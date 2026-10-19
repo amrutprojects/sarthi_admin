@@ -1,4 +1,4 @@
-import { newIdempotencyKey, request, type PageMeta } from '../../../services/api-client';
+import { API_BASE_URL, ApiError, newIdempotencyKey, request, type PageMeta } from '../../../services/api-client';
 
 /* GET /student-registrations item (masked; backend students/register/student.service.ts publicStudent). */
 export interface Registration {
@@ -68,6 +68,13 @@ export const registrationApi = {
 
   async get(id: string): Promise<RegistrationDetail> {
     return (await request<RegistrationDetail>(`/student-registrations/${id}`)).data;
+  },
+
+  /* One uploaded file as a Blob (sent with the session cookie), for in-page preview. */
+  async fileBlob(id: string, documentId: string): Promise<Blob> {
+    const res = await fetch(`${API_BASE_URL}/student-registrations/${id}/documents/${documentId}/file`, { credentials: 'include' });
+    if (!res.ok) throw new ApiError(`Could not load the file (${res.status})`, res.status, 'FILE_ERROR');
+    return res.blob();
   },
 
   /* Multipart: "data" = JSON, one file per document type code. The idempotency key makes a retried submit safe. */
