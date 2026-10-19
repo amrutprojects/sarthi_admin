@@ -17,14 +17,6 @@ const IDENTITY_ROWS: { module: string; label: string }[] = [
   { module: 'permissions', label: 'Permissions' },
 ];
 
-/* Reference-data masters, shown under "Masters"; their `status` (activate / deactivate) code is listed as an extra. */
-const MASTER_ROWS: { module: string; label: string }[] = [
-  { module: 'regions', label: 'Regions' },
-  { module: 'castes', label: 'Castes' },
-  { module: 'document-types', label: 'Document types' },
-  { module: 'education', label: 'Education' },
-];
-
 interface Row {
   module: string;
   label: string;
@@ -60,8 +52,8 @@ function buildSections(perms: MatrixPermission[]): Section[] {
       sections.push(current);
       continue;
     }
-    if (n.k === 'users' || n.k === 'masters') {
-      for (const r of n.k === 'users' ? IDENTITY_ROWS : MASTER_ROWS) {
+    if (n.k === 'users') {
+      for (const r of IDENTITY_ROWS) {
         const row = buildRow(r.module, `${n.l} — ${r.label}`, perms);
         if (row) {
           current?.rows.push(row);

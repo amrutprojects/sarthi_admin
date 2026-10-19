@@ -1,3 +1,4 @@
+import StatusToggle from '../../../components/ui/StatusToggle';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmModal, fmtDateTime, toastError, toastOk } from '../../../components/feedback/apiFeedback';
 import { Badge, Callout, GenBadge, KvList } from '../../../components/ui';
@@ -11,7 +12,11 @@ import type { MasterFormValues } from '../schemas/masterSchema';
 import type { MasterListParams, MasterRecord, MasterSortField } from '../types';
 import MasterForm from './MasterForm';
 
-type Dialog = { type: 'create' } | { type: 'edit'; row: MasterRecord } | { type: 'view'; row: MasterRecord } | { type: 'delete'; row: MasterRecord };
+type Dialog =
+  | { type: 'create' }
+  | { type: 'edit'; row: MasterRecord }
+  | { type: 'view'; row: MasterRecord }
+  | { type: 'delete'; row: MasterRecord };
 type Status = 'all' | 'active' | 'inactive';
 const PAGE_SIZE = 20;
 const FORM_FIELDS = ['code', 'name', 'description', 'isMandatory'] as const;
@@ -188,7 +193,23 @@ export default function MasterTab({ master }: { master: MasterConfig }) {
                       </td>
                       {master.hasMandatory ? <td>{r.isMandatory ? <Badge tone="saffron">Mandatory</Badge> : 'Optional'}</td> : null}
                       <td>
-                        <GenBadge status={r.isActive ? 'ACTIVE' : 'INACTIVE'} />
+                        <StatusToggle
+                          active={r.isActive}
+                          label={`Status of ${r.name}`}
+                          busy={setActive.isPending && setActive.variables?.id === r.id}
+                          onChange={
+                            can('status')
+                              ? (isActive) =>
+                                  setActive.mutate(
+                                    { id: r.id, isActive },
+                                    {
+                                      onSuccess: () => toastOk(`${master.label} ${isActive ? 'activated' : 'deactivated'}`),
+                                      onError: toastError,
+                                    },
+                                  )
+                              : undefined
+                          }
+                        />
                       </td>
                       <td className="tw-whitespace-nowrap">{fmtDateTime(r.updatedAt)}</td>
                       <td>
@@ -199,24 +220,6 @@ export default function MasterTab({ master }: { master: MasterConfig }) {
                           {can('update') ? (
                             <button type="button" className="btn xs" onClick={() => setDialog({ type: 'edit', row: r })}>
                               Edit
-                            </button>
-                          ) : null}
-                          {can('status') ? (
-                            <button
-                              type="button"
-                              className="btn xs"
-                              disabled={setActive.isPending}
-                              onClick={() =>
-                                setActive.mutate(
-                                  { id: r.id, isActive: !r.isActive },
-                                  {
-                                    onSuccess: () => toastOk(`${master.label} ${r.isActive ? 'deactivated' : 'activated'}`),
-                                    onError: toastError,
-                                  },
-                                )
-                              }
-                            >
-                              {r.isActive ? 'Deactivate' : 'Activate'}
                             </button>
                           ) : null}
                           {can('delete') ? (

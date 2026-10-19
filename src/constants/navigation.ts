@@ -57,6 +57,7 @@ export type RouteName =
   | 'administration'
   | 'users'
   | 'masters'
+  | 'masterList'
   | 'audit'
   | 'settings'
   | 'studentImport'
@@ -110,9 +111,14 @@ export const NAV: NavEntry[] = [
   { k: 'app', l: 'Student App', i: 'phone', r: '/student-app' },
   { k: 'admin', l: 'Administration', i: 'settings', r: '/administration' },
   { k: 'users', l: 'Users & Roles', i: 'users', r: '/users' },
-  { k: 'masters', l: 'Masters', i: 'layers', r: '/masters' },
   { k: 'audit', l: 'Audit Log', i: 'doc', r: '/audit' },
   { k: 'settings', l: 'System Settings', i: 'settings', r: '/settings' },
+  { g: 'Masters' },
+  /* Keys equal the backend permission prefixes (regions.view, …). */
+  { k: 'regions', l: 'Regions', i: 'map', r: '/masters/regions' },
+  { k: 'castes', l: 'Castes', i: 'users', r: '/masters/castes' },
+  { k: 'document-types', l: 'Document Types', i: 'doc', r: '/masters/document-types' },
+  { k: 'education', l: 'Education', i: 'award', r: '/masters/education' },
   { g: 'Public Site' },
   { k: 'pubhome', l: 'AMRUT Public Site', i: 'globe', r: '/home' },
   { k: 'pubprog', l: 'AMRUT Kalash 2.0', i: 'award', r: '/programme' },
@@ -171,6 +177,10 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/administration', 'administration', 'admin'],
   ['/users', 'users', 'users'],
   ['/masters', 'masters', 'masters'],
+  ['/masters/regions', 'masterList', 'regions'],
+  ['/masters/castes', 'masterList', 'castes'],
+  ['/masters/document-types', 'masterList', 'document-types'],
+  ['/masters/education', 'masterList', 'education'],
   ['/audit', 'audit', 'audit'],
   ['/settings', 'settings', 'settings'],
 ];

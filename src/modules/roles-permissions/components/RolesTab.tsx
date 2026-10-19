@@ -1,5 +1,6 @@
+import StatusToggle from '../../../components/ui/StatusToggle';
 import { useCallback, useMemo, useState, type FormEvent } from 'react';
-import { Badge, Callout, GenBadge, Kpi } from '../../../components/ui';
+import { Badge, Callout, Kpi } from '../../../components/ui';
 import type { Column } from '../../../components/tables/DataTable';
 import ServerTable, { type ServerSort } from '../../../components/tables/ServerTable';
 import ListFilters, { statusParam, type ListFilterValues } from '../../../components/tables/ListFilters';
@@ -81,7 +82,18 @@ export default function RolesTab() {
       k: 'isActive',
       l: 'Status',
       exportVal: (r) => (r.isActive ? 'Active' : 'Inactive'),
-      render: (r) => <GenBadge status={r.isActive ? 'ACTIVE' : 'INACTIVE'} />,
+      render: (r) => (
+        <StatusToggle
+          active={r.isActive}
+          label={`Status of ${r.name}`}
+          busy={busy}
+          onChange={
+            can('updateRole') && r.code !== PROTECTED
+              ? (isActive) => run(() => rolesApi.setStatus(r.id, isActive), isActive ? 'Role activated' : 'Role deactivated', reload)
+              : undefined
+          }
+        />
+      ),
     },
     {
       k: 'act',
@@ -100,16 +112,6 @@ export default function RolesTab() {
                 Edit
               </button>
             </Can>
-            {can('updateRole') && !locked ? (
-              <button
-                type="button"
-                className="btn xs"
-                disabled={busy}
-                onClick={() => run(() => rolesApi.setStatus(r.id, !r.isActive), r.isActive ? 'Role deactivated' : 'Role activated', reload)}
-              >
-                {r.isActive ? 'Deactivate' : 'Activate'}
-              </button>
-            ) : null}
             {can('deleteRole') && !locked && !r.isSystem ? (
               <button
                 type="button"

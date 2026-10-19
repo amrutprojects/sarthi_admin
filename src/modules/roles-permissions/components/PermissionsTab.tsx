@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { GenBadge, Kpi } from '../../../components/ui';
+import { Kpi } from '../../../components/ui';
+import StatusToggle from '../../../components/ui/StatusToggle';
 import ListFilters, { statusParam, type ListFilterValues } from '../../../components/tables/ListFilters';
 import ServerTable, { type ServerColumn, type ServerSort } from '../../../components/tables/ServerTable';
 import type { ApiError } from '../../../services/api-client';
@@ -57,23 +58,22 @@ export default function PermissionsTab() {
       ),
     },
     { key: 'module', label: 'Module', sortKey: 'module', render: (p) => <span style={{ textTransform: 'capitalize' }}>{p.module}</span> },
-    { key: 'status', label: 'Status', render: (p) => <GenBadge status={p.isActive ? 'ACTIVE' : 'INACTIVE'} /> },
     {
-      key: 'act',
-      label: '',
-      render: (p) =>
-        can('updatePermission') ? (
-          <button
-            type="button"
-            className="btn xs"
-            disabled={busy}
-            onClick={() =>
-              run(() => permissionsApi.setStatus(p.id, !p.isActive), p.isActive ? 'Permission deactivated' : 'Permission activated', reload)
-            }
-          >
-            {p.isActive ? 'Deactivate' : 'Activate'}
-          </button>
-        ) : null,
+      key: 'status',
+      label: 'Status',
+      render: (p) => (
+        <StatusToggle
+          active={p.isActive}
+          label={`Status of ${p.name}`}
+          busy={busy}
+          onChange={
+            can('updatePermission')
+              ? (isActive) =>
+                  run(() => permissionsApi.setStatus(p.id, isActive), isActive ? 'Permission activated' : 'Permission deactivated', reload)
+              : undefined
+          }
+        />
+      ),
     },
   ];
 

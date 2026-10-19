@@ -62,7 +62,8 @@ describe('<MasterTab>', () => {
     await screen.findByText('Pune');
     expect(screen.getByRole('button', { name: 'View' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Add region/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Deactivate' })).not.toBeInTheDocument();
+    /* Without regions.status the switch shows the state but is disabled. */
+    expect(screen.getByRole('switch', { name: 'Status of Pune' })).toBeDisabled();
     unmount();
 
     ['regions.create', 'regions.update', 'regions.status', 'regions.delete'].forEach((p) => permissions.add(p));
@@ -72,7 +73,9 @@ describe('<MasterTab>', () => {
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
     vi.mocked(masterApi.setStatus).mockResolvedValue(record({ isActive: false }));
-    await userEvent.click(screen.getByRole('button', { name: 'Deactivate' }));
+    const toggle = screen.getByRole('switch', { name: 'Status of Pune' });
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await userEvent.click(toggle);
     await waitFor(() => expect(masterApi.setStatus).toHaveBeenCalledWith(region, 'r1', false));
   });
 

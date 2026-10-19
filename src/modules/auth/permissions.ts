@@ -60,6 +60,10 @@ export const SCREEN_ACCESS: Record<string, string[]> = {
   users: ['users.view', 'roles.view', 'permissions.view'],
   /* Reference-data masters (Region, Caste, Document type, Education): opens with any one view code. */
   masters: ['regions.view', 'castes.view', 'document-types.view', 'education.view'],
+  regions: ['regions.view'],
+  castes: ['castes.view'],
+  'document-types': ['document-types.view'],
+  education: ['education.view'],
 };
 
 /* Named actions → the action is available if the user holds ANY of these codes. */

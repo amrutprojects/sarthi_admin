@@ -13,13 +13,25 @@ export interface UserTableProps {
   showRoles: boolean;
   /* Row actions, rendered by the container (which knows the permissions). */
   renderActions: (user: User) => ReactNode;
+  /* Status cell (the container renders the toggle); defaults to a badge. */
+  renderStatus?: (user: User) => ReactNode;
   fetching?: boolean;
 }
 
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—');
 
 /* Server-paged user table. Purely presentational: data and actions come from props. */
-export default function UserTable({ users, meta, page, onPage, currentUserId, showRoles, renderActions, fetching }: UserTableProps) {
+export default function UserTable({
+  users,
+  meta,
+  page,
+  onPage,
+  currentUserId,
+  showRoles,
+  renderActions,
+  renderStatus,
+  fetching,
+}: UserTableProps) {
   const pages = meta?.totalPages ?? 1;
   return (
     <div className="dt">
@@ -63,9 +75,7 @@ export default function UserTable({ users, meta, page, onPage, currentUserId, sh
                     )}
                   </td>
                 ) : null}
-                <td>
-                  <GenBadge status={u.isActive ? 'ACTIVE' : 'INACTIVE'} />
-                </td>
+                <td>{renderStatus ? renderStatus(u) : <GenBadge status={u.isActive ? 'ACTIVE' : 'INACTIVE'} />}</td>
                 <td className="tw-whitespace-nowrap">{fmt(u.lastLoginAt)}</td>
                 <td>{renderActions(u)}</td>
               </tr>

@@ -1,3 +1,4 @@
+import StatusToggle from '../../../components/ui/StatusToggle';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ConfirmModal, toastError, toastOk } from '../../../components/feedback/apiFeedback';
 import { Callout, Kpi } from '../../../components/ui';
@@ -62,6 +63,24 @@ export default function UsersTab() {
 
   const forbidden = list.error instanceof ApiError && list.error.status === 403;
 
+  /* Own account: shown, not switchable (you cannot deactivate yourself). */
+  const renderStatus = (u: User) => (
+    <StatusToggle
+      active={u.isActive}
+      label={`Status of ${u.name}`}
+      busy={setStatus.isPending && setStatus.variables?.id === u.id}
+      onChange={
+        can('updateUser') && u.id !== me?.id
+          ? (isActive) =>
+              setStatus.mutate(
+                { id: u.id, isActive },
+                { onSuccess: () => toastOk(isActive ? 'User activated' : 'User deactivated'), onError: toastError },
+              )
+          : undefined
+      }
+    />
+  );
+
   const renderActions = (u: User) => {
     const self = u.id === me?.id;
     return (
@@ -74,21 +93,6 @@ export default function UsersTab() {
         {can('assignRoles') && canSeeRoles && !self ? (
           <button type="button" className="btn xs" onClick={() => setDialog({ type: 'roles', user: u })}>
             Roles
-          </button>
-        ) : null}
-        {can('updateUser') && !self ? (
-          <button
-            type="button"
-            className="btn xs"
-            disabled={setStatus.isPending}
-            onClick={() =>
-              setStatus.mutate(
-                { id: u.id, isActive: !u.isActive },
-                { onSuccess: () => toastOk(u.isActive ? 'User deactivated' : 'User activated'), onError: toastError },
-              )
-            }
-          >
-            {u.isActive ? 'Deactivate' : 'Activate'}
           </button>
         ) : null}
         {can('deleteUser') && !self ? (
@@ -157,6 +161,7 @@ export default function UsersTab() {
             currentUserId={me?.id}
             showRoles={canSeeRoles}
             renderActions={renderActions}
+            renderStatus={renderStatus}
             fetching={list.isFetching}
           />
         )}
