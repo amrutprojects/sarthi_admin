@@ -49,6 +49,18 @@ import AdministrationPage from './pages/platform/AdministrationPage';
 import UsersPage from './pages/platform/UsersPage';
 import AuditPage from './pages/platform/AuditPage';
 import SettingsPage from './pages/platform/SettingsPage';
+import StateList from './features/cms/state/pages/StateList';
+import StateCreate from './features/cms/state/pages/StateCreate';
+import StateEdit from './features/cms/state/pages/StateEdit';
+import StateView from './features/cms/state/pages/StateView';
+import DistrictList from './features/cms/district/pages/DistrictList';
+import DistrictCreate from './features/cms/district/pages/DistrictCreate';
+import DistrictEdit from './features/cms/district/pages/DistrictEdit';
+import DistrictView from './features/cms/district/pages/DistrictView';
+import TalukaList from './features/cms/taluka/pages/TalukaList';
+import TalukaCreate from './features/cms/taluka/pages/TalukaCreate';
+import TalukaEdit from './features/cms/taluka/pages/TalukaEdit';
+import TalukaView from './features/cms/taluka/pages/TalukaView';
 
 /* Route name → React page component. */
 const REACT_PAGES: Record<RouteName, ComponentType> = {
@@ -89,6 +101,18 @@ const REACT_PAGES: Record<RouteName, ComponentType> = {
   finance: FinancePage,
   pmo: PmoPage,
   qa: QaPage,
+  cmsStateList: StateList,
+  cmsStateCreate: StateCreate,
+  cmsStateEdit: StateEdit,
+  cmsStateView: StateView,
+  cmsDistrictList: DistrictList,
+  cmsDistrictCreate: DistrictCreate,
+  cmsDistrictEdit: DistrictEdit,
+  cmsDistrictView: DistrictView,
+  cmsTalukaList: TalukaList,
+  cmsTalukaCreate: TalukaCreate,
+  cmsTalukaEdit: TalukaEdit,
+  cmsTalukaView: TalukaView,
   lms: LmsPage,
   studentApp: StudentAppPage,
   administration: AdministrationPage,

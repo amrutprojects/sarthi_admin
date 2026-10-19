@@ -159,7 +159,18 @@ svg.ico{width:17px;height:17px;flex:0 0 17px;display:inline-block;vertical-align
 .tb-user-meta span{display:block;font-size:10.5px;color:var(--muted)}
 .demo-pill{background:var(--saffron-100);color:#B45309;border:1px solid #F6CFA5;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:99px;letter-spacing:.02em;white-space:nowrap}
 
-.page{padding:18px 22px 60px;flex:1;min-width:0}
+/*
+ * width:100% is load-bearing, not decoration.
+ *
+ * `.page` is a flex item of `.main`, a COLUMN flex container, so its width is the cross axis. Per the
+ * flexbox spec an `auto` cross-axis margin disables align-self:stretch: the item is then sized by its
+ * content and the auto margins centre it. The large-desktop rule further down sets `margin-left:auto;
+ * margin-right:auto`, so without a definite width every screen collapsed to its own intrinsic width
+ * and sat centred in a sea of blank space — a sparse listing shrank to ~900px, a dense one to ~1500px.
+ * An explicit width keeps the page filling `.main` at every breakpoint; `box-sizing:border-box` is
+ * global, so the padding stays inside it and nothing overflows.
+ */
+.page{padding:18px 22px 60px;flex:1;min-width:0;width:100%}
 .page-head{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px}
 .page-head .ph-l{min-width:0;flex:1}
 .page-head h1{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -605,9 +616,15 @@ img, svg, video, canvas { max-width:100% }
 .perm-matrix thead .pm-menu { z-index:3; background:var(--saffron-100) }
 .perm-matrix .pm-sec td { position:sticky; left:0 }
 
-/* Large desktops: keep line lengths readable. */
+/*
+ * Large desktops: keep line lengths readable.
+ *
+ * The auto margins here are the ones that cancel flex stretch (see the base .page rule), so the
+ * width is repeated rather than inherited from it — this block stays correct even if the rules are
+ * ever reordered.
+ */
 @media (min-width:1920px) {
-  .page { max-width:1760px; margin-left:auto; margin-right:auto }
+  .page { width:100%; max-width:1760px; margin-left:auto; margin-right:auto }
 }
 /* Tablets (iPad portrait / landscape) */
 @media (max-width:1024px) {
