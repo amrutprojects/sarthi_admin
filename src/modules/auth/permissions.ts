@@ -26,6 +26,7 @@ const MENU_KEYS = [
   'lifecycle',
   'atrisk',
   'imports',
+  'registrations',
   'districts',
   'map',
   'centres',
