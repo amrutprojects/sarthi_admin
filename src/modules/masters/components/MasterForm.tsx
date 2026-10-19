@@ -39,6 +39,17 @@ export default function MasterForm({ master, mode, defaultValues, submitting, se
       aria-label={`${mode === 'create' ? 'Add' : 'Edit'} ${master.label.toLowerCase()}`}
     >
       <div className="tw-grid tw-grid-cols-1 tw-gap-4 sm:tw-grid-cols-3">
+        <div className={`${field} sm:tw-col-span-2`}>
+          <label htmlFor={id('name')} className={labelCls}>
+            Name
+          </label>
+          <input id={id('name')} className="inp" autoComplete="off" aria-invalid={!!err('name')} {...register('name')} />
+          {err('name') ? (
+            <span className={errorText} role="alert">
+              {err('name')}
+            </span>
+          ) : null}
+        </div>
         <div className={field}>
           <label htmlFor={id('code')} className={labelCls}>
             Code
@@ -54,17 +65,6 @@ export default function MasterForm({ master, mode, defaultValues, submitting, se
           {err('code') ? (
             <span className={errorText} role="alert">
               {err('code')}
-            </span>
-          ) : null}
-        </div>
-        <div className={`${field} sm:tw-col-span-2`}>
-          <label htmlFor={id('name')} className={labelCls}>
-            Name
-          </label>
-          <input id={id('name')} className="inp" autoComplete="off" aria-invalid={!!err('name')} {...register('name')} />
-          {err('name') ? (
-            <span className={errorText} role="alert">
-              {err('name')}
             </span>
           ) : null}
         </div>
