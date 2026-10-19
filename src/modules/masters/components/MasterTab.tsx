@@ -11,7 +11,11 @@ import type { MasterFormValues } from '../schemas/masterSchema';
 import type { MasterListParams, MasterRecord, MasterSortField } from '../types';
 import MasterForm from './MasterForm';
 
-type Dialog = { type: 'create' } | { type: 'edit'; row: MasterRecord } | { type: 'view'; row: MasterRecord } | { type: 'delete'; row: MasterRecord };
+type Dialog =
+  | { type: 'create' }
+  | { type: 'edit'; row: MasterRecord }
+  | { type: 'view'; row: MasterRecord }
+  | { type: 'delete'; row: MasterRecord };
 type Status = 'all' | 'active' | 'inactive';
 const PAGE_SIZE = 20;
 const FORM_FIELDS = ['code', 'name', 'description', 'isMandatory'] as const;
@@ -94,17 +98,20 @@ export default function MasterTab({ master }: { master: MasterConfig }) {
       <div className="card">
         <div className="card-h">
           <h3>{master.plural}</h3>
-          <div className="tw-flex tw-flex-wrap tw-items-center tw-gap-2">
+          {/* One row on wider screens (inline widths: .inp sets width: 100%, which outranks the utilities). */}
+          <div className="tw-flex tw-flex-wrap tw-items-center tw-justify-end tw-gap-2">
             <input
               type="search"
-              className="inp sm tw-min-w-0 tw-flex-1 sm:tw-w-60 sm:tw-flex-none"
+              className="inp sm"
+              style={{ width: 240, maxWidth: '100%' }}
               placeholder="Search code or name"
               aria-label={`Search ${plural}`}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
             <select
-              className="inp sm tw-w-auto"
+              className="inp sm"
+              style={{ width: 150 }}
               aria-label="Filter by status"
               value={status}
               onChange={(e) => {
@@ -117,7 +124,7 @@ export default function MasterTab({ master }: { master: MasterConfig }) {
               <option value="inactive">Inactive</option>
             </select>
             {can('create') ? (
-              <button type="button" className="btn sm primary" onClick={() => setDialog({ type: 'create' })}>
+              <button type="button" className="btn sm primary tw-whitespace-nowrap" onClick={() => setDialog({ type: 'create' })}>
                 <Icon name="plus" />
                 Add {master.label.toLowerCase()}
               </button>
