@@ -123,7 +123,7 @@ function UploadCard({ reference, onUploaded }: { reference: ImportReference | nu
               file={zip}
               accept=".zip"
               prompt="Drop the documents ZIP here"
-              hint="Write each file’s path inside the ZIP in the Excel document columns (e.g. doc_photo = scans/asha photo.jpg), or use folders named by source_record_id · PDF, JPG or PNG, up to 5 MB each"
+              hint="One folder per student, named by source_record_id (e.g. MA-0001/photo.jpg) — no other folders · the Excel doc_ columns name the file (photo.jpg) · PDF, JPG or PNG, up to 5 MB each"
               maxMb={500}
               onPick={setZip}
               onReject={reject}
@@ -534,11 +534,11 @@ function GuideTab({ reference }: { reference: ImportReference | null }) {
                   <b>Documents</b>: Yes/No presence flags; a missing required document can be accepted with a reason.
                 </li>
                 <li>
-                  <b>Documents ZIP</b>: in each document column of the Excel write the file’s path inside the ZIP (e.g.{' '}
-                  <span className="mono">doc_photo</span> = <span className="mono">scans/asha photo.jpg</span>); any folder or file name
-                  works. Without paths, use folders named by <span className="mono">source_record_id</span> with files named by type (
-                  <span className="mono">PHOTO.jpg</span>, <span className="mono">AADHAAR_CARD.pdf</span>). PDF, JPG or PNG up to 5 MB each;
-                  files move to the student’s own folder on finalise.
+                  <b>Documents ZIP</b>: one folder per student, named exactly like <span className="mono">source_record_id</span> (e.g.{' '}
+                  <span className="mono">MA-0001/photo.jpg</span>); files in any other folder are rejected. In the Excel document columns
+                  write the file name in that folder (<span className="mono">doc_photo</span> = <span className="mono">photo.jpg</span>), or
+                  write Yes and name files by type (<span className="mono">AADHAAR_CARD.pdf</span>). PDF, JPG or PNG up to 5 MB each; files
+                  move to the student’s own folder on finalise.
                 </li>
                 <li>
                   <b>Duplicates</b>: same source ID, same Aadhaar, or same name + date of birth + contact need a reviewer's decision.
