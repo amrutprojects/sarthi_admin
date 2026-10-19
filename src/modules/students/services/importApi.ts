@@ -28,6 +28,28 @@ export interface BatchCounts {
   created?: number;
   linked?: number;
 }
+export interface DocumentsReport {
+  zipName: string;
+  uploadedAt: string;
+  stored: number;
+  replaced: number;
+  studentsWithFiles: number;
+  unmatchedFolders: string[];
+  rejected: { path: string; reason: string }[];
+}
+/* A stored document file (backend StudentDocument DTO). */
+export interface StudentDocument {
+  id: string;
+  docType: string;
+  label: string;
+  originalName: string;
+  mimeType: 'application/pdf' | 'image/jpeg' | 'image/png';
+  sizeBytes: number;
+  uploadedAt: string;
+}
+const EXT: Record<StudentDocument['mimeType'], string> = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png' };
+const fileNameOf = (d: StudentDocument) => `${d.docType}.${EXT[d.mimeType]}`;
+
 export interface ImportBatch {
   id: string;
   code: string;
@@ -40,6 +62,7 @@ export interface ImportBatch {
   columnMapping: Record<string, string>;
   ignoredColumns: string[];
   failureReason: string | null;
+  documentsReport: DocumentsReport | null;
   createdById: string;
   finalisedById: string | null;
   finalisedAt: string | null;
@@ -133,12 +156,23 @@ export const importApi = {
   template: () => downloadFile('/imports/template.csv', 'student-import-template.csv'),
   list: (q: { page?: number; limit?: number; status?: string; search?: string }) => paged<ImportBatch>('/imports', q),
   get: async (id: string) => (await request<ImportBatch>(`/imports/${id}`)).data,
-  upload: async (file: File, sourceReference?: string) => {
+  /* Data file plus, optionally, the documents ZIP (one folder per student named by source_record_id). */
+  upload: async (file: File, sourceReference?: string, documents?: File) => {
     const fd = new FormData();
     fd.append('file', file);
+    if (documents) fd.append('documents', documents);
     if (sourceReference) fd.append('sourceReference', sourceReference);
     return request<ImportBatch>('/imports', { method: 'POST', body: fd });
   },
+  uploadDocuments: async (batchId: string, documents: File) => {
+    const fd = new FormData();
+    fd.append('documents', documents);
+    return request<ImportBatch>(`/imports/${batchId}/documents`, { method: 'POST', body: fd });
+  },
+  rowDocuments: async (batchId: string, rowId: string) =>
+    (await request<StudentDocument[]>(`/imports/${batchId}/rows/${rowId}/documents`)).data,
+  downloadRowDocument: (batchId: string, rowId: string, doc: StudentDocument) =>
+    downloadFile(`/imports/${batchId}/rows/${rowId}/documents/${doc.id}/file`, fileNameOf(doc)),
   rows: (id: string, q: { page?: number; limit?: number; status?: string; search?: string }) =>
     paged<ImportRowView>(`/imports/${id}/rows`, q),
   accept: (id: string, rowId: string, reason: string) =>
@@ -156,4 +190,7 @@ export const studentApi = {
   list: (q: { page?: number; limit?: number; search?: string; centre?: string; track?: string; batch?: string }) =>
     paged<StudentView>('/students', q),
   get: async (id: string) => (await request<StudentDetail>(`/students/${id}`)).data,
+  documents: async (id: string) => (await request<StudentDocument[]>(`/students/${id}/documents`)).data,
+  downloadDocument: (studentId: string, doc: StudentDocument) =>
+    downloadFile(`/students/${studentId}/documents/${doc.id}/file`, fileNameOf(doc)),
 };

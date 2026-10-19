@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Badge, Callout, Kpi, PageHead } from '../../../components/ui';
 import { Drawer } from '../../../components/ui/Overlay';
@@ -7,6 +7,8 @@ import { Can } from '../../auth';
 import { ApiError, type PageMeta } from '../../../services/api-client';
 import { importApi, studentApi, type ImportBatch, type ImportReference, type StudentDetail, type StudentView } from '../services/importApi';
 import { toastError, toastOk } from '../../../components/feedback/apiFeedback';
+import DocumentList from '../components/DocumentList';
+import FileDrop from '../components/FileDrop';
 import { BATCH_STATUS_LABEL, ServerTable, StatusBadge, fmtDate } from '../components/importUi';
 
 type Tab = 'batches' | 'students' | 'guide';
@@ -62,40 +64,22 @@ export default function StudentImportPage() {
 
 function UploadCard({ reference, onUploaded }: { reference: ImportReference | null; onUploaded: (b: ImportBatch) => void }) {
   const [file, setFile] = useState<File | null>(null);
+  const [zip, setZip] = useState<File | null>(null);
   const [sourceRef, setSourceRef] = useState('');
   const [busy, setBusy] = useState(false);
-  const [drag, setDrag] = useState(false);
-  const input = useRef<HTMLInputElement>(null);
   const maxMb = reference?.maxFileMb ?? 20;
-
-  const pick = (f: File | undefined) => {
-    if (!f) return;
-    if (!/\.(csv|xlsx)$/i.test(f.name)) {
-      toastError(new ApiError('Choose a .csv or .xlsx file', 400, 'BAD_FILE'));
-      return;
-    }
-    if (f.size > maxMb * 1024 * 1024) {
-      toastError(new ApiError(`The file is larger than ${maxMb} MB`, 400, 'TOO_LARGE'));
-      return;
-    }
-    setFile(f);
-  };
-  const onDrop = (e: DragEvent) => {
-    e.preventDefault();
-    setDrag(false);
-    pick(e.dataTransfer.files[0]);
-  };
+  const reject = (msg: string) => toastError(new ApiError(msg, 400, 'BAD_FILE'));
 
   async function submit() {
     if (!file) return;
     setBusy(true);
     try {
-      const res = await importApi.upload(file, sourceRef.trim() || undefined);
+      const res = await importApi.upload(file, sourceRef.trim() || undefined, zip ?? undefined);
       if (res.data.status === 'IMPORT_FAILED') toastError(new ApiError(res.message, 422, 'IMPORT_FAILED'));
       else toastOk(res.message);
       setFile(null);
+      setZip(null);
       setSourceRef('');
-      if (input.current) input.current.value = '';
       onUploaded(res.data);
     } catch (e) {
       toastError(e);
@@ -110,43 +94,33 @@ function UploadCard({ reference, onUploaded }: { reference: ImportReference | nu
         <h3>Upload approved-student file</h3>
       </div>
       <div className="card-b">
-        <div
-          className="import-drop"
-          data-drag={drag || undefined}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDrag(true);
-          }}
-          onDragLeave={() => setDrag(false)}
-          onDrop={onDrop}
-          onClick={() => input.current?.click()}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') input.current?.click();
-          }}
-        >
-          <Icon name="download" />
-          {file ? (
-            <div>
-              <b>{file.name}</b> <span className="muted">· {(file.size / 1024).toFixed(0)} KB</span>
-            </div>
-          ) : (
-            <div>
-              <b>Drop a CSV or XLSX file here</b>, or click to choose
-            </div>
-          )}
-          <div className="fs11 muted">
-            UTF-8 CSV or Excel · up to {maxMb} MB · up to {(reference?.maxRows ?? 50000).toLocaleString('en-IN')} rows · first sheet, first
-            row is the header
+        <div className="tw-grid tw-grid-cols-1 tw-gap-3 md:tw-grid-cols-2">
+          <div>
+            <div className="tw-mb-1 tw-text-xs tw-font-semibold tw-text-ink-2">1. Student data (required)</div>
+            <FileDrop
+              file={file}
+              accept=".csv,.xlsx"
+              prompt="Drop the Excel or CSV file here"
+              hint={`Excel (.xlsx) or UTF-8 CSV · up to ${maxMb} MB · up to ${(reference?.maxRows ?? 50000).toLocaleString('en-IN')} rows · first sheet, first row is the header`}
+              maxMb={maxMb}
+              onPick={setFile}
+              onReject={reject}
+              ariaLabel="Choose the student data file"
+            />
           </div>
-          <input
-            ref={input}
-            type="file"
-            accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            hidden
-            onChange={(e) => pick(e.target.files?.[0])}
-          />
+          <div>
+            <div className="tw-mb-1 tw-text-xs tw-font-semibold tw-text-ink-2">2. Documents ZIP (optional)</div>
+            <FileDrop
+              file={zip}
+              accept=".zip"
+              prompt="Drop the documents ZIP here"
+              hint="One folder per student named by source_record_id, e.g. MA-0001/PHOTO.jpg, MA-0001/AADHAAR_CARD.pdf · PDF, JPG or PNG, up to 5 MB each"
+              maxMb={500}
+              onPick={setZip}
+              onReject={reject}
+              ariaLabel="Choose the documents ZIP"
+            />
+          </div>
         </div>
         <div className="f gp10 wrap mt10" style={{ alignItems: 'flex-end' }}>
           <div className="fld" style={{ flex: '1 1 240px' }}>
@@ -167,8 +141,9 @@ function UploadCard({ reference, onUploaded }: { reference: ImportReference | nu
           </button>
         </div>
         <div className="hint mt10">
-          Uploading creates an import batch only; no student is created until a second person reviews and finalises it. The same file cannot
-          be uploaded twice.
+          Uploading creates an import batch only; no student is created until a second person reviews and finalises it. Documents are stored
+          per student and move to the student's own folder when the batch is finalised. Documents can also be added later from the batch
+          page.
         </div>
       </div>
     </div>
@@ -457,7 +432,16 @@ function StudentDrawer({ s, onClose }: { s: StudentDetail; onClose: () => void }
         {field('Declaration', s.declarationAccepted === null ? 'Not supplied' : s.declarationAccepted ? 'Accepted' : 'Not accepted')}
       </div>
       <h4 className="mb6 mt14">
-        Documents <span className="muted fs11">(metadata from the source)</span>
+        Document files <span className="muted fs11">(stored in this student's folder)</span>
+      </h4>
+      <DocumentList
+        queryKey={['students', s.id, 'documents']}
+        load={() => studentApi.documents(s.id)}
+        download={(d) => studentApi.downloadDocument(s.id, d)}
+        emptyText="No document files were uploaded for this student."
+      />
+      <h4 className="mb6 mt14">
+        Documents declared by the source <span className="muted fs11">(metadata)</span>
       </h4>
       <div className="list">
         {s.documents.map((d) => (
@@ -539,6 +523,12 @@ function GuideTab({ reference }: { reference: ImportReference | null }) {
                 </li>
                 <li>
                   <b>Documents</b>: Yes/No presence flags; a missing required document can be accepted with a reason.
+                </li>
+                <li>
+                  <b>Documents ZIP</b>: one folder per student named by <span className="mono">source_record_id</span>, files named by type
+                  (<span className="mono">PHOTO</span>, <span className="mono">SIGNATURE</span>, <span className="mono">AADHAAR_CARD</span>,{' '}
+                  <span className="mono">CASTE_CERT</span>…); PDF, JPG or PNG up to 5 MB each. Files move to the student&apos;s own folder
+                  on finalise.
                 </li>
                 <li>
                   <b>Duplicates</b>: same source ID, same Aadhaar, or same name + date of birth + contact need a reviewer's decision.

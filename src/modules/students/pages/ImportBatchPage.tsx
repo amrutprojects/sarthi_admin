@@ -2,11 +2,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Badge, Callout, Kpi, PageHead } from '../../../components/ui';
 import { Drawer, Modal } from '../../../components/ui/Overlay';
-import { useCan } from '../../auth';
-import { useAuth } from '../../auth';
-import type { PageMeta } from '../../../services/api-client';
+import { useAuth, useCan } from '../../auth';
+import { ApiError, type PageMeta } from '../../../services/api-client';
 import { importApi, type ImportBatch, type ImportRowView } from '../services/importApi';
 import { toastError, toastOk } from '../../../components/feedback/apiFeedback';
+import DocumentList from '../components/DocumentList';
+import DocumentsReportCard from '../components/DocumentsReportCard';
+import FileDrop from '../components/FileDrop';
 import { BATCH_STATUS_LABEL, ROW_STATUS_LABEL, ReasonModal, ServerTable, StatusBadge, fmtDate } from '../components/importUi';
 
 const FILTERS: [string, string][] = [
@@ -37,6 +39,7 @@ export default function ImportBatchPage() {
   const [open, setOpen] = useState<ImportRowView | null>(null);
   const [finalising, setFinalising] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [uploadingDocs, setUploadingDocs] = useState(false);
 
   const loadBatch = useCallback(async () => {
     try {
@@ -88,6 +91,11 @@ export default function ImportBatchPage() {
         sub={`${batch.fileName} · received ${fmtDate(batch.createdAt)}${batch.sourceReference ? ' · ' + batch.sourceReference : ''}`}
         actions={
           <>
+            {can('resolveImport') && EDITABLE.includes(batch.status) ? (
+              <button type="button" className="btn" onClick={() => setUploadingDocs(true)}>
+                Upload documents
+              </button>
+            ) : null}
             {can('cancelImport') && !['FINALISED', 'CANCELLED'].includes(batch.status) ? (
               <button type="button" className="btn" onClick={() => setCancelling(true)}>
                 Cancel batch
@@ -140,6 +148,8 @@ export default function ImportBatchPage() {
         <Kpi label="Skipped / rejected" value={`${c.skipped} / ${c.rejected}`} tone="" />
         <Kpi label="Imported" value={c.reconciled.toLocaleString('en-IN')} tone="v" />
       </div>
+
+      {batch.documentsReport ? <DocumentsReportCard report={batch.documentsReport} /> : null}
 
       {batch.ignoredColumns.length ? (
         <div className="mb14">
@@ -235,6 +245,16 @@ export default function ImportBatchPage() {
           onClose={() => setOpen(null)}
           onChanged={async (r) => {
             setOpen(r);
+            await reloadAll();
+          }}
+        />
+      ) : null}
+      {uploadingDocs ? (
+        <DocumentsUploadModal
+          batch={batch}
+          onClose={() => setUploadingDocs(false)}
+          onDone={async () => {
+            setUploadingDocs(false);
             await reloadAll();
           }}
         />
@@ -408,9 +428,22 @@ function RowDrawer({
         {kv('Approval', `${row.approvalStatus ?? '—'} · ${fmtDate(row.approvedAt)}`)}
         {kv('Evidence', row.evidenceRef)}
       </div>
+      {row.status !== 'RECONCILED' ? (
+        <>
+          <h4 className="mb6 mt14">
+            Document files <span className="muted fs11">(from the documents ZIP)</span>
+          </h4>
+          <DocumentList
+            queryKey={['imports', batchId, 'rows', row.id, 'documents']}
+            load={() => importApi.rowDocuments(batchId, row.id)}
+            download={(d) => importApi.downloadRowDocument(batchId, row.id, d)}
+            emptyText="No files for this row yet. Upload a documents ZIP with a folder named after its source record ID."
+          />
+        </>
+      ) : null}
       {row.documents ? (
         <>
-          <h4 className="mb6 mt14">Documents</h4>
+          <h4 className="mb6 mt14">Documents declared</h4>
           <div className="f gp6 wrap">
             {Object.entries(row.documents).map(([k, d]) => (
               <Badge key={k} tone={d.supplied ? 'green' : 'grey'}>
@@ -506,6 +539,57 @@ function FinaliseModal({ batch, onClose, onDone }: { batch: ImportBatch; onClose
         </label>
         <input id="fin-code" className="inp mono" value={code} autoFocus onChange={(e) => setCode(e.target.value)} />
       </div>
+    </Modal>
+  );
+}
+
+/* Add or replace documents for a batch under review (folders named by source_record_id). */
+function DocumentsUploadModal({ batch, onClose, onDone }: { batch: ImportBatch; onClose: () => void; onDone: () => Promise<void> }) {
+  const [zip, setZip] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  async function upload() {
+    if (!zip) return;
+    setBusy(true);
+    try {
+      const r = await importApi.uploadDocuments(batch.id, zip);
+      toastOk(r.message);
+      await onDone();
+    } catch (e) {
+      toastError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Modal
+      title={`Upload documents — ${batch.code}`}
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="btn" onClick={onClose}>
+            Cancel
+          </button>
+          <button type="button" className="btn primary" disabled={!zip || busy} onClick={() => void upload()}>
+            {busy ? 'Uploading…' : 'Upload documents'}
+          </button>
+        </>
+      }
+    >
+      <p className="fs13" style={{ marginTop: 0 }}>
+        One folder per student, named by the <b className="mono">source_record_id</b> in this batch. Name each file by its type, for example{' '}
+        <span className="mono">MA-0001/PHOTO.jpg</span>, <span className="mono">MA-0001/AADHAAR_CARD.pdf</span>. Documents of the same type
+        replace earlier uploads.
+      </p>
+      <FileDrop
+        file={zip}
+        accept=".zip"
+        prompt="Drop the documents ZIP here"
+        hint="PDF, JPG or PNG · up to 5 MB per file"
+        maxMb={500}
+        onPick={setZip}
+        onReject={(m) => toastError(new ApiError(m, 400, 'BAD_FILE'))}
+        ariaLabel="Choose the documents ZIP"
+      />
     </Modal>
   );
 }
