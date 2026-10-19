@@ -91,45 +91,47 @@ export default function RegistrationDetailPage() {
       ) : !r ? (
         <div className="skel" style={{ height: 200 }} aria-busy="true" aria-label="Loading registration" />
       ) : (
-        <div className="grid g2">
-          <div className="card">
-            <div className="card-h">
-              <h3>Basic details</h3>
+        <div className="grid g2" style={{ alignItems: 'start' }}>
+          <div>
+            <div className="card">
+              <div className="card-h">
+                <h3>Basic details</h3>
+              </div>
+              <div className="card-b">
+                <KvList
+                  pairs={[
+                    ['First name', r.firstName],
+                    ['Last name', r.lastName],
+                    ['Father name', r.fatherName],
+                    ['Mother name', r.motherName],
+                    ['Email', r.email ?? '—'],
+                    ['Date of birth', r.dateOfBirth ?? '—'],
+                    ['Aadhaar', r.aadhaar ?? '—'],
+                    ['Mobile', r.mobile ?? '—'],
+                    ['Religion', r.religion],
+                    ['Caste', r.caste],
+                  ]}
+                />
+              </div>
             </div>
-            <div className="card-b">
-              <KvList
-                pairs={[
-                  ['First name', r.firstName],
-                  ['Last name', r.lastName],
-                  ['Father name', r.fatherName],
-                  ['Mother name', r.motherName],
-                  ['Email', r.email ?? '—'],
-                  ['Date of birth', r.dateOfBirth ?? '—'],
-                  ['Aadhaar', r.aadhaar ?? '—'],
-                  ['Mobile', r.mobile ?? '—'],
-                  ['Religion', r.religion],
-                  ['Caste', r.caste],
-                ]}
-              />
+            <div className="card mt14">
+              <div className="card-h">
+                <h3>Course</h3>
+              </div>
+              <div className="card-b">
+                <KvList
+                  pairs={[
+                    ['Course centre', r.centreName ?? r.centreCode ?? '—'],
+                    ['Technology', r.trackName ?? r.trackSourceValue],
+                    ['Education qualification', r.educationQualification],
+                    ['Declaration accepted', r.declarationAccepted ? 'Yes' : 'No'],
+                    ['Submitted', fmtDateTime(r.createdAt)],
+                  ]}
+                />
+              </div>
             </div>
           </div>
           <div className="card">
-            <div className="card-h">
-              <h3>Course</h3>
-            </div>
-            <div className="card-b">
-              <KvList
-                pairs={[
-                  ['Course centre', r.centreName ?? r.centreCode ?? '—'],
-                  ['Technology', r.trackName ?? r.trackSourceValue],
-                  ['Education qualification', r.educationQualification],
-                  ['Declaration accepted', r.declarationAccepted ? 'Yes' : 'No'],
-                  ['Submitted', fmtDateTime(r.createdAt)],
-                ]}
-              />
-            </div>
-          </div>
-          <div className="card tw-col-span-full">
             <div className="card-h">
               <h3>Documents</h3>
             </div>
