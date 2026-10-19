@@ -51,6 +51,7 @@ const MENU_KEYS = [
   'documents',
   'lms',
   'app',
+  'cms-states', 'cms-districts', 'cms-talukas',
   'admin',
   'audit',
   'settings',
@@ -99,6 +100,19 @@ export const ACTION_ACCESS = {
   assignPermissions: ['permissions.assign'],
   viewPermissions: ['permissions.view'],
   updatePermission: ['permissions.update'],
+  /* CMS geography masters (live backend). Seeded to Super Admin only; other roles need an explicit grant. */
+  viewStates: ['cms-states.view'],
+  createState: ['cms-states.create'],
+  updateState: ['cms-states.update'],
+  deleteState: ['cms-states.delete'],
+  viewDistricts: ['cms-districts.view'],
+  createDistrict: ['cms-districts.create'],
+  updateDistrict: ['cms-districts.update'],
+  deleteDistrict: ['cms-districts.delete'],
+  viewTalukas: ['cms-talukas.view'],
+  createTaluka: ['cms-talukas.create'],
+  updateTaluka: ['cms-talukas.update'],
+  deleteTaluka: ['cms-talukas.delete'],
 } satisfies Record<string, string[]>;
 
 export type Action = keyof typeof ACTION_ACCESS;
