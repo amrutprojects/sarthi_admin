@@ -1,9 +1,19 @@
-import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
-import AS from '../legacy';
+import { useCallback, type Dispatch, type SetStateAction } from 'react';
+import { useUiStore } from '../store/ui.store';
 
-/* Page state kept in AS.state[key] so it survives navigation, like the original portal. */
+/* Screen state (e.g. filters) kept in the UI store for the session, so it survives navigating away and back. */
 export default function usePersistentState<T extends object>(key: string, defaults: T): [T, Dispatch<SetStateAction<T>>] {
-  const [s, setS] = useState<T>(() => ({ ...defaults, ...((AS.state[key] as Partial<T> | undefined) || {}) }));
-  useEffect(() => { AS.state[key] = s; }, [key, s]);
-  return [s, setS];
+  const stored = useUiStore((s) => s.pageState[key]) as Partial<T> | undefined;
+  const setPageState = useUiStore((s) => s.setPageState);
+  const value = { ...defaults, ...(stored ?? {}) } as T;
+  const setValue: Dispatch<SetStateAction<T>> = useCallback(
+    (next) => {
+      const current = { ...defaults, ...((useUiStore.getState().pageState[key] as Partial<T> | undefined) ?? {}) } as T;
+      setPageState(key, typeof next === 'function' ? (next as (p: T) => T)(current) : next);
+    },
+    // defaults is a constant object per screen
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [key, setPageState],
+  );
+  return [value, setValue];
 }

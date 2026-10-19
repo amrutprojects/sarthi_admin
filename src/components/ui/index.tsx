@@ -5,7 +5,7 @@
 import { Fragment, type CSSProperties, type ElementType, type HTMLAttributes, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AS from '../../legacy';
-import Icon from '../Icon';
+import Icon from './Icon';
 import { goTo } from '../../hooks/useLegacyEvents';
 import type { CandidateStatus, Tone } from '../../types/domain';
 import type { Option } from '../../types/legacy';
