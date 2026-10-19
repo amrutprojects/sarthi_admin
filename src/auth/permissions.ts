@@ -16,7 +16,7 @@ const MENU_KEYS = [
   'dashboard', 'exec', 'today', 'candidates', 'lifecycle', 'atrisk', 'districts', 'map', 'centres', 'onboarding',
   'batches', 'trainers', 'tot', 'live', 'offline', 'online', 'attendance', 'progress', 'assessments', 'certification',
   'marketing', 'mobilization', 'comms', 'reports', 'finance', 'pmo', 'qa', 'tasks', 'documents', 'lms', 'app',
-  'cms-states', 'cms-districts', 'cms-talukas',
+  'cms-contact', 'cms-states', 'cms-districts', 'cms-talukas',
   'admin', 'audit', 'settings',
 ];
 export const SCREEN_ACCESS: Record<string, string[]> = {
@@ -58,7 +58,9 @@ export const ACTION_ACCESS = {
   assignPermissions: ['permissions.assign'],
   viewPermissions: ['permissions.view'],
   updatePermission: ['permissions.update'],
-  /* CMS geography masters (live backend). Seeded to Super Admin only; other roles need an explicit grant. */
+  /* CMS content and geography masters (live backend). Seeded to Super Admin only; other roles need an explicit grant. */
+  viewContactPage: ['cms-contact.view'],
+  updateContactPage: ['cms-contact.update'],
   viewStates: ['cms-states.view'],
   createState: ['cms-states.create'],
   updateState: ['cms-states.update'],

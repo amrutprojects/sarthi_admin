@@ -49,6 +49,8 @@ import AdministrationPage from './pages/platform/AdministrationPage';
 import UsersPage from './pages/platform/UsersPage';
 import AuditPage from './pages/platform/AuditPage';
 import SettingsPage from './pages/platform/SettingsPage';
+import ContactView from './features/cms/contact/pages/ContactView';
+import ContactEdit from './features/cms/contact/pages/ContactEdit';
 import StateList from './features/cms/state/pages/StateList';
 import StateCreate from './features/cms/state/pages/StateCreate';
 import StateEdit from './features/cms/state/pages/StateEdit';
@@ -101,6 +103,8 @@ const REACT_PAGES: Record<RouteName, ComponentType> = {
   finance: FinancePage,
   pmo: PmoPage,
   qa: QaPage,
+  cmsContactView: ContactView,
+  cmsContactEdit: ContactEdit,
   cmsStateList: StateList,
   cmsStateCreate: StateCreate,
   cmsStateEdit: StateEdit,
