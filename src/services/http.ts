@@ -73,10 +73,11 @@ export async function request<T>(path: string, opts: RequestOptions = {}): Promi
       method: opts.method ?? 'GET',
       headers: {
         Accept: 'application/json',
-        ...(opts.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...(opts.body !== undefined && !(opts.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+      /* FormData (file uploads) is sent as multipart; the browser sets its boundary. */
+      body: opts.body instanceof FormData ? opts.body : opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
     });
   } catch {
     throw new ApiError('Cannot reach the server. Check that the backend is running.', 0, 'NETWORK_ERROR');
@@ -102,4 +103,20 @@ export async function requestAll<T>(path: string, query: RequestOptions['query']
     if (!meta || page >= meta.totalPages) break;
   }
   return out;
+}
+
+/* Authenticated file download (e.g. CSV templates): fetches with the bearer token and saves via a temporary link. */
+export async function downloadFile(path: string, fileName: string): Promise<void> {
+  const token = tokenStore.get();
+  const res = await fetch(API_BASE_URL + path, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (res.status === 401) { tokenStore.clear(); unauthorizedHandler?.(); }
+  if (!res.ok) throw new ApiError(`Download failed (${res.status})`, res.status, 'DOWNLOAD_FAILED');
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

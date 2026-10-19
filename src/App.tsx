@@ -47,6 +47,8 @@ import LmsPage from './pages/platform/LmsPage';
 import StudentAppPage from './pages/platform/StudentAppPage';
 import AdministrationPage from './pages/platform/AdministrationPage';
 import UsersPage from './pages/platform/UsersPage';
+import StudentImportPage from './pages/imports/StudentImportPage';
+import ImportBatchPage from './pages/imports/ImportBatchPage';
 import AuditPage from './pages/platform/AuditPage';
 import SettingsPage from './pages/platform/SettingsPage';
 
@@ -93,6 +95,8 @@ const REACT_PAGES: Record<RouteName, ComponentType> = {
   studentApp: StudentAppPage,
   administration: AdministrationPage,
   users: UsersPage,
+  studentImport: StudentImportPage,
+  importBatch: ImportBatchPage,
   audit: AuditPage,
   settings: SettingsPage,
 };

@@ -12,7 +12,8 @@ export type RouteName =
   | 'live' | 'offlineMode' | 'onlineMode' | 'attendance' | 'progress'
   | 'assessments' | 'certification' | 'marketing' | 'campaignDetail' | 'mobilization' | 'communications'
   | 'reports' | 'reportDetail' | 'finance' | 'pmo' | 'qa' | 'tasks' | 'documents'
-  | 'lms' | 'studentApp' | 'administration' | 'users' | 'audit' | 'settings';
+  | 'lms' | 'studentApp' | 'administration' | 'users' | 'audit' | 'settings'
+  | 'studentImport' | 'importBatch';
 
 /* [path pattern, route name, sidebar key] */
 export type AdminRoute = [path: string, name: RouteName, navKey: string];
@@ -27,6 +28,7 @@ export const NAV: NavEntry[] = [
   { k: 'candidates', l: 'Candidates', i: 'users', r: '/candidates' },
   { k: 'lifecycle', l: 'Lifecycle & Funnel', i: 'layers', r: '/lifecycle' },
   { k: 'atrisk', l: 'At-Risk Engine', i: 'alert', r: '/at-risk' },
+  { k: 'imports', l: 'Student Import', i: 'download', r: '/student-import' },
   { g: 'Delivery Network' },
   { k: 'districts', l: 'Districts', i: 'map', r: '/districts' },
   { k: 'map', l: 'District Map', i: 'pin', r: '/map' },
@@ -80,6 +82,7 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/dashboard', 'dashboard', 'dashboard'], ['/executive', 'executive', 'exec'], ['/today', 'today', 'today'],
   ['/candidates', 'candidates', 'candidates'], ['/candidates/:id', 'candidateDetail', 'candidates'],
   ['/lifecycle', 'lifecycle', 'lifecycle'], ['/at-risk', 'atRisk', 'atrisk'],
+  ['/student-import', 'studentImport', 'imports'], ['/student-import/:id', 'importBatch', 'imports'],
   ['/districts', 'districts', 'districts'], ['/districts/:id', 'districtDetail', 'districts'],
   ['/districts/:id/talukas/:t', 'talukaDetail', 'districts'], ['/map', 'mapPage', 'map'],
   ['/centres', 'centres', 'centres'], ['/centres/:id', 'centreDetail', 'centres'], ['/centre-onboarding', 'centreOnboarding', 'onboarding'],

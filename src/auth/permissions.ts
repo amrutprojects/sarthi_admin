@@ -13,7 +13,7 @@ export const MENU_ACTION_LABEL: Record<MenuAction, string> = { view: 'View', cre
 
 /* Sidebar key → the screen opens if the user holds ANY of these codes. Keys without an entry are open to every signed-in user. */
 const MENU_KEYS = [
-  'dashboard', 'exec', 'today', 'candidates', 'lifecycle', 'atrisk', 'districts', 'map', 'centres', 'onboarding',
+  'dashboard', 'exec', 'today', 'candidates', 'lifecycle', 'atrisk', 'imports', 'districts', 'map', 'centres', 'onboarding',
   'batches', 'trainers', 'tot', 'live', 'offline', 'online', 'attendance', 'progress', 'assessments', 'certification',
   'marketing', 'mobilization', 'comms', 'reports', 'finance', 'pmo', 'qa', 'tasks', 'documents', 'lms', 'app',
   'admin', 'audit', 'settings',
@@ -44,6 +44,11 @@ export const ACTION_ACCESS = {
   syncLms: ['lms.update'],
   editSettings: ['settings.update'],
   manageDocuments: ['documents.create', 'documents.update'],
+  /* student data import (live backend) */
+  createImport: ['imports.create'],
+  resolveImport: ['imports.update'],
+  cancelImport: ['imports.delete'],
+  finaliseImport: ['imports.approve'],
   /* identity & access (live backend) */
   viewUsers: ['users.view'],
   createUser: ['users.create'],

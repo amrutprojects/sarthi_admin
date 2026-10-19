@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { authApi, type ApiRoleRef, type CurrentUser } from '../services/authApi';
-import { onUnauthorized, tokenStore } from '../services/http';
+import { ApiError, onUnauthorized, tokenStore } from '../services/http';
 
 /*
  * Authentication state backed by the admin backend:
@@ -37,12 +37,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('anonymous');
   }, []);
 
+  /*
+   * Only a 401 means the session is over. A network error or 5xx (e.g. the backend restarting) is retried
+   * a few times with back-off, so a brief outage does not sign the user out.
+   */
   const refresh = useCallback(async () => {
-    try {
-      setUser(await authApi.me());
-      setStatus('authenticated');
-    } catch {
-      signOutLocally();
+    for (let attempt = 0; ; attempt++) {
+      try {
+        setUser(await authApi.me());
+        setStatus('authenticated');
+        return;
+      } catch (err) {
+        const unauthorised = err instanceof ApiError && err.status === 401;
+        if (unauthorised || attempt >= 5 || !tokenStore.get()) { signOutLocally(); return; }
+        await new Promise((r) => setTimeout(r, Math.min(8000, 500 * 2 ** attempt)));
+      }
     }
   }, [signOutLocally]);
 
