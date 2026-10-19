@@ -11,7 +11,11 @@ import type { MasterFormValues } from '../schemas/masterSchema';
 import type { MasterListParams, MasterRecord, MasterSortField } from '../types';
 import MasterForm from './MasterForm';
 
-type Dialog = { type: 'create' } | { type: 'edit'; row: MasterRecord } | { type: 'view'; row: MasterRecord } | { type: 'delete'; row: MasterRecord };
+type Dialog =
+  | { type: 'create' }
+  | { type: 'edit'; row: MasterRecord }
+  | { type: 'view'; row: MasterRecord }
+  | { type: 'delete'; row: MasterRecord };
 type Status = 'all' | 'active' | 'inactive';
 const PAGE_SIZE = 20;
 const FORM_FIELDS = ['code', 'name', 'description', 'isMandatory'] as const;
