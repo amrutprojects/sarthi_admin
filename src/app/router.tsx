@@ -55,6 +55,7 @@ const PAGES: Record<RouteName, LazyExoticComponent<ComponentType>> = {
   studentApp: page(() => import('../modules/platform/pages/StudentAppPage')),
   administration: page(() => import('../modules/platform/pages/AdministrationPage')),
   users: page(() => import('../modules/users/pages/UsersPage')),
+  masters: page(() => import('../modules/masters/pages/MastersPage')),
   audit: page(() => import('../modules/platform/pages/AuditPage')),
   settings: page(() => import('../modules/platform/pages/SettingsPage')),
 };

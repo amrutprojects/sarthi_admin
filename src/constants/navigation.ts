@@ -56,6 +56,7 @@ export type RouteName =
   | 'studentApp'
   | 'administration'
   | 'users'
+  | 'masters'
   | 'audit'
   | 'settings'
   | 'studentImport'
@@ -109,6 +110,7 @@ export const NAV: NavEntry[] = [
   { k: 'app', l: 'Student App', i: 'phone', r: '/student-app' },
   { k: 'admin', l: 'Administration', i: 'settings', r: '/administration' },
   { k: 'users', l: 'Users & Roles', i: 'users', r: '/users' },
+  { k: 'masters', l: 'Masters', i: 'layers', r: '/masters' },
   { k: 'audit', l: 'Audit Log', i: 'doc', r: '/audit' },
   { k: 'settings', l: 'System Settings', i: 'settings', r: '/settings' },
   { g: 'Public Site' },
@@ -168,6 +170,7 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/student-app', 'studentApp', 'app'],
   ['/administration', 'administration', 'admin'],
   ['/users', 'users', 'users'],
+  ['/masters', 'masters', 'masters'],
   ['/audit', 'audit', 'audit'],
   ['/settings', 'settings', 'settings'],
 ];
