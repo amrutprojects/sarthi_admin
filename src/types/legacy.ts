@@ -3,13 +3,46 @@
  * which register themselves on window.AS.
  */
 import type {
-  AttendancePoint, AuditEntry, Batch, Campaign, Candidate, CandidateStatus, Centre, Communication, Coordinator, Course,
-  District, DistrictStatusDef, DistrictStatusKey, DocumentRecord, HealthScore, Inspection, Kpis, LeadSource, LiveSession, Lms,
-  Mobilization, MonthlyPoint, Notification, Payment, PmoMember, ProgrammeConfig, Role, SearchResult, StatusDef, StudentApp,
-  TalukaRollup, Task, Trainer, User,
+  AttendancePoint,
+  AuditEntry,
+  Batch,
+  Campaign,
+  Candidate,
+  CandidateStatus,
+  Centre,
+  Communication,
+  Coordinator,
+  Course,
+  District,
+  DistrictStatusDef,
+  DistrictStatusKey,
+  DocumentRecord,
+  HealthScore,
+  Inspection,
+  Kpis,
+  LeadSource,
+  LiveSession,
+  Lms,
+  Mobilization,
+  MonthlyPoint,
+  Notification,
+  Payment,
+  PmoMember,
+  ProgrammeConfig,
+  Role,
+  SearchResult,
+  StatusDef,
+  StudentApp,
+  TalukaRollup,
+  Task,
+  Trainer,
+  User,
 } from './domain';
 
-export interface Option { v: string; l: string }
+export interface Option {
+  v: string;
+  l: string;
+}
 export type Bilingual = { mr: string; en: string };
 
 /* Mock data service: AS.db */
@@ -25,19 +58,41 @@ export interface LegacyDb {
   ASSESSED_STATUSES: CandidateStatus[];
   PASSED_STATUSES: CandidateStatus[];
   CERTIFIED_STATUSES: CandidateStatus[];
-  districts: District[]; districtBy: Record<string, District>;
-  centres: Centre[]; onlineUnit: Centre; allCentres: Centre[]; centreBy: Record<string, Centre>;
-  trainers: Trainer[]; trainerBy: Record<string, Trainer>;
-  batches: Batch[]; batchBy: Record<string, Batch>;
-  candidates: Candidate[]; candidateBy: Record<string, Candidate>;
-  courses: Course[]; coordinators: Coordinator[];
-  campaigns: Campaign[]; leadSources: LeadSource[]; mobilization: Mobilization;
-  tasks: Task[]; notifications: Notification[]; documents: DocumentRecord[];
-  auditLog: AuditEntry[]; inspections: Inspection[]; payments: Payment[];
-  monthly: MonthlyPoint[]; months: string[]; attendanceTrend: AttendancePoint[];
-  liveSessions: LiveSession[]; pmoTeam: PmoMember[]; users: User[]; demoLogins: string[];
-  communications: Communication[]; lms: Lms; studentApp: StudentApp;
-  stateKpis: Kpis; sources: string[];
+  districts: District[];
+  districtBy: Record<string, District>;
+  centres: Centre[];
+  onlineUnit: Centre;
+  allCentres: Centre[];
+  centreBy: Record<string, Centre>;
+  trainers: Trainer[];
+  trainerBy: Record<string, Trainer>;
+  batches: Batch[];
+  batchBy: Record<string, Batch>;
+  candidates: Candidate[];
+  candidateBy: Record<string, Candidate>;
+  courses: Course[];
+  coordinators: Coordinator[];
+  campaigns: Campaign[];
+  leadSources: LeadSource[];
+  mobilization: Mobilization;
+  tasks: Task[];
+  notifications: Notification[];
+  documents: DocumentRecord[];
+  auditLog: AuditEntry[];
+  inspections: Inspection[];
+  payments: Payment[];
+  monthly: MonthlyPoint[];
+  months: string[];
+  attendanceTrend: AttendancePoint[];
+  liveSessions: LiveSession[];
+  pmoTeam: PmoMember[];
+  users: User[];
+  demoLogins: string[];
+  communications: Communication[];
+  lms: Lms;
+  studentApp: StudentApp;
+  stateKpis: Kpis;
+  sources: string[];
   kpis(rows: Candidate[], target: number): Kpis;
   byDistrict(code: string): Candidate[];
   byCentre(id: string): Candidate[];
@@ -53,10 +108,27 @@ export interface LegacyDb {
 }
 
 /* Item shapes accepted by the SVG chart generators (AS.charts). */
-export interface ChartItem { l: string; v: number; c?: string; link?: string; display?: string; sub?: string }
-export interface ChartSeries { l: string; v: number[]; c?: string }
-export interface CalendarDay { d: number; v: number; full: string }
-export interface ChartOpts { [key: string]: unknown }
+export interface ChartItem {
+  l: string;
+  v: number;
+  c?: string;
+  link?: string;
+  display?: string;
+  sub?: string;
+}
+export interface ChartSeries {
+  l: string;
+  v: number[];
+  c?: string;
+}
+export interface CalendarDay {
+  d: number;
+  v: number;
+  full: string;
+}
+export interface ChartOpts {
+  [key: string]: unknown;
+}
 
 export interface LegacyCharts {
   palette: string[];
@@ -71,8 +143,22 @@ export interface LegacyCharts {
   calendar(days: CalendarDay[]): string;
 }
 
-export interface MapMarker { districtId: string; title: string; sub?: string; badge?: string; link?: string; color?: string; live?: boolean }
-export interface MapRenderOpts { metric?: string; colorMode?: string; height?: number; statusFilter?: string; filterMode?: string }
+export interface MapMarker {
+  districtId: string;
+  title: string;
+  sub?: string;
+  badge?: string;
+  link?: string;
+  color?: string;
+  live?: boolean;
+}
+export interface MapRenderOpts {
+  metric?: string;
+  colorMode?: string;
+  height?: number;
+  statusFilter?: string;
+  filterMode?: string;
+}
 export interface LegacyMap {
   provider: string;
   render(opts: MapRenderOpts): string;
@@ -80,8 +166,18 @@ export interface LegacyMap {
   markers(list: MapMarker[], opts?: { height?: number; legend?: { c: string; l: string }[] }): string;
 }
 
-export interface ModalOptions { title: string; body: string; footer?: string; size?: string; headExtra?: string; onMount?: (root: HTMLElement) => void }
-export interface ExportColumn<T> { l: string; exportVal: (row: T) => unknown }
+export interface ModalOptions {
+  title: string;
+  body: string;
+  footer?: string;
+  size?: string;
+  headExtra?: string;
+  onMount?: (root: HTMLElement) => void;
+}
+export interface ExportColumn<T> {
+  l: string;
+  exportVal: (row: T) => unknown;
+}
 
 /* Formatters and DOM helpers: AS.ui */
 export interface LegacyUi {
@@ -111,8 +207,16 @@ export interface LegacyUi {
 }
 
 export interface LearnerStats {
-  title: Bilingual; sub: Bilingual; overall: Bilingual; hours: Bilingual; topics: Bilingual; attendance: Bilingual;
-  assignments: Bilingual; mcqs: Bilingual; assessments: Bilingual; foot: Bilingual;
+  title: Bilingual;
+  sub: Bilingual;
+  overall: Bilingual;
+  hours: Bilingual;
+  topics: Bilingual;
+  attendance: Bilingual;
+  assignments: Bilingual;
+  mcqs: Bilingual;
+  assessments: Bilingual;
+  foot: Bilingual;
   words: { mr: Record<string, string>; en: Record<string, string> };
 }
 
@@ -127,7 +231,11 @@ export interface LegacyContent {
   learnerStats: LearnerStats;
 }
 
-export interface Session { userId: string; role: string; at: number }
+export interface Session {
+  userId: string;
+  role: string;
+  at: number;
+}
 export type LegacyAction = (arg?: string | null, el?: Element, e?: Event) => void;
 
 export interface LegacyAuth {
@@ -152,5 +260,7 @@ export interface LegacyGlobal {
 }
 
 declare global {
-  interface Window { AS: LegacyGlobal }
+  interface Window {
+    AS: LegacyGlobal;
+  }
 }

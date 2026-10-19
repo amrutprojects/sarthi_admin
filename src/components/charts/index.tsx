@@ -10,15 +10,24 @@ import type { CalendarDay, ChartItem, ChartOpts, ChartSeries, MapMarker, MapRend
 
 const C = () => AS.charts;
 
-interface ItemsProps { items: ChartItem[]; opts?: ChartOpts }
+interface ItemsProps {
+  items: ChartItem[];
+  opts?: ChartOpts;
+}
 
-export const LineChart = ({ series, labels, opts }: { series: ChartSeries[]; labels: string[]; opts?: ChartOpts }) => <Html html={C().line(series, labels, opts)} />;
+export const LineChart = ({ series, labels, opts }: { series: ChartSeries[]; labels: string[]; opts?: ChartOpts }) => (
+  <Html html={C().line(series, labels, opts)} />
+);
 export const Donut = ({ items, opts }: ItemsProps) => <Html html={C().donut(items, opts)} />;
 export const Funnel = ({ stages }: { stages: ChartItem[] }) => <Html html={C().funnel(stages)} />;
 export const HBar = ({ items, opts }: ItemsProps) => <Html html={C().hbar(items, opts)} />;
 export const VBar = ({ items, opts }: ItemsProps) => <Html html={C().vbar(items, opts)} />;
-export const Ring = ({ value, opts }: { value: number; opts?: ChartOpts }) => <Html html={C().ring(value, opts)} as="span" style={{ display: 'contents' }} />;
-export const Stacked = ({ labels, series, opts }: { labels: string[]; series: ChartSeries[]; opts?: ChartOpts }) => <Html html={C().stacked(labels, series, opts)} />;
+export const Ring = ({ value, opts }: { value: number; opts?: ChartOpts }) => (
+  <Html html={C().ring(value, opts)} as="span" style={{ display: 'contents' }} />
+);
+export const Stacked = ({ labels, series, opts }: { labels: string[]; series: ChartSeries[]; opts?: ChartOpts }) => (
+  <Html html={C().stacked(labels, series, opts)} />
+);
 export const Heatmap = ({ cells, opts }: { cells: ChartItem[]; opts?: ChartOpts }) => <Html html={C().heatmap(cells, opts)} />;
 export const Calendar = ({ days }: { days: CalendarDay[] }) => <Html html={C().calendar(days)} />;
 
