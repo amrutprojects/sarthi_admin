@@ -1,12 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import './assets/css/styles.css';
-import './assets/css/amrut.css';
+import './styles/tailwind.css';
+import './styles/styles.css';
+import './styles/amrut.css';
 import './legacy';
-import { AuthProvider } from './context/AuthContext';
 import { bump } from './utils/legacyBus';
-import App from './App';
+import App from './app/App';
+import { AppProviders } from './app/providers';
 
 /* Legacy screens call AS.render() after changing data; route it to a React re-render. */
 window.AS.render = bump;
@@ -18,10 +18,8 @@ if (window.location.hash.startsWith('#/')) {
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </BrowserRouter>
+    <AppProviders>
+      <App />
+    </AppProviders>
   </React.StrictMode>,
 );

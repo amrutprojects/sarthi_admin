@@ -1,20 +1,23 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>AMRUT × SUMAGO — Admin Panel</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230A2540'/><path d='M8 23 16 8l8 15h-4.6L16 15.6 12.6 23z' fill='%23F58220'/></svg>">
-</head>
-<body>
-  <div id="root"></div>
-  <!-- Portal targets used by the shared UI library (modal, drawer, toast) -->
-  <div id="drawer-root"></div>
-  <div id="modal-root"></div>
-  <div id="toast-root" class="toast-root"></div>
-  <!-- Portal targets for React modals/drawers (kept separate so legacy close-all never touches React DOM) -->
-  <div id="react-modal-root"></div>
-  <div id="react-drawer-root"></div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>AMRUT × SUMAGO — Admin Panel</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230A2540'/><path d='M8 23 16 8l8 15h-4.6L16 15.6 12.6 23z' fill='%23F58220'/></svg>"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Portal targets used by the shared UI library (modal, drawer, toast) -->
+    <div id="drawer-root"></div>
+    <div id="modal-root"></div>
+    <div id="toast-root" class="toast-root"></div>
+    <!-- Portal targets for React modals/drawers (kept separate so legacy close-all never touches React DOM) -->
+    <div id="react-modal-root"></div>
+    <div id="react-drawer-root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

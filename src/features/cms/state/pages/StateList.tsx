@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import Icon from '../../../../components/Icon';
+import Icon from '../../../../components/ui/Icon';
 import { FilterBar, PageHead, useGo } from '../../../../components/ui';
-import { Can, useCan } from '../../../../auth/Can';
+import { Can, useCan } from '../../../../modules/auth/components/Can';
 import MasterKpis from '../../components/MasterKpis';
 import { STATUS_OPTIONS } from '../../components/MasterFilters';
 import MasterStatusBadge from '../../components/MasterStatusBadge';

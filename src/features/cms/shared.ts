@@ -1,7 +1,7 @@
 /*
  * The async / notification helpers the CMS screens use.
  *
- * These already exist for the Users & Roles screens (src/pages/platform/access/shared.tsx) and are
+ * These already exist for the Users & Roles screens (src/components/feedback/apiFeedback.tsx) and are
  * re-exported here rather than copied, so the CMS and the access screens keep behaving identically:
  * one toast format, one loading skeleton, one confirmation dialog.
  */
@@ -13,4 +13,4 @@ export {
   toastOk,
   useAction,
   useApiData,
-} from '../../pages/platform/access/shared';
+} from '../../components/feedback/apiFeedback';

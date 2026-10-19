@@ -6,7 +6,10 @@ import { isPublicPath, publicUrl } from '../utils/publicSite';
 /* Navigate to a "#/path" link; public-site paths open the existing public website. */
 export function goTo(navigate: NavigateFunction, href: string): void {
   const path = href.replace(/^#/, '') || '/';
-  if (isPublicPath(path)) { window.location.href = publicUrl(path); return; }
+  if (isPublicPath(path)) {
+    window.location.href = publicUrl(path);
+    return;
+  }
   navigate(path);
 }
 
@@ -28,12 +31,19 @@ export default function useLegacyEvents() {
       if (t.closest('[data-modal-close]')) U.closeModal();
       if (t.closest('[data-drawer-close]')) U.closeDrawer();
       const ov = t.closest('[data-modal-ov]');
-      if (ov && t === ov) { U.closeModal(); return; }
+      if (ov && t === ov) {
+        U.closeModal();
+        return;
+      }
 
       const act = t.closest('[data-act]');
       if (act) {
         const fn = AS.actions[act.getAttribute('data-act') || ''];
-        if (fn) { e.preventDefault(); fn(act.getAttribute('data-arg'), act, e); return; }
+        if (fn) {
+          e.preventDefault();
+          fn(act.getAttribute('data-arg'), act, e);
+          return;
+        }
       }
       /* Plain links written in the original "#/route" form are routed without a page reload. */
       const a = t.closest('a[href^="#/"]');
@@ -45,12 +55,18 @@ export default function useLegacyEvents() {
       const go = t.closest('[data-go]');
       if (go) {
         const href = go.getAttribute('data-go');
-        if (href) { e.preventDefault(); goTo(navigate, href); }
+        if (href) {
+          e.preventDefault();
+          goTo(navigate, href);
+        }
       }
     }
 
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') { U.closeModal(); U.closeDrawer(); }
+      if (e.key === 'Escape') {
+        U.closeModal();
+        U.closeDrawer();
+      }
     }
 
     document.addEventListener('click', onClick);

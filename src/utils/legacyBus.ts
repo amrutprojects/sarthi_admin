@@ -14,7 +14,9 @@ export function useLegacyTick(): number {
   const [t, setT] = useState(tick);
   useEffect(() => {
     listeners.add(setT);
-    return () => { listeners.delete(setT); };
+    return () => {
+      listeners.delete(setT);
+    };
   }, []);
   return t;
 }

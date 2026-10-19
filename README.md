@@ -1,63 +1,89 @@
-# AMRUT × SUMAGO — React Admin Panel
+# AMRUT × SUMAGO — Admin Panel
 
-React 18 + TypeScript + Vite + React Router version of the internal MIS (the screens behind sign-in).
-The public website (`../index.html`, `../assets/`) is **not** part of this app and was not modified.
+React single-page admin panel for the AMRUT × SUMAGO programme. It talks to the REST API in [amrut-kalash-api](https://github.com/amrutprojects/amrut-kalash-api) and is organised as feature modules.
+
+| Concern | Choice |
+|---|---|
+| UI | React 18, TypeScript (strict), Vite 5, React Router 6 (lazy-loaded pages) |
+| Server state | TanStack Query ([ADR-0007](docs/architecture/adr/0007-state-management.md)) |
+| Client state | Zustand (`src/store`) — UI preferences and screen filters only |
+| Forms | React Hook Form + Zod |
+| HTTP | One fetch-based client (`src/services/api-client.ts`), cookie session + CSRF ([ADR-0003](docs/architecture/adr/0003-browser-sessions.md)) |
+| Styling | Existing design system (`src/styles`) + Tailwind with `tw-` prefix ([ADR-0008](docs/architecture/adr/0008-tailwind-alongside-existing-css.md)) |
+| Quality | ESLint, Prettier, module boundary check, Vitest + React Testing Library |
+
+## Quick start
+
+Requires Node.js 20+ and the API running locally (see the API repository).
+
+```bash
+npm install
+cp .env.example .env      # VITE_API_PROXY_TARGET = where the API runs (default http://localhost:5001)
+npm run dev               # http://localhost:5174
+```
+
+Sign in with an account created in the API (`npm run admin:create`, or `npm run demo:users` for one demo account per role).
 
 ## Commands
 
-```bash
-cd admin-panel
-npm install
-npm run dev       # http://localhost:5174
-npm run typecheck # tsc, strict mode, no emit
-npm run build     # type-checks, then outputs dist/
-npm run preview   # serve the production build
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Dev server with HMR; `/api` is proxied to the backend |
+| `npm run build` | Type-check, then build `dist/` |
+| `npm run preview` | Serve the production build |
+| `npm run typecheck` | TypeScript only |
+| `npm run lint` | ESLint + module boundary check |
+| `npm run format` / `format:check` | Prettier |
+| `npm test` / `test:watch` / `test:coverage` | Vitest |
+
+## Structure
+
+```
+src/
+  main.tsx               Entry: styles, legacy bridge, providers, <App/>
+  app/                   App.tsx, router.tsx (route table, lazy pages), providers.tsx (Query, Router, Auth), routing/ (ProtectedRoute, RequireAccess)
+  layouts/               AdminLayout and its shell components (Sidebar, Topbar, MobileNav)
+  modules/<feature>/     pages/, components/, hooks/, services/, schemas/, types/, tests/, index.ts (public API)
+    auth/                Session (TanStack Query), login page, permission rules, <Can/>
+    users/               Reference module — see docs/development-guidelines/module-guide.md
+    roles-permissions/   Roles, permission matrix, menu visibility
+    students/            Student data import and register
+    dashboard, candidates, network, delivery, training, outcomes, outreach, governance, platform
+                         Screens still backed by sample data (services/mock)
+  components/            ui/ (design-system primitives), tables/, feedback/ (errors, toasts, dialogs), charts/
+  services/              api-client.ts (the only HTTP client); mock/ (sample-data services)
+  constants/             navigation.ts (sidebar, routes, menu keys)
+  hooks/  store/  types/  utils/  styles/
+  legacy/                Original portal JavaScript (sample data, charts, maps, helpers), typed via types/legacy.ts
+tests/                   Test setup, shared test utilities, cross-cutting tests
+docs/                    Architecture, ADRs, module guide, conventions
 ```
 
-Copy `.env.example` to `.env`:
+## Documentation
+
+- [Architecture overview](docs/architecture/README.md) and [decision records](docs/architecture/adr/)
+- [Module creation guide and checklist](docs/development-guidelines/module-guide.md)
+- [Conventions](docs/development-guidelines/conventions.md)
+- API contract: the API's `/api/docs` (Swagger UI) and `/api/v1/openapi.json`
+
+## Environment variables
 
 | Variable | Purpose |
 |---|---|
-| `VITE_PUBLIC_SITE_URL` | URL of the existing public site; Home / Track / Verify links open it |
-| `VITE_API_BASE_URL` | Base URL for a future backend (`src/services/api.js → http()`); unused today |
+| `VITE_API_BASE_URL` | API base URL. Development: `/api/v1` (proxied). Production: the API origin + `/api/v1`, on the same site as the panel (cookies). |
+| `VITE_API_PROXY_TARGET` | Development only: where the dev server proxies `/api` |
+| `VITE_PUBLIC_SITE_URL` | The public website (Track / Verify links) |
 
-## How it is built
-
-- **TypeScript**: `strict` mode with `noUnusedLocals` / `noUnusedParameters` (`tsconfig.json`). `npm run build` fails on any type error. There is no `any` in the source.
-  - `src/types/domain.ts`: the programme data model (Candidate, Batch, Centre, District, Trainer, Kpis, Task, …). These are the shapes a real backend API should return.
-  - `src/types/legacy.ts`: typings for the five shared JS modules kept from the original portal (`window.AS`: data service, chart/map generators, UI helpers, strings).
-  - `DataTable<T>` and `Column<T>` are generic, so each table's render/sort/export callbacks are checked against its row type. `FilterBar` is generic over its filter-state object.
-  - The original JS modules in `src/legacy/*.js` stay JavaScript (unchanged copies). They are typed through `types/legacy.ts` rather than converted.
-
-- **React shell**: `LoginPage`, `AdminLayout`, `Sidebar`, `Topbar` (global search, notifications, profile menu, role switch, help), `MobileNav`, `ProtectedRoute`, `AuthContext`.
-- **Routing**: `HashRouter`, so URLs stay `#/dashboard`, `#/candidates/:id` and so on, as before.
-- **Auth**: same demo-role session (`sessionStorage` key `amrut_sumago_session_v1`). There is no real backend auth because the project has no backend.
-- **Data**: `src/services/api.js` wraps the existing mock service `AS.db` (`src/legacy/data.js`). Replace it with REST calls here when a backend exists.
-- **Pages**: all 40 admin screens are React components (functional components + hooks):
-
-  | Folder | Screens | Data service |
-  |---|---|---|
-  | `pages/dashboard/` | Dashboard, Executive Command Centre, Today's Operations | `dashboardService.js` |
-  | `pages/candidates/` | Candidate Master, Candidate Detail (8 tabs), Lifecycle & Funnel, At-Risk Engine | `candidateService.js` |
-  | `pages/network/` | Districts, District Detail, Taluka Detail, District Map, Centres, Centre Detail, Centre Onboarding | `networkService.js` |
-  | `pages/delivery/` | Batches, Batch Detail (8 tabs), Trainers, Trainer Detail, Trainer ToT | `deliveryService.js` |
-  | `pages/training/` | Live Monitor, Offline, Online, Attendance, Student Progress | `trainingService.js` |
-  | `pages/outcomes/`, `pages/outreach/` | Assessments, Certification, Marketing, Campaign Detail, Mobilization, Communications | `outcomeService.js` |
-  | `pages/governance/`, `pages/platform/` | Tasks, Documents, Reports, Report Detail (14 reports), Finance, PMO, QA, LMS, Student App, Administration, Users & Roles, Audit Log, Settings | `governanceService.js` |
-
-- **UI kit**: `src/components/ui/` (PageHead, Card, Kpi, FilterBar, DataTable with search/sort/paging/columns/CSV-Excel-PDF export, Modal, Drawer, badges, timeline, lists) reproduces the original markup and class names, so `styles.css` applies unchanged.
-- **Shared dialogs**: `components/GlobalDialogs.jsx` hosts the task detail drawer, the create-task dialog and the LMS sync dialog, which several pages open. React modals and drawers render into `#react-modal-root` / `#react-drawer-root`.
-- **Kept from the original code** (`src/legacy/`, unchanged copies of `../assets/js/`): the mock data service (`data.js`), strings (`amrut.js`), the SVG chart and map generators (`charts.js`, `map.js`) and helper formatters, toast and export (`ui.js`). The chart and map output is wrapped by `src/components/charts/`, and `hooks/useLegacyEvents.js` handles the `data-go` links inside it. None of the original page modules are loaded.
-- **Styles**: `src/assets/css/styles.css` and `amrut.css` are copies of the originals.
-
-### Behaviour differences from the original
-
-- Certification KPI links ending in `?state=generated` or `?state=issued` now filter the register. In the original they did nothing.
-- On Report Detail, **Apply filters** applies the selected district through the URL (`?district=`). In the original it only showed a toast.
-- **Reset** on the Map page restores the map defaults. In the original it set every field to `ALL`.
+Variables are baked in at build time; build once per environment. `.env` and `.env.*` (except `.env.example`) are git-ignored. Never put secrets in `VITE_*` variables — they are visible in the bundle.
 
 ## Deployment
 
-`npm run build`, then upload `dist/` to any static host or to a sub-folder next to the public site,
-for example `/admin/`. `base: './'` in `vite.config.js` makes asset paths relative, so any folder works.
-Set `VITE_PUBLIC_SITE_URL` to the public site's production URL before building.
+1. `npm ci && npm run build` with the environment's `.env.production` (or variables in CI).
+2. Serve `dist/` as static files over HTTPS, with every unknown path falling back to `index.html` (client-side routing, e.g. `try_files $uri /index.html` in nginx).
+3. Serve the panel and the API on the same registrable domain (e.g. `admin.example.gov.in` / `api.example.gov.in`) and list the panel origin in the API's `FRONTEND_URL`.
+
+## Open items
+
+- **Browser end-to-end tests** (Playwright) for login, Users & Roles and the student import journey are not set up yet; component tests and the API's e2e tests cover the logic today.
+- **Sample-data screens**: dashboards, candidates, network, delivery, training, outcomes, outreach and governance still read `services/mock` (`src/legacy/data.js`). Each moves to the API as its backend module is built, following the users module pattern.
+- 22 ESLint warnings remain from `react-refresh/only-export-components` in the shared UI kit (files export components and helpers together); harmless at runtime.

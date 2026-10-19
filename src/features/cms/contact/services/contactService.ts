@@ -1,5 +1,5 @@
 /* Contact Page Management API (backend /api/v1/cms/contact). */
-import { request } from '../../../../services/http';
+import { request } from '../../../../services/api-client';
 import type { ApiContactPage, UpdateContactPageInput } from '../types/contact.types';
 
 /*

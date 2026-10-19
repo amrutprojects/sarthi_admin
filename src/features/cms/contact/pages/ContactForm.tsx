@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Callout } from '../../../../components/ui';
-import { ApiError } from '../../../../services/http';
+import { ApiError } from '../../../../services/api-client';
 import BilingualField from '../../components/BilingualField';
 import MasterField, { fieldAria } from '../../components/MasterField';
 import MasterFormActions from '../../components/MasterFormActions';

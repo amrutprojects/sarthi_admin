@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { Dash, KvList, PageHead, useGo } from '../../../../components/ui';
-import { Can } from '../../../../auth/Can';
+import { Can } from '../../../../modules/auth/components/Can';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { LoadState, fmtDateTime, useAction, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';

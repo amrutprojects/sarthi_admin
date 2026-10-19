@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
-import Topbar from '../components/Topbar';
-import MobileNav from '../components/MobileNav';
-import ErrorBoundary from '../components/ErrorBoundary';
-import GlobalDialogs from '../components/GlobalDialogs';
-import { ADMIN_ROUTES } from '../routes/navConfig';
+import Sidebar from './components/Sidebar';
+import Topbar from './components/Topbar';
+import MobileNav from './components/MobileNav';
+import ErrorBoundary from '../components/feedback/ErrorBoundary';
+import GlobalDialogs from '../components/feedback/GlobalDialogs';
+import { ADMIN_ROUTES } from '../constants/navigation';
 import { matchPath } from 'react-router-dom';
+import { useUiStore } from '../store/ui.store';
 
 function activeKey(pathname: string): string {
   const hit = ADMIN_ROUTES.find(([p]) => matchPath(p, pathname));
@@ -15,27 +16,22 @@ function activeKey(pathname: string): string {
 
 export default function AdminLayout() {
   const { pathname } = useLocation();
-  const [collapsed, setCollapsed] = useState(() => {
-    try { return localStorage.getItem('as_sb_collapsed') === '1'; } catch { return false; }
-  });
-  const [open, setOpen] = useState(false);
+  const { sidebarCollapsed: collapsed, sidebarOpen: open, toggleSidebar: toggle, setSidebarOpen } = useUiStore();
 
-  useEffect(() => { setOpen(false); }, [pathname]);
-
-  function toggle() {
-    setCollapsed((c) => {
-      try { localStorage.setItem('as_sb_collapsed', c ? '0' : '1'); } catch { /* storage blocked */ }
-      return !c;
-    });
-  }
+  /* Close the off-canvas sidebar after navigating (phones and tablets). */
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname, setSidebarOpen]);
 
   const nk = activeKey(pathname);
   return (
     <div className={'shell' + (collapsed ? ' collapsed' : '')} id="shell">
       <Sidebar active={nk} collapsed={collapsed} open={open} onToggle={toggle} />
       <div className="main">
-        <Topbar onBurger={() => setOpen((o) => !o)} />
-        <ErrorBoundary resetKey={pathname}><Outlet /></ErrorBoundary>
+        <Topbar onBurger={() => setSidebarOpen(!open)} />
+        <ErrorBoundary resetKey={pathname}>
+          <Outlet />
+        </ErrorBoundary>
       </div>
       <MobileNav active={nk} />
       <GlobalDialogs />

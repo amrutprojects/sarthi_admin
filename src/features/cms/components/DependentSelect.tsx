@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ApiError } from '../../../services/http';
+import { ApiError } from '../../../services/api-client';
 import MasterField, { fieldAria } from './MasterField';
 import { optionLabel, type GeoOption } from '../types';
 
