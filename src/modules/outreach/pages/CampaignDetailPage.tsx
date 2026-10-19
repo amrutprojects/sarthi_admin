@@ -1,7 +1,22 @@
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import AS from '../../../legacy';
-import { PageHead, Card, Kpi, KvList, LinkButton, EmptyState, Callout, DemoNote, GenBadge, StatusBadge, fmt, money, dateFmt, titleCase } from '../../../components/ui';
+import {
+  PageHead,
+  Card,
+  Kpi,
+  KvList,
+  LinkButton,
+  EmptyState,
+  Callout,
+  DemoNote,
+  GenBadge,
+  StatusBadge,
+  fmt,
+  money,
+  dateFmt,
+  titleCase,
+} from '../../../components/ui';
 import { Funnel } from '../../../components/charts';
 import DataTable, { type Column } from '../../../components/tables/DataTable';
 import { useLegacyTick } from '../../../utils/legacyBus';
@@ -21,24 +36,56 @@ const columns: Column<Candidate>[] = [
 export default function CampaignDetailPage() {
   useLegacyTick();
   const { id = '' } = useParams();
-  useEffect(() => { document.title = 'Campaign — AMRUT × SUMAGO Admin'; }, []);
+  useEffect(() => {
+    document.title = 'Campaign — AMRUT × SUMAGO Admin';
+  }, []);
 
   const c = S.campaign(id);
-  if (!c) return <div className="page"><EmptyState title="Campaign not found" msg=""><LinkButton to="#/marketing" className="btn primary">All campaigns</LinkButton></EmptyState></div>;
+  if (!c)
+    return (
+      <div className="page">
+        <EmptyState title="Campaign not found" msg="">
+          <LinkButton to="#/marketing" className="btn primary">
+            All campaigns
+          </LinkButton>
+        </EmptyState>
+      </div>
+    );
   const src = S.leadSources().find((s) => s.s === c.platform) || { leads: c.leads, reg: c.reg, enr: Math.round(c.reg * 0.8) };
-  const leads = S.candidates().filter((x) => x.source === c.platform).slice(0, 120);
+  const leads = S.candidates()
+    .filter((x) => x.source === c.platform)
+    .slice(0, 120);
 
   return (
     <div className="page">
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'Marketing', link: '#/marketing' }, { l: c.name }]}
         title={c.name}
-        badge={<><span className="tag">{c.platform}</span><GenBadge status={c.status} /></>}
-        sub={<><span className="mono">{c.id}</span> · {dateFmt(c.start)} – {dateFmt(c.end)}</>}
-        actions={<>
-          <LinkButton to="#/mobilization">Mobilization</LinkButton>
-          <Can action="manageCampaigns"><button type="button" className="btn primary" onClick={() => AS.ui.toast('Demo action recorded — no data was persisted.', 'ok')}>Edit campaign</button></Can>
-        </>}
+        badge={
+          <>
+            <span className="tag">{c.platform}</span>
+            <GenBadge status={c.status} />
+          </>
+        }
+        sub={
+          <>
+            <span className="mono">{c.id}</span> · {dateFmt(c.start)} – {dateFmt(c.end)}
+          </>
+        }
+        actions={
+          <>
+            <LinkButton to="#/mobilization">Mobilization</LinkButton>
+            <Can action="manageCampaigns">
+              <button
+                type="button"
+                className="btn primary"
+                onClick={() => AS.ui.toast('Demo action recorded — no data was persisted.', 'ok')}
+              >
+                Edit campaign
+              </button>
+            </Can>
+          </>
+        }
       />
       <div className="grid g6 mb14">
         <Kpi label="Reach" value={c.reach} tone="b" />
@@ -50,25 +97,47 @@ export default function CampaignDetailPage() {
       </div>
       <div className="grid g-2-1 mb14">
         <Card title="Campaign funnel → mobilization handover" sub={'Everything below "Leads" is mobilization, not marketing'}>
-          <Funnel stages={[
-            { l: 'Reach', v: c.reach, c: '#DCC9B4' }, { l: 'Clicks', v: c.clicks || Math.round(c.reach * 0.04), c: '#F2D3B0' },
-            { l: 'Leads', v: c.leads, c: '#C8651C', link: '#/mobilization' },
-            { l: 'Registrations', v: c.reg, c: '#E88C2C', link: '#/candidates' },
-            { l: 'Enrolled', v: src.enr, c: '#1E7A46', link: '#/candidates?bucket=enrolled' },
-          ]} />
+          <Funnel
+            stages={[
+              { l: 'Reach', v: c.reach, c: '#DCC9B4' },
+              { l: 'Clicks', v: c.clicks || Math.round(c.reach * 0.04), c: '#F2D3B0' },
+              { l: 'Leads', v: c.leads, c: '#C8651C', link: '#/mobilization' },
+              { l: 'Registrations', v: c.reg, c: '#E88C2C', link: '#/candidates' },
+              { l: 'Enrolled', v: src.enr, c: '#1E7A46', link: '#/candidates?bucket=enrolled' },
+            ]}
+          />
         </Card>
         <Card title="Campaign parameters">
-          <KvList pairs={[
-            ['Campaign ID', c.id], ['Platform', c.platform], ['Status', titleCase(c.status)],
-            ['Start', dateFmt(c.start)], ['End', dateFmt(c.end)],
-            ['Spend (indicative)', money(c.spend)], ['Cost per lead', '₹' + fmt(c.cpl)], ['Lead → registration', c.conversion + '%'],
-          ]} />
-          <div className="mt10"><Callout tone="warn" title="Indicative">Campaign budgets shown are configurable demo values, not committed spend.</Callout></div>
+          <KvList
+            pairs={[
+              ['Campaign ID', c.id],
+              ['Platform', c.platform],
+              ['Status', titleCase(c.status)],
+              ['Start', dateFmt(c.start)],
+              ['End', dateFmt(c.end)],
+              ['Spend (indicative)', money(c.spend)],
+              ['Cost per lead', '₹' + fmt(c.cpl)],
+              ['Lead → registration', c.conversion + '%'],
+            ]}
+          />
+          <div className="mt10">
+            <Callout tone="warn" title="Indicative">
+              Campaign budgets shown are configurable demo values, not committed spend.
+            </Callout>
+          </div>
         </Card>
       </div>
       <Card title="Leads generated by this channel" flush>
-        <DataTable key={c.id} rows={leads} columns={columns} pageSize={10} exportName="Campaign_Leads" search={['id', 'name']} rowLink={(x) => '#/candidates/' + x.id}
-          emptyMsg="No candidate records are attributed to this channel in the demo dataset." />
+        <DataTable
+          key={c.id}
+          rows={leads}
+          columns={columns}
+          pageSize={10}
+          exportName="Campaign_Leads"
+          search={['id', 'name']}
+          rowLink={(x) => '#/candidates/' + x.id}
+          emptyMsg="No candidate records are attributed to this channel in the demo dataset."
+        />
       </Card>
       <DemoNote />
     </div>

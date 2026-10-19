@@ -8,10 +8,26 @@ import type { Option } from '../../types/legacy';
 
 const db = () => AS.db;
 
-export const DEFAULT_CAND_FILTER: CandidateFilter = { district: 'ALL', taluka: 'ALL', mode: 'ALL', centre: 'ALL', batch: 'ALL', status: 'ALL', gender: 'ALL', bucket: 'ALL' };
+export const DEFAULT_CAND_FILTER: CandidateFilter = {
+  district: 'ALL',
+  taluka: 'ALL',
+  mode: 'ALL',
+  centre: 'ALL',
+  batch: 'ALL',
+  status: 'ALL',
+  gender: 'ALL',
+  bucket: 'ALL',
+};
 
 export interface CandidateFilter extends Record<string, string> {
-  district: string; taluka: string; mode: string; centre: string; batch: string; status: string; gender: string; bucket: string;
+  district: string;
+  taluka: string;
+  mode: string;
+  centre: string;
+  batch: string;
+  status: string;
+  gender: string;
+  bucket: string;
 }
 
 export const BUCKETS: Record<string, { l: string; f: (c: Candidate) => boolean }> = {
@@ -34,15 +50,17 @@ export const BUCKETS: Record<string, { l: string; f: (c: Candidate) => boolean }
 
 export function filterCandidates(f: CandidateFilter): Candidate[] {
   const bucket = BUCKETS[f.bucket] || BUCKETS.ALL;
-  return db().candidates.filter((c) =>
-    bucket.f(c)
-    && (f.district === 'ALL' || c.districtId === f.district)
-    && (f.taluka === 'ALL' || c.taluka === f.taluka)
-    && (f.mode === 'ALL' || c.mode === f.mode)
-    && (f.centre === 'ALL' || c.centreId === f.centre)
-    && (f.batch === 'ALL' || c.batchId === f.batch)
-    && (f.status === 'ALL' || c.status === f.status)
-    && (f.gender === 'ALL' || c.gender === f.gender));
+  return db().candidates.filter(
+    (c) =>
+      bucket.f(c) &&
+      (f.district === 'ALL' || c.districtId === f.district) &&
+      (f.taluka === 'ALL' || c.taluka === f.taluka) &&
+      (f.mode === 'ALL' || c.mode === f.mode) &&
+      (f.centre === 'ALL' || c.centreId === f.centre) &&
+      (f.batch === 'ALL' || c.batchId === f.batch) &&
+      (f.status === 'ALL' || c.status === f.status) &&
+      (f.gender === 'ALL' || c.gender === f.gender),
+  );
 }
 
 export function candidateKpis(rows: Candidate[], f: CandidateFilter): Kpis {
@@ -50,7 +68,9 @@ export function candidateKpis(rows: Candidate[], f: CandidateFilter): Kpis {
 }
 
 export const talukaOptions = (districtId: string): Option[] =>
-  ([{ v: 'ALL', l: 'All talukas' }] as Option[]).concat((districtId !== 'ALL' ? db().districtBy[districtId].talukas : []).map((t) => ({ v: t, l: t })));
+  ([{ v: 'ALL', l: 'All talukas' }] as Option[]).concat(
+    (districtId !== 'ALL' ? db().districtBy[districtId].talukas : []).map((t) => ({ v: t, l: t })),
+  );
 export const centreOptions = () => AS.ui.centreOptions();
 export const batchOptions = () => AS.ui.batchOptions();
 export const statusOptions = () => AS.ui.statusOptions();

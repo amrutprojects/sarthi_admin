@@ -9,7 +9,10 @@ export function testQueryClient() {
 }
 
 /* Renders a component with the providers screens need (query client, router). */
-export function renderWithProviders(ui: ReactElement, { route = '/', client = testQueryClient(), ...options }: RenderOptions & { route?: string; client?: QueryClient } = {}) {
+export function renderWithProviders(
+  ui: ReactElement,
+  { route = '/', client = testQueryClient(), ...options }: RenderOptions & { route?: string; client?: QueryClient } = {},
+) {
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>

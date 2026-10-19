@@ -10,7 +10,9 @@ const demoToast = () => AS.ui.toast('Demo action recorded — no data was persis
 export default function AdministrationPage() {
   useLegacyTick();
   const go = useGo();
-  useEffect(() => { document.title = 'Administration — AMRUT × SUMAGO Admin'; }, []);
+  useEffect(() => {
+    document.title = 'Administration — AMRUT × SUMAGO Admin';
+  }, []);
   const DB = G.db();
   const [targets, setTargets] = useState(() => Object.fromEntries(DB.districts.map((d) => [d.code, String(d.target)])));
 
@@ -36,43 +38,95 @@ export default function AdministrationPage() {
         crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'Administration' }]}
         title="Administration — Master Configuration"
         sub="Programme masters and configuration. Nothing here is hard-coded — targets, allocations and commercial parameters remain configurable."
-        actions={<LinkButton to="#/settings" icon="settings" className="btn primary">System settings</LinkButton>}
+        actions={
+          <LinkButton to="#/settings" icon="settings" className="btn primary">
+            System settings
+          </LinkButton>
+        }
       />
       <div className="grid g3 mb14">
         {masters.map(([l, n, link, desc]) => (
           <div key={l} className="card pad pointer" onClick={() => go(link)}>
-            <div className="f jb ac"><b className="fs13">{l}</b><span className="tag">{n}</span></div>
+            <div className="f jb ac">
+              <b className="fs13">{l}</b>
+              <span className="tag">{n}</span>
+            </div>
             <div className="fs11 muted mt4">{desc}</div>
           </div>
         ))}
       </div>
       <div className="grid g2 mb14">
-        <Card title="Course catalogue" flush footer={<Can action="editSettings"><button type="button" className="btn sm" onClick={demoToast}>Add course</button></Can>}>
+        <Card
+          title="Course catalogue"
+          flush
+          footer={
+            <Can action="editSettings">
+              <button type="button" className="btn sm" onClick={demoToast}>
+                Add course
+              </button>
+            </Can>
+          }
+        >
           <div className="list">
             {DB.courses.map((c) => (
               <div key={c.id} className="list-row norow">
-                <div className="lr-main"><b>{c.name}</b><span className="mono">{c.id}</span> <span>· {c.hours} hours · {DB.batches.filter((b) => b.courseId === c.id).length} batches</span></div>
+                <div className="lr-main">
+                  <b>{c.name}</b>
+                  <span className="mono">{c.id}</span>{' '}
+                  <span>
+                    · {c.hours} hours · {DB.batches.filter((b) => b.courseId === c.id).length} batches
+                  </span>
+                </div>
                 <Badge tone="blue">{c.mode === 'BOTH' ? 'Offline + Online' : titleCase(c.mode)}</Badge>
               </div>
             ))}
           </div>
         </Card>
-        <Card title="District target allocation" footer={<Can action="editSettings"><button type="button" className="btn sm primary" onClick={demoToast}>Save allocation</button></Can>}>
+        <Card
+          title="District target allocation"
+          footer={
+            <Can action="editSettings">
+              <button type="button" className="btn sm primary" onClick={demoToast}>
+                Save allocation
+              </button>
+            </Can>
+          }
+        >
           <div style={{ maxHeight: 340, overflow: 'auto' }}>
-            {DB.districts.slice().sort((a, b) => b.target - a.target).map((d) => (
-              <div key={d.code} className="f jb ac gp10 mb6">
-                <span className="fs12 flex1 ell">{d.name}</span>
-                <input className="inp sm" style={{ width: 70 }} value={targets[d.code]} onChange={(e) => setTargets((t) => ({ ...t, [d.code]: e.target.value }))} aria-label={'Target for ' + d.name} />
-                <span className="fs11 muted" style={{ width: 56 }}>{d.hasCentre ? 'centre' : 'online'}</span>
-              </div>
-            ))}
+            {DB.districts
+              .slice()
+              .sort((a, b) => b.target - a.target)
+              .map((d) => (
+                <div key={d.code} className="f jb ac gp10 mb6">
+                  <span className="fs12 flex1 ell">{d.name}</span>
+                  <input
+                    className="inp sm"
+                    style={{ width: 70 }}
+                    value={targets[d.code]}
+                    onChange={(e) => setTargets((t) => ({ ...t, [d.code]: e.target.value }))}
+                    aria-label={'Target for ' + d.name}
+                  />
+                  <span className="fs11 muted" style={{ width: 56 }}>
+                    {d.hasCentre ? 'centre' : 'online'}
+                  </span>
+                </div>
+              ))}
           </div>
-          <div className="f jb ac mt10"><b className="fs12">Total allocated</b><b>{DB.districts.reduce((a, d) => a + d.target, 0)} / {DB.config.target}</b></div>
+          <div className="f jb ac mt10">
+            <b className="fs12">Total allocated</b>
+            <b>
+              {DB.districts.reduce((a, d) => a + d.target, 0)} / {DB.config.target}
+            </b>
+          </div>
         </Card>
       </div>
       <Card title="Offline centre district allocation">
         <Callout tone="warn" title="Indicative demo distribution">
-          {'Approved offline centres currently sit in: ' + DB.centres.map((c) => G.districtName(c.districtId)).join(', ') + '. This is an indicative demo distribution and is '}<b>not</b>{' a final approved district allocation. It is fully configurable.'}
+          {'Approved offline centres currently sit in: ' +
+            DB.centres.map((c) => G.districtName(c.districtId)).join(', ') +
+            '. This is an indicative demo distribution and is '}
+          <b>not</b>
+          {' a final approved district allocation. It is fully configurable.'}
         </Callout>
         <div className="grid g5 mt14">
           {DB.centres.map((c) => (

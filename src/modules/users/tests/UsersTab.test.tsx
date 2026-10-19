@@ -19,7 +19,14 @@ vi.mock('../services/userApi', () => ({
 }));
 
 const user = (over: Partial<User> = {}): User => ({
-  id: 'u1', name: 'Asha Patil', email: 'asha@example.org', isActive: true, lastLoginAt: null, createdAt: '', updatedAt: '', ...over,
+  id: 'u1',
+  name: 'Asha Patil',
+  email: 'asha@example.org',
+  isActive: true,
+  lastLoginAt: null,
+  createdAt: '',
+  updatedAt: '',
+  ...over,
 });
 const page = (items: User[]) => ({ items, meta: { page: 1, limit: 20, total: items.length, totalPages: 1 } });
 

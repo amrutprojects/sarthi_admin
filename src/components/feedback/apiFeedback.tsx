@@ -5,9 +5,7 @@ import { ApiError } from '../../services/api-client';
 
 /* Toast an API failure with the backend's message (and field details). */
 export function toastError(err: unknown): void {
-  const msg = err instanceof ApiError
-    ? (err.status === 403 ? 'Not permitted: ' : '') + err.fullMessage
-    : 'Something went wrong';
+  const msg = err instanceof ApiError ? (err.status === 403 ? 'Not permitted: ' : '') + err.fullMessage : 'Something went wrong';
   AS.ui.toast(msg, 'err');
 }
 
@@ -32,7 +30,9 @@ export function useApiData<T>(load: () => Promise<T>, deps: unknown[] = []) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
-  useEffect(() => { void reload(); }, [reload]);
+  useEffect(() => {
+    void reload();
+  }, [reload]);
   return { data, error, loading, reload };
 }
 
@@ -61,26 +61,59 @@ export function LoadState({ loading, error, onRetry }: { loading: boolean; error
     return (
       <div className="callout c-err mb14">
         <div>
-          <b>Could not load data from the server. </b>{error.fullMessage}{' '}
-          <button type="button" className="btn xs" onClick={onRetry}>Retry</button>
+          <b>Could not load data from the server. </b>
+          {error.fullMessage}{' '}
+          <button type="button" className="btn xs" onClick={onRetry}>
+            Retry
+          </button>
         </div>
       </div>
     );
   }
   if (loading) {
-    return <div style={{ padding: '6px 0' }}>{[0, 1, 2].map((i) => <div key={i} className="skel" style={{ height: 14, marginBottom: 10, width: (100 - i * 8) + '%' }} />)}</div>;
+    return (
+      <div style={{ padding: '6px 0' }}>
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="skel" style={{ height: 14, marginBottom: 10, width: 100 - i * 8 + '%' }} />
+        ))}
+      </div>
+    );
   }
   return null;
 }
 
-export function ConfirmModal({ title, message, confirmLabel, danger, busy, onConfirm, onClose }: {
-  title: string; message: string; confirmLabel: string; danger?: boolean; busy?: boolean; onConfirm: () => void; onClose: () => void;
+export function ConfirmModal({
+  title,
+  message,
+  confirmLabel,
+  danger,
+  busy,
+  onConfirm,
+  onClose,
+}: {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  danger?: boolean;
+  busy?: boolean;
+  onConfirm: () => void;
+  onClose: () => void;
 }) {
   return (
-    <Modal title={title} onClose={onClose} footer={<>
-      <button type="button" className="btn" onClick={onClose}>Cancel</button>
-      <button type="button" className={'btn ' + (danger ? 'danger' : 'primary')} disabled={busy} onClick={onConfirm}>{confirmLabel}</button>
-    </>}>
+    <Modal
+      title={title}
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="btn" onClick={onClose}>
+            Cancel
+          </button>
+          <button type="button" className={'btn ' + (danger ? 'danger' : 'primary')} disabled={busy} onClick={onConfirm}>
+            {confirmLabel}
+          </button>
+        </>
+      }
+    >
       <p style={{ margin: 0 }}>{message}</p>
     </Modal>
   );

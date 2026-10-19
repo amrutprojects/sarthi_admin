@@ -32,16 +32,36 @@ export default function PermissionsTab() {
       <div className="grid g2">
         {groups.map(([module, list]) => (
           <div key={module} className="card">
-            <div className="card-h"><h3 style={{ textTransform: 'capitalize' }}>{module} <span className="sub">{list.length} permissions</span></h3></div>
+            <div className="card-h">
+              <h3 style={{ textTransform: 'capitalize' }}>
+                {module} <span className="sub">{list.length} permissions</span>
+              </h3>
+            </div>
             <div className="card-b flush">
               <div className="list">
                 {list.map((p) => (
                   <div key={p.id} className="list-row norow">
-                    <div className="lr-main"><b>{p.name}</b><span className="mono">{p.code}</span></div>
+                    <div className="lr-main">
+                      <b>{p.name}</b>
+                      <span className="mono">{p.code}</span>
+                    </div>
                     <GenBadge status={p.isActive ? 'ACTIVE' : 'INACTIVE'} />
                     {can('updatePermission') ? (
-                      <button type="button" className="btn xs" disabled={busy}
-                        onClick={() => run(() => permissionsApi.setStatus(p.id, !p.isActive), p.isActive ? 'Permission deactivated' : 'Permission activated', async () => { await perms.reload(); await refresh(); })}>
+                      <button
+                        type="button"
+                        className="btn xs"
+                        disabled={busy}
+                        onClick={() =>
+                          run(
+                            () => permissionsApi.setStatus(p.id, !p.isActive),
+                            p.isActive ? 'Permission deactivated' : 'Permission activated',
+                            async () => {
+                              await perms.reload();
+                              await refresh();
+                            },
+                          )
+                        }
+                      >
                         {p.isActive ? 'Deactivate' : 'Activate'}
                       </button>
                     ) : null}

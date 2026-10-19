@@ -10,7 +10,9 @@ export default function ProtectedRoute() {
       <div className="boot">
         <div className="boot-mark">A×S</div>
         <div className="boot-txt">Checking your session…</div>
-        <div className="boot-bar"><span /></div>
+        <div className="boot-bar">
+          <span />
+        </div>
       </div>
     );
   }

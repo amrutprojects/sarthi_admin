@@ -28,12 +28,23 @@ describe('api-client', () => {
     setCsrfToken('csrf-123');
     await request('/roles', { method: 'POST', body: { name: 'x' }, idempotencyKey: 'key-12345678' });
     await request('/roles');
-    expect(fetchMock.mock.calls[0][1].headers).toMatchObject({ 'X-CSRF-Token': 'csrf-123', 'Idempotency-Key': 'key-12345678', 'Content-Type': 'application/json' });
+    expect(fetchMock.mock.calls[0][1].headers).toMatchObject({
+      'X-CSRF-Token': 'csrf-123',
+      'Idempotency-Key': 'key-12345678',
+      'Content-Type': 'application/json',
+    });
     expect(fetchMock.mock.calls[1][1].headers).not.toHaveProperty('X-CSRF-Token');
   });
 
   it('turns error envelopes into ApiError with code and details', async () => {
-    vi.stubGlobal('fetch', respond(422, { success: false, message: 'Validation failed', error: { code: 'VALIDATION_ERROR', details: [{ field: 'email', message: 'bad' }] } }));
+    vi.stubGlobal(
+      'fetch',
+      respond(422, {
+        success: false,
+        message: 'Validation failed',
+        error: { code: 'VALIDATION_ERROR', details: [{ field: 'email', message: 'bad' }] },
+      }),
+    );
     const err = (await request('/users', { method: 'POST', body: {} }).catch((e: unknown) => e)) as ApiError;
     expect(err).toBeInstanceOf(ApiError);
     expect(err).toMatchObject({ status: 422, code: 'VALIDATION_ERROR' });

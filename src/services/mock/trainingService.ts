@@ -32,24 +32,36 @@ export const isActive = (c: Candidate): boolean => db().inSet(db().ACTIVE_STATUS
 
 export function topOnlineDistricts(): ChartItem[] {
   const g: Record<string, number> = {};
-  byMode('ONLINE').forEach((c) => { g[c.districtId] = (g[c.districtId] || 0) + 1; });
-  const arr = Object.keys(g).map((k) => ({ l: districtName(k), v: g[k], link: '#/districts/' + k })).sort((a, b) => b.v - a.v);
+  byMode('ONLINE').forEach((c) => {
+    g[c.districtId] = (g[c.districtId] || 0) + 1;
+  });
+  const arr = Object.keys(g)
+    .map((k) => ({ l: districtName(k), v: g[k], link: '#/districts/' + k }))
+    .sort((a, b) => b.v - a.v);
   const top: ChartItem[] = arr.slice(0, 6);
   const rest = arr.slice(6).reduce((a, x) => a + x.v, 0);
   if (rest) top.push({ l: 'Other districts', v: rest, c: '#DCC9B4' });
   return top;
 }
 
-export interface AttendanceFilter extends Record<string, string> { date: string; district: string; centre: string; batch: string; mode: string }
+export interface AttendanceFilter extends Record<string, string> {
+  date: string;
+  district: string;
+  centre: string;
+  batch: string;
+  mode: string;
+}
 export const DEFAULT_ATT = (): AttendanceFilter => ({ date: db().config.asOf, district: 'ALL', centre: 'ALL', batch: 'ALL', mode: 'ALL' });
 export function attendanceRows(f: AttendanceFilter): Candidate[] {
-  return db().candidates.filter((c) =>
-    isEnrolled(c)
-    && (f.district === 'ALL' || c.districtId === f.district)
-    && (f.centre === 'ALL' || c.centreId === f.centre)
-    && (f.batch === 'ALL' || c.batchId === f.batch)
-    && (f.mode === 'ALL' || c.mode === f.mode)
-    && c.attendance > 0);
+  return db().candidates.filter(
+    (c) =>
+      isEnrolled(c) &&
+      (f.district === 'ALL' || c.districtId === f.district) &&
+      (f.centre === 'ALL' || c.centreId === f.centre) &&
+      (f.batch === 'ALL' || c.batchId === f.batch) &&
+      (f.mode === 'ALL' || c.mode === f.mode) &&
+      c.attendance > 0,
+  );
 }
 
 /* LMS sync lives in the LMS module (not yet converted). */

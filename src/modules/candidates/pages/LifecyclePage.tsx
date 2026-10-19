@@ -8,7 +8,9 @@ import type { CandidateStatus } from '../../../types/domain';
 export default function LifecyclePage() {
   useLegacyTick();
   const go = useGo();
-  useEffect(() => { document.title = 'Candidate lifecycle — AMRUT × SUMAGO Admin'; }, []);
+  useEffect(() => {
+    document.title = 'Candidate lifecycle — AMRUT × SUMAGO Admin';
+  }, []);
 
   const m = S.mobilization();
   const k = S.stateKpis();
@@ -30,7 +32,9 @@ export default function LifecyclePage() {
     { l: 'Certification', v: k.certified, c: '#E88C2C', link: '#/certification' },
   ];
   const counts: Partial<Record<CandidateStatus, number>> = {};
-  S.candidates().forEach((c) => { counts[c.status] = (counts[c.status] || 0) + 1; });
+  S.candidates().forEach((c) => {
+    counts[c.status] = (counts[c.status] || 0) + 1;
+  });
 
   return (
     <div className="page">
@@ -38,22 +42,35 @@ export default function LifecyclePage() {
         crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'Candidates', link: '#/candidates' }, { l: 'Lifecycle & funnel' }]}
         title="Candidate Lifecycle & Funnel"
         sub="End-to-end conversion from awareness through certification. Click any stage to open the underlying records."
-        actions={<>
-          <LinkButton to="#/marketing">Marketing funnel</LinkButton>
-          <LinkButton to="#/mobilization">Mobilization funnel</LinkButton>
-        </>}
+        actions={
+          <>
+            <LinkButton to="#/marketing">Marketing funnel</LinkButton>
+            <LinkButton to="#/mobilization">Mobilization funnel</LinkButton>
+          </>
+        }
       />
       <div className="grid g-2-1 mb14">
-        <Card title="Full lifecycle funnel" sub="Marketing → mobilization → training → certification"><Funnel stages={stages} /></Card>
+        <Card title="Full lifecycle funnel" sub="Marketing → mobilization → training → certification">
+          <Funnel stages={stages} />
+        </Card>
         <Card title="Conversion between stages" flush>
           <div className="list">
             {stages.slice(1).map((s, i) => {
               const prev = stages[i].v;
-              const pct = Math.round(s.v / prev * 1000) / 10;
+              const pct = Math.round((s.v / prev) * 1000) / 10;
               return (
                 <div key={s.l} className="list-row" onClick={s.link ? () => go(s.link) : undefined}>
-                  <div className="lr-main"><b>{stages[i].l} → {s.l}</b><span>{fmt(prev)} → {fmt(s.v)}</span></div>
-                  <b className="fs13" style={{ color: pct >= 70 ? 'var(--green)' : pct >= 30 ? 'var(--amber)' : 'var(--red)' }}>{pct}%</b>
+                  <div className="lr-main">
+                    <b>
+                      {stages[i].l} → {s.l}
+                    </b>
+                    <span>
+                      {fmt(prev)} → {fmt(s.v)}
+                    </span>
+                  </div>
+                  <b className="fs13" style={{ color: pct >= 70 ? 'var(--green)' : pct >= 30 ? 'var(--amber)' : 'var(--red)' }}>
+                    {pct}%
+                  </b>
                 </div>
               );
             })}
@@ -62,17 +79,25 @@ export default function LifecyclePage() {
       </div>
       <Card title="Candidate status engine — current distribution" sub="Click any status to open the filtered list">
         <div className="grid g4">
-          {S.statuses().filter((s) => counts[s.k]).map((s) => (
-            <div key={s.k} className="kpi" onClick={() => go('#/candidates?status=' + s.k)}>
-              <div className="kpi-t">{s.l}</div>
-              <div className="kpi-v" style={{ fontSize: 21 }}>{fmt(counts[s.k])}</div>
-              <div className="kpi-d"><Badge tone={s.tone}>{s.l}</Badge></div>
-            </div>
-          ))}
+          {S.statuses()
+            .filter((s) => counts[s.k])
+            .map((s) => (
+              <div key={s.k} className="kpi" onClick={() => go('#/candidates?status=' + s.k)}>
+                <div className="kpi-t">{s.l}</div>
+                <div className="kpi-v" style={{ fontSize: 21 }}>
+                  {fmt(counts[s.k])}
+                </div>
+                <div className="kpi-d">
+                  <Badge tone={s.tone}>{s.l}</Badge>
+                </div>
+              </div>
+            ))}
         </div>
         <div className="mt14">
           <Callout tone="info" title="Configurable state machine">
-            {'The programme uses ' + S.statuses().length + ' defined statuses. Transitions are recorded in each candidate timeline and in the system audit log. Statuses and permitted transitions are configurable under Administration.'}
+            {'The programme uses ' +
+              S.statuses().length +
+              ' defined statuses. Transitions are recorded in each candidate timeline and in the system audit log. Statuses and permitted transitions are configurable under Administration.'}
           </Callout>
         </div>
       </Card>

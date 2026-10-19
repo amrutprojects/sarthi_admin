@@ -1,7 +1,12 @@
 import { Component, type ReactNode } from 'react';
 
-interface Props { resetKey: string; children: ReactNode }
-interface State { error: Error | null }
+interface Props {
+  resetKey: string;
+  children: ReactNode;
+}
+interface State {
+  error: Error | null;
+}
 
 /* Keeps the shell usable if one page throws; resets when the route changes. */
 export default class ErrorBoundary extends Component<Props, State> {
@@ -20,8 +25,15 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (!error) return this.props.children;
     return (
       <div className="page">
-        <div className="callout c-err"><div><b>This page failed to load. </b>{error.message || String(error)}</div></div>
-        <a className="btn primary mt14" href="#/dashboard">Go to Dashboard</a>
+        <div className="callout c-err">
+          <div>
+            <b>This page failed to load. </b>
+            {error.message || String(error)}
+          </div>
+        </div>
+        <a className="btn primary mt14" href="#/dashboard">
+          Go to Dashboard
+        </a>
       </div>
     );
   }

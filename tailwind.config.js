@@ -13,8 +13,13 @@ export default {
     extend: {
       colors: {
         brand: {
-          50: 'var(--brand-050)', 100: 'var(--brand-100)', 500: 'var(--brand-500)', 600: 'var(--brand-600)',
-          700: 'var(--brand-700)', 800: 'var(--brand-800)', 900: 'var(--brand-900)',
+          50: 'var(--brand-050)',
+          100: 'var(--brand-100)',
+          500: 'var(--brand-500)',
+          600: 'var(--brand-600)',
+          700: 'var(--brand-700)',
+          800: 'var(--brand-800)',
+          900: 'var(--brand-900)',
         },
         saffron: { DEFAULT: 'var(--saffron)', 100: 'var(--saffron-100)' },
         surface: { DEFAULT: 'var(--surface)', 2: 'var(--surface-2)' },

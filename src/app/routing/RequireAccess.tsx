@@ -11,9 +11,15 @@ export default function RequireAccess({ navKey, children }: { navKey: string; ch
     <div className="page">
       <EmptyState
         title="You don't have access to this screen"
-        msg={'Your role (' + (primaryRole ? primaryRole.name : 'none') + ') does not include permission for this module, or the menu is hidden for your role. Ask an administrator if you need it.'}
+        msg={
+          'Your role (' +
+          (primaryRole ? primaryRole.name : 'none') +
+          ') does not include permission for this module, or the menu is hidden for your role. Ask an administrator if you need it.'
+        }
       >
-        <LinkButton to="#/dashboard" className="btn primary">Go to Dashboard</LinkButton>
+        <LinkButton to="#/dashboard" className="btn primary">
+          Go to Dashboard
+        </LinkButton>
       </EmptyState>
     </div>
   );

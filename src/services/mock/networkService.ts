@@ -11,8 +11,16 @@ export const districts = () => db().districts;
 export const districtName = (id: string | null): string => (id ? db().districtBy[id].name : '—');
 export const district = (code: string): District | undefined => db().districtBy[code];
 export const districtStatus = (d: District): DistrictStatusDef => db().DISTRICT_STATUS[d.status];
-export interface DistrictRow { d: District; k: Kpis; st: DistrictStatusDef }
-export const districtRow = (d: District): DistrictRow => ({ d, k: db().kpis(db().byDistrict(d.code), d.target), st: db().DISTRICT_STATUS[d.status] });
+export interface DistrictRow {
+  d: District;
+  k: Kpis;
+  st: DistrictStatusDef;
+}
+export const districtRow = (d: District): DistrictRow => ({
+  d,
+  k: db().kpis(db().byDistrict(d.code), d.target),
+  st: db().DISTRICT_STATUS[d.status],
+});
 export const stateTotals = () => db().kpis(db().candidates, db().config.target);
 export const regions = () => [...new Set(db().districts.map((d) => d.region))];
 export const byDistrict = (code: string): Candidate[] => db().byDistrict(code);
@@ -35,7 +43,11 @@ export const liveSessions = () => db().liveSessions;
 export const mapProvider = () => AS.map.provider;
 
 /* Districts page filter (AS.state.geo semantics). */
-export interface GeoFilter extends Record<string, string> { sort: string; filter: string; region: string }
+export interface GeoFilter extends Record<string, string> {
+  sort: string;
+  filter: string;
+  region: string;
+}
 export const DEFAULT_GEO: GeoFilter = { sort: 'performance', filter: 'ALL', region: 'ALL' };
 const RAG_FILTER: Record<string, string> = { critical: 'RED', amber: 'AMBER', green: 'GREEN', grey: 'GREY' };
 export function filterDistricts(s: GeoFilter): DistrictRow[] {
@@ -54,16 +66,23 @@ export function filterDistricts(s: GeoFilter): DistrictRow[] {
 }
 
 /* Centres page filter (AS.state.centre semantics). */
-export interface CentreFilter extends Record<string, string> { district: string; status: string; mode: string; perf: string }
+export interface CentreFilter extends Record<string, string> {
+  district: string;
+  status: string;
+  mode: string;
+  perf: string;
+}
 export const DEFAULT_CENTRE: CentreFilter = { district: 'ALL', status: 'ALL', mode: 'ALL', perf: 'ALL' };
 export function filterCentres(f: CentreFilter): Centre[] {
-  return db().allCentres.filter((c) =>
-    (f.district === 'ALL' || c.districtId === f.district)
-    && (f.status === 'ALL' || c.status === f.status)
-    && (f.mode === 'ALL' || c.mode === f.mode)
-    && !(f.perf === 'high' && c.score < 80)
-    && !(f.perf === 'mid' && (c.score < 70 || c.score >= 80))
-    && !(f.perf === 'low' && c.score >= 70));
+  return db().allCentres.filter(
+    (c) =>
+      (f.district === 'ALL' || c.districtId === f.district) &&
+      (f.status === 'ALL' || c.status === f.status) &&
+      (f.mode === 'ALL' || c.mode === f.mode) &&
+      !(f.perf === 'high' && c.score < 80) &&
+      !(f.perf === 'mid' && (c.score < 70 || c.score >= 80)) &&
+      !(f.perf === 'low' && c.score >= 70),
+  );
 }
 
 /* Task create/detail still live in the Tasks module (not yet converted). */

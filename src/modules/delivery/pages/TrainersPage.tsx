@@ -1,6 +1,19 @@
 import { useEffect } from 'react';
 import AS from '../../../legacy';
-import { PageHead, Kpi, FilterBar, LinkButton, DemoNote, Badge, GenBadge, ModeTag, ProgRow, districtOptions, modeOptions, titleCase } from '../../../components/ui';
+import {
+  PageHead,
+  Kpi,
+  FilterBar,
+  LinkButton,
+  DemoNote,
+  Badge,
+  GenBadge,
+  ModeTag,
+  ProgRow,
+  districtOptions,
+  modeOptions,
+  titleCase,
+} from '../../../components/ui';
 import DataTable, { type Column } from '../../../components/tables/DataTable';
 import Icon from '../../../components/ui/Icon';
 import { useLegacyTick } from '../../../utils/legacyBus';
@@ -18,15 +31,28 @@ const columns: Column<Trainer>[] = [
   { k: 'centreId', l: 'Centre / unit', sortVal: (t) => S.centre(t.centreId).name, render: (t) => S.centre(t.centreId).name },
   { k: 'districtId', l: 'District', exportVal: (t) => S.districtName(t.districtId), render: (t) => S.districtName(t.districtId) },
   { k: 'mode', l: 'Mode', render: (t) => <ModeTag mode={t.mode} /> },
-  { k: 'totStatus', l: 'ToT', exportVal: (t) => titleCase(t.totStatus), render: (t) => <Badge tone={S.totTone(t.totStatus)}>{titleCase(t.totStatus)}</Badge> },
+  {
+    k: 'totStatus',
+    l: 'ToT',
+    exportVal: (t) => titleCase(t.totStatus),
+    render: (t) => <Badge tone={S.totTone(t.totStatus)}>{titleCase(t.totStatus)}</Badge>,
+  },
   { k: 'availability', l: 'Availability', render: (t) => <GenBadge status={t.availability} /> },
-  { k: 'score', l: 'Performance', align: 'right', exportVal: (t) => t.score + '/100', render: (t) => <ProgRow pct={t.score} tone={t.score >= 80 ? 'g' : t.score >= 65 ? 'a' : 'r'} label={t.score + '/100'} /> },
+  {
+    k: 'score',
+    l: 'Performance',
+    align: 'right',
+    exportVal: (t) => t.score + '/100',
+    render: (t) => <ProgRow pct={t.score} tone={t.score >= 80 ? 'g' : t.score >= 65 ? 'a' : 'r'} label={t.score + '/100'} />,
+  },
 ];
 
 export default function TrainersPage() {
   useLegacyTick();
   const [f, setF] = usePersistentState('trainer', S.DEFAULT_TRAINER);
-  useEffect(() => { document.title = 'Trainers — AMRUT × SUMAGO Admin'; }, []);
+  useEffect(() => {
+    document.title = 'Trainers — AMRUT × SUMAGO Admin';
+  }, []);
 
   const all = S.trainers();
   const rows = S.filterTrainers(f);
@@ -37,12 +63,29 @@ export default function TrainersPage() {
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'Trainers' }]}
         title="Trainer Management"
-        badge={<span className="tag">{rows.length} of {all.length}</span>}
+        badge={
+          <span className="tag">
+            {rows.length} of {all.length}
+          </span>
+        }
         sub="Trainer pool across offline centres and the central online training unit."
-        actions={<>
-          <LinkButton to="#/tot" icon="award">ToT management</LinkButton>
-          <Can action="manageTrainers"><button type="button" className="btn primary" onClick={() => AS.ui.toast('Demo action recorded — no data was persisted.', 'ok')}><Icon name="plus" />Add trainer</button></Can>
-        </>}
+        actions={
+          <>
+            <LinkButton to="#/tot" icon="award">
+              ToT management
+            </LinkButton>
+            <Can action="manageTrainers">
+              <button
+                type="button"
+                className="btn primary"
+                onClick={() => AS.ui.toast('Demo action recorded — no data was persisted.', 'ok')}
+              >
+                <Icon name="plus" />
+                Add trainer
+              </button>
+            </Can>
+          </>
+        }
       />
       <div className="grid g6 mb14">
         <Kpi label="Trainer pool" value={all.length} tone="b" />
@@ -56,16 +99,45 @@ export default function TrainersPage() {
         fields={[
           { k: 'district', l: 'District', options: districtOptions() },
           { k: 'mode', l: 'Mode', options: modeOptions() },
-          { k: 'availability', l: 'Availability', options: [{ v: 'ALL', l: 'All' }, { v: 'ACTIVE', l: 'Active' }, { v: 'BACKUP', l: 'Backup' }, { v: 'INACTIVE', l: 'Inactive' }] },
-          { k: 'tot', l: 'ToT status', options: [{ v: 'ALL', l: 'All' }, { v: 'CERTIFIED', l: 'Certified / approved' }, { v: 'COMPLETED', l: 'Completed' }, { v: 'REGISTERED', l: 'Registered' }, { v: 'NOT_STARTED', l: 'Not started' }] },
+          {
+            k: 'availability',
+            l: 'Availability',
+            options: [
+              { v: 'ALL', l: 'All' },
+              { v: 'ACTIVE', l: 'Active' },
+              { v: 'BACKUP', l: 'Backup' },
+              { v: 'INACTIVE', l: 'Inactive' },
+            ],
+          },
+          {
+            k: 'tot',
+            l: 'ToT status',
+            options: [
+              { v: 'ALL', l: 'All' },
+              { v: 'CERTIFIED', l: 'Certified / approved' },
+              { v: 'COMPLETED', l: 'Completed' },
+              { v: 'REGISTERED', l: 'Registered' },
+              { v: 'NOT_STARTED', l: 'Not started' },
+            ],
+          },
         ]}
         value={f}
         onChange={(k, v) => setF((x) => ({ ...x, [k]: v }))}
         onReset={() => setF(S.DEFAULT_TRAINER)}
       />
       <div className="card">
-        <div className="card-h"><h3>Trainer database</h3></div>
-        <DataTable key={JSON.stringify(f)} rows={rows} columns={columns} pageSize={12} exportName="Trainer_Database" search={['id', 'name', 'specialization']} rowLink={(t) => '#/trainers/' + t.id} />
+        <div className="card-h">
+          <h3>Trainer database</h3>
+        </div>
+        <DataTable
+          key={JSON.stringify(f)}
+          rows={rows}
+          columns={columns}
+          pageSize={12}
+          exportName="Trainer_Database"
+          search={['id', 'name', 'specialization']}
+          rowLink={(t) => '#/trainers/' + t.id}
+        />
       </div>
       <DemoNote />
     </div>

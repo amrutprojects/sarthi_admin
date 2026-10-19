@@ -2,7 +2,13 @@ import { Fragment, useMemo } from 'react';
 import { NAV, isNavGroup } from '../../../constants/navigation';
 import { MENU_ACTIONS, MENU_ACTION_LABEL, type MenuAction } from '../../auth';
 
-export interface MatrixPermission { id: string; code: string; name: string; module: string; description?: string | null }
+export interface MatrixPermission {
+  id: string;
+  code: string;
+  name: string;
+  module: string;
+  description?: string | null;
+}
 
 /* Identity & access modules, shown under "Users & Roles" with their own codes mapped onto the columns. */
 const IDENTITY_ROWS: { module: string; label: string }[] = [
@@ -11,8 +17,16 @@ const IDENTITY_ROWS: { module: string; label: string }[] = [
   { module: 'permissions', label: 'Permissions' },
 ];
 
-interface Row { module: string; label: string; cells: Partial<Record<MenuAction, MatrixPermission>>; extras: MatrixPermission[] }
-interface Section { title: string; rows: Row[] }
+interface Row {
+  module: string;
+  label: string;
+  cells: Partial<Record<MenuAction, MatrixPermission>>;
+  extras: MatrixPermission[];
+}
+interface Section {
+  title: string;
+  rows: Row[];
+}
 
 function buildRow(module: string, label: string, perms: MatrixPermission[]): Row | null {
   const mine = perms.filter((p) => p.module === module);
@@ -33,16 +47,26 @@ function buildSections(perms: MatrixPermission[]): Section[] {
   const used = new Set<string>();
   let current: Section | null = null;
   for (const n of NAV) {
-    if (isNavGroup(n)) { current = { title: n.g, rows: [] }; sections.push(current); continue; }
+    if (isNavGroup(n)) {
+      current = { title: n.g, rows: [] };
+      sections.push(current);
+      continue;
+    }
     if (n.k === 'users') {
       for (const r of IDENTITY_ROWS) {
         const row = buildRow(r.module, 'Users & Roles — ' + r.label, perms);
-        if (row) { current?.rows.push(row); used.add(r.module); }
+        if (row) {
+          current?.rows.push(row);
+          used.add(r.module);
+        }
       }
       continue;
     }
     const row = buildRow(n.k, n.l, perms);
-    if (row) { current?.rows.push(row); used.add(n.k); }
+    if (row) {
+      current?.rows.push(row);
+      used.add(n.k);
+    }
   }
   const rest = [...new Set(perms.map((p) => p.module))].filter((m) => !used.has(m)).sort();
   if (rest.length) sections.push({ title: 'Other', rows: rest.map((m) => buildRow(m, m, perms)!).filter(Boolean) });
@@ -50,7 +74,13 @@ function buildSections(perms: MatrixPermission[]): Section[] {
 }
 
 /* Menus × View / Add / Update / Delete / Approve checkbox grid. */
-export default function PermissionMatrix({ permissions, granted, editable, held, onChange }: {
+export default function PermissionMatrix({
+  permissions,
+  granted,
+  editable,
+  held,
+  onChange,
+}: {
   permissions: MatrixPermission[];
   granted: Set<string>;
   editable: boolean;
@@ -69,15 +99,26 @@ export default function PermissionMatrix({ permissions, granted, editable, held,
     }
     onChange(next);
   };
-  const rowIds = (r: Row) => [...Object.values(r.cells).filter(Boolean).map((p) => p!.id), ...r.extras.map((p) => p.id)];
+  const rowIds = (r: Row) => [
+    ...Object.values(r.cells)
+      .filter(Boolean)
+      .map((p) => p!.id),
+    ...r.extras.map((p) => p.id),
+  ];
   const colIds = (a: MenuAction) => allRows.map((r) => r.cells[a]?.id).filter((x): x is string => !!x);
   const allOn = (ids: string[]) => ids.length > 0 && ids.every((id) => granted.has(id));
 
   const box = (p: MatrixPermission | undefined) => {
     if (!p) return <span className="muted">—</span>;
     return (
-      <input type="checkbox" aria-label={p.name} title={p.code + (editable && !held.has(p.code) ? ' · not held by you' : '')}
-        checked={granted.has(p.id)} disabled={!editable} onChange={() => set([p.id], !granted.has(p.id))} />
+      <input
+        type="checkbox"
+        aria-label={p.name}
+        title={p.code + (editable && !held.has(p.code) ? ' · not held by you' : '')}
+        checked={granted.has(p.id)}
+        disabled={!editable}
+        onChange={() => set([p.id], !granted.has(p.id))}
+      />
     );
   };
 
@@ -90,7 +131,14 @@ export default function PermissionMatrix({ permissions, granted, editable, held,
             {MENU_ACTIONS.map((a) => (
               <th key={a}>
                 <label className="pm-col">
-                  {editable ? <input type="checkbox" checked={allOn(colIds(a))} onChange={() => set(colIds(a), !allOn(colIds(a)))} aria-label={'All ' + MENU_ACTION_LABEL[a]} /> : null}
+                  {editable ? (
+                    <input
+                      type="checkbox"
+                      checked={allOn(colIds(a))}
+                      onChange={() => set(colIds(a), !allOn(colIds(a)))}
+                      aria-label={'All ' + MENU_ACTION_LABEL[a]}
+                    />
+                  ) : null}
                   {MENU_ACTION_LABEL[a]}
                 </label>
               </th>
@@ -101,7 +149,9 @@ export default function PermissionMatrix({ permissions, granted, editable, held,
         <tbody>
           {sections.map((s) => (
             <Fragment key={s.title}>
-              <tr className="pm-sec"><td colSpan={MENU_ACTIONS.length + 2}>{s.title}</td></tr>
+              <tr className="pm-sec">
+                <td colSpan={MENU_ACTIONS.length + 2}>{s.title}</td>
+              </tr>
               {s.rows.map((r) => {
                 const ids = rowIds(r);
                 return (
@@ -112,14 +162,26 @@ export default function PermissionMatrix({ permissions, granted, editable, held,
                         <div className="pm-extras">
                           {r.extras.map((p) => (
                             <label key={p.id} title={p.code}>
-                              <input type="checkbox" checked={granted.has(p.id)} disabled={!editable} onChange={() => set([p.id], !granted.has(p.id))} /> {p.name}
+                              <input
+                                type="checkbox"
+                                checked={granted.has(p.id)}
+                                disabled={!editable}
+                                onChange={() => set([p.id], !granted.has(p.id))}
+                              />{' '}
+                              {p.name}
                             </label>
                           ))}
                         </div>
                       ) : null}
                     </td>
-                    {MENU_ACTIONS.map((a) => <td key={a}>{box(r.cells[a])}</td>)}
-                    <td>{editable ? <input type="checkbox" aria-label={'All ' + r.label} checked={allOn(ids)} onChange={() => set(ids, !allOn(ids))} /> : null}</td>
+                    {MENU_ACTIONS.map((a) => (
+                      <td key={a}>{box(r.cells[a])}</td>
+                    ))}
+                    <td>
+                      {editable ? (
+                        <input type="checkbox" aria-label={'All ' + r.label} checked={allOn(ids)} onChange={() => set(ids, !allOn(ids))} />
+                      ) : null}
+                    </td>
                   </tr>
                 );
               })}

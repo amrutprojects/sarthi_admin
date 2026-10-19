@@ -10,14 +10,18 @@ type Tab = 'users' | 'roles' | 'permissions' | 'menus';
 export default function UsersPage() {
   const can = useCan();
   const { user, permissions } = useAuth();
-  const tabs = ([
-    ['users', 'Users', can('viewUsers')],
-    ['roles', 'Roles', can('viewRoles')],
-    ['permissions', 'Permissions', can('viewPermissions')],
-    ['menus', 'Menu visibility', can('viewRoles')],
-  ] as [Tab, string, boolean][]).filter(([, , ok]) => ok);
+  const tabs = (
+    [
+      ['users', 'Users', can('viewUsers')],
+      ['roles', 'Roles', can('viewRoles')],
+      ['permissions', 'Permissions', can('viewPermissions')],
+      ['menus', 'Menu visibility', can('viewRoles')],
+    ] as [Tab, string, boolean][]
+  ).filter(([, , ok]) => ok);
   const [tab, setTab] = useState<Tab>(tabs[0]?.[0] ?? 'users');
-  useEffect(() => { document.title = 'Users & roles — AMRUT × SUMAGO Admin'; }, []);
+  useEffect(() => {
+    document.title = 'Users & roles — AMRUT × SUMAGO Admin';
+  }, []);
 
   return (
     <div className="page">
@@ -36,7 +40,11 @@ export default function UsersPage() {
         </div>
       ) : null}
       <div className="tabs">
-        {tabs.map(([k, l]) => <button type="button" key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}
+        {tabs.map(([k, l]) => (
+          <button type="button" key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>
+            {l}
+          </button>
+        ))}
       </div>
       {tab === 'users' && can('viewUsers') ? <UsersTab /> : null}
       {tab === 'roles' && can('viewRoles') ? <RolesTab /> : null}

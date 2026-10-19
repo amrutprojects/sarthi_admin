@@ -15,12 +15,24 @@ const columns: Column<AuditEntry>[] = [
   { k: 'module', l: 'Module', render: (l) => <span className="tag">{l.module}</span> },
   { k: 'oldValue', l: 'Old value', render: (l) => <span className="muted">{l.oldValue}</span> },
   { k: 'newValue', l: 'New value', render: (l) => <b>{l.newValue}</b> },
-  { k: 'ip', l: 'IP / device', exportVal: (l) => l.ip + ' ' + l.device, render: (l) => <><span className="mono">{l.ip}</span><div className="fs11 muted">{l.device}</div></> },
+  {
+    k: 'ip',
+    l: 'IP / device',
+    exportVal: (l) => l.ip + ' ' + l.device,
+    render: (l) => (
+      <>
+        <span className="mono">{l.ip}</span>
+        <div className="fs11 muted">{l.device}</div>
+      </>
+    ),
+  },
 ];
 
 export default function AuditPage() {
   useLegacyTick();
-  useEffect(() => { document.title = 'Audit log — AMRUT × SUMAGO Admin'; }, []);
+  useEffect(() => {
+    document.title = 'Audit log — AMRUT × SUMAGO Admin';
+  }, []);
   const log = G.db().auditLog;
   return (
     <div className="page">
@@ -28,7 +40,11 @@ export default function AuditPage() {
         crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'Audit log' }]}
         title="System Activity / Audit Log"
         sub="Immutable record of every change: who, what, which module, when, and the old and new values."
-        actions={<LinkButton to="#/reports" className="btn primary">Export</LinkButton>}
+        actions={
+          <LinkButton to="#/reports" className="btn primary">
+            Export
+          </LinkButton>
+        }
       />
       <div className="grid g4 mb14">
         <Kpi label="Log entries" value={log.length} tone="b" sub="Last 20 days (demo)" />
@@ -37,7 +53,9 @@ export default function AuditPage() {
         <Kpi label="Retention" value="7 years" tone="" sub="Configurable" />
       </div>
       <div className="card">
-        <div className="card-h"><h3>Activity log</h3></div>
+        <div className="card-h">
+          <h3>Activity log</h3>
+        </div>
         <DataTable rows={log} columns={columns} pageSize={15} exportName="Audit_Log" search={['user', 'action', 'module']} />
       </div>
       <DemoNote />

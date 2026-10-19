@@ -21,7 +21,8 @@ function serverFieldErrors(err: unknown): Partial<Record<keyof UserFormValues, s
   if (!(err instanceof ApiError)) return {};
   if (err.status === 409 && /email/i.test(err.message)) return { email: err.message };
   const out: Partial<Record<keyof UserFormValues, string>> = {};
-  for (const d of err.details) if (d.field && ['name', 'email', 'password'].includes(d.field)) out[d.field as keyof UserFormValues] = d.message;
+  for (const d of err.details)
+    if (d.field && ['name', 'email', 'password'].includes(d.field)) out[d.field as keyof UserFormValues] = d.message;
   return out;
 }
 
@@ -65,8 +66,16 @@ export default function UsersTab() {
     const self = u.id === me?.id;
     return (
       <div className="tw-flex tw-flex-wrap tw-gap-1">
-        {can('updateUser') ? <button type="button" className="btn xs" onClick={() => setDialog({ type: 'edit', user: u })}>Edit</button> : null}
-        {can('assignRoles') && canSeeRoles && !self ? <button type="button" className="btn xs" onClick={() => setDialog({ type: 'roles', user: u })}>Roles</button> : null}
+        {can('updateUser') ? (
+          <button type="button" className="btn xs" onClick={() => setDialog({ type: 'edit', user: u })}>
+            Edit
+          </button>
+        ) : null}
+        {can('assignRoles') && canSeeRoles && !self ? (
+          <button type="button" className="btn xs" onClick={() => setDialog({ type: 'roles', user: u })}>
+            Roles
+          </button>
+        ) : null}
         {can('updateUser') && !self ? (
           <button
             type="button"
@@ -83,7 +92,9 @@ export default function UsersTab() {
           </button>
         ) : null}
         {can('deleteUser') && !self ? (
-          <button type="button" className="btn xs tw-text-danger" onClick={() => setDialog({ type: 'delete', user: u })}>Delete</button>
+          <button type="button" className="btn xs tw-text-danger" onClick={() => setDialog({ type: 'delete', user: u })}>
+            Delete
+          </button>
         ) : null}
       </div>
     );
@@ -105,24 +116,33 @@ export default function UsersTab() {
             <UserFilters value={filters} onChange={onFilters} />
             {can('createUser') ? (
               <button type="button" className="btn sm primary" onClick={() => setDialog({ type: 'create' })}>
-                <Icon name="plus" />Add user
+                <Icon name="plus" />
+                Add user
               </button>
             ) : null}
           </div>
         </div>
 
         {forbidden ? (
-          <div className="card-b"><Callout tone="warn" title="Not permitted. ">You do not have permission to view user accounts.</Callout></div>
+          <div className="card-b">
+            <Callout tone="warn" title="Not permitted. ">
+              You do not have permission to view user accounts.
+            </Callout>
+          </div>
         ) : list.isError ? (
           <div className="card-b">
             <Callout tone="err" title="Could not load users. ">
               {list.error instanceof ApiError ? list.error.fullMessage : 'Unexpected error'}{' '}
-              <button type="button" className="btn xs" onClick={() => void list.refetch()}>Retry</button>
+              <button type="button" className="btn xs" onClick={() => void list.refetch()}>
+                Retry
+              </button>
             </Callout>
           </div>
         ) : list.isPending ? (
           <div className="card-b" aria-busy="true" aria-label="Loading users">
-            {[0, 1, 2, 3].map((i) => <div key={i} className="skel tw-mb-3" style={{ height: 16 }} />)}
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="skel tw-mb-3" style={{ height: 16 }} />
+            ))}
           </div>
         ) : list.data.items.length === 0 ? (
           <div className="card-b tw-py-10 tw-text-center tw-text-ink-muted">
@@ -142,7 +162,7 @@ export default function UsersTab() {
         )}
       </div>
 
-      {dialog?.type === 'create' ? <CreateUserDialog roles={can('assignRoles') ? roles.data ?? [] : []} onClose={close} /> : null}
+      {dialog?.type === 'create' ? <CreateUserDialog roles={can('assignRoles') ? (roles.data ?? []) : []} onClose={close} /> : null}
       {dialog?.type === 'edit' ? <EditUserDialog user={dialog.user} onClose={close} /> : null}
       {dialog?.type === 'roles' ? <UserRolesDrawer user={dialog.user} onClose={close} /> : null}
       {dialog?.type === 'delete' ? (
@@ -153,7 +173,15 @@ export default function UsersTab() {
           confirmLabel="Delete"
           message={`Delete ${dialog.user.name} (${dialog.user.email})? The account is soft-deleted: it can no longer sign in, and it is kept for audit history.`}
           onClose={close}
-          onConfirm={() => remove.mutate(dialog.user.id, { onSuccess: () => { toastOk('User deleted'); close(); }, onError: toastError })}
+          onConfirm={() =>
+            remove.mutate(dialog.user.id, {
+              onSuccess: () => {
+                toastOk('User deleted');
+                close();
+              },
+              onError: toastError,
+            })
+          }
         />
       ) : null}
     </>
@@ -175,10 +203,21 @@ function CreateUserDialog({ roles, onClose }: { roles: Parameters<typeof UserFor
         onCancel={onClose}
         onSubmit={(v) =>
           create.mutate(
-            { name: v.name, email: v.email, password: v.password, roleIds: v.roleIds.length ? v.roleIds : undefined, idempotencyKey: key.current },
             {
-              onSuccess: () => { toastOk('User created'); onClose(); },
-              onError: (e) => { if (!Object.keys(serverFieldErrors(e)).length) toastError(e); },
+              name: v.name,
+              email: v.email,
+              password: v.password,
+              roleIds: v.roleIds.length ? v.roleIds : undefined,
+              idempotencyKey: key.current,
+            },
+            {
+              onSuccess: () => {
+                toastOk('User created');
+                onClose();
+              },
+              onError: (e) => {
+                if (!Object.keys(serverFieldErrors(e)).length) toastError(e);
+              },
             },
           )
         }
@@ -202,8 +241,13 @@ function EditUserDialog({ user, onClose }: { user: User; onClose: () => void }) 
           update.mutate(
             { id: user.id, input: { name: v.name, email: v.email, ...(v.password ? { password: v.password } : {}) } },
             {
-              onSuccess: () => { toastOk('User updated'); onClose(); },
-              onError: (e) => { if (!Object.keys(serverFieldErrors(e)).length) toastError(e); },
+              onSuccess: () => {
+                toastOk('User updated');
+                onClose();
+              },
+              onError: (e) => {
+                if (!Object.keys(serverFieldErrors(e)).length) toastError(e);
+              },
             },
           )
         }
@@ -224,25 +268,44 @@ function UserRolesDrawer({ user, onClose }: { user: User; onClose: () => void })
       onClose={onClose}
       footer={
         <>
-          <button type="button" className="btn" onClick={onClose}>Cancel</button>
+          <button type="button" className="btn" onClick={onClose}>
+            Cancel
+          </button>
           <button
             type="button"
             className="btn primary"
             disabled={save.isPending || roles.isPending}
-            onClick={() => save.mutate({ id: user.id, roleIds: selected }, { onSuccess: () => { toastOk('Roles updated'); onClose(); }, onError: toastError })}
+            onClick={() =>
+              save.mutate(
+                { id: user.id, roleIds: selected },
+                {
+                  onSuccess: () => {
+                    toastOk('Roles updated');
+                    onClose();
+                  },
+                  onError: toastError,
+                },
+              )
+            }
           >
             Save roles
           </button>
         </>
       }
     >
-      <Callout tone="info" title="Privilege rules. ">You can only grant or remove roles whose permissions you hold, and you cannot change your own roles. The server enforces these rules.</Callout>
+      <Callout tone="info" title="Privilege rules. ">
+        You can only grant or remove roles whose permissions you hold, and you cannot change your own roles. The server enforces these
+        rules.
+      </Callout>
       {roles.isPending ? <div className="skel tw-mt-4" style={{ height: 120 }} /> : null}
       <div className="list mt14">
         {usable.map((r) => (
           <label key={r.id} className="list-row tw-cursor-pointer">
             <input type="checkbox" className="tw-accent-brand-600" checked={selected.includes(r.id)} onChange={() => toggle(r.id)} />
-            <div className="lr-main"><b>{r.name}</b><span className="mono">{r.code}</span></div>
+            <div className="lr-main">
+              <b>{r.name}</b>
+              <span className="mono">{r.code}</span>
+            </div>
           </label>
         ))}
       </div>

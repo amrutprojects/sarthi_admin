@@ -11,14 +11,21 @@ export const centreName = (id: string | null): string => (id ? AS.db.centreBy[id
 export const roleOf = (k: string): Role | undefined => AS.db.ROLES.find((r) => r.k === k);
 
 /* ---------- tasks ---------- */
-export interface TaskFilter extends Record<string, string> { priority: string; status: string; type: string; owner: string }
+export interface TaskFilter extends Record<string, string> {
+  priority: string;
+  status: string;
+  type: string;
+  owner: string;
+}
 export const DEFAULT_TASK: TaskFilter = { priority: 'ALL', status: 'ALL', type: 'ALL', owner: 'ALL' };
 export function filterTasks(f: TaskFilter): Task[] {
-  return AS.db.tasks.filter((t) =>
-    (f.priority === 'ALL' || t.priority === f.priority)
-    && (f.status === 'ALL' || t.status === f.status)
-    && (f.type === 'ALL' || t.type === f.type)
-    && (f.owner === 'ALL' || t.owner === f.owner));
+  return AS.db.tasks.filter(
+    (t) =>
+      (f.priority === 'ALL' || t.priority === f.priority) &&
+      (f.status === 'ALL' || t.status === f.status) &&
+      (f.type === 'ALL' || t.type === f.type) &&
+      (f.owner === 'ALL' || t.owner === f.owner),
+  );
 }
 export const task = (id: string): Task | undefined => AS.db.tasks.find((t) => t.id === id);
 export function updateTaskStatus(id: string, status: Task['status']): void {
@@ -28,9 +35,13 @@ export function updateTaskStatus(id: string, status: Task['status']): void {
 export const taskOwners = (): { name: string }[] => [...AS.db.pmoTeam, ...AS.db.coordinators];
 
 /* ---------- documents ---------- */
-export interface DocFilter extends Record<string, string> { category: string; status: string }
+export interface DocFilter extends Record<string, string> {
+  category: string;
+  status: string;
+}
 export const DEFAULT_DOC: DocFilter = { category: 'ALL', status: 'ALL' };
-export const filterDocs = (f: DocFilter): DocumentRecord[] => AS.db.documents.filter((d) => (f.category === 'ALL' || d.category === f.category) && (f.status === 'ALL' || d.status === f.status));
+export const filterDocs = (f: DocFilter): DocumentRecord[] =>
+  AS.db.documents.filter((d) => (f.category === 'ALL' || d.category === f.category) && (f.status === 'ALL' || d.status === f.status));
 
 /* ---------- reports ---------- */
 export const REPORTS: [id: string, title: string, description: string][] = [
@@ -56,7 +67,10 @@ export function saveConfig(values: Partial<ProgrammeConfig>): number {
   let changed = 0;
   const config = AS.db.config as unknown as Record<string, unknown>;
   (Object.keys(values) as (keyof ProgrammeConfig)[]).forEach((k) => {
-    if (config[k] !== values[k]) { config[k] = values[k]; changed++; }
+    if (config[k] !== values[k]) {
+      config[k] = values[k];
+      changed++;
+    }
   });
   return changed;
 }

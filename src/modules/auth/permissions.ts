@@ -9,14 +9,51 @@
 
 export const MENU_ACTIONS = ['view', 'create', 'update', 'delete', 'approve'] as const;
 export type MenuAction = (typeof MENU_ACTIONS)[number];
-export const MENU_ACTION_LABEL: Record<MenuAction, string> = { view: 'View', create: 'Add', update: 'Update', delete: 'Delete', approve: 'Approve' };
+export const MENU_ACTION_LABEL: Record<MenuAction, string> = {
+  view: 'View',
+  create: 'Add',
+  update: 'Update',
+  delete: 'Delete',
+  approve: 'Approve',
+};
 
 /* Sidebar key → the screen opens if the user holds ANY of these codes. Keys without an entry are open to every signed-in user. */
 const MENU_KEYS = [
-  'dashboard', 'exec', 'today', 'candidates', 'lifecycle', 'atrisk', 'imports', 'districts', 'map', 'centres', 'onboarding',
-  'batches', 'trainers', 'tot', 'live', 'offline', 'online', 'attendance', 'progress', 'assessments', 'certification',
-  'marketing', 'mobilization', 'comms', 'reports', 'finance', 'pmo', 'qa', 'tasks', 'documents', 'lms', 'app',
-  'admin', 'audit', 'settings',
+  'dashboard',
+  'exec',
+  'today',
+  'candidates',
+  'lifecycle',
+  'atrisk',
+  'imports',
+  'districts',
+  'map',
+  'centres',
+  'onboarding',
+  'batches',
+  'trainers',
+  'tot',
+  'live',
+  'offline',
+  'online',
+  'attendance',
+  'progress',
+  'assessments',
+  'certification',
+  'marketing',
+  'mobilization',
+  'comms',
+  'reports',
+  'finance',
+  'pmo',
+  'qa',
+  'tasks',
+  'documents',
+  'lms',
+  'app',
+  'admin',
+  'audit',
+  'settings',
 ];
 export const SCREEN_ACCESS: Record<string, string[]> = {
   ...Object.fromEntries(MENU_KEYS.map((k) => [k, [`${k}.view`]])),

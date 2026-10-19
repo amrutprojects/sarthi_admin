@@ -5,7 +5,12 @@ import { useCanOpen } from '../../modules/auth/components/Can';
 import { goTo } from '../../hooks/useLegacyEvents';
 import { useLegacyTick } from '../../utils/legacyBus';
 
-interface SidebarProps { active: string; collapsed: boolean; open: boolean; onToggle: () => void }
+interface SidebarProps {
+  active: string;
+  collapsed: boolean;
+  open: boolean;
+  onToggle: () => void;
+}
 
 export default function Sidebar({ active, collapsed, open, onToggle }: SidebarProps) {
   const navigate = useNavigate();
@@ -23,11 +28,19 @@ export default function Sidebar({ active, collapsed, open, onToggle }: SidebarPr
     <aside className={'sidebar' + (open ? ' open' : '')} id="sidebar">
       <div className="sb-brand">
         <div className="sb-logo">A×S</div>
-        <div className="sb-brand-txt"><b>AMRUT × SUMAGO</b><span>Programme Management Portal</span></div>
+        <div className="sb-brand-txt">
+          <b>AMRUT × SUMAGO</b>
+          <span>Programme Management Portal</span>
+        </div>
       </div>
       <div className="sb-scroll">
         {visible.map((n) => {
-          if (isNavGroup(n)) return <div className="sb-group" key={'g-' + n.g}>{n.g}</div>;
+          if (isNavGroup(n))
+            return (
+              <div className="sb-group" key={'g-' + n.g}>
+                {n.g}
+              </div>
+            );
           const c = n.count ? n.count() : null;
           return (
             <button
@@ -36,7 +49,9 @@ export default function Sidebar({ active, collapsed, open, onToggle }: SidebarPr
               className={'sb-item' + (active === n.k ? ' active' : '') + (n.warn ? ' warn' : '')}
               onClick={() => goTo(navigate, n.r)}
             >
-              <span className="sb-ico"><Icon name={n.i} /></span>
+              <span className="sb-ico">
+                <Icon name={n.i} />
+              </span>
               <span className="sb-label">{n.l}</span>
               {c ? <span className="sb-count">{c}</span> : null}
             </button>
@@ -44,9 +59,14 @@ export default function Sidebar({ active, collapsed, open, onToggle }: SidebarPr
         })}
       </div>
       <div className="sb-foot">
-        <div className="sb-demo"><b>DEMO ENVIRONMENT</b><br />Sample data only. Not actual programme performance.</div>
+        <div className="sb-demo">
+          <b>DEMO ENVIRONMENT</b>
+          <br />
+          Sample data only. Not actual programme performance.
+        </div>
         <button type="button" className="sb-toggle" onClick={onToggle}>
-          <Icon name={collapsed ? 'chevR' : 'chevL'} /><span className="sb-label">Collapse</span>
+          <Icon name={collapsed ? 'chevR' : 'chevL'} />
+          <span className="sb-label">Collapse</span>
         </button>
       </div>
     </aside>

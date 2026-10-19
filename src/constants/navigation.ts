@@ -1,19 +1,65 @@
 import { api } from '../services/mock/api';
 
-export interface NavGroup { g: string }
-export interface NavItem { k: string; l: string; i: string; r: string; count?: () => number; warn?: boolean }
+export interface NavGroup {
+  g: string;
+}
+export interface NavItem {
+  k: string;
+  l: string;
+  i: string;
+  r: string;
+  count?: () => number;
+  warn?: boolean;
+}
 export type NavEntry = NavGroup | NavItem;
 export const isNavGroup = (n: NavEntry): n is NavGroup => 'g' in n;
 
 export type RouteName =
-  | 'dashboard' | 'executive' | 'today' | 'candidates' | 'candidateDetail' | 'lifecycle' | 'atRisk'
-  | 'districts' | 'districtDetail' | 'talukaDetail' | 'mapPage' | 'centres' | 'centreDetail' | 'centreOnboarding'
-  | 'batches' | 'batchDetail' | 'trainers' | 'trainerDetail' | 'tot'
-  | 'live' | 'offlineMode' | 'onlineMode' | 'attendance' | 'progress'
-  | 'assessments' | 'certification' | 'marketing' | 'campaignDetail' | 'mobilization' | 'communications'
-  | 'reports' | 'reportDetail' | 'finance' | 'pmo' | 'qa' | 'tasks' | 'documents'
-  | 'lms' | 'studentApp' | 'administration' | 'users' | 'audit' | 'settings'
-  | 'studentImport' | 'importBatch';
+  | 'dashboard'
+  | 'executive'
+  | 'today'
+  | 'candidates'
+  | 'candidateDetail'
+  | 'lifecycle'
+  | 'atRisk'
+  | 'districts'
+  | 'districtDetail'
+  | 'talukaDetail'
+  | 'mapPage'
+  | 'centres'
+  | 'centreDetail'
+  | 'centreOnboarding'
+  | 'batches'
+  | 'batchDetail'
+  | 'trainers'
+  | 'trainerDetail'
+  | 'tot'
+  | 'live'
+  | 'offlineMode'
+  | 'onlineMode'
+  | 'attendance'
+  | 'progress'
+  | 'assessments'
+  | 'certification'
+  | 'marketing'
+  | 'campaignDetail'
+  | 'mobilization'
+  | 'communications'
+  | 'reports'
+  | 'reportDetail'
+  | 'finance'
+  | 'pmo'
+  | 'qa'
+  | 'tasks'
+  | 'documents'
+  | 'lms'
+  | 'studentApp'
+  | 'administration'
+  | 'users'
+  | 'audit'
+  | 'settings'
+  | 'studentImport'
+  | 'importBatch';
 
 /* [path pattern, route name, sidebar key] */
 export type AdminRoute = [path: string, name: RouteName, navKey: string];
@@ -79,22 +125,49 @@ export const MOBILE_NAV: NavItem[] = [
 ];
 
 export const ADMIN_ROUTES: AdminRoute[] = [
-  ['/dashboard', 'dashboard', 'dashboard'], ['/executive', 'executive', 'exec'], ['/today', 'today', 'today'],
-  ['/candidates', 'candidates', 'candidates'], ['/candidates/:id', 'candidateDetail', 'candidates'],
-  ['/lifecycle', 'lifecycle', 'lifecycle'], ['/at-risk', 'atRisk', 'atrisk'],
-  ['/student-import', 'studentImport', 'imports'], ['/student-import/:id', 'importBatch', 'imports'],
-  ['/districts', 'districts', 'districts'], ['/districts/:id', 'districtDetail', 'districts'],
-  ['/districts/:id/talukas/:t', 'talukaDetail', 'districts'], ['/map', 'mapPage', 'map'],
-  ['/centres', 'centres', 'centres'], ['/centres/:id', 'centreDetail', 'centres'], ['/centre-onboarding', 'centreOnboarding', 'onboarding'],
-  ['/batches', 'batches', 'batches'], ['/batches/:id', 'batchDetail', 'batches'],
-  ['/trainers', 'trainers', 'trainers'], ['/trainers/:id', 'trainerDetail', 'trainers'], ['/tot', 'tot', 'tot'],
-  ['/live', 'live', 'live'], ['/offline', 'offlineMode', 'offline'], ['/online', 'onlineMode', 'online'],
-  ['/attendance', 'attendance', 'attendance'], ['/progress', 'progress', 'progress'],
-  ['/assessments', 'assessments', 'assessments'], ['/certification', 'certification', 'certification'],
-  ['/marketing', 'marketing', 'marketing'], ['/marketing/:id', 'campaignDetail', 'marketing'],
-  ['/mobilization', 'mobilization', 'mobilization'], ['/communications', 'communications', 'comms'],
-  ['/reports', 'reports', 'reports'], ['/reports/:id', 'reportDetail', 'reports'], ['/finance', 'finance', 'finance'],
-  ['/pmo', 'pmo', 'pmo'], ['/qa', 'qa', 'qa'], ['/tasks', 'tasks', 'tasks'], ['/documents', 'documents', 'documents'],
-  ['/lms', 'lms', 'lms'], ['/student-app', 'studentApp', 'app'],
-  ['/administration', 'administration', 'admin'], ['/users', 'users', 'users'], ['/audit', 'audit', 'audit'], ['/settings', 'settings', 'settings'],
+  ['/dashboard', 'dashboard', 'dashboard'],
+  ['/executive', 'executive', 'exec'],
+  ['/today', 'today', 'today'],
+  ['/candidates', 'candidates', 'candidates'],
+  ['/candidates/:id', 'candidateDetail', 'candidates'],
+  ['/lifecycle', 'lifecycle', 'lifecycle'],
+  ['/at-risk', 'atRisk', 'atrisk'],
+  ['/student-import', 'studentImport', 'imports'],
+  ['/student-import/:id', 'importBatch', 'imports'],
+  ['/districts', 'districts', 'districts'],
+  ['/districts/:id', 'districtDetail', 'districts'],
+  ['/districts/:id/talukas/:t', 'talukaDetail', 'districts'],
+  ['/map', 'mapPage', 'map'],
+  ['/centres', 'centres', 'centres'],
+  ['/centres/:id', 'centreDetail', 'centres'],
+  ['/centre-onboarding', 'centreOnboarding', 'onboarding'],
+  ['/batches', 'batches', 'batches'],
+  ['/batches/:id', 'batchDetail', 'batches'],
+  ['/trainers', 'trainers', 'trainers'],
+  ['/trainers/:id', 'trainerDetail', 'trainers'],
+  ['/tot', 'tot', 'tot'],
+  ['/live', 'live', 'live'],
+  ['/offline', 'offlineMode', 'offline'],
+  ['/online', 'onlineMode', 'online'],
+  ['/attendance', 'attendance', 'attendance'],
+  ['/progress', 'progress', 'progress'],
+  ['/assessments', 'assessments', 'assessments'],
+  ['/certification', 'certification', 'certification'],
+  ['/marketing', 'marketing', 'marketing'],
+  ['/marketing/:id', 'campaignDetail', 'marketing'],
+  ['/mobilization', 'mobilization', 'mobilization'],
+  ['/communications', 'communications', 'comms'],
+  ['/reports', 'reports', 'reports'],
+  ['/reports/:id', 'reportDetail', 'reports'],
+  ['/finance', 'finance', 'finance'],
+  ['/pmo', 'pmo', 'pmo'],
+  ['/qa', 'qa', 'qa'],
+  ['/tasks', 'tasks', 'tasks'],
+  ['/documents', 'documents', 'documents'],
+  ['/lms', 'lms', 'lms'],
+  ['/student-app', 'studentApp', 'app'],
+  ['/administration', 'administration', 'admin'],
+  ['/users', 'users', 'users'],
+  ['/audit', 'audit', 'audit'],
+  ['/settings', 'settings', 'settings'],
 ];

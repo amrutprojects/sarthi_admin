@@ -29,11 +29,14 @@ function useUserMutation<TVars, TResult>(fn: (vars: TVars) => Promise<TResult>) 
   return useMutation({ mutationFn: fn, onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }) });
 }
 
-export const useCreateUser = () => useUserMutation((input: CreateUserInput & { idempotencyKey: string }) => {
-  const { idempotencyKey, ...body } = input;
-  return userApi.create(body, idempotencyKey);
-});
+export const useCreateUser = () =>
+  useUserMutation((input: CreateUserInput & { idempotencyKey: string }) => {
+    const { idempotencyKey, ...body } = input;
+    return userApi.create(body, idempotencyKey);
+  });
 export const useUpdateUser = () => useUserMutation(({ id, input }: { id: string; input: UpdateUserInput }) => userApi.update(id, input));
-export const useSetUserStatus = () => useUserMutation(({ id, isActive }: { id: string; isActive: boolean }) => userApi.setStatus(id, isActive));
+export const useSetUserStatus = () =>
+  useUserMutation(({ id, isActive }: { id: string; isActive: boolean }) => userApi.setStatus(id, isActive));
 export const useDeleteUser = () => useUserMutation((id: string) => userApi.remove(id));
-export const useReplaceUserRoles = () => useUserMutation(({ id, roleIds }: { id: string; roleIds: string[] }) => userApi.replaceRoles(id, roleIds));
+export const useReplaceUserRoles = () =>
+  useUserMutation(({ id, roleIds }: { id: string; roleIds: string[] }) => userApi.replaceRoles(id, roleIds));

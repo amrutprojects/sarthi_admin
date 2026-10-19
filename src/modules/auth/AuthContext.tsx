@@ -80,7 +80,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [signOutLocally]);
 
   const user = session.data ?? null;
-  const status: AuthStatus = session.isPending || (session.isError && session.isFetching) ? 'loading' : user ? 'authenticated' : 'anonymous';
+  const status: AuthStatus =
+    session.isPending || (session.isError && session.isFetching) ? 'loading' : user ? 'authenticated' : 'anonymous';
 
   const value = useMemo<AuthValue>(
     () => ({

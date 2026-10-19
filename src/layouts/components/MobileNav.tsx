@@ -10,7 +10,8 @@ export default function MobileNav({ active }: { active: string }) {
     <nav className="mnav">
       {MOBILE_NAV.filter((n) => canOpen(n.k)).map((n) => (
         <button key={n.k} type="button" className={active === n.k ? 'on' : ''} onClick={() => navigate(n.r)}>
-          <Icon name={n.i} /><span>{n.l}</span>
+          <Icon name={n.i} />
+          <span>{n.l}</span>
         </button>
       ))}
     </nav>

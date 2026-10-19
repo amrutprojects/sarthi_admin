@@ -31,7 +31,9 @@ export default function UserTable({ users, meta, page, onPage, currentUserId, sh
               {showRoles ? <th scope="col">Roles</th> : null}
               <th scope="col">Status</th>
               <th scope="col">Last sign-in</th>
-              <th scope="col"><span className="tw-sr-only">Actions</span></th>
+              <th scope="col">
+                <span className="tw-sr-only">Actions</span>
+              </th>
             </tr>
           </thead>
           <tbody className={fetching ? 'tw-opacity-60' : undefined}>
@@ -49,13 +51,21 @@ export default function UserTable({ users, meta, page, onPage, currentUserId, sh
                 {showRoles ? (
                   <td>
                     {u.roles?.length ? (
-                      <div className="tw-flex tw-flex-wrap tw-gap-1">{u.roles.map((r) => <Badge key={r.id} tone="blue">{r.name}</Badge>)}</div>
+                      <div className="tw-flex tw-flex-wrap tw-gap-1">
+                        {u.roles.map((r) => (
+                          <Badge key={r.id} tone="blue">
+                            {r.name}
+                          </Badge>
+                        ))}
+                      </div>
                     ) : (
                       <span className="tw-text-ink-muted">No role</span>
                     )}
                   </td>
                 ) : null}
-                <td><GenBadge status={u.isActive ? 'ACTIVE' : 'INACTIVE'} /></td>
+                <td>
+                  <GenBadge status={u.isActive ? 'ACTIVE' : 'INACTIVE'} />
+                </td>
                 <td className="tw-whitespace-nowrap">{fmt(u.lastLoginAt)}</td>
                 <td>{renderActions(u)}</td>
               </tr>
@@ -66,12 +76,22 @@ export default function UserTable({ users, meta, page, onPage, currentUserId, sh
       {meta && meta.total > 0 ? (
         <div className="tbl-bot">
           <div className="info">
-            Showing <b>{(page - 1) * meta.limit + 1}–{Math.min(meta.total, page * meta.limit)}</b> of <b>{meta.total}</b>
+            Showing{' '}
+            <b>
+              {(page - 1) * meta.limit + 1}–{Math.min(meta.total, page * meta.limit)}
+            </b>{' '}
+            of <b>{meta.total}</b>
           </div>
           <div className="pager" role="navigation" aria-label="Pagination">
-            <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} aria-label="Previous page">‹</button>
-            <button type="button" className="on" aria-current="page">{page} / {pages}</button>
-            <button type="button" disabled={page >= pages} onClick={() => onPage(page + 1)} aria-label="Next page">›</button>
+            <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} aria-label="Previous page">
+              ‹
+            </button>
+            <button type="button" className="on" aria-current="page">
+              {page} / {pages}
+            </button>
+            <button type="button" disabled={page >= pages} onClick={() => onPage(page + 1)} aria-label="Next page">
+              ›
+            </button>
           </div>
         </div>
       ) : null}

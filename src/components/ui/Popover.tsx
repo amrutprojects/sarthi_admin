@@ -25,14 +25,26 @@ export default function Popover({ anchor, width = 340, alignLeft = false, onClos
       const t = e.target as Node;
       if (ref.current && !ref.current.contains(t) && !(anchor && anchor.contains(t))) onClose();
     }
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+    }
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [anchor, onClose]);
 
   return createPortal(
-    <div className="pop" ref={ref} style={{ width, top: pos.top, left: pos.left }} onClick={(e) => { if ((e.target as Element).closest('[data-close-pop]')) onClose(); }}>
+    <div
+      className="pop"
+      ref={ref}
+      style={{ width, top: pos.top, left: pos.left }}
+      onClick={(e) => {
+        if ((e.target as Element).closest('[data-close-pop]')) onClose();
+      }}
+    >
       {children}
     </div>,
     document.body,

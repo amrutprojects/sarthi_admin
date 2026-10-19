@@ -8,7 +8,11 @@ import type { ChartItem } from '../../types/legacy';
 
 const db = () => AS.db;
 
-export interface DashFilter extends Record<string, string> { district: string; mode: string; metric: string }
+export interface DashFilter extends Record<string, string> {
+  district: string;
+  mode: string;
+  metric: string;
+}
 export const DEFAULT_DASH_FILTER: DashFilter = { district: 'ALL', mode: 'ALL', metric: 'enrolled' };
 
 export function filteredCandidates(f: DashFilter): Candidate[] {
@@ -42,11 +46,38 @@ export function criticalItems() {
   const amberC = D.centres.filter((c) => c.score < 75);
   const risk = D.atRiskCandidates();
   return [
-    { color: 'var(--red)', t: crit.length + ' districts critical / delayed', s: crit.map((d) => d.name).join(', ') || 'None', link: '#/districts?filter=critical' },
-    { color: 'var(--amber)', t: amberC.length + ' centres below performance benchmark', s: amberC.map((c) => c.name.split(' ')[0]).join(', ') || 'None', link: '#/centres?filter=low' },
-    { color: 'var(--amber)', t: risk.length + ' students flagged at risk', s: 'Attendance, inactivity or progress concerns', link: '#/at-risk' },
-    { color: 'var(--red)', t: D.tasks.filter((t) => t.priority === 'HIGH' && t.status !== 'CLOSED' && t.status !== 'RESOLVED').length + ' high-priority open tasks', s: 'Assigned across PMO, QA and coordinators', link: '#/tasks?priority=HIGH' },
-    { color: 'var(--amber)', t: D.batches.filter((b) => b.status === 'DELAYED').length + ' batch delayed', s: 'Revised schedule pending', link: '#/batches?status=DELAYED' },
+    {
+      color: 'var(--red)',
+      t: crit.length + ' districts critical / delayed',
+      s: crit.map((d) => d.name).join(', ') || 'None',
+      link: '#/districts?filter=critical',
+    },
+    {
+      color: 'var(--amber)',
+      t: amberC.length + ' centres below performance benchmark',
+      s: amberC.map((c) => c.name.split(' ')[0]).join(', ') || 'None',
+      link: '#/centres?filter=low',
+    },
+    {
+      color: 'var(--amber)',
+      t: risk.length + ' students flagged at risk',
+      s: 'Attendance, inactivity or progress concerns',
+      link: '#/at-risk',
+    },
+    {
+      color: 'var(--red)',
+      t:
+        D.tasks.filter((t) => t.priority === 'HIGH' && t.status !== 'CLOSED' && t.status !== 'RESOLVED').length +
+        ' high-priority open tasks',
+      s: 'Assigned across PMO, QA and coordinators',
+      link: '#/tasks?priority=HIGH',
+    },
+    {
+      color: 'var(--amber)',
+      t: D.batches.filter((b) => b.status === 'DELAYED').length + ' batch delayed',
+      s: 'Revised schedule pending',
+      link: '#/batches?status=DELAYED',
+    },
   ];
 }
 
@@ -73,8 +104,8 @@ export function districtKpis(d: District): Kpis {
 }
 
 export function topDistricts(): ChartItem[] {
-  return db().districts
-    .map((d) => {
+  return db()
+    .districts.map((d) => {
       const k = districtKpis(d);
       return { l: d.name, v: k.enrolled, display: k.enrolled + ' / ' + d.target, link: '#/districts/' + d.code };
     })

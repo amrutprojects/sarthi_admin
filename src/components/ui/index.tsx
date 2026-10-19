@@ -27,12 +27,52 @@ export function Html({ html, as: Tag = 'div', ...rest }: HtmlProps) {
   return <Tag {...rest} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-const TONE_CLASS: Record<Tone, string> = { green: 'b-green', amber: 'b-amber', red: 'b-red', grey: 'b-grey', blue: 'b-blue', info: 'b-info', violet: 'b-violet', saffron: 'b-saffron' };
+const TONE_CLASS: Record<Tone, string> = {
+  green: 'b-green',
+  amber: 'b-amber',
+  red: 'b-red',
+  grey: 'b-grey',
+  blue: 'b-blue',
+  info: 'b-info',
+  violet: 'b-violet',
+  saffron: 'b-saffron',
+};
 const GEN_TONE: Record<string, Tone> = {
-  ACTIVE: 'green', COMPLETED: 'green', CERTIFIED: 'green', VERIFIED: 'green', APPROVED: 'green', SENT: 'green', PAID: 'green', RESOLVED: 'green', HEALTHY: 'green', ON_TRACK: 'green', PASSED: 'green',
-  PENDING: 'amber', IN_PROGRESS: 'amber', UPCOMING: 'blue', SCHEDULED: 'blue', NEEDS_IMPROVEMENT: 'amber', AT_RISK: 'amber', PARTIALLY_PAID: 'amber', DRAFT: 'grey', OPEN: 'amber', PARTIAL: 'amber',
-  CRITICAL: 'red', DELAYED: 'red', REJECTED: 'red', FAILED: 'red', SUSPENDED: 'red', INACTIVE: 'grey', CANCELLED: 'red',
-  CLOSED: 'grey', ARCHIVED: 'grey', NOT_STARTED: 'grey', BACKUP: 'blue', SUCCESS: 'green', INFO: 'blue', LIVE: 'red',
+  ACTIVE: 'green',
+  COMPLETED: 'green',
+  CERTIFIED: 'green',
+  VERIFIED: 'green',
+  APPROVED: 'green',
+  SENT: 'green',
+  PAID: 'green',
+  RESOLVED: 'green',
+  HEALTHY: 'green',
+  ON_TRACK: 'green',
+  PASSED: 'green',
+  PENDING: 'amber',
+  IN_PROGRESS: 'amber',
+  UPCOMING: 'blue',
+  SCHEDULED: 'blue',
+  NEEDS_IMPROVEMENT: 'amber',
+  AT_RISK: 'amber',
+  PARTIALLY_PAID: 'amber',
+  DRAFT: 'grey',
+  OPEN: 'amber',
+  PARTIAL: 'amber',
+  CRITICAL: 'red',
+  DELAYED: 'red',
+  REJECTED: 'red',
+  FAILED: 'red',
+  SUSPENDED: 'red',
+  INACTIVE: 'grey',
+  CANCELLED: 'red',
+  CLOSED: 'grey',
+  ARCHIVED: 'grey',
+  NOT_STARTED: 'grey',
+  BACKUP: 'blue',
+  SUCCESS: 'green',
+  INFO: 'blue',
+  LIVE: 'red',
 };
 
 export function Badge({ tone, nodot, children }: { tone?: Tone | string; nodot?: boolean; children?: ReactNode }) {
@@ -42,12 +82,15 @@ export function GenBadge({ status }: { status: string }) {
   return <Badge tone={GEN_TONE[status] || 'grey'}>{titleCase(status)}</Badge>;
 }
 export function ModeTag({ mode }: { mode: string }) {
-  return mode === 'ONLINE'
-    ? <span className="mode-tag mode-on">ONLINE</span>
-    : <span className="mode-tag mode-off">OFFLINE</span>;
+  return mode === 'ONLINE' ? <span className="mode-tag mode-on">ONLINE</span> : <span className="mode-tag mode-off">OFFLINE</span>;
 }
 export function LivePill({ children = 'LIVE' }: { children?: ReactNode }) {
-  return <span className="live"><i />{children}</span>;
+  return (
+    <span className="live">
+      <i />
+      {children}
+    </span>
+  );
 }
 
 export interface KpiProps {
@@ -67,12 +110,19 @@ export function Kpi({ label, value, tone, sub, link, pct, progTone, title }: Kpi
       <div className="kpi-t">{label}</div>
       <div className="kpi-v">{typeof value === 'number' ? fmt(value) : value}</div>
       {sub ? <div className="kpi-d">{sub}</div> : null}
-      {pct != null ? <div className="prog sm mt8"><i className={progTone || ''} style={{ width: Math.min(100, pct) + '%' }} /></div> : null}
+      {pct != null ? (
+        <div className="prog sm mt8">
+          <i className={progTone || ''} style={{ width: Math.min(100, pct) + '%' }} />
+        </div>
+      ) : null}
     </div>
   );
 }
 
-export interface Crumb { l: string; link?: string }
+export interface Crumb {
+  l: string;
+  link?: string;
+}
 export function Crumbs({ items }: { items: Crumb[] }) {
   const go = useGo();
   return (
@@ -87,14 +137,23 @@ export function Crumbs({ items }: { items: Crumb[] }) {
   );
 }
 
-interface PageHeadProps { crumbs?: Crumb[]; title: ReactNode; badge?: ReactNode; sub?: ReactNode; actions?: ReactNode }
+interface PageHeadProps {
+  crumbs?: Crumb[];
+  title: ReactNode;
+  badge?: ReactNode;
+  sub?: ReactNode;
+  actions?: ReactNode;
+}
 export function PageHead({ crumbs, title, badge, sub, actions }: PageHeadProps) {
   return (
     <>
       {crumbs ? <Crumbs items={crumbs} /> : null}
       <div className="page-head">
         <div className="ph-l">
-          <h1>{title}{badge}</h1>
+          <h1>
+            {title}
+            {badge}
+          </h1>
           {sub ? <div className="page-sub">{sub}</div> : null}
         </div>
         {actions ? <div className="page-actions">{actions}</div> : null}
@@ -103,13 +162,29 @@ export function PageHead({ crumbs, title, badge, sub, actions }: PageHeadProps) 
   );
 }
 
-interface CardProps { title?: ReactNode; sub?: ReactNode; action?: ReactNode; footer?: ReactNode; flush?: boolean; cls?: string; children?: ReactNode }
+interface CardProps {
+  title?: ReactNode;
+  sub?: ReactNode;
+  action?: ReactNode;
+  footer?: ReactNode;
+  flush?: boolean;
+  cls?: string;
+  children?: ReactNode;
+}
 export function Card({ title, sub, action, footer, flush, cls, children }: CardProps) {
   return (
     <div className={'card' + (cls ? ' ' + cls : '')}>
       {title ? (
         <div className="card-h">
-          <h3>{title}{sub ? <> <span className="sub">{sub}</span></> : null}</h3>
+          <h3>
+            {title}
+            {sub ? (
+              <>
+                {' '}
+                <span className="sub">{sub}</span>
+              </>
+            ) : null}
+          </h3>
           {action}
         </div>
       ) : null}
@@ -120,38 +195,87 @@ export function Card({ title, sub, action, footer, flush, cls, children }: CardP
 }
 
 /* Button that navigates to a "#/route" link. */
-export function LinkButton({ to, className = 'btn', icon, children }: { to: string; className?: string; icon?: string; children?: ReactNode }) {
+export function LinkButton({
+  to,
+  className = 'btn',
+  icon,
+  children,
+}: {
+  to: string;
+  className?: string;
+  icon?: string;
+  children?: ReactNode;
+}) {
   const go = useGo();
-  return <button type="button" className={className} onClick={() => go(to)}>{icon ? <Icon name={icon} /> : null}{children}</button>;
+  return (
+    <button type="button" className={className} onClick={() => go(to)}>
+      {icon ? <Icon name={icon} /> : null}
+      {children}
+    </button>
+  );
 }
 
 export function EmptyState({ title, msg, children }: { title: string; msg: string; children?: ReactNode }) {
   return (
     <div className="empty">
-      <div className="e-ico"><Icon name="search" /></div>
-      <b>{title}</b><p>{msg}</p>{children}
+      <div className="e-ico">
+        <Icon name="search" />
+      </div>
+      <b>{title}</b>
+      <p>{msg}</p>
+      {children}
     </div>
   );
 }
 
 export function Callout({ tone, title, children }: { tone: 'info' | 'warn' | 'err' | 'ok'; title?: string; children?: ReactNode }) {
-  return <div className={'callout c-' + tone}><div>{title ? <b>{title}</b> : null}{children}</div></div>;
+  return (
+    <div className={'callout c-' + tone}>
+      <div>
+        {title ? <b>{title}</b> : null}
+        {children}
+      </div>
+    </div>
+  );
 }
 
-export function DemoNote({ children = 'Illustrative / demo data. Indicative values - subject to AMRUT / COEP approval.' }: { children?: ReactNode }) {
+export function DemoNote({
+  children = 'Illustrative / demo data. Indicative values - subject to AMRUT / COEP approval.',
+}: {
+  children?: ReactNode;
+}) {
   return <div className="disclaim mt10">{children}</div>;
 }
 
 export function KvList({ pairs }: { pairs: [string, ReactNode][] }) {
-  return <>{pairs.map(([k, v]) => <div className="kv" key={k}><span>{k}</span><b>{v}</b></div>)}</>;
+  return (
+    <>
+      {pairs.map(([k, v]) => (
+        <div className="kv" key={k}>
+          <span>{k}</span>
+          <b>{v}</b>
+        </div>
+      ))}
+    </>
+  );
 }
 
-interface AlertCardProps { color: string; title: ReactNode; sub: ReactNode; onClick?: () => void; right?: ReactNode; chevron?: boolean }
+interface AlertCardProps {
+  color: string;
+  title: ReactNode;
+  sub: ReactNode;
+  onClick?: () => void;
+  right?: ReactNode;
+  chevron?: boolean;
+}
 export function AlertCard({ color, title, sub, onClick, right, chevron }: AlertCardProps) {
   return (
     <div className="alert-card" onClick={onClick}>
       <span className="pdot" style={{ background: color }} />
-      <div className="ac-b"><b>{title}</b><span>{sub}</span></div>
+      <div className="ac-b">
+        <b>{title}</b>
+        <span>{sub}</span>
+      </div>
       {right}
       {chevron ? <Icon name="chevR" /> : null}
     </div>
@@ -179,14 +303,30 @@ export function FilterBar<V extends Record<string, string>>({ id, fields, value,
           <label htmlFor={(id || 'fb') + '-' + f.k}>{f.l}</label>
           {'options' in f ? (
             <select className="inp" id={(id || 'fb') + '-' + f.k} value={value[f.k]} onChange={(e) => onChange(f.k, e.target.value)}>
-              {f.options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+              {f.options.map((o) => (
+                <option key={o.v} value={o.v}>
+                  {o.l}
+                </option>
+              ))}
             </select>
           ) : (
-            <input type={f.type} className="inp" id={(id || 'fb') + '-' + f.k} placeholder={f.ph} value={value[f.k] || ''} onChange={(e) => onChange(f.k, e.target.value)} />
+            <input
+              type={f.type}
+              className="inp"
+              id={(id || 'fb') + '-' + f.k}
+              placeholder={f.ph}
+              value={value[f.k] || ''}
+              onChange={(e) => onChange(f.k, e.target.value)}
+            />
           )}
         </div>
       ))}
-      <div className="fb-actions"><button type="button" className="btn" onClick={onReset}>Reset</button>{extra}</div>
+      <div className="fb-actions">
+        <button type="button" className="btn" onClick={onReset}>
+          Reset
+        </button>
+        {extra}
+      </div>
     </div>
   );
 }
@@ -200,21 +340,48 @@ export function StatusBadge({ status }: { status: CandidateStatus }) {
 }
 
 export function ProgRow({ pct, tone, label }: { pct: number; tone?: string; label?: string }) {
-  return <div className="prog-row"><div className="prog"><i className={tone || ''} style={{ width: Math.min(100, pct || 0) + '%' }} /></div><b>{label || (pct || 0) + '%'}</b></div>;
+  return (
+    <div className="prog-row">
+      <div className="prog">
+        <i className={tone || ''} style={{ width: Math.min(100, pct || 0) + '%' }} />
+      </div>
+      <b>{label || (pct || 0) + '%'}</b>
+    </div>
+  );
 }
 
 export function AttendanceCell({ value: v }: { value: number }) {
   if (!v) return <span className="muted">-</span>;
   const tone = v >= 85 ? 'g' : v >= 75 ? '' : v >= 60 ? 'a' : 'r';
-  return <div className="prog-row" style={{ minWidth: 96 }}><div className="prog sm"><i className={tone} style={{ width: v + '%' }} /></div><b>{v}%</b></div>;
+  return (
+    <div className="prog-row" style={{ minWidth: 96 }}>
+      <div className="prog sm">
+        <i className={tone} style={{ width: v + '%' }} />
+      </div>
+      <b>{v}%</b>
+    </div>
+  );
 }
 
 export const Dash = () => <span className="muted">—</span>;
 
-export interface TimelineItem { title: string; sub: ReactNode; state?: 'done' | 'cur' | 'fail' | '' }
+export interface TimelineItem {
+  title: string;
+  sub: ReactNode;
+  state?: 'done' | 'cur' | 'fail' | '';
+}
 /* Vertical status timeline (original U.tl). */
 export function Timeline({ items }: { items: TimelineItem[] }) {
-  return <div className="tl">{items.map((i, n) => <div key={n} className={'tl-i ' + (i.state || '')}><b>{i.title}</b><span>{i.sub}</span></div>)}</div>;
+  return (
+    <div className="tl">
+      {items.map((i, n) => (
+        <div key={n} className={'tl-i ' + (i.state || '')}>
+          <b>{i.title}</b>
+          <span>{i.sub}</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export interface ListItem {
@@ -236,8 +403,15 @@ export function ListRows({ items }: { items: ListItem[] }) {
         const iconStyle: CSSProperties = { background: i.iconBg || 'var(--brand-100)', color: i.iconFg || 'var(--brand-600)' };
         return (
           <div key={n} className="list-row" onClick={i.link ? () => go(i.link as string) : undefined}>
-            {i.icon || i.iconText ? <div className="icon-sq" style={iconStyle}>{i.iconText || <Icon name={i.icon as string} />}</div> : null}
-            <div className="lr-main"><b>{i.title}</b><span>{i.sub || ''}</span></div>
+            {i.icon || i.iconText ? (
+              <div className="icon-sq" style={iconStyle}>
+                {i.iconText || <Icon name={i.icon as string} />}
+              </div>
+            ) : null}
+            <div className="lr-main">
+              <b>{i.title}</b>
+              <span>{i.sub || ''}</span>
+            </div>
             {i.right}
           </div>
         );

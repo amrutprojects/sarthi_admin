@@ -19,7 +19,9 @@ export default function AdminLayout() {
   const { sidebarCollapsed: collapsed, sidebarOpen: open, toggleSidebar: toggle, setSidebarOpen } = useUiStore();
 
   /* Close the off-canvas sidebar after navigating (phones and tablets). */
-  useEffect(() => { setSidebarOpen(false); }, [pathname, setSidebarOpen]);
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname, setSidebarOpen]);
 
   const nk = activeKey(pathname);
   return (
@@ -27,7 +29,9 @@ export default function AdminLayout() {
       <Sidebar active={nk} collapsed={collapsed} open={open} onToggle={toggle} />
       <div className="main">
         <Topbar onBurger={() => setSidebarOpen(!open)} />
-        <ErrorBoundary resetKey={pathname}><Outlet /></ErrorBoundary>
+        <ErrorBoundary resetKey={pathname}>
+          <Outlet />
+        </ErrorBoundary>
       </div>
       <MobileNav active={nk} />
       <GlobalDialogs />

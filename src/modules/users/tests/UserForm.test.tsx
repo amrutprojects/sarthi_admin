@@ -15,7 +15,18 @@ describe('<UserForm>', () => {
 
   it('submits trimmed, valid values with the selected roles', async () => {
     const onSubmit = vi.fn();
-    const roles = [{ id: '11111111-1111-4111-8111-111111111111', name: 'Viewer', code: 'VIEWER', description: null, isSystem: false, isActive: true, createdAt: '', updatedAt: '' }];
+    const roles = [
+      {
+        id: '11111111-1111-4111-8111-111111111111',
+        name: 'Viewer',
+        code: 'VIEWER',
+        description: null,
+        isSystem: false,
+        isActive: true,
+        createdAt: '',
+        updatedAt: '',
+      },
+    ];
     render(<UserForm mode="create" roles={roles} onSubmit={onSubmit} onCancel={() => {}} />);
     await userEvent.type(screen.getByLabelText('Full name'), '  Asha Patil ');
     await userEvent.type(screen.getByLabelText('Email'), 'asha@example.org');
@@ -29,7 +40,9 @@ describe('<UserForm>', () => {
   });
 
   it('shows server-side field errors (e.g. duplicate email)', () => {
-    render(<UserForm mode="create" serverErrors={{ email: 'A user with this email already exists' }} onSubmit={() => {}} onCancel={() => {}} />);
+    render(
+      <UserForm mode="create" serverErrors={{ email: 'A user with this email already exists' }} onSubmit={() => {}} onCancel={() => {}} />,
+    );
     expect(screen.getByRole('alert')).toHaveTextContent('A user with this email already exists');
   });
 

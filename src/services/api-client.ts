@@ -112,7 +112,12 @@ export async function request<T>(path: string, opts: RequestOptions = {}): Promi
   const json = (await res.json().catch(() => null)) as Envelope<T> | null;
   if (!res.ok || !json?.success) {
     if (res.status === 401 && !opts.skipAuthHandling) unauthorizedHandler?.();
-    throw new ApiError(json?.message || res.statusText || 'Request failed', res.status, json?.error?.code ?? 'ERROR', json?.error?.details ?? []);
+    throw new ApiError(
+      json?.message || res.statusText || 'Request failed',
+      res.status,
+      json?.error?.code ?? 'ERROR',
+      json?.error?.details ?? [],
+    );
   }
   return { data: json.data, meta: json.meta, message: json.message };
 }
