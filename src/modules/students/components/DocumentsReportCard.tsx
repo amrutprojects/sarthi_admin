@@ -24,7 +24,24 @@ export default function DocumentsReportCard({ report }: { report: DocumentsRepor
             tone={report.unmatchedFolders.length ? 'tw-text-warn' : undefined}
           />
         </div>
-        {report.replaced ? <div className="hint mt10">{report.replaced} earlier documents were replaced by this upload.</div> : null}
+        <div className="hint mt10">
+          {report.matchedByPath ? `${report.matchedByPath} files were matched by the paths written in the Excel. ` : ''}
+          {report.replaced ? `${report.replaced} earlier documents were replaced by this upload.` : ''}
+        </div>
+        {report.missingReferenced?.length ? (
+          <div className="mt14">
+            <Callout tone="err" title={`Files named in the Excel but not in the ZIP (${report.missingReferenced.length}). `}>
+              <ul className="tw-mb-0 tw-mt-2 tw-max-h-60 tw-overflow-auto tw-pl-5 tw-text-sm">
+                {report.missingReferenced.slice(0, 100).map((m) => (
+                  <li key={`${m.rowNumber}-${m.docType}`}>
+                    Row {m.rowNumber} ({m.sourceRecordId ?? 'no source ID'}) · {m.docType.replace(/_/g, ' ').toLowerCase()}:{' '}
+                    <span className="mono">{m.path}</span>
+                  </li>
+                ))}
+              </ul>
+            </Callout>
+          </div>
+        ) : null}
         {report.rejected.length ? (
           <details className="mt14">
             <summary className="tw-cursor-pointer tw-font-semibold">Rejected files ({report.rejected.length})</summary>

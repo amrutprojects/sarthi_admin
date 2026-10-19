@@ -55,6 +55,8 @@ describe('<DocumentsReportCard>', () => {
           studentsWithFiles: 4,
           unmatchedFolders: ['MA-9999'],
           rejected: [{ path: 'MA-1/PHOTO.pdf', reason: 'not a PDF, JPG or PNG file' }],
+          matchedByPath: 10,
+          missingReferenced: [{ rowNumber: 4, sourceRecordId: 'MA-4', docType: 'CASTE_CERT', path: 'scans/missing.pdf' }],
         }}
       />,
     );
@@ -62,6 +64,8 @@ describe('<DocumentsReportCard>', () => {
     expect(screen.getByText('Students with files')).toBeInTheDocument();
     expect(screen.getByText(/not a PDF, JPG or PNG file/)).toBeInTheDocument();
     expect(screen.getByText(/MA-9999/)).toBeInTheDocument();
+    expect(screen.getByText(/10 files were matched by the paths written in the Excel/)).toBeInTheDocument();
+    expect(screen.getByText('scans/missing.pdf')).toBeInTheDocument();
   });
 });
 
@@ -71,6 +75,7 @@ describe('<DocumentList>', () => {
     docType: 'PHOTO',
     label: 'Photo',
     originalName: 'PHOTO.jpg',
+    sourcePath: 'scans/asha photo.jpg',
     mimeType: 'image/jpeg',
     sizeBytes: 2048,
     uploadedAt: '',
@@ -80,7 +85,7 @@ describe('<DocumentList>', () => {
     const download = vi.fn().mockResolvedValue(undefined);
     renderWithProviders(<DocumentList queryKey={['t', 1]} load={async () => [doc]} download={download} emptyText="none" />);
     expect(await screen.findByText('Photo')).toBeInTheDocument();
-    expect(screen.getByText(/PHOTO.jpg · 2 KB/)).toBeInTheDocument();
+    expect(screen.getByText(/scans\/asha photo.jpg · 2 KB/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Download Photo' }));
     expect(download).toHaveBeenCalledWith(doc);
   });

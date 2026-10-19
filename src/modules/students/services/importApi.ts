@@ -32,10 +32,14 @@ export interface DocumentsReport {
   zipName: string;
   uploadedAt: string;
   stored: number;
+  /* Files assigned because the Excel named their path. */
+  matchedByPath?: number;
   replaced: number;
   studentsWithFiles: number;
   unmatchedFolders: string[];
   rejected: { path: string; reason: string }[];
+  /* Paths named in the Excel that the ZIP did not contain. */
+  missingReferenced?: { rowNumber: number; sourceRecordId: string | null; docType: string; path: string }[];
 }
 /* A stored document file (backend StudentDocument DTO). */
 export interface StudentDocument {
@@ -43,6 +47,8 @@ export interface StudentDocument {
   docType: string;
   label: string;
   originalName: string;
+  /* Where the file was inside the uploaded ZIP. */
+  sourcePath: string | null;
   mimeType: 'application/pdf' | 'image/jpeg' | 'image/png';
   sizeBytes: number;
   uploadedAt: string;
@@ -154,6 +160,8 @@ const paged = async <T>(path: string, query: Record<string, string | number | un
 export const importApi = {
   reference: async () => (await request<ImportReference>('/imports/reference')).data,
   template: () => downloadFile('/imports/template.csv', 'student-import-template.csv'),
+  templateXlsx: () => downloadFile('/imports/template.xlsx', 'student-import-template.xlsx'),
+  sampleDocuments: () => downloadFile('/imports/sample-documents.zip', 'sample-documents.zip'),
   list: (q: { page?: number; limit?: number; status?: string; search?: string }) => paged<ImportBatch>('/imports', q),
   get: async (id: string) => (await request<ImportBatch>(`/imports/${id}`)).data,
   /* Data file plus, optionally, the documents ZIP (one folder per student named by source_record_id). */

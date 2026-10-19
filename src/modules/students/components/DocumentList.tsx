@@ -32,7 +32,7 @@ export default function DocumentList({
           <div className="lr-main">
             <b>{d.label}</b>
             <span>
-              {d.originalName} · {size(d.sizeBytes)}
+              {d.sourcePath ?? d.originalName} · {size(d.sizeBytes)}
             </span>
           </div>
           <Badge tone="green">{kind[d.mimeType]}</Badge>

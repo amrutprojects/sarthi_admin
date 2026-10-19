@@ -576,9 +576,10 @@ function DocumentsUploadModal({ batch, onClose, onDone }: { batch: ImportBatch; 
       }
     >
       <p className="fs13" style={{ marginTop: 0 }}>
-        One folder per student, named by the <b className="mono">source_record_id</b> in this batch. Name each file by its type, for example{' '}
-        <span className="mono">MA-0001/PHOTO.jpg</span>, <span className="mono">MA-0001/AADHAAR_CARD.pdf</span>. Documents of the same type
-        replace earlier uploads.
+        Files are matched by the paths written in the Excel document columns (e.g. <span className="mono">doc_photo</span> ={' '}
+        <span className="mono">scans/asha photo.jpg</span>). Files not named in the Excel can use one folder per student, named by the{' '}
+        <b className="mono">source_record_id</b>, with files named by type, for example <span className="mono">MA-0001/PHOTO.jpg</span>,{' '}
+        <span className="mono">MA-0001/AADHAAR_CARD.pdf</span>. Documents of the same type replace earlier uploads.
       </p>
       <FileDrop
         file={zip}

@@ -36,10 +36,19 @@ export default function StudentImportPage() {
         badge={<Badge tone="green">Live</Badge>}
         sub="Upload the approved-student file (CSV or XLSX). Every row is validated, duplicates are flagged, and a second person finalises the batch into the student register."
         actions={
-          <button type="button" className="btn" onClick={() => importApi.template().catch(toastError)}>
-            <Icon name="download" />
-            Download template
-          </button>
+          <>
+            <button type="button" className="btn" onClick={() => importApi.templateXlsx().catch(toastError)}>
+              <Icon name="download" />
+              Excel template
+            </button>
+            <button type="button" className="btn" onClick={() => importApi.sampleDocuments().catch(toastError)}>
+              <Icon name="download" />
+              Sample documents ZIP
+            </button>
+            <button type="button" className="btn ghost" onClick={() => importApi.template().catch(toastError)}>
+              CSV template
+            </button>
+          </>
         }
       />
       <div className="tabs">
@@ -114,7 +123,7 @@ function UploadCard({ reference, onUploaded }: { reference: ImportReference | nu
               file={zip}
               accept=".zip"
               prompt="Drop the documents ZIP here"
-              hint="One folder per student named by source_record_id, e.g. MA-0001/PHOTO.jpg, MA-0001/AADHAAR_CARD.pdf · PDF, JPG or PNG, up to 5 MB each"
+              hint="Write each file’s path inside the ZIP in the Excel document columns (e.g. doc_photo = scans/asha photo.jpg), or use folders named by source_record_id · PDF, JPG or PNG, up to 5 MB each"
               maxMb={500}
               onPick={setZip}
               onReject={reject}
@@ -525,10 +534,11 @@ function GuideTab({ reference }: { reference: ImportReference | null }) {
                   <b>Documents</b>: Yes/No presence flags; a missing required document can be accepted with a reason.
                 </li>
                 <li>
-                  <b>Documents ZIP</b>: one folder per student named by <span className="mono">source_record_id</span>, files named by type
-                  (<span className="mono">PHOTO</span>, <span className="mono">SIGNATURE</span>, <span className="mono">AADHAAR_CARD</span>,{' '}
-                  <span className="mono">CASTE_CERT</span>…); PDF, JPG or PNG up to 5 MB each. Files move to the student&apos;s own folder
-                  on finalise.
+                  <b>Documents ZIP</b>: in each document column of the Excel write the file’s path inside the ZIP (e.g.{' '}
+                  <span className="mono">doc_photo</span> = <span className="mono">scans/asha photo.jpg</span>); any folder or file name
+                  works. Without paths, use folders named by <span className="mono">source_record_id</span> with files named by type (
+                  <span className="mono">PHOTO.jpg</span>, <span className="mono">AADHAAR_CARD.pdf</span>). PDF, JPG or PNG up to 5 MB each;
+                  files move to the student’s own folder on finalise.
                 </li>
                 <li>
                   <b>Duplicates</b>: same source ID, same Aadhaar, or same name + date of birth + contact need a reviewer's decision.
