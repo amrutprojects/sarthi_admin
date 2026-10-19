@@ -1,175 +1,248 @@
-import { useState, type FormEvent } from 'react';
-import { Badge, Callout, GenBadge, Kpi } from '../../../components/ui';
-import DataTable, { type Column } from '../../../components/tables/DataTable';
-import { Drawer, Modal } from '../../../components/ui/Overlay';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { ConfirmModal, toastError, toastOk } from '../../../components/feedback/apiFeedback';
+import { Callout, Kpi } from '../../../components/ui';
 import Icon from '../../../components/ui/Icon';
-import Avatar from '../../../components/ui/Avatar';
-import { Can, useCan } from '../../auth/components/Can';
-import { useAuth } from '../../auth/AuthContext';
-import type { ApiRoleRef, ApiUser } from '../../auth/services/authApi';
-import { rolesApi, usersApi, type ApiRole } from '../../roles-permissions/services/rbacApi';
-import { ConfirmModal, LoadState, fmtDateTime, useAction, useApiData } from '../../../components/feedback/apiFeedback';
+import { Drawer, Modal } from '../../../components/ui/Overlay';
+import { ApiError, newIdempotencyKey } from '../../../services/api-client';
+import { useAuth, useCan } from '../../auth';
+import { useRoles } from '../../roles-permissions';
+import { useCreateUser, useDeleteUser, useReplaceUserRoles, useSetUserStatus, useUpdateUser, useUsers } from '../hooks/useUsers';
+import type { UserFormValues } from '../schemas/userSchema';
+import type { User, UserListParams } from '../types/user.types';
+import UserFilters, { type UserFilterValues } from './UserFilters';
+import UserForm from './UserForm';
+import UserTable from './UserTable';
 
-type UserRow = ApiUser & { roles: ApiRoleRef[] };
-type Dialog = { type: 'create' } | { type: 'edit'; user: UserRow } | { type: 'roles'; user: UserRow } | { type: 'delete'; user: UserRow };
+type Dialog = { type: 'create' } | { type: 'edit'; user: User } | { type: 'roles'; user: User } | { type: 'delete'; user: User };
+const PAGE_SIZE = 20;
 
-const PASSWORD_HINT = 'At least 10 characters, with upper-case, lower-case and a digit.';
+/* Field errors from a 422 / 409 response, mapped onto the form. */
+function serverFieldErrors(err: unknown): Partial<Record<keyof UserFormValues, string>> {
+  if (!(err instanceof ApiError)) return {};
+  if (err.status === 409 && /email/i.test(err.message)) return { email: err.message };
+  const out: Partial<Record<keyof UserFormValues, string>> = {};
+  for (const d of err.details) if (d.field && ['name', 'email', 'password'].includes(d.field)) out[d.field as keyof UserFormValues] = d.message;
+  return out;
+}
 
+/*
+ * Users screen (sample feature for the module conventions, see docs/development-guidelines/frontend-modules.md):
+ * server state via TanStack Query hooks, forms via React Hook Form + Zod, permissions gate every action
+ * (the backend enforces them again), and every state is handled: loading, error, empty, success, unauthorized.
+ */
 export default function UsersTab() {
   const can = useCan();
   const { user: me } = useAuth();
   const canSeeRoles = can('viewRoles');
+  const [filters, setFilters] = useState<UserFilterValues>({ search: '', status: 'all' });
+  const [page, setPage] = useState(1);
   const [dialog, setDialog] = useState<Dialog | null>(null);
-  const { busy, run } = useAction();
-
-  /* GET /users includes each user's roles when the viewer holds roles.view (one request, not one per user). */
-  const users = useApiData<UserRow[]>(async () => (await usersApi.listAll()).map((u) => ({ ...u, roles: u.roles ?? [] })), [canSeeRoles]);
-  const roles = useApiData<ApiRole[]>(() => (canSeeRoles ? rolesApi.listAll() : Promise.resolve([])), [canSeeRoles]);
-
-  const rows = users.data ?? [];
   const close = () => setDialog(null);
-  const reload = () => users.reload();
 
-  const columns: Column<UserRow>[] = [
-    {
-      k: 'name', l: 'User', exportVal: (u) => u.name,
-      render: (u) => <div className="f ac gp8"><Avatar name={u.name} /><div><b>{u.name}</b>{u.id === me?.id ? <> <Badge tone="saffron">You</Badge></> : null}<div className="fs11 muted">{u.email}</div></div></div>,
-    },
-    ...(canSeeRoles ? [{
-      k: 'roles', l: 'Roles', sortVal: (u: UserRow) => u.roles.map((r) => r.name).join(', '), exportVal: (u: UserRow) => u.roles.map((r) => r.code).join(', '),
-      render: (u: UserRow) => (u.roles.length ? <div className="f gp4 wrap">{u.roles.map((r) => <Badge key={r.id} tone="blue">{r.name}</Badge>)}</div> : <span className="muted">No role</span>),
-    }] : []),
-    { k: 'isActive', l: 'Status', exportVal: (u) => (u.isActive ? 'Active' : 'Inactive'), render: (u) => <GenBadge status={u.isActive ? 'ACTIVE' : 'INACTIVE'} /> },
-    { k: 'lastLoginAt', l: 'Last sign-in', exportVal: (u) => fmtDateTime(u.lastLoginAt), render: (u) => fmtDateTime(u.lastLoginAt) },
-    {
-      k: 'act', l: '', sortable: false, exportVal: () => '',
-      render: (u) => {
-        const self = u.id === me?.id;
-        return (
-          <div className="f gp4 wrap">
-            <Can action="updateUser"><button type="button" className="btn xs" onClick={() => setDialog({ type: 'edit', user: u })}>Edit</button></Can>
-            {can('assignRoles') && canSeeRoles && !self ? <button type="button" className="btn xs" onClick={() => setDialog({ type: 'roles', user: u })}>Roles</button> : null}
-            {can('updateUser') && !self ? (
-              <button type="button" className="btn xs" disabled={busy}
-                onClick={() => run(() => usersApi.setStatus(u.id, !u.isActive), u.isActive ? 'User deactivated' : 'User activated', reload)}>
-                {u.isActive ? 'Deactivate' : 'Activate'}
-              </button>
-            ) : null}
-            {can('deleteUser') && !self ? <button type="button" className="btn xs" style={{ color: 'var(--red)' }} onClick={() => setDialog({ type: 'delete', user: u })}>Delete</button> : null}
-          </div>
-        );
-      },
-    },
-  ];
+  const params: UserListParams = {
+    page,
+    limit: PAGE_SIZE,
+    search: filters.search || undefined,
+    isActive: filters.status === 'all' ? undefined : filters.status === 'active',
+    sortBy: 'name',
+    sortOrder: 'ASC',
+  };
+  const list = useUsers(params);
+  const activeCount = useUsers({ page: 1, limit: 1, isActive: true });
+  const inactiveCount = useUsers({ page: 1, limit: 1, isActive: false });
+  const roles = useRoles(canSeeRoles);
+
+  const setStatus = useSetUserStatus();
+  const remove = useDeleteUser();
+  const onFilters = useCallback((v: UserFilterValues) => {
+    setFilters(v);
+    setPage(1);
+  }, []);
+
+  const forbidden = list.error instanceof ApiError && list.error.status === 403;
+
+  const renderActions = (u: User) => {
+    const self = u.id === me?.id;
+    return (
+      <div className="tw-flex tw-flex-wrap tw-gap-1">
+        {can('updateUser') ? <button type="button" className="btn xs" onClick={() => setDialog({ type: 'edit', user: u })}>Edit</button> : null}
+        {can('assignRoles') && canSeeRoles && !self ? <button type="button" className="btn xs" onClick={() => setDialog({ type: 'roles', user: u })}>Roles</button> : null}
+        {can('updateUser') && !self ? (
+          <button
+            type="button"
+            className="btn xs"
+            disabled={setStatus.isPending}
+            onClick={() =>
+              setStatus.mutate(
+                { id: u.id, isActive: !u.isActive },
+                { onSuccess: () => toastOk(u.isActive ? 'User deactivated' : 'User activated'), onError: toastError },
+              )
+            }
+          >
+            {u.isActive ? 'Deactivate' : 'Activate'}
+          </button>
+        ) : null}
+        {can('deleteUser') && !self ? (
+          <button type="button" className="btn xs tw-text-danger" onClick={() => setDialog({ type: 'delete', user: u })}>Delete</button>
+        ) : null}
+      </div>
+    );
+  };
 
   return (
     <>
       <div className="grid g4 mb14">
-        <Kpi label="Users" value={rows.length} tone="b" />
-        <Kpi label="Active" value={rows.filter((u) => u.isActive).length} tone="g" />
-        <Kpi label="Inactive" value={rows.filter((u) => !u.isActive).length} tone="" />
-        <Kpi label="Without a role" value={canSeeRoles ? rows.filter((u) => !u.roles.length).length : '—'} tone="a" />
-      </div>
-      <div className="card">
-        <div className="card-h">
-          <h3>User accounts <span className="sub">live from the backend</span></h3>
-          <Can action="createUser"><button type="button" className="btn sm primary" onClick={() => setDialog({ type: 'create' })}><Icon name="plus" />Add user</button></Can>
-        </div>
-        <LoadState loading={users.loading && !users.data} error={users.error} onRetry={reload} />
-        {users.data ? <DataTable rows={rows} columns={columns} pageSize={12} exportName="User_Accounts" search={['name', 'email']} searchLabel="name or email" /> : null}
+        <Kpi label="Users" value={(activeCount.data?.meta.total ?? 0) + (inactiveCount.data?.meta.total ?? 0)} tone="b" />
+        <Kpi label="Active" value={activeCount.data?.meta.total ?? '—'} tone="g" />
+        <Kpi label="Inactive" value={inactiveCount.data?.meta.total ?? '—'} tone="" />
+        <Kpi label="Showing" value={list.data?.items.length ?? '—'} tone="a" sub={`page ${page}`} />
       </div>
 
-      {dialog?.type === 'create' && <UserFormModal roles={roles.data ?? []} canAssignRoles={can('assignRoles') && canSeeRoles} onClose={close} onSaved={reload} />}
-      {dialog?.type === 'edit' && <UserFormModal user={dialog.user} roles={[]} canAssignRoles={false} onClose={close} onSaved={reload} />}
-      {dialog?.type === 'roles' && <UserRolesDrawer user={dialog.user} roles={roles.data ?? []} onClose={close} onSaved={reload} />}
-      {dialog?.type === 'delete' && (
+      <div className="card">
+        <div className="card-h">
+          <h3>User accounts</h3>
+          <div className="tw-flex tw-flex-wrap tw-items-center tw-gap-2">
+            <UserFilters value={filters} onChange={onFilters} />
+            {can('createUser') ? (
+              <button type="button" className="btn sm primary" onClick={() => setDialog({ type: 'create' })}>
+                <Icon name="plus" />Add user
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        {forbidden ? (
+          <div className="card-b"><Callout tone="warn" title="Not permitted. ">You do not have permission to view user accounts.</Callout></div>
+        ) : list.isError ? (
+          <div className="card-b">
+            <Callout tone="err" title="Could not load users. ">
+              {list.error instanceof ApiError ? list.error.fullMessage : 'Unexpected error'}{' '}
+              <button type="button" className="btn xs" onClick={() => void list.refetch()}>Retry</button>
+            </Callout>
+          </div>
+        ) : list.isPending ? (
+          <div className="card-b" aria-busy="true" aria-label="Loading users">
+            {[0, 1, 2, 3].map((i) => <div key={i} className="skel tw-mb-3" style={{ height: 16 }} />)}
+          </div>
+        ) : list.data.items.length === 0 ? (
+          <div className="card-b tw-py-10 tw-text-center tw-text-ink-muted">
+            {filters.search || filters.status !== 'all' ? 'No users match these filters.' : 'No user accounts yet.'}
+          </div>
+        ) : (
+          <UserTable
+            users={list.data.items}
+            meta={list.data.meta}
+            page={page}
+            onPage={setPage}
+            currentUserId={me?.id}
+            showRoles={canSeeRoles}
+            renderActions={renderActions}
+            fetching={list.isFetching}
+          />
+        )}
+      </div>
+
+      {dialog?.type === 'create' ? <CreateUserDialog roles={can('assignRoles') ? roles.data ?? [] : []} onClose={close} /> : null}
+      {dialog?.type === 'edit' ? <EditUserDialog user={dialog.user} onClose={close} /> : null}
+      {dialog?.type === 'roles' ? <UserRolesDrawer user={dialog.user} onClose={close} /> : null}
+      {dialog?.type === 'delete' ? (
         <ConfirmModal
-          title="Delete user" danger busy={busy} confirmLabel="Delete"
+          title="Delete user"
+          danger
+          busy={remove.isPending}
+          confirmLabel="Delete"
           message={`Delete ${dialog.user.name} (${dialog.user.email})? The account is soft-deleted: it can no longer sign in, and it is kept for audit history.`}
           onClose={close}
-          onConfirm={() => run(() => usersApi.remove(dialog.user.id), 'User deleted', async () => { close(); await reload(); })}
+          onConfirm={() => remove.mutate(dialog.user.id, { onSuccess: () => { toastOk('User deleted'); close(); }, onError: toastError })}
         />
-      )}
+      ) : null}
     </>
   );
 }
 
-function UserFormModal({ user, roles, canAssignRoles, onClose, onSaved }: {
-  user?: UserRow; roles: ApiRole[]; canAssignRoles: boolean; onClose: () => void; onSaved: () => void;
-}) {
-  const editing = !!user;
-  const [name, setName] = useState(user?.name ?? '');
-  const [email, setEmail] = useState(user?.email ?? '');
-  const [password, setPassword] = useState('');
-  const [roleIds, setRoleIds] = useState<string[]>([]);
-  const { busy, run } = useAction();
-
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    const ok = await run(
-      () => (editing
-        ? usersApi.update(user.id, { name: name.trim(), email: email.trim(), ...(password ? { password } : {}) })
-        : usersApi.create({ name: name.trim(), email: email.trim(), password, ...(roleIds.length ? { roleIds } : {}) })),
-      editing ? 'User updated' : 'User created',
-    );
-    if (ok) { onClose(); onSaved(); }
-  }
-
-  const usable = roles.filter((r) => r.isActive);
+function CreateUserDialog({ roles, onClose }: { roles: Parameters<typeof UserForm>[0]['roles']; onClose: () => void }) {
+  const create = useCreateUser();
+  /* One key per dialog: a retry of the same submission is replayed, not duplicated. */
+  const key = useRef(newIdempotencyKey());
+  const serverErrors = useMemo(() => serverFieldErrors(create.error), [create.error]);
   return (
-    <Modal title={editing ? 'Edit user' : 'Add user'} onClose={onClose} footer={<>
-      <button type="button" className="btn" onClick={onClose}>Cancel</button>
-      <button type="submit" form="user-form" className="btn primary" disabled={busy}>{editing ? 'Save' : 'Create user'}</button>
-    </>}>
-      <form id="user-form" onSubmit={submit} noValidate>
-        <div className="grid g2">
-          <div className="fld"><label htmlFor="uf-name">Full name</label><input className="inp" id="uf-name" value={name} onChange={(e) => setName(e.target.value)} required /></div>
-          <div className="fld"><label htmlFor="uf-email">Email</label><input className="inp" id="uf-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="off" /></div>
-        </div>
-        <div className="fld mt10">
-          <label htmlFor="uf-pass">{editing ? 'New password (leave blank to keep)' : 'Password'}</label>
-          <input className="inp" id="uf-pass" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
-          <div className="hint">{PASSWORD_HINT}</div>
-        </div>
-        {canAssignRoles ? (
-          <div className="fld mt10">
-            <label>Roles</label>
-            <div className="grid g2">
-              {usable.map((r) => (
-                <label key={r.id} className="f ac gp8 fs13 pointer" style={{ padding: '3px 0' }}>
-                  <input type="checkbox" checked={roleIds.includes(r.id)} onChange={() => setRoleIds((s) => (s.includes(r.id) ? s.filter((x) => x !== r.id) : [...s, r.id]))} />
-                  {r.name}
-                </label>
-              ))}
-            </div>
-            <div className="hint">You can only assign roles whose permissions you hold yourself.</div>
-          </div>
-        ) : null}
-      </form>
+    <Modal title="Add user" onClose={onClose}>
+      <UserForm
+        mode="create"
+        roles={roles}
+        submitting={create.isPending}
+        serverErrors={serverErrors}
+        onCancel={onClose}
+        onSubmit={(v) =>
+          create.mutate(
+            { name: v.name, email: v.email, password: v.password, roleIds: v.roleIds.length ? v.roleIds : undefined, idempotencyKey: key.current },
+            {
+              onSuccess: () => { toastOk('User created'); onClose(); },
+              onError: (e) => { if (!Object.keys(serverFieldErrors(e)).length) toastError(e); },
+            },
+          )
+        }
+      />
     </Modal>
   );
 }
 
-function UserRolesDrawer({ user, roles, onClose, onSaved }: { user: UserRow; roles: ApiRole[]; onClose: () => void; onSaved: () => void }) {
-  const [selected, setSelected] = useState<string[]>(user.roles.map((r) => r.id));
-  const { busy, run } = useAction();
-  const usable = roles.filter((r) => r.isActive || selected.includes(r.id));
-  const toggle = (id: string) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
-
+function EditUserDialog({ user, onClose }: { user: User; onClose: () => void }) {
+  const update = useUpdateUser();
+  const serverErrors = useMemo(() => serverFieldErrors(update.error), [update.error]);
   return (
-    <Drawer title={'Roles — ' + user.name} onClose={onClose} footer={<>
-      <button type="button" className="btn" onClick={onClose}>Cancel</button>
-      <button type="button" className="btn primary" disabled={busy}
-        onClick={() => run(() => usersApi.replaceRoles(user.id, selected), 'Roles updated', () => { onClose(); onSaved(); })}>Save roles</button>
-    </>}>
-      <Callout tone="info" title="Privilege rules">You can only grant or remove roles whose permissions you hold, and you cannot change your own roles. The server enforces these rules.</Callout>
+    <Modal title={`Edit ${user.name}`} onClose={onClose}>
+      <UserForm
+        mode="edit"
+        defaultValues={{ name: user.name, email: user.email }}
+        submitting={update.isPending}
+        serverErrors={serverErrors}
+        onCancel={onClose}
+        onSubmit={(v) =>
+          update.mutate(
+            { id: user.id, input: { name: v.name, email: v.email, ...(v.password ? { password: v.password } : {}) } },
+            {
+              onSuccess: () => { toastOk('User updated'); onClose(); },
+              onError: (e) => { if (!Object.keys(serverFieldErrors(e)).length) toastError(e); },
+            },
+          )
+        }
+      />
+    </Modal>
+  );
+}
+
+function UserRolesDrawer({ user, onClose }: { user: User; onClose: () => void }) {
+  const roles = useRoles(true);
+  const save = useReplaceUserRoles();
+  const [selected, setSelected] = useState<string[]>(() => (user.roles ?? []).map((r) => r.id));
+  const usable = (roles.data ?? []).filter((r) => r.isActive || selected.includes(r.id));
+  const toggle = (id: string) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  return (
+    <Drawer
+      title={`Roles — ${user.name}`}
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="btn" onClick={onClose}>Cancel</button>
+          <button
+            type="button"
+            className="btn primary"
+            disabled={save.isPending || roles.isPending}
+            onClick={() => save.mutate({ id: user.id, roleIds: selected }, { onSuccess: () => { toastOk('Roles updated'); onClose(); }, onError: toastError })}
+          >
+            Save roles
+          </button>
+        </>
+      }
+    >
+      <Callout tone="info" title="Privilege rules. ">You can only grant or remove roles whose permissions you hold, and you cannot change your own roles. The server enforces these rules.</Callout>
+      {roles.isPending ? <div className="skel tw-mt-4" style={{ height: 120 }} /> : null}
       <div className="list mt14">
         {usable.map((r) => (
-          <label key={r.id} className="list-row pointer" style={{ cursor: 'pointer' }}>
-            <input type="checkbox" checked={selected.includes(r.id)} onChange={() => toggle(r.id)} />
+          <label key={r.id} className="list-row tw-cursor-pointer">
+            <input type="checkbox" className="tw-accent-brand-600" checked={selected.includes(r.id)} onChange={() => toggle(r.id)} />
             <div className="lr-main"><b>{r.name}</b><span className="mono">{r.code}</span></div>
-            {r.isSystem ? <Badge tone="violet">System</Badge> : null}
-            {!r.isActive ? <Badge tone="grey">Inactive</Badge> : null}
           </label>
         ))}
       </div>

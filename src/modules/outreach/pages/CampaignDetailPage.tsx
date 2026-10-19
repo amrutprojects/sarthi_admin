@@ -7,7 +7,7 @@ import DataTable, { type Column } from '../../../components/tables/DataTable';
 import { useLegacyTick } from '../../../utils/legacyBus';
 import * as S from '../../../services/mock/outcomeService';
 import type { Candidate } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const columns: Column<Candidate>[] = [
   { k: 'id', l: 'Candidate ID', render: (x) => <span className="lnk mono">{x.id}</span> },

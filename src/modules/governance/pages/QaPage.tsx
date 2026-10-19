@@ -7,7 +7,7 @@ import Icon from '../../../components/ui/Icon';
 import { useLegacyTick } from '../../../utils/legacyBus';
 import * as G from '../../../services/mock/governanceService';
 import type { Inspection } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const LEVELS: [level: string, title: string, desc: string, freq: string, tone: string][] = [
   ['LEVEL 1', 'Centre — Daily', 'Centre manager self-check: attendance, session delivery, infrastructure readiness', 'Daily', 'green'],

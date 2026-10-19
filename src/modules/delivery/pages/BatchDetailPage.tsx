@@ -15,7 +15,7 @@ import * as S from '../../../services/mock/deliveryService';
 import type { Candidate } from '../../../types/domain';
 import type { Crumb } from '../../../components/ui';
 import type { Batch } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 /* Candidates whose assessment score falls in [lo, hi); unassessed candidates are excluded. */
 const scoreBand = (rows: Candidate[], lo: number, hi: number) => rows.filter((x) => x.score != null && x.score >= lo && x.score < hi).length;

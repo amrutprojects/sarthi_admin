@@ -12,7 +12,7 @@ import type { CandidateFilter } from '../../../services/mock/candidateService';
 import usePersistentState from '../../../hooks/usePersistentState';
 import { NewCandidateModal } from './CandidateDialogs';
 import type { Candidate } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const QUERY_KEYS = ['district', 'mode', 'centre', 'batch', 'status', 'bucket', 'taluka'];
 

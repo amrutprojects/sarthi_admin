@@ -6,7 +6,7 @@ import { useLegacyTick } from '../../../utils/legacyBus';
 import * as S from '../../../services/mock/candidateService';
 import { BulkMessageDrawer, MessageDrawer } from './CandidateDialogs';
 import type { Candidate, Risk } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 export default function AtRiskPage() {
   useLegacyTick();

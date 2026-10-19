@@ -15,7 +15,7 @@ import type { TimelineItem } from '../../../components/ui';
 
 type DetailDialog = { type: 'msg' } | { type: 'status' } | { type: 'doc'; name: string };
 import { MessageDrawer, StatusModal, DocumentDrawer } from './CandidateDialogs';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const LIFECYCLE: [label: string, stage: number][] = [
   ['Lead', 1], ['Application', 4], ['Documents submitted', 6], ['Eligibility verification', 7],

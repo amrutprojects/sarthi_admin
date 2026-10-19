@@ -1,8 +1,8 @@
 import { Fragment, useMemo, useState } from 'react';
 import { Callout } from '../../../components/ui';
 import Icon from '../../../components/ui/Icon';
-import { useCan } from '../../auth/components/Can';
-import { useAuth } from '../../auth/AuthContext';
+import { useCan } from '../../auth';
+import { useAuth } from '../../auth';
 import { NAV, isNavGroup, type NavItem } from '../../../constants/navigation';
 import { menuVisibilityApi, type MenuVisibilityChange } from '../services/rbacApi';
 import { LoadState, useAction, useApiData } from '../../../components/feedback/apiFeedback';

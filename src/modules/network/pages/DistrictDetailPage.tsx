@@ -11,7 +11,7 @@ import Avatar from '../../../components/ui/Avatar';
 import { useLegacyTick } from '../../../utils/legacyBus';
 import * as S from '../../../services/mock/networkService';
 import type { Candidate } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const candColumns: Column<Candidate>[] = [
   { k: 'id', l: 'Candidate ID', render: (x) => <span className="lnk mono">{x.id}</span> },

@@ -7,9 +7,9 @@ import DataTable, { type Column } from '../../../components/tables/DataTable';
 import { useLegacyTick } from '../../../utils/legacyBus';
 import usePersistentState from '../../../hooks/usePersistentState';
 import * as S from '../../../services/mock/trainingService';
-import { BulkMessageDrawer, MessageDrawer } from '../../candidates/pages/CandidateDialogs';
+import { BulkMessageDrawer, MessageDrawer } from '../../candidates';
 import type { Candidate } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const QUERY_KEYS: string[] = ['district', 'centre', 'batch', 'mode'];
 

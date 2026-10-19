@@ -7,7 +7,7 @@ import { useLegacyTick } from '../../../utils/legacyBus';
 import * as S from '../../../services/mock/deliveryService';
 import type { Trainer } from '../../../types/domain';
 import type { ListItem } from '../../../components/ui';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const TOT_DAY1 = ['Programme orientation', 'Curriculum walkthrough', 'Teaching methodology', 'Student engagement techniques', 'Practical training methodology'];
 const TOT_DAY2 = ['Portal usage', 'Attendance marking', 'Assessment process', 'Documentation standards', 'Reporting & escalation', 'Mock session & evaluation'];

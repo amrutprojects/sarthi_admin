@@ -6,7 +6,7 @@ import { Modal, Drawer } from '../../../components/ui/Overlay';
 import Icon from '../../../components/ui/Icon';
 import { useLegacyTick } from '../../../utils/legacyBus';
 import * as G from '../../../services/mock/governanceService';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const logIcon = (s: string) => (s === 'SUCCESS' ? ['var(--green-bg)', 'var(--green)'] : s === 'PARTIAL' ? ['var(--amber-bg)', 'var(--amber)'] : ['var(--brand-100)', 'var(--brand-600)']);
 

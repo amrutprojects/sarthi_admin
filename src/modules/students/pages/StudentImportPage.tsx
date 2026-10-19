@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Badge, Callout, Kpi, PageHead } from '../../../components/ui';
 import { Drawer } from '../../../components/ui/Overlay';
 import Icon from '../../../components/ui/Icon';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 import { ApiError, type PageMeta } from '../../../services/api-client';
 import { importApi, studentApi, type ImportBatch, type ImportReference, type StudentDetail, type StudentView } from '../services/importApi';
 import { toastError, toastOk } from '../../../components/feedback/apiFeedback';

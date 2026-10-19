@@ -3,7 +3,7 @@ import AS from '../../../legacy';
 import { PageHead, Card, Callout, DemoNote, Badge, LinkButton, titleCase, useGo } from '../../../components/ui';
 import { useLegacyTick } from '../../../utils/legacyBus';
 import * as G from '../../../services/mock/governanceService';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const demoToast = () => AS.ui.toast('Demo action recorded — no data was persisted.', 'ok');
 

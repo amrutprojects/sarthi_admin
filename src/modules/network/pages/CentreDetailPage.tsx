@@ -14,7 +14,7 @@ import { useLegacyTick } from '../../../utils/legacyBus';
 import * as S from '../../../services/mock/networkService';
 import type { Candidate } from '../../../types/domain';
 import type { Centre, District, Trainer } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const SCORE_MAX: Record<string, number> = { 'Computer Infrastructure': 25, Classroom: 15, 'Working PCs': 15, 'Trainer Availability': 15, 'Internet / Power': 10, Accessibility: 5, Experience: 5, Documentation: 5, 'Institutional Capability': 5 };
 const demoToast = () => AS.ui.toast('Demo action recorded — no data was persisted.', 'ok');

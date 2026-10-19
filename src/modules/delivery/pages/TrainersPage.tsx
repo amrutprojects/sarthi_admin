@@ -7,7 +7,7 @@ import { useLegacyTick } from '../../../utils/legacyBus';
 import usePersistentState from '../../../hooks/usePersistentState';
 import * as S from '../../../services/mock/deliveryService';
 import type { Trainer } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const columns: Column<Trainer>[] = [
   { k: 'id', l: 'Trainer ID', render: (t) => <span className="lnk mono">{t.id}</span> },

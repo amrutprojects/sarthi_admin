@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { GenBadge, Kpi } from '../../../components/ui';
-import { useCan } from '../../auth/components/Can';
-import { useAuth } from '../../auth/AuthContext';
+import { useCan } from '../../auth';
+import { useAuth } from '../../auth';
 import { permissionsApi } from '../services/rbacApi';
 import { LoadState, useAction, useApiData } from '../../../components/feedback/apiFeedback';
 
@@ -12,11 +12,12 @@ export default function PermissionsTab() {
   const perms = useApiData(() => permissionsApi.listAll());
   const { busy, run } = useAction();
 
+  const list = perms.data;
   const groups = useMemo(() => {
-    const m = new Map<string, NonNullable<typeof perms.data>>();
-    for (const p of perms.data ?? []) m.set(p.module, [...(m.get(p.module) ?? []), p]);
+    const m = new Map<string, NonNullable<typeof list>>();
+    for (const p of list ?? []) m.set(p.module, [...(m.get(p.module) ?? []), p]);
     return [...m.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [perms.data]);
+  }, [list]);
 
   const all = perms.data ?? [];
   return (

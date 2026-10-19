@@ -5,7 +5,7 @@ import { Modal } from '../../../components/ui/Overlay';
 import { useLegacyTick, bump } from '../../../utils/legacyBus';
 import * as G from '../../../services/mock/governanceService';
 import type { ProgrammeConfig } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 type FieldDef = [key: keyof ProgrammeConfig, label: string, type: 'text' | 'number' | 'date'];
 const PROJECT_FIELDS: FieldDef[] = [

@@ -6,9 +6,9 @@ import Icon from '../../../components/ui/Icon';
 import { useLegacyTick } from '../../../utils/legacyBus';
 import usePersistentState from '../../../hooks/usePersistentState';
 import * as G from '../../../services/mock/governanceService';
-import { DocumentDrawer } from '../../candidates/pages/CandidateDialogs';
+import { DocumentDrawer } from '../../candidates';
 import type { DocumentRecord } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 export default function DocumentsPage() {
   useLegacyTick();

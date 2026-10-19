@@ -8,7 +8,7 @@ import Icon from '../../../components/ui/Icon';
 import { useLegacyTick } from '../../../utils/legacyBus';
 import usePersistentState from '../../../hooks/usePersistentState';
 import * as G from '../../../services/mock/governanceService';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const PRIO_COLOR: Record<string, string> = { HIGH: 'var(--red)', MEDIUM: 'var(--amber)' };
 

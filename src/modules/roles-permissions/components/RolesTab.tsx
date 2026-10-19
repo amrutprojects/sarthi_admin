@@ -3,8 +3,8 @@ import { Badge, Callout, GenBadge, Kpi } from '../../../components/ui';
 import DataTable, { type Column } from '../../../components/tables/DataTable';
 import { Drawer, Modal } from '../../../components/ui/Overlay';
 import Icon from '../../../components/ui/Icon';
-import { Can, useCan } from '../../auth/components/Can';
-import { useAuth } from '../../auth/AuthContext';
+import { Can, useCan } from '../../auth';
+import { useAuth } from '../../auth';
 import { permissionsApi, rolesApi, type ApiPermission, type ApiRole } from '../services/rbacApi';
 import PermissionMatrix from './PermissionMatrix';
 import { ConfirmModal, LoadState, useAction, useApiData } from '../../../components/feedback/apiFeedback';
@@ -132,7 +132,7 @@ function RolePermissionsDrawer({ role, catalogue, editable, onClose, onSaved }: 
   const { permissions: mine } = useAuth();
   const { busy, run } = useAction();
 
-  const granted = selected ?? new Set((detail.data?.permissions ?? []).map((p) => p.id));
+  const granted = useMemo(() => selected ?? new Set((detail.data?.permissions ?? []).map((p) => p.id)), [selected, detail.data]);
   /* The full active catalogue; falls back to the role's own grants when the catalogue is not visible. */
   const source = useMemo(() => (catalogue.length
     ? catalogue.filter((p) => p.isActive || granted.has(p.id))

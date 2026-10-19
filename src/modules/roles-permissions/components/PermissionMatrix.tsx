@@ -1,6 +1,6 @@
 import { Fragment, useMemo } from 'react';
 import { NAV, isNavGroup } from '../../../constants/navigation';
-import { MENU_ACTIONS, MENU_ACTION_LABEL, type MenuAction } from '../../auth/permissions';
+import { MENU_ACTIONS, MENU_ACTION_LABEL, type MenuAction } from '../../auth';
 
 export interface MatrixPermission { id: string; code: string; name: string; module: string; description?: string | null }
 
@@ -63,7 +63,10 @@ export default function PermissionMatrix({ permissions, granted, editable, held,
 
   const set = (ids: string[], on: boolean) => {
     const next = new Set(granted);
-    for (const id of ids) (on ? next.add(id) : next.delete(id));
+    for (const id of ids) {
+      if (on) next.add(id);
+      else next.delete(id);
+    }
     onChange(next);
   };
   const rowIds = (r: Row) => [...Object.values(r.cells).filter(Boolean).map((p) => p!.id), ...r.extras.map((p) => p.id)];

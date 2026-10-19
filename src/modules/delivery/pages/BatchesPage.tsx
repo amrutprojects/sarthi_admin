@@ -12,7 +12,7 @@ import { useLegacyTick } from '../../../utils/legacyBus';
 import usePersistentState from '../../../hooks/usePersistentState';
 import * as S from '../../../services/mock/deliveryService';
 import type { Batch } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const QUERY_KEYS: string[] = ['district', 'centre', 'mode', 'status', 'course'];
 

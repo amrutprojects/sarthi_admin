@@ -6,7 +6,7 @@ import DataTable, { type Column } from '../../../components/tables/DataTable';
 import Icon from '../../../components/ui/Icon';
 import * as S from '../../../services/mock/networkService';
 import type { Centre } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const ONBOARD_STEPS: [title: string, desc: string][] = [
   ['Centre identified', 'Coordinator identifies a candidate institution'],

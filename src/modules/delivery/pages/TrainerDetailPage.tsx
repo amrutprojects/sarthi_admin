@@ -6,7 +6,7 @@ import { HBar } from '../../../components/charts';
 import Avatar from '../../../components/ui/Avatar';
 import { useLegacyTick } from '../../../utils/legacyBus';
 import * as S from '../../../services/mock/deliveryService';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 export default function TrainerDetailPage() {
   useLegacyTick();

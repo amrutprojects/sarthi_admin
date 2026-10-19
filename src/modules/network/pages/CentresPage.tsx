@@ -12,7 +12,7 @@ import { useLegacyTick } from '../../../utils/legacyBus';
 import usePersistentState from '../../../hooks/usePersistentState';
 import * as S from '../../../services/mock/networkService';
 import type { Centre } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const columns: Column<Centre>[] = [
   { k: 'id', l: 'Centre ID', render: (c) => <span className="lnk mono">{c.id}</span> },

@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Badge, Callout, PageHead } from '../../../components/ui';
-import { useCan } from '../../auth/components/Can';
-import { useAuth } from '../../auth/AuthContext';
-import MenuVisibilityTab from '../../roles-permissions/components/MenuVisibilityTab';
-import PermissionsTab from '../../roles-permissions/components/PermissionsTab';
-import RolesTab from '../../roles-permissions/components/RolesTab';
+import { useAuth, useCan } from '../../auth';
+import { MenuVisibilityTab, PermissionsTab, RolesTab } from '../../roles-permissions';
 import UsersTab from '../components/UsersTab';
 
 type Tab = 'users' | 'roles' | 'permissions' | 'menus';

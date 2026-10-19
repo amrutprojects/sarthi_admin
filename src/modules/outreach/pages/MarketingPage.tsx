@@ -8,7 +8,7 @@ import { useLegacyTick } from '../../../utils/legacyBus';
 import * as S from '../../../services/mock/outcomeService';
 import type { Campaign } from '../../../types/domain';
 import type { Mobilization } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const columns: Column<Campaign>[] = [
   { k: 'id', l: 'Campaign ID', render: (c) => <span className="lnk mono">{c.id}</span> },

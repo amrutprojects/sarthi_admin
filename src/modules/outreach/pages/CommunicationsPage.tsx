@@ -7,7 +7,7 @@ import Icon from '../../../components/ui/Icon';
 import { useLegacyTick } from '../../../utils/legacyBus';
 import * as S from '../../../services/mock/outcomeService';
 import type { Communication } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const columns: Column<Communication>[] = [
   { k: 'id', l: 'ID', render: (c) => <span className="mono">{c.id}</span> },

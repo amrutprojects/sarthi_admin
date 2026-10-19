@@ -10,7 +10,7 @@ import { useLegacyTick, bump } from '../../../utils/legacyBus';
 import usePersistentState from '../../../hooks/usePersistentState';
 import * as S from '../../../services/mock/outcomeService';
 import type { Candidate } from '../../../types/domain';
-import { Can } from '../../auth/components/Can';
+import { Can } from '../../auth';
 
 const QUERY_KEYS: string[] = ['district', 'centre', 'mode', 'state'];
 

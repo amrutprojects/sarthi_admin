@@ -5,8 +5,8 @@ import Icon from '../../../components/ui/Icon';
 import { useLegacyTick } from '../../../utils/legacyBus';
 import { learnerPanelHtml } from '../../../utils/learnerPanel';
 import * as G from '../../../services/mock/governanceService';
-import { CampaignDrawer } from '../../outreach/pages/CommunicationsPage';
-import { Can } from '../../auth/components/Can';
+import { CampaignDrawer } from '../../outreach';
+import { Can } from '../../auth';
 
 export default function StudentAppPage() {
   useLegacyTick();
