@@ -37,7 +37,20 @@ export interface UpdateRoleInput {
 
 const enc = encodeURIComponent;
 
+/* Server-side list parameters (backend listQuerySchema). */
+export interface ListParams {
+  page: number;
+  limit: number;
+  search?: string;
+  isActive?: boolean;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  module?: string;
+}
+const listQuery = (p: ListParams) => ({ ...p, isActive: p.isActive === undefined ? undefined : String(p.isActive) });
+
 export const rolesApi = {
+  list: (p: ListParams, signal?: AbortSignal) => request<ApiRole[]>('/roles', { query: listQuery(p), signal }),
   listAll: () => requestAll<ApiRole>('/roles', { sortBy: 'name', sortOrder: 'asc' }),
   get: async (id: string) => (await request<ApiRole>(`/roles/${enc(id)}`)).data,
   create: async (input: CreateRoleInput) => (await request<ApiRole>('/roles', { method: 'POST', body: input })).data,
@@ -53,6 +66,7 @@ export const rolesApi = {
 };
 
 export const permissionsApi = {
+  list: (p: ListParams, signal?: AbortSignal) => request<ApiPermission[]>('/permissions', { query: listQuery(p), signal }),
   listAll: () => requestAll<ApiPermission>('/permissions', { sortBy: 'module', sortOrder: 'asc' }),
   setStatus: async (id: string, isActive: boolean) =>
     (await request<ApiPermission>(`/permissions/${enc(id)}/status`, { method: 'PATCH', body: { isActive } })).data,
