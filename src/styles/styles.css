@@ -583,10 +583,22 @@ svg.ico {
   white-space: nowrap;
 }
 
+/*
+ * width:100% is load-bearing, not decoration.
+ *
+ * `.page` is a flex item of `.main`, a COLUMN flex container, so its width is the cross axis. Per the
+ * flexbox spec an `auto` cross-axis margin disables align-self:stretch: the item is then sized by its
+ * content and the auto margins centre it. The large-desktop rule further down sets `margin-left:auto;
+ * margin-right:auto`, so without a definite width every screen collapsed to its own intrinsic width
+ * and sat centred in a sea of blank space — a sparse listing shrank to ~900px, a dense one to ~1500px.
+ * An explicit width keeps the page filling `.main` at every breakpoint; `box-sizing:border-box` is
+ * global, so the padding stays inside it and nothing overflows.
+ */
 .page {
   padding: 18px 22px 60px;
   flex: 1;
   min-width: 0;
+  width: 100%;
 }
 .page-head {
   display: flex;
@@ -2709,9 +2721,16 @@ canvas {
   left: 0;
 }
 
-/* Large desktops: keep line lengths readable. */
+/*
+ * Large desktops: keep line lengths readable.
+ *
+ * The auto margins here are the ones that cancel flex stretch (see the base .page rule), so the
+ * width is repeated rather than inherited from it — this block stays correct even if the rules are
+ * ever reordered.
+ */
 @media (min-width: 1920px) {
   .page {
+    width: 100%;
     max-width: 1760px;
     margin-left: auto;
     margin-right: auto;

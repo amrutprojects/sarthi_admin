@@ -52,6 +52,20 @@ export type RouteName =
   | 'qa'
   | 'tasks'
   | 'documents'
+  | 'cmsContactView'
+  | 'cmsContactEdit'
+  | 'cmsStateList'
+  | 'cmsStateCreate'
+  | 'cmsStateEdit'
+  | 'cmsStateView'
+  | 'cmsDistrictList'
+  | 'cmsDistrictCreate'
+  | 'cmsDistrictEdit'
+  | 'cmsDistrictView'
+  | 'cmsTalukaList'
+  | 'cmsTalukaCreate'
+  | 'cmsTalukaEdit'
+  | 'cmsTalukaView'
   | 'lms'
   | 'studentApp'
   | 'administration'
@@ -106,6 +120,11 @@ export const NAV: NavEntry[] = [
   { k: 'qa', l: 'Quality Assurance', i: 'check', r: '/qa' },
   { k: 'tasks', l: 'Tasks & Alerts', i: 'alert', r: '/tasks', count: () => api.openTaskCount(), warn: true },
   { k: 'documents', l: 'Documents', i: 'folder', r: '/documents' },
+  { g: 'CMS' },
+  { k: 'cms-contact', l: 'Contact Page Management', i: 'mail', r: '/cms/contact' },
+  { k: 'cms-states', l: 'State Master', i: 'globe', r: '/cms/states' },
+  { k: 'cms-districts', l: 'District Master', i: 'map', r: '/cms/districts' },
+  { k: 'cms-talukas', l: 'Taluka Master', i: 'pin', r: '/cms/talukas' },
   { g: 'Platform' },
   { k: 'lms', l: 'LMS Integration', i: 'plug', r: '/lms' },
   { k: 'app', l: 'Student App', i: 'phone', r: '/student-app' },
@@ -172,6 +191,25 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/qa', 'qa', 'qa'],
   ['/tasks', 'tasks', 'tasks'],
   ['/documents', 'documents', 'documents'],
+  /*
+   * CMS master data. The static `create` path is listed before the `:id` pattern so the first match in
+   * activeKey() (AdminLayout) is the intended one; React Router itself ranks static segments higher.
+   */
+  /* The Contact page is a singleton: a read-only settings view plus its edit form, no list. */
+  ['/cms/contact', 'cmsContactView', 'cms-contact'],
+  ['/cms/contact/edit', 'cmsContactEdit', 'cms-contact'],
+  ['/cms/states', 'cmsStateList', 'cms-states'],
+  ['/cms/states/create', 'cmsStateCreate', 'cms-states'],
+  ['/cms/states/:id/edit', 'cmsStateEdit', 'cms-states'],
+  ['/cms/states/:id', 'cmsStateView', 'cms-states'],
+  ['/cms/districts', 'cmsDistrictList', 'cms-districts'],
+  ['/cms/districts/create', 'cmsDistrictCreate', 'cms-districts'],
+  ['/cms/districts/:id/edit', 'cmsDistrictEdit', 'cms-districts'],
+  ['/cms/districts/:id', 'cmsDistrictView', 'cms-districts'],
+  ['/cms/talukas', 'cmsTalukaList', 'cms-talukas'],
+  ['/cms/talukas/create', 'cmsTalukaCreate', 'cms-talukas'],
+  ['/cms/talukas/:id/edit', 'cmsTalukaEdit', 'cms-talukas'],
+  ['/cms/talukas/:id', 'cmsTalukaView', 'cms-talukas'],
   ['/lms', 'lms', 'lms'],
   ['/student-app', 'studentApp', 'app'],
   ['/administration', 'administration', 'admin'],
