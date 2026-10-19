@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
-import { ApiError } from '../../../../services/http';
+import { ApiError } from '../../../../services/api-client';
 import { RootSelect } from '../../components/DependentSelect';
 import MasterField, { fieldAria } from '../../components/MasterField';
 import MasterFormActions from '../../components/MasterFormActions';

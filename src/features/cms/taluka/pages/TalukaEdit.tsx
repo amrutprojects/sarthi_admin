@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
-import { Can } from '../../../../auth/Can';
+import { Can } from '../../../../modules/auth';
 import MasterField from '../../components/MasterField';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { LoadState, toastOk, useAction, useApiData } from '../../shared';
@@ -58,7 +58,6 @@ export default function TalukaEdit() {
               isActive: taluka.isActive,
             }}
             submitLabel="Save changes"
-
             confirmMessage="Are you sure you want to save the changes to this taluka?"
             backTo={`/cms/talukas/${taluka.id}`}
             currentState={{ id: taluka.stateId, name: taluka.stateName, code: taluka.stateCode }}

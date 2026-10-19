@@ -1,5 +1,5 @@
 /* State Master API (backend /api/v1/cms/states). */
-import { request, requestAll, type PageMeta } from '../../../../services/http';
+import { request, requestAll, type PageMeta } from '../../../../services/api-client';
 import type { GeoOption } from '../../types';
 import type { MasterQuery } from '../../components/MasterTable';
 import type { ApiState, CreateStateInput, UpdateStateInput } from '../types/state.types';

@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
-import { ApiError } from '../../../../services/http';
+import { ApiError } from '../../../../services/api-client';
 import DependentSelect, { RootSelect } from '../../components/DependentSelect';
 import MasterField, { fieldAria } from '../../components/MasterField';
 import MasterFormActions from '../../components/MasterFormActions';
@@ -117,7 +117,8 @@ export default function TalukaForm({
               placeholder="Select district"
               disabledHint="Select a state first."
               emptyHint="This state has no active districts yet. Add one in the District Master."
-              extraOption={currentDistrict ?? undefined}
+              /* The saved district belongs to the saved state; offering it under another state would let a mismatched pair be picked. */
+              extraOption={currentDistrict && values.stateId === currentState?.id ? currentDistrict : undefined}
               error={show('districtId')}
             />
 

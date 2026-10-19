@@ -1,5 +1,5 @@
 /* Taluka Master API (backend /api/v1/cms/talukas). */
-import { request, type PageMeta } from '../../../../services/http';
+import { request, type PageMeta } from '../../../../services/api-client';
 import type { GeoOption } from '../../types';
 import type { MasterQuery } from '../../components/MasterTable';
 import type { ApiTaluka, CreateTalukaInput, UpdateTalukaInput } from '../types/taluka.types';

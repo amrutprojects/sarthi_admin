@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
-import { Can } from '../../../../auth/Can';
+import { Can } from '../../../../modules/auth';
 import MasterField from '../../components/MasterField';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { LoadState, toastOk, useAction, useApiData } from '../../shared';
@@ -47,7 +47,6 @@ export default function DistrictEdit() {
           <DistrictForm
             initial={{ stateId: district.stateId, name: district.name, code: district.code, isActive: district.isActive }}
             submitLabel="Save changes"
-
             confirmMessage="Are you sure you want to save the changes to this district?"
             backTo={`/cms/districts/${district.id}`}
             currentState={{ id: district.stateId, name: district.stateName + (district.stateIsActive ? '' : ' (inactive)'), code: district.stateCode }}

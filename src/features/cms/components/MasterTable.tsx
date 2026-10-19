@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { EmptyState, fmt, useGo } from '../../../components/ui';
-import type { ApiError, PageMeta } from '../../../services/http';
+import type { ApiError, PageMeta } from '../../../services/api-client';
 import { LoadState } from '../shared';
 
 /* Query state of a CMS listing. Mirrors the list parameters the backend accepts. */

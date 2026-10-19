@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { PageHead } from '../../../../components/ui';
-import { Can } from '../../../../auth/Can';
+import { Can } from '../../../../modules/auth';
 import MasterField from '../../components/MasterField';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { LoadState, toastOk, useAction, useApiData } from '../../shared';
@@ -37,7 +37,6 @@ export default function StateEdit() {
         <StateForm
           initial={{ name: state.name, code: state.code, isActive: state.isActive }}
           submitLabel="Save changes"
-
           confirmMessage="Are you sure you want to save the changes to this state?"
           backTo={`/cms/states/${state.id}`}
           onSave={async (values) => {
