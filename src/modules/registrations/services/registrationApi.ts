@@ -16,6 +16,17 @@ export interface Registration {
   createdAt: string;
 }
 
+export interface RegistrationFile {
+  id: string;
+  docType: string;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploadedAt: string;
+  verifiedAt: string | null;
+  verifiedBy: string | null;
+}
+
 export interface RegistrationDetail extends Registration {
   firstName: string;
   lastName: string;
@@ -28,7 +39,7 @@ export interface RegistrationDetail extends Registration {
   trackSourceValue: string;
   declarationAccepted: boolean | null;
   documents: { key: string; label: string; required: boolean; supplied: boolean; barcode: string | null }[];
-  files: { id: string; docType: string; originalName: string; mimeType: string; sizeBytes: number; uploadedAt: string }[];
+  files: RegistrationFile[];
 }
 
 export interface RegistrationListParams {
@@ -75,6 +86,11 @@ export const registrationApi = {
     const res = await fetch(`${API_BASE_URL}/student-registrations/${id}/documents/${documentId}/file`, { credentials: 'include' });
     if (!res.ok) throw new ApiError(`Could not load the file (${res.status})`, res.status, 'FILE_ERROR');
     return res.blob();
+  },
+
+  /* Marks one uploaded document as verified (repeat calls keep the first verification). */
+  async verifyDocument(id: string, documentId: string): Promise<RegistrationFile> {
+    return (await request<RegistrationFile>(`/student-registrations/${id}/documents/${documentId}/verify`, { method: 'POST' })).data;
   },
 
   /* Multipart: "data" = JSON, one file per document type code. The idempotency key makes a retried submit safe. */

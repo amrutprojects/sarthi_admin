@@ -1,54 +1,99 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { Modal } from '../../../components/ui/Overlay';
 import { useParams } from 'react-router-dom';
-import { fmtDateTime } from '../../../components/feedback/apiFeedback';
-import { Callout, GenBadge, KvList, PageHead } from '../../../components/ui';
+import { fmtDateTime, toastError, toastOk } from '../../../components/feedback/apiFeedback';
+import { Badge, Callout, GenBadge, KvList, PageHead } from '../../../components/ui';
+import { Modal } from '../../../components/ui/Overlay';
 import { ApiError } from '../../../services/api-client';
-import { registrationApi } from '../services/registrationApi';
+import { useAuth } from '../../auth';
+import { registrationApi, type RegistrationFile } from '../services/registrationApi';
 
 const kb = (n: number) => `${Math.max(1, Math.round(n / 1024))} KB`;
+const AADHAAR_DOC = 'AADHAAR_CARD';
 
-type FileRow = { id: string; docType: string; originalName: string; mimeType: string };
+/* Object URL for one uploaded file, fetched with the session; revoked when no longer shown. */
+function useFileUrl(registrationId: string, file: RegistrationFile | undefined) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!file) return;
+    let objectUrl: string | null = null;
+    let cancelled = false;
+    setUrl(null);
+    setError(null);
+    registrationApi
+      .fileBlob(registrationId, file.id)
+      .then((b) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(new Blob([b], { type: file.mimeType }));
+        setUrl(objectUrl);
+      })
+      .catch((e: unknown) => !cancelled && setError(e instanceof Error ? e.message : 'Could not load the file'));
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [registrationId, file]);
+  return { url, error };
+}
 
-/* Shows one uploaded image or PDF in a modal; the file is fetched with the session and shown from a local object URL. */
+function FileView({ url, file, height }: { url: string; file: RegistrationFile; height: string }) {
+  return file.mimeType === 'application/pdf' ? (
+    <iframe src={url} title={file.originalName} style={{ width: '100%', height, border: 0 }} />
+  ) : (
+    <img src={url} alt={file.originalName} style={{ maxWidth: '100%', maxHeight: height, display: 'block', margin: '0 auto' }} />
+  );
+}
+
+function VerifiedTag({ file }: { file: RegistrationFile }) {
+  return file.verifiedAt ? (
+    <span title={`Verified by ${file.verifiedBy ?? '—'} on ${fmtDateTime(file.verifiedAt)}`}>
+      <Badge tone="green">Verified</Badge>
+    </span>
+  ) : (
+    <Badge tone="amber">Pending</Badge>
+  );
+}
+
+/* One uploaded file in a modal, with Verify once the reviewer has looked at it. */
 function FilePreview({
   registrationId,
   file,
   title,
+  canVerify,
+  verifying,
+  onVerify,
   onClose,
 }: {
   registrationId: string;
-  file: FileRow;
+  file: RegistrationFile;
   title: string;
+  canVerify: boolean;
+  verifying: boolean;
+  onVerify: () => void;
   onClose: () => void;
 }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    let objectUrl: string | null = null;
-    registrationApi
-      .fileBlob(registrationId, file.id)
-      .then((b) => {
-        objectUrl = URL.createObjectURL(new Blob([b], { type: file.mimeType }));
-        setUrl(objectUrl);
-      })
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load the file'));
-    return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [registrationId, file.id, file.mimeType]);
+  const { url, error } = useFileUrl(registrationId, file);
   return (
     <Modal
       title={title}
       size="xl"
       onClose={onClose}
       footer={
-        url ? (
-          <a className="btn" href={url} download={file.originalName}>
-            Download
-          </a>
-        ) : undefined
+        <>
+          {url ? (
+            <a className="btn" href={url} download={file.originalName}>
+              Download
+            </a>
+          ) : null}
+          {file.verifiedAt ? (
+            <VerifiedTag file={file} />
+          ) : canVerify ? (
+            <button type="button" className="btn primary" disabled={!url || verifying} onClick={onVerify}>
+              {verifying ? 'Verifying…' : 'Verify document'}
+            </button>
+          ) : null}
+        </>
       }
     >
       {error ? (
@@ -57,21 +102,86 @@ function FilePreview({
         </Callout>
       ) : !url ? (
         <div className="skel" style={{ height: 300 }} aria-busy="true" aria-label="Loading file" />
-      ) : file.mimeType === 'application/pdf' ? (
-        <iframe src={url} title={file.originalName} style={{ width: '100%', height: '70vh', border: 0 }} />
       ) : (
-        <img src={url} alt={file.originalName} style={{ maxWidth: '100%', maxHeight: '70vh', display: 'block', margin: '0 auto' }} />
+        <FileView url={url} file={file} height="70vh" />
       )}
     </Modal>
   );
 }
 
-/* One registration (masked), with its declared and uploaded documents. */
+/* Hovering the Aadhaar number shows the uploaded Aadhaar card beside it, for a quick cross-check. */
+function AadhaarHover({ registrationId, value, card }: { registrationId: string; value: string; card?: RegistrationFile }) {
+  const [open, setOpen] = useState(false);
+  const { url, error } = useFileUrl(registrationId, open ? card : undefined);
+  return (
+    <span
+      style={{ position: 'relative', display: 'inline-block', cursor: card ? 'zoom-in' : 'default' }}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onFocus={() => setOpen(true)}
+      onBlur={() => setOpen(false)}
+      tabIndex={0}
+      aria-label={card ? 'Aadhaar number; hover to see the Aadhaar card' : 'Aadhaar number'}
+    >
+      <span className="mono" style={{ borderBottom: card ? '1px dashed currentColor' : undefined }}>
+        {value}
+      </span>
+      {open ? (
+        <div
+          role="tooltip"
+          className="card"
+          style={{
+            position: 'absolute',
+            left: 'calc(100% + 12px)',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: 420,
+            zIndex: 50,
+            padding: 8,
+          }}
+        >
+          <div className="tw-mb-1 tw-text-xs tw-font-semibold tw-text-ink-2">Aadhaar card</div>
+          {!card ? (
+            <div className="tw-text-xs tw-text-ink-muted">No Aadhaar card uploaded.</div>
+          ) : error ? (
+            <div className="tw-text-xs tw-text-danger">{error}</div>
+          ) : !url ? (
+            <div className="skel" style={{ height: 200 }} aria-busy="true" />
+          ) : (
+            <FileView url={url} file={card} height="300px" />
+          )}
+        </div>
+      ) : null}
+    </span>
+  );
+}
+
+/* One registration (masked): details on the left (scrolls on its own), documents with preview and verification on the right. */
 export default function RegistrationDetailPage() {
   const { id = '' } = useParams();
+  const qc = useQueryClient();
+  const { permissions } = useAuth();
+  const canVerify = permissions.has('registrations.update');
   const q = useQuery({ queryKey: ['registrations', 'detail', id], queryFn: () => registrationApi.get(id), enabled: !!id });
   const r = q.data;
-  const [preview, setPreview] = useState<{ file: FileRow; title: string } | null>(null);
+  const [preview, setPreview] = useState<{ fileId: string; title: string } | null>(null);
+  /* Verify becomes available once the reviewer has opened the file in this visit. */
+  const [previewed, setPreviewed] = useState<Set<string>>(new Set());
+  const verify = useMutation({
+    mutationFn: (fileId: string) => registrationApi.verifyDocument(id, fileId),
+    onSuccess: () => {
+      toastOk('Document verified');
+      void qc.invalidateQueries({ queryKey: ['registrations', 'detail', id] });
+    },
+    onError: toastError,
+  });
+  const open = (file: RegistrationFile, title: string) => {
+    setPreviewed((s) => new Set(s).add(file.id));
+    setPreview({ fileId: file.id, title });
+  };
+  const previewFile = r?.files.find((f) => f.id === preview?.fileId);
+  const uploaded = r?.files.length ?? 0;
+  const verifiedCount = r?.files.filter((f) => f.verifiedAt).length ?? 0;
 
   return (
     <div className="page">
@@ -91,8 +201,11 @@ export default function RegistrationDetailPage() {
       ) : !r ? (
         <div className="skel" style={{ height: 200 }} aria-busy="true" aria-label="Loading registration" />
       ) : (
-        <div className="grid g2" style={{ alignItems: 'start' }}>
-          <div>
+        <div className="tw-grid tw-grid-cols-1 tw-items-start tw-gap-4 lg:tw-grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+          <div
+            className="tw-flex tw-flex-col tw-gap-4 lg:tw-sticky lg:tw-top-4 lg:tw-max-h-[calc(100vh-150px)] lg:tw-overflow-y-auto"
+            aria-label="Registration details"
+          >
             <div className="card">
               <div className="card-h">
                 <h3>Basic details</h3>
@@ -106,7 +219,14 @@ export default function RegistrationDetailPage() {
                     ['Mother name', r.motherName],
                     ['Email', r.email ?? '—'],
                     ['Date of birth', r.dateOfBirth ?? '—'],
-                    ['Aadhaar', r.aadhaar ?? '—'],
+                    [
+                      'Aadhaar',
+                      r.aadhaar ? (
+                        <AadhaarHover registrationId={r.id} value={r.aadhaar} card={r.files.find((f) => f.docType === AADHAAR_DOC)} />
+                      ) : (
+                        '—'
+                      ),
+                    ],
                     ['Mobile', r.mobile ?? '—'],
                     ['Religion', r.religion],
                     ['Caste', r.caste],
@@ -114,7 +234,7 @@ export default function RegistrationDetailPage() {
                 />
               </div>
             </div>
-            <div className="card mt14">
+            <div className="card">
               <div className="card-h">
                 <h3>Course</h3>
               </div>
@@ -131,9 +251,13 @@ export default function RegistrationDetailPage() {
               </div>
             </div>
           </div>
+
           <div className="card">
             <div className="card-h">
               <h3>Documents</h3>
+              <span className="tw-text-xs tw-text-ink-muted">
+                {verifiedCount} of {uploaded} uploaded verified
+              </span>
             </div>
             <div className="dt">
               <div className="tbl-wrap">
@@ -141,9 +265,10 @@ export default function RegistrationDetailPage() {
                   <thead>
                     <tr>
                       <th scope="col">Document</th>
-                      <th scope="col">Required</th>
                       <th scope="col">File</th>
                       <th scope="col">Barcode</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -151,25 +276,46 @@ export default function RegistrationDetailPage() {
                       const f = r.files.find((x) => x.docType === d.key);
                       return (
                         <tr key={d.key}>
-                          <td>{d.label}</td>
-                          <td>{d.required ? 'Yes' : '—'}</td>
                           <td>
+                            {d.label}
+                            {d.required ? <span className="tw-text-danger"> *</span> : null}
+                          </td>
+                          <td className="tw-break-all">
                             {f ? (
-                              <div className="tw-flex tw-flex-wrap tw-items-center tw-gap-2">
-                                <span>
-                                  {f.originalName} ({kb(f.sizeBytes)})
-                                </span>
-                                <button type="button" className="btn xs" onClick={() => setPreview({ file: f, title: d.label })}>
-                                  Preview
-                                </button>
-                              </div>
+                              <>
+                                {f.originalName}
+                                <div className="tw-text-xs tw-text-ink-muted">{kb(f.sizeBytes)}</div>
+                              </>
                             ) : d.supplied ? (
                               'Supplied'
                             ) : (
-                              'Not uploaded'
+                              <span className="tw-text-ink-muted">Not uploaded</span>
                             )}
                           </td>
                           <td className="mono">{d.barcode ?? '—'}</td>
+                          <td>{f ? <VerifiedTag file={f} /> : '—'}</td>
+                          <td>
+                            {f ? (
+                              <div className="tw-flex tw-flex-wrap tw-gap-1">
+                                <button type="button" className="btn xs" onClick={() => open(f, d.label)}>
+                                  Preview
+                                </button>
+                                {canVerify && !f.verifiedAt ? (
+                                  <button
+                                    type="button"
+                                    className="btn xs primary"
+                                    disabled={!previewed.has(f.id) || verify.isPending}
+                                    title={previewed.has(f.id) ? 'Mark this document as verified' : 'Preview the document first'}
+                                    onClick={() => verify.mutate(f.id)}
+                                  >
+                                    Verify
+                                  </button>
+                                ) : null}
+                              </div>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
                         </tr>
                       );
                     })}
@@ -180,8 +326,16 @@ export default function RegistrationDetailPage() {
           </div>
         </div>
       )}
-      {preview && r ? (
-        <FilePreview registrationId={r.id} file={preview.file} title={preview.title} onClose={() => setPreview(null)} />
+      {preview && r && previewFile ? (
+        <FilePreview
+          registrationId={r.id}
+          file={previewFile}
+          title={preview.title}
+          canVerify={canVerify}
+          verifying={verify.isPending}
+          onVerify={() => verify.mutate(previewFile.id)}
+          onClose={() => setPreview(null)}
+        />
       ) : null}
     </div>
   );
