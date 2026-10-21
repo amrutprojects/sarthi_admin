@@ -5,7 +5,7 @@ import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { LoadState, fmtDateTime, useAction, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import { modulesService } from '../services/modulesService';
-import type { Bilingual } from '../types/modules.types';
+import { MODULE_KIND_LABEL, type Bilingual } from '../types/modules.types';
 
 /*
  * Modules Page Management — the read-only view of what the public page is showing.
@@ -32,14 +32,12 @@ export default function ModulesView() {
     </div>
   );
 
-  const t = page?.timeSplit;
-
   return (
     <div className="page">
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'CMS' }, { l: 'Modules Page' }]}
         title="Modules Page Management"
-        sub="The module cards, each elective module's own employment domains, and the hours shown on the public Modules page."
+        sub="Each module's type, hours and employment domains, plus the page heading and the programme fact sheet."
         actions={
           page ? (
             <div className="f ac gp8 wrap">
@@ -72,7 +70,7 @@ export default function ModulesView() {
 
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
 
-      {page && t ? (
+      {page ? (
         <>
           {!page.isPublished ? (
             <div className="mb14">
@@ -96,6 +94,7 @@ export default function ModulesView() {
                       <th scope="col">Code</th>
                       <th scope="col">Certificate name</th>
                       <th scope="col">Type</th>
+                      <th scope="col">Hours</th>
                       <th scope="col">Domains</th>
                       <th scope="col">Status</th>
                     </tr>
@@ -108,7 +107,13 @@ export default function ModulesView() {
                           <code>{m.code}</code>
                         </td>
                         <td>{pair(m.name)}</td>
-                        <td>{m.elective ? 'Elective' : 'Core'}</td>
+                        <td>{MODULE_KIND_LABEL[m.kind]}</td>
+                        <td>
+                          {m.timeSplit.moduleHours}h
+                          <div className="muted fs12">
+                            {m.timeSplit.trainingHours} + {m.timeSplit.assessmentHours}
+                          </div>
+                        </td>
                         <td>{m.electives.length > 0 ? m.electives.length : <Dash />}</td>
                         <td>
                           <MasterStatusBadge isActive={m.isActive} />
@@ -173,20 +178,34 @@ export default function ModulesView() {
 
           <div className="card mb14">
             <div className="card-h">
-              <h3>Hours and learning path</h3>
+              <h3>Page heading and learning path</h3>
             </div>
             <div className="card-b">
               <KvList
                 pairs={[
-                  ['Total per module', `${t.moduleHours} hours`],
-                  [
-                    'Training',
-                    `${t.trainingHours} hours — ${t.weeksPerModule} weeks, ${t.daysPerWeek} days/week, ${t.hoursPerDay} hrs/day`,
-                  ],
-                  ['Assessment', `${t.assessmentHours} hours — ${t.weeklyAssessmentHours} hrs/week`],
+                  ['Page title', pair(page.pageTitle)],
+                  ['Page subtitle', pair(page.pageSubtitle)],
                   ['Learning path', `${page.learningPath.fixedPathPct}% fixed-path / ${page.learningPath.selfPathPct}% self-path`],
                   ['Session length', pair(page.learningPath.sessionLength)],
                   ['Last updated', fmtDateTime(page.updatedAt)],
+                ]}
+              />
+            </div>
+          </div>
+
+          {/* The fact sheet on /programme. Hours and counts there are summed from the modules. */}
+          <div className="card mb14">
+            <div className="card-h">
+              <h3>Programme fact sheet &mdash; /programme</h3>
+            </div>
+            <div className="card-b">
+              <KvList
+                pairs={[
+                  ['Ideal duration', `${page.facts.idealMonths} months`],
+                  ['Validity', `${page.facts.validityMonths} months`],
+                  ['Security deposit', `₹${page.facts.securityDeposit.toLocaleString('en-IN')}`],
+                  ['Apply before', `${page.facts.applyLeadDays} days`],
+                  ['Partner', page.facts.partnerName],
                 ]}
               />
             </div>

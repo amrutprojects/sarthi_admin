@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../auth-context';
 import { canDo, canOpen, type Action } from '../permissions';
 
 /* True when the signed-in user may perform the action (backend permission codes). */

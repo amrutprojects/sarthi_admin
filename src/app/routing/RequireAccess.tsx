@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useAuth } from '../../modules/auth/AuthContext';
+import { useAuth } from '../../modules/auth/auth-context';
 import { canOpen } from '../../modules/auth/permissions';
 import { EmptyState, LinkButton } from '../../components/ui';
 

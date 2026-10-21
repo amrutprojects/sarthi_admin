@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../../modules/auth/AuthContext';
+import { useAuth } from '../../modules/auth/auth-context';
 
 /* Admin routes need a valid backend session; while an existing token is being checked, show a loader. */
 export default function ProtectedRoute() {

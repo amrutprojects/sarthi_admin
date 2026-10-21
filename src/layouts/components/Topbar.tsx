@@ -7,7 +7,7 @@ import Popover from '../../components/ui/Popover';
 import { useCanOpen } from '../../modules/auth/components/Can';
 import type { SearchResult } from '../../types/domain';
 import { api } from '../../services/mock/api';
-import { useAuth } from '../../modules/auth/AuthContext';
+import { useAuth } from '../../modules/auth/auth-context';
 import { goTo } from '../../hooks/useLegacyEvents';
 
 const TONE = { red: 'var(--red)', amber: 'var(--amber)', green: 'var(--green)', blue: 'var(--brand-500)' };

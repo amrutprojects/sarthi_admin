@@ -2873,3 +2873,58 @@ ul.rules {
     min-width: 0;
   }
 }
+
+/* ===========================================================
+   Collapsible form section.
+
+   The Modules editor holds everything about a module inside its
+   own card — type, seven hour fields, and its employment domains
+   — so four modules open at once is thousands of pixels of form.
+   Each card collapses to a summary line instead.
+
+   The header is a real <button> so it is keyboard-reachable and
+   announced as a control; `.card-h` is class-scoped, so the card
+   keeps its own layout and these rules only undo what the button
+   element brings with it.
+   =========================================================== */
+button.card-h {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  cursor: pointer;
+}
+button.card-h:hover {
+  background: var(--surface-2);
+}
+/* Nothing below it while collapsed, so the rule would float. */
+button.card-h[aria-expanded='false'] {
+  border-bottom: 0;
+}
+button.card-h .sec-x {
+  margin-left: auto;
+  flex: 0 0 auto;
+  color: var(--muted);
+  transition: transform 0.18s;
+}
+button.card-h[aria-expanded='true'] .sec-x {
+  transform: rotate(90deg);
+}
+
+/* The summary line shown while a section is collapsed. */
+.sec-sum {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.sec-sum .err {
+  color: var(--danger, #b42318);
+  font-weight: 600;
+}

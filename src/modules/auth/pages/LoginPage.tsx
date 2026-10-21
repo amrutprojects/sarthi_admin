@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import AS from '../../../legacy';
 import { api } from '../../../services/mock/api';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../auth-context';
 import { ApiError } from '../../../services/api-client';
 import { publicUrl } from '../../../utils/publicSite';
 

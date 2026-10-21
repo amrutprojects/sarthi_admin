@@ -7,10 +7,18 @@ export interface Bilingual {
 }
 
 /*
- * How one module's hours divide. The same split applies to every module, which is why it is one
- * record rather than a field on each card. Training + assessment must equal the module total —
- * that is the programme's own arithmetic, and the database enforces it.
+ * MAIN runs for every candidate; ELECTIVE is one the candidate picks an employment domain within.
+ * Offered as a dropdown on each module card.
  */
+export const MODULE_KINDS = ['MAIN', 'ELECTIVE'] as const;
+export type ModuleKind = (typeof MODULE_KINDS)[number];
+
+export const MODULE_KIND_LABEL: Record<ModuleKind, string> = {
+  MAIN: 'Main module',
+  ELECTIVE: 'Elective',
+};
+
+/** One module's own timetable. Training plus assessment must equal the module total. */
 export interface ModuleTimeSplit {
   moduleHours: number;
   trainingHours: number;
@@ -29,26 +37,28 @@ export interface LearningPath {
   selfPathPct: number;
 }
 
-export interface ApiModule {
-  id: string;
-  no: number;
-  code: string;
-  name: Bilingual;
-  description: Bilingual;
-  /* True for the modules that carry the employment-domain choice. */
-  elective: boolean;
-  displayOrder: number;
-  isActive: boolean;
-  /* This module's own domains. Empty for a core module. */
-  electives: ApiElectiveDomain[];
+/**
+ * The fact sheet shown on the public /programme page.
+ *
+ * Total hours, the module count and the number of employment domains are deliberately absent:
+ * the site sums those from the modules, so they cannot contradict the Modules page.
+ */
+export interface ProgrammeFacts {
+  idealMonths: number;
+  validityMonths: number;
+  securityDeposit: number;
+  applyLeadDays: number;
+  partnerName: string;
+}
+
+/** Figures the home page prints that the module lists cannot supply. */
+export interface ProgrammeStats {
+  districtCount: number;
 }
 
 /*
  * One employment domain offered BY ONE MODULE, and the certificate that module awards in it.
- *
- * Each elective module carries its own list, so module 3 and module 4 can offer different domains
- * and editing one leaves the other alone. The certificate is single, because it is this module's
- * award in this domain — which module the row belongs to is what makes it the basic or advanced one.
+ * Each module carries its own list, so editing one leaves the others alone.
  */
 export interface ApiElectiveDomain {
   id: string;
@@ -59,23 +69,48 @@ export interface ApiElectiveDomain {
   isActive: boolean;
 }
 
+export interface ApiModule {
+  id: string;
+  no: number;
+  code: string;
+  kind: ModuleKind;
+  name: Bilingual;
+  description: Bilingual;
+  /* This module's own timetable. */
+  timeSplit: ModuleTimeSplit;
+  displayOrder: number;
+  /*
+   * Whether this module is shown on the website and counted in the programme totals. For an
+   * elective this is the "include it" tick box; a module that is off appears nowhere and adds
+   * nothing to the hours.
+   */
+  isActive: boolean;
+  electives: ApiElectiveDomain[];
+}
+
 export interface ApiModulesPage {
   id: string;
+  pageTitle: Bilingual;
+  pageSubtitle: Bilingual;
   modules: ApiModule[];
-  timeSplit: ModuleTimeSplit;
   learningPath: LearningPath;
+  facts: ProgrammeFacts;
+  stats: ProgrammeStats;
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface UpdateModulesPageInput {
+  pageTitle: Bilingual;
+  pageSubtitle: Bilingual;
   modules: {
     no: number;
     code: string;
+    kind: ModuleKind;
     name: Bilingual;
     description: Bilingual;
-    elective: boolean;
+    timeSplit: ModuleTimeSplit;
     displayOrder: number;
     isActive: boolean;
     electives: {
@@ -86,13 +121,13 @@ export interface UpdateModulesPageInput {
       isActive: boolean;
     }[];
   }[];
-  timeSplit: ModuleTimeSplit;
   learningPath: LearningPath;
+  facts: ProgrammeFacts;
   isPublished: boolean;
 }
 
 /*
- * Error keys are built as paths rather than drawn from a fixed list, because the modules and
- * domains are lists an administrator adds to — "modules.2.name.mr" names one input.
+ * Error keys are built as paths rather than drawn from a fixed list, because the modules and their
+ * domains are lists an administrator adds to — "modules.2.timeSplit.moduleHours" names one input.
  */
 export type ModulesField = string;
