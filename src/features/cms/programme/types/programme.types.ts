@@ -22,6 +22,20 @@ export interface TrainingModes {
   note: Bilingual;
 }
 
+/**
+ * The fact sheet in the right-hand rail of the public /programme page.
+ *
+ * Total hours, the module line and the elective count are deliberately absent: the site sums those
+ * from the modules, so they cannot contradict the Modules page.
+ */
+export interface ProgrammeFacts {
+  idealMonths: number;
+  validityMonths: number;
+  securityDeposit: number;
+  applyLeadDays: number;
+  partnerName: string;
+}
+
 export interface UpdateProgrammePageInput {
   intro: Bilingual;
   objectives: Bilingual[];
@@ -30,6 +44,7 @@ export interface UpdateProgrammePageInput {
   assessmentNote: Bilingual;
   certification: Bilingual[];
   trainingModes: TrainingModes;
+  facts: ProgrammeFacts;
   isPublished?: boolean;
 }
 

@@ -1,8 +1,8 @@
-import { Callout, Dash, KvList, PageHead, useGo } from '../../../../components/ui';
+import { Dash, KvList, PageHead, useGo } from '../../../../components/ui';
 import { Can } from '../../../../modules/auth/components/Can';
 import Icon from '../../../../components/ui/Icon';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
-import { LoadState, fmtDateTime, useAction, useApiData } from '../../shared';
+import { LoadState, fmtDateTime, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import { modulesService } from '../services/modulesService';
 import { MODULE_KIND_LABEL, type Bilingual } from '../types/modules.types';
@@ -13,12 +13,13 @@ import { MODULE_KIND_LABEL, type Bilingual } from '../types/modules.types';
  * This is the landing screen for the menu because cms-modules.view and cms-modules.update are
  * separate permissions: a view-only administrator gets the whole picture without an editable form,
  * and the Edit button simply is not rendered for them.
+ *
+ * There is no Publish button: the website always shows this content, so what is here is what is live.
  */
 export default function ModulesView() {
   usePageTitle('Modules Page');
   const go = useGo();
   const detail = useApiData(() => modulesService.get(), []);
-  const { busy, run } = useAction();
 
   const page = detail.data;
 
@@ -37,33 +38,15 @@ export default function ModulesView() {
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'CMS' }, { l: 'Modules Page' }]}
         title="Modules Page Management"
-        sub="Each module's type, hours and employment domains, plus the page heading and the programme fact sheet."
+        sub="Each module's type, hours and employment domains, plus the page heading and the learning path."
         actions={
           page ? (
-            <div className="f ac gp8 wrap">
-              <Can action="updateModulesPage">
-                <button
-                  type="button"
-                  className="btn"
-                  disabled={busy}
-                  onClick={() =>
-                    run(
-                      () => modulesService.setPublished(!page.isPublished),
-                      page.isPublished ? 'Modules page unpublished' : 'Modules page published',
-                      () => detail.reload(),
-                    )
-                  }
-                >
-                  {page.isPublished ? 'Unpublish' : 'Publish'}
-                </button>
-              </Can>
-              <Can action="updateModulesPage">
-                <button type="button" className="btn primary" onClick={() => go('/cms/modules/edit')}>
-                  <Icon name="doc" />
-                  Edit content
-                </button>
-              </Can>
-            </div>
+            <Can action="updateModulesPage">
+              <button type="button" className="btn primary" onClick={() => go('/cms/modules/edit')}>
+                <Icon name="doc" />
+                Edit content
+              </button>
+            </Can>
           ) : undefined
         }
       />
@@ -72,18 +55,9 @@ export default function ModulesView() {
 
       {page ? (
         <>
-          {!page.isPublished ? (
-            <div className="mb14">
-              <Callout tone="warn" title="This content is not published">
-                The public Modules page is showing the website&rsquo;s own built-in copy. Publish to make the content below live.
-              </Callout>
-            </div>
-          ) : null}
-
           <div className="card mb14">
             <div className="card-h">
               <h3>Modules</h3>
-              <MasterStatusBadge isActive={page.isPublished} />
             </div>
             <div className="card-b">
               <div className="tbl-wrap">
@@ -107,7 +81,13 @@ export default function ModulesView() {
                           <code>{m.code}</code>
                         </td>
                         <td>{pair(m.name)}</td>
-                        <td>{MODULE_KIND_LABEL[m.kind]}</td>
+                        <td>
+                          {MODULE_KIND_LABEL[m.kind]}
+                          {/* Whether the website badges this elective's card; a Main module has no badge. */}
+                          {m.kind === 'ELECTIVE' ? (
+                            <div className="muted fs12">{m.showElectiveLabel === false ? 'Label hidden' : 'Label shown'}</div>
+                          ) : null}
+                        </td>
                         <td>
                           {m.timeSplit.moduleHours}h
                           <div className="muted fs12">
@@ -188,24 +168,6 @@ export default function ModulesView() {
                   ['Learning path', `${page.learningPath.fixedPathPct}% fixed-path / ${page.learningPath.selfPathPct}% self-path`],
                   ['Session length', pair(page.learningPath.sessionLength)],
                   ['Last updated', fmtDateTime(page.updatedAt)],
-                ]}
-              />
-            </div>
-          </div>
-
-          {/* The fact sheet on /programme. Hours and counts there are summed from the modules. */}
-          <div className="card mb14">
-            <div className="card-h">
-              <h3>Programme fact sheet &mdash; /programme</h3>
-            </div>
-            <div className="card-b">
-              <KvList
-                pairs={[
-                  ['Ideal duration', `${page.facts.idealMonths} months`],
-                  ['Validity', `${page.facts.validityMonths} months`],
-                  ['Security deposit', `₹${page.facts.securityDeposit.toLocaleString('en-IN')}`],
-                  ['Apply before', `${page.facts.applyLeadDays} days`],
-                  ['Partner', page.facts.partnerName],
                 ]}
               />
             </div>

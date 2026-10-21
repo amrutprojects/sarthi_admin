@@ -1,14 +1,17 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
+import { Callout } from '../../../../components/ui';
 import { ApiError } from '../../../../services/api-client';
 import { toastError } from '../../shared';
 import BilingualField from '../../components/BilingualField';
-import MasterField from '../../components/MasterField';
+import MasterField, { fieldAria } from '../../components/MasterField';
 import MasterFormActions from '../../components/MasterFormActions';
 import type {
   ApiProgrammePage,
   AssessmentRow,
   Bilingual,
   MethodologyRow,
+  ProgrammeFacts,
   TrainingMode,
   UpdateProgrammePageInput,
 } from '../types/programme.types';
@@ -17,8 +20,27 @@ const FORM_ID = 'programme-form';
 const blank = (): Bilingual => ({ mr: '', en: '' });
 type Errors = Record<string, string>;
 
+/*
+ * The fact sheet is held as typed text, so a cleared figure reads as "required" on save instead of
+ * quietly becoming 0. It turns into numbers only in toInput.
+ */
+type FactsValues = { [K in keyof ProgrammeFacts]: string };
+type FactNumber = Exclude<keyof ProgrammeFacts, 'partnerName'>;
+type FormValues = Omit<UpdateProgrammePageInput, 'facts'> & { facts: FactsValues };
+
+const toInput = ({ facts, ...rest }: FormValues): UpdateProgrammePageInput => ({
+  ...rest,
+  facts: {
+    idealMonths: Number(facts.idealMonths.trim()),
+    validityMonths: Number(facts.validityMonths.trim()),
+    securityDeposit: Number(facts.securityDeposit.trim()),
+    applyLeadDays: Number(facts.applyLeadDays.trim()),
+    partnerName: facts.partnerName.trim(),
+  },
+});
+
 /* Client checks mirroring the backend (programme.validator.ts); the server validates again and its errors map here. */
-function validate(v: UpdateProgrammePageInput): Errors {
+function validate(v: FormValues): Errors {
   const e: Errors = {};
   const pair = (path: string, p: Bilingual, label: string) => {
     if (!p.mr.trim()) e[`${path}.mr`] = `${label} (Marathi) is required`;
@@ -49,6 +71,24 @@ function validate(v: UpdateProgrammePageInput): Errors {
   });
   if (!v.trainingModes.modes.length) e['trainingModes.modes'] = 'Add at least one training mode';
   pair('trainingModes.note', v.trainingModes.note, 'Note');
+
+  /* The fact sheet: whole numbers within the backend's bounds, and the partner's registered name. */
+  const whole = (key: FactNumber, label: string, max: number) => {
+    const raw = v.facts[key].trim();
+    const n = Number(raw);
+    if (!raw) e[`facts.${key}`] = `${label} is required`;
+    else if (!Number.isFinite(n)) e[`facts.${key}`] = `${label} must be a number`;
+    else if (!Number.isInteger(n)) e[`facts.${key}`] = `${label} must be a whole number`;
+    else if (n < 0) e[`facts.${key}`] = `${label} must be at least 0`;
+    else if (n > max) e[`facts.${key}`] = `${label} must be at most ${max}`;
+  };
+  whole('idealMonths', 'Ideal duration', 120);
+  whole('validityMonths', 'Validity', 240);
+  whole('securityDeposit', 'Security deposit', 10_000_000);
+  whole('applyLeadDays', 'Apply before', 365);
+  const partner = v.facts.partnerName.trim();
+  if (!partner) e['facts.partnerName'] = 'Partner name is required';
+  else if (partner.length > 150) e['facts.partnerName'] = 'Partner name must be at most 150 characters';
   return e;
 }
 
@@ -137,8 +177,8 @@ function ListSection<T>({
 
 /*
  * The whole Programme page in one form: introduction, objectives, methodology rows, the assessment table and note,
- * and the certification points. Every text is a Marathi / English pair; lists can be added to, removed from and
- * reordered (the order is the order shown on the website).
+ * the certification points, and the right-hand rail's fact sheet and training modes. Every text is a Marathi /
+ * English pair; lists can be added to, removed from and reordered (the order is the order shown on the website).
  */
 export default function ProgrammeForm({
   initial,
@@ -149,7 +189,7 @@ export default function ProgrammeForm({
   backTo: string;
   onSave: (values: UpdateProgrammePageInput) => Promise<void>;
 }) {
-  const start = useMemo<UpdateProgrammePageInput>(
+  const start = useMemo<FormValues>(
     () => ({
       intro: initial.intro,
       objectives: initial.objectives,
@@ -158,28 +198,55 @@ export default function ProgrammeForm({
       assessmentNote: initial.assessmentNote,
       certification: initial.certification,
       trainingModes: initial.trainingModes,
+      facts: {
+        idealMonths: String(initial.facts.idealMonths),
+        validityMonths: String(initial.facts.validityMonths),
+        securityDeposit: String(initial.facts.securityDeposit),
+        applyLeadDays: String(initial.facts.applyLeadDays),
+        partnerName: initial.facts.partnerName,
+      },
       isPublished: initial.isPublished,
     }),
     [initial],
   );
-  const [v, setV] = useState<UpdateProgrammePageInput>(start);
+  const [v, setV] = useState<FormValues>(start);
   const [errors, setErrors] = useState<Errors>({});
   const [busy, setBusy] = useState(false);
   const dirty = JSON.stringify(v) !== JSON.stringify(start);
-  const set = <K extends keyof UpdateProgrammePageInput>(k: K, next: UpdateProgrammePageInput[K]) => setV((s) => ({ ...s, [k]: next }));
+  const set = <K extends keyof FormValues>(k: K, next: FormValues[K]) => setV((s) => ({ ...s, [k]: next }));
   const pairErrors = (path: string) => ({ errorMr: errors[`${path}.mr`], errorEn: errors[`${path}.en`] });
+
+  /* One fact-sheet figure: typed as text, checked as a whole number on save. */
+  const factNumber = (key: FactNumber, label: string, hint?: string) => {
+    const id = `pf-facts-${key}`;
+    const error = errors[`facts.${key}`];
+    return (
+      <MasterField id={id} label={label} required error={error} hint={hint}>
+        <input
+          className="inp mono"
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          {...fieldAria(id, error)}
+          value={v.facts[key]}
+          onChange={(e) => set('facts', { ...v.facts, [key]: e.target.value })}
+        />
+      </MasterField>
+    );
+  };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const found = validate(v);
-    setErrors(found);
+    /* Drawn before the scroll below, so it finds this submit's first message (e.g. a fact sheet figure far above the Save button). */
+    flushSync(() => setErrors(found));
     if (Object.keys(found).length) {
       document.querySelector('[aria-invalid="true"], [role="alert"]')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
       return;
     }
     setBusy(true);
     try {
-      await onSave(v);
+      await onSave(toInput(v));
     } catch (err) {
       if (err instanceof ApiError && (err.status === 422 || err.status === 400) && err.details.length) {
         const mapped: Errors = {};
@@ -343,6 +410,48 @@ export default function ProgrammeForm({
             />
           )}
         />
+
+        {/* The right-hand rail on the website: this fact sheet, then the training modes box. */}
+        <div className="card mb14">
+          <div className="card-h">
+            <h3>Programme fact sheet &mdash; shown on /programme</h3>
+          </div>
+          <div className="card-b">
+            <Callout tone="info" title="Hours and counts are not entered here">
+              Total hours, the module line and the elective count on this fact sheet are worked out from the modules on the Modules page, so
+              they cannot disagree with it. The fields below are the ones nothing else supplies; the home page&rsquo;s programme section
+              prints the duration, validity and deposit from here too.
+            </Callout>
+
+            <div className="grid g2 mt14">
+              {factNumber('idealMonths', 'Ideal duration (months)')}
+              {factNumber('validityMonths', 'Validity (months)')}
+              {factNumber(
+                'securityDeposit',
+                'Security deposit (₹)',
+                'Entered as a plain number; the site adds the ₹ and the thousands separator.',
+              )}
+              {factNumber('applyLeadDays', 'Apply before (days)')}
+              <MasterField
+                id="pf-facts-partnerName"
+                label="Partner name"
+                required
+                error={errors['facts.partnerName']}
+                hint="A registered company name, so it is not translated."
+              >
+                <input
+                  className="inp"
+                  type="text"
+                  autoComplete="off"
+                  maxLength={150}
+                  {...fieldAria('pf-facts-partnerName', errors['facts.partnerName'])}
+                  value={v.facts.partnerName}
+                  onChange={(e) => set('facts', { ...v.facts, partnerName: e.target.value })}
+                />
+              </MasterField>
+            </div>
+          </div>
+        </div>
 
         <div className="card mb14">
           <div className="card-h">

@@ -50,6 +50,11 @@ export interface ModuleFormValues {
   timeSplit: TimeSplitFormValues;
   /* Shown on the website and counted in the totals. For an elective this is the "include" box. */
   isActive: boolean;
+  /*
+   * The "Show 'Elective' label on website" box. Offered only while the type is Elective, but kept
+   * whatever the type, so switching to Main and back does not lose it.
+   */
+  showElectiveLabel: boolean;
   electives: DomainFormValues[];
 }
 
@@ -63,14 +68,6 @@ export interface ModulesFormValues {
     fixedPathPct: string;
     selfPathPct: string;
   };
-  facts: {
-    idealMonths: string;
-    validityMonths: string;
-    securityDeposit: string;
-    applyLeadDays: string;
-    partnerName: string;
-  };
-  isPublished: boolean;
 }
 
 const pairOf = (v: Bilingual | null | undefined): BilingualValue =>
@@ -95,6 +92,7 @@ export const emptyModule = (): ModuleFormValues => ({
   description: { mr: '', en: '' },
   timeSplit: emptyTimeSplit(),
   isActive: true,
+  showElectiveLabel: true,
   electives: [],
 });
 
@@ -125,6 +123,8 @@ export function toFormValues(page: ApiModulesPage): ModulesFormValues {
         weeklyAssessmentHours: String(m.timeSplit.weeklyAssessmentHours),
       },
       isActive: m.isActive,
+      /* An older server that predates the setting sends nothing: the badge then shows, as before. */
+      showElectiveLabel: typeof m.showElectiveLabel === 'boolean' ? m.showElectiveLabel : true,
       electives: m.electives.map((d) => ({
         no: String(d.no),
         domain: pairOf(d.domain),
@@ -138,14 +138,6 @@ export function toFormValues(page: ApiModulesPage): ModulesFormValues {
       fixedPathPct: String(page.learningPath.fixedPathPct),
       selfPathPct: String(page.learningPath.selfPathPct),
     },
-    facts: {
-      idealMonths: String(page.facts.idealMonths),
-      validityMonths: String(page.facts.validityMonths),
-      securityDeposit: String(page.facts.securityDeposit),
-      applyLeadDays: String(page.facts.applyLeadDays),
-      partnerName: page.facts.partnerName,
-    },
-    isPublished: page.isPublished,
   };
 }
 
@@ -175,6 +167,7 @@ export function toPayload(v: ModulesFormValues): UpdateModulesPageInput {
       },
       displayOrder: index,
       isActive: m.isActive,
+      showElectiveLabel: m.showElectiveLabel,
       electives: m.electives.map((d, k) => ({
         no: asNumber(d.no),
         domain: trimPair(d.domain),
@@ -189,14 +182,6 @@ export function toPayload(v: ModulesFormValues): UpdateModulesPageInput {
       fixedPathPct: asNumber(v.learningPath.fixedPathPct),
       selfPathPct: asNumber(v.learningPath.selfPathPct),
     },
-    facts: {
-      idealMonths: asNumber(v.facts.idealMonths),
-      validityMonths: asNumber(v.facts.validityMonths),
-      securityDeposit: asNumber(v.facts.securityDeposit),
-      applyLeadDays: asNumber(v.facts.applyLeadDays),
-      partnerName: v.facts.partnerName.trim(),
-    },
-    isPublished: v.isPublished,
   };
 }
 
@@ -358,29 +343,6 @@ export function validateModulesForm(v: ModulesFormValues): FieldErrors<ModulesFi
       errors['learningPath.fixedPathPct'] = `The two shares add up to ${sum}, not 100`;
     }
   }
-
-  /* ---- the /programme fact sheet ---- */
-  errors['facts.idealMonths'] = requiredNumber(v.facts.idealMonths, 'Ideal duration', {
-    min: 0,
-    max: 120,
-    integer: true,
-  });
-  errors['facts.validityMonths'] = requiredNumber(v.facts.validityMonths, 'Validity', {
-    min: 0,
-    max: 240,
-    integer: true,
-  });
-  errors['facts.securityDeposit'] = requiredNumber(v.facts.securityDeposit, 'Security deposit', {
-    min: 0,
-    max: 10_000_000,
-    integer: true,
-  });
-  errors['facts.applyLeadDays'] = requiredNumber(v.facts.applyLeadDays, 'Apply before', {
-    min: 0,
-    max: 365,
-    integer: true,
-  });
-  errors['facts.partnerName'] = requiredText(v.facts.partnerName, 'Partner name', 150);
 
   return errors;
 }

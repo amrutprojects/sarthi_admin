@@ -37,20 +37,6 @@ export interface LearningPath {
   selfPathPct: number;
 }
 
-/**
- * The fact sheet shown on the public /programme page.
- *
- * Total hours, the module count and the number of employment domains are deliberately absent:
- * the site sums those from the modules, so they cannot contradict the Modules page.
- */
-export interface ProgrammeFacts {
-  idealMonths: number;
-  validityMonths: number;
-  securityDeposit: number;
-  applyLeadDays: number;
-  partnerName: string;
-}
-
 /** Figures the home page prints that the module lists cannot supply. */
 export interface ProgrammeStats {
   districtCount: number;
@@ -85,6 +71,12 @@ export interface ApiModule {
    * nothing to the hours.
    */
   isActive: boolean;
+  /*
+   * Whether the website prints the "Elective" badge on this module's card. Only meaningful for an
+   * ELECTIVE module; it is kept on a MAIN one so switching the type back does not lose it. Turning
+   * it off hides the badge alone — the module, its domains and its hours still show.
+   */
+  showElectiveLabel: boolean;
   electives: ApiElectiveDomain[];
 }
 
@@ -94,9 +86,11 @@ export interface ApiModulesPage {
   pageSubtitle: Bilingual;
   modules: ApiModule[];
   learningPath: LearningPath;
-  facts: ProgrammeFacts;
   stats: ProgrammeStats;
-  isPublished: boolean;
+  /*
+   * No isPublished: the website always shows this content. The server may still send the column,
+   * and the admin ignores it.
+   */
   createdAt: string;
   updatedAt: string;
 }
@@ -113,6 +107,7 @@ export interface UpdateModulesPageInput {
     timeSplit: ModuleTimeSplit;
     displayOrder: number;
     isActive: boolean;
+    showElectiveLabel: boolean;
     electives: {
       no: number;
       domain: Bilingual;
@@ -122,8 +117,6 @@ export interface UpdateModulesPageInput {
     }[];
   }[];
   learningPath: LearningPath;
-  facts: ProgrammeFacts;
-  isPublished: boolean;
 }
 
 /*
