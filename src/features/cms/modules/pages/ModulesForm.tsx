@@ -7,7 +7,7 @@ import MasterField, { fieldAria } from '../../components/MasterField';
 import MasterFormActions from '../../components/MasterFormActions';
 import { toastError } from '../../shared';
 import { isValid, type FieldErrors } from '../../validation';
-import type { ModulesField } from '../types/modules.types';
+import { MODULE_KINDS, MODULE_KIND_LABEL, type ModuleKind, type ModulesField } from '../types/modules.types';
 import {
   emptyDomain,
   emptyModule,
@@ -15,6 +15,7 @@ import {
   type DomainFormValues,
   type ModuleFormValues,
   type ModulesFormValues,
+  type TimeSplitFormValues,
 } from '../validation/modules.validation';
 
 interface ModulesFormProps {
@@ -26,22 +27,22 @@ interface ModulesFormProps {
 const FORM_ID = 'cms-modules-form';
 
 /*
- * The Modules page editor, on its own page (no modal), in three sections: the module cards, the
- * hours, and the learning-path split.
+ * The Modules page editor, on its own page (no modal).
  *
- * Employment domains are edited INSIDE the module that offers them, because every module carries
- * its own list — adding a domain to one does not add it to any other.
+ * Each module card holds everything about that module: its type, its own timetable, and its own
+ * employment domains. Nothing about a module lives anywhere else, so changing one module cannot
+ * quietly change another.
+ *
+ * The page-level cards below are the things that genuinely are page-level: the heading, the
+ * learning-path split, the /programme fact sheet, and the home page's figures.
  *
  * Behaviour matches the other CMS forms: validate on submit, re-validate a field once it has been
  * touched, block a second submit while one is in flight, keep what was typed when a save fails, and
- * put the server's own field messages on the matching inputs.
+ * put the server's own field messages on the matching inputs. The whole page is one PUT.
  *
- * The whole page is one PUT — the backend saves it in a single transaction, so the public page is
- * never served half-updated.
- *
- * Two rules are arithmetic rather than text, and both are checked as you type because getting them
- * wrong produces a page that contradicts itself: training plus assessment must equal the module
- * total, and the two learning-path shares must total 100.
+ * Two rules are arithmetic and are checked as you type, because getting them wrong produces a page
+ * that contradicts itself: each module's training plus assessment must equal its total, and the two
+ * learning-path shares must total 100.
  */
 export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProps) {
   const [values, setValues] = useState<ModulesFormValues>(initial);
@@ -51,9 +52,38 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
   const [busy, setBusy] = useState(false);
   const [dirty, setDirty] = useState(false);
 
+  /*
+   * Which module cards are open. Collapsed by default — see the comment on the card header.
+   *
+   * Indexes, not codes: a code can be blank or duplicated while someone is typing, so it is not
+   * yet an identity. Reordering or removing a module shifts every index after it, which is why
+   * `changeList` clears this along with the touched flags and the server errors.
+   */
+  const [openModules, setOpenModules] = useState<Set<number>>(new Set());
+  const isOpen = (i: number) => openModules.has(i);
+  const toggleModule = (i: number) =>
+    setOpenModules((s) => {
+      const next = new Set(s);
+      if (!next.delete(i)) next.add(i);
+      return next;
+    });
+
   const local = validateModulesForm(values);
   const show = (f: string) => (submitted || touched[f] ? local[f] : undefined) ?? serverErrors[f];
   const touch = (f: string) => setTouched((t) => ({ ...t, [f]: true }));
+
+  /*
+   * Does anything under this module have a problem?
+   *
+   * This is what makes collapsing safe: a validation message inside a closed card is a message
+   * nobody can read, so the summary line flags it and `submit` opens every offending card.
+   */
+  const moduleHasErrors = (i: number): boolean => {
+    const prefix = `modules.${i}.`;
+    const flagged = (errors: FieldErrors<ModulesField>) =>
+      Object.entries(errors).some(([key, value]) => Boolean(value) && key.startsWith(prefix));
+    return (submitted && flagged(local)) || flagged(serverErrors);
+  };
 
   const change = (next: ModulesFormValues, cleared: string[] = []) => {
     setValues(next);
@@ -78,12 +108,36 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
     setDirty(true);
     setTouched({});
     setServerErrors({});
+    setOpenModules(new Set());
+  };
+
+  const patchModule = (index: number, next: Partial<ModuleFormValues>, cleared: string[] = []) =>
+    change({ ...values, modules: values.modules.map((x, k) => (k === index ? { ...x, ...next } : x)) }, cleared);
+
+  /*
+   * Open every module card carrying one of these errors.
+   *
+   * Without this a failed submit would look like nothing happened: the messages would all be
+   * inside collapsed cards. Called for the local rules on submit and again for whatever the
+   * server rejects.
+   */
+  const revealErrors = (errors: FieldErrors<ModulesField>) => {
+    const guilty = new Set<number>();
+    for (const [key, value] of Object.entries(errors)) {
+      if (!value) continue;
+      const match = /^modules\.(\d+)\./.exec(key);
+      if (match) guilty.add(Number(match[1]));
+    }
+    if (guilty.size > 0) setOpenModules((s) => new Set([...s, ...guilty]));
   };
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setSubmitted(true);
-    if (busy || !isValid(local)) return;
+    if (busy || !isValid(local)) {
+      revealErrors(local);
+      return;
+    }
 
     setBusy(true);
     setServerErrors({});
@@ -92,8 +146,9 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
       setDirty(false);
     } catch (err) {
       /*
-       * A 422 carries per-field paths such as "body.modules.2.name.mr". Those are the keys this
-       * form errors by, so dropping the "body." prefix puts each message on the right input.
+       * A 422 carries per-field paths such as "body.modules.2.timeSplit.moduleHours". Those are
+       * the keys this form errors by, so dropping the "body." prefix puts each message on the
+       * right input.
        */
       if (err instanceof ApiError && (err.status === 422 || err.status === 400) && err.details.length) {
         const mapped: FieldErrors<ModulesField> = {};
@@ -102,6 +157,7 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
           mapped[d.field.replace(/^body\./, '')] = d.message;
         }
         setServerErrors(mapped);
+        revealErrors(mapped);
         if (!isValid(mapped)) return;
       }
       toastError(err);
@@ -134,11 +190,53 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
     return next;
   };
 
+  /* One module's own timetable. */
+  const timeSplitRows = (moduleIndex: number, m: ModuleFormValues) => {
+    const prefix = `modules.${moduleIndex}.timeSplit`;
+    const set = (next: Partial<TimeSplitFormValues>, cleared: string[]) =>
+      patchModule(moduleIndex, { timeSplit: { ...m.timeSplit, ...next } }, cleared);
+
+    return (
+      <div className="mt14">
+        <h5 className="fs13 mb8">Hours for this module</h5>
+        <p className="muted fs12 mb10">
+          This module&rsquo;s own timetable — each module has its own, so changing this one leaves the others alone. Training and assessment
+          must add up to the module total.
+        </p>
+        <div className="grid g2">
+          {numberField(`${prefix}.moduleHours`, 'Total hours', m.timeSplit.moduleHours, (v) =>
+            set({ moduleHours: v }, [`${prefix}.moduleHours`]),
+          )}
+          {numberField(`${prefix}.trainingHours`, 'Training hours', m.timeSplit.trainingHours, (v) =>
+            set({ trainingHours: v }, [`${prefix}.trainingHours`, `${prefix}.moduleHours`]),
+          )}
+          {numberField(`${prefix}.assessmentHours`, 'Assessment hours', m.timeSplit.assessmentHours, (v) =>
+            set({ assessmentHours: v }, [`${prefix}.assessmentHours`, `${prefix}.moduleHours`]),
+          )}
+          {numberField(`${prefix}.weeksPerModule`, 'Weeks', m.timeSplit.weeksPerModule, (v) =>
+            set({ weeksPerModule: v }, [`${prefix}.weeksPerModule`]),
+          )}
+          {numberField(`${prefix}.daysPerWeek`, 'Training days per week', m.timeSplit.daysPerWeek, (v) =>
+            set({ daysPerWeek: v }, [`${prefix}.daysPerWeek`]),
+          )}
+          {numberField(`${prefix}.hoursPerDay`, 'Training hours per day', m.timeSplit.hoursPerDay, (v) =>
+            set({ hoursPerDay: v }, [`${prefix}.hoursPerDay`]),
+          )}
+          {numberField(
+            `${prefix}.weeklyAssessmentHours`,
+            'Assessment hours per week',
+            m.timeSplit.weeklyAssessmentHours,
+            (v) => set({ weeklyAssessmentHours: v }, [`${prefix}.weeklyAssessmentHours`]),
+            'May be fractional, such as 3.5.',
+          )}
+        </div>
+      </div>
+    );
+  };
+
   /*
-   * One elective module's employment domains.
-   *
-   * Nested inside the module rather than kept as one page-wide list, because each elective module
-   * offers its own: adding a domain here adds it to THIS module only.
+   * One module's employment domains. Nested inside the module because each carries its own:
+   * adding a domain here adds it to THIS module only.
    */
   const domainRows = (moduleIndex: number, m: ModuleFormValues) => {
     const write = (electives: DomainFormValues[]) =>
@@ -148,11 +246,8 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
       });
 
     const patch = (index: number, next: Partial<DomainFormValues>) =>
-      change({
-        ...values,
-        modules: values.modules.map((x, k) =>
-          k === moduleIndex ? { ...x, electives: x.electives.map((d, j) => (j === index ? { ...d, ...next } : d)) } : x,
-        ),
+      patchModule(moduleIndex, {
+        electives: m.electives.map((d, j) => (j === index ? { ...d, ...next } : d)),
       });
 
     const prefix = `modules.${moduleIndex}.electives`;
@@ -164,12 +259,6 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
           A candidate picks one of these and earns the certificate named beside it. This list belongs to {m.code.trim() || 'this module'}{' '}
           alone — every other module keeps its own.
         </p>
-
-        {show(prefix) ? (
-          <p className="err fs12 mb10" role="alert">
-            {show(prefix)}
-          </p>
-        ) : null}
 
         {m.electives.map((d, k) => (
           <div className="card mb10" key={k}>
@@ -257,16 +346,49 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
   return (
     <>
       <form id={FORM_ID} onSubmit={submit} noValidate>
+        {/* ── the page heading ─────────────────────────────────── */}
+        <div className="card mb14">
+          <div className="card-h">
+            <h3>Page heading</h3>
+          </div>
+          <div className="card-b">
+            <BilingualField
+              id="mp-title"
+              label="Page title"
+              maxLength={200}
+              value={values.pageTitle}
+              onChange={(pageTitle) => change({ ...values, pageTitle }, ['pageTitle.mr', 'pageTitle.en'])}
+              onBlur={(half) => touch(`pageTitle.${half}`)}
+              errorMr={show('pageTitle.mr')}
+              errorEn={show('pageTitle.en')}
+              hint="The heading at the top of the public Modules page."
+            />
+            <div className="mt10">
+              <BilingualField
+                id="mp-subtitle"
+                label="Page subtitle"
+                maxLength={500}
+                multiline
+                value={values.pageSubtitle}
+                onChange={(pageSubtitle) => change({ ...values, pageSubtitle }, ['pageSubtitle.mr', 'pageSubtitle.en'])}
+                onBlur={(half) => touch(`pageSubtitle.${half}`)}
+                errorMr={show('pageSubtitle.mr')}
+                errorEn={show('pageSubtitle.en')}
+                hint="Any numbers you write here are typed, not worked out — update them if you change the modules below."
+              />
+            </div>
+          </div>
+        </div>
+
         {/* ── the module cards ─────────────────────────────────── */}
         <div className="card mb14">
           <div className="card-h">
             <h3>Modules</h3>
           </div>
           <div className="card-b">
-            <Callout tone="info" title="Core and elective modules">
-              Modules marked elective are the ones where a candidate chooses one of the employment domains below. On the public site those
-              cards open the domain list; the others open their own hours. The module code identifies a module across the programme, so
-              changing it creates a new module rather than renaming one.
+            <Callout tone="info" title="Each module stands on its own">
+              A module carries its own type, its own hours and its own employment domains. Marking one hidden removes it from the website
+              AND from the programme totals in one action — which is how you leave an elective out without deleting it.
             </Callout>
 
             {show('modules') ? (
@@ -277,48 +399,67 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
 
             {values.modules.map((m, i) => (
               <div className="card mt14" key={i}>
-                <div className="card-b">
+                {/*
+                 * Collapsed to a summary by default: an open module is its name, description,
+                 * seven hour fields and every one of its domains, so four open at once is
+                 * thousands of pixels of form. The summary carries enough to find the one you
+                 * want without opening it.
+                 */}
+                <button
+                  type="button"
+                  className="card-h"
+                  aria-expanded={isOpen(i)}
+                  aria-controls={`module-body-${i}`}
+                  onClick={() => toggleModule(i)}
+                >
+                  <h3 className="fs14">
+                    Module {i + 1}
+                    {m.code.trim() ? ` — ${m.code.trim().toUpperCase()}` : ''}
+                  </h3>
+                  <span className="sec-sum">
+                    <span>{MODULE_KIND_LABEL[m.kind]}</span>
+                    <span>{m.timeSplit.moduleHours || '—'}h</span>
+                    <span>
+                      {m.electives.length} domain{m.electives.length === 1 ? '' : 's'}
+                    </span>
+                    {!m.isActive ? <span>Hidden</span> : null}
+                    {moduleHasErrors(i) ? <span className="err">Needs attention</span> : null}
+                  </span>
+                  <Icon name="chevR" className="sec-x" />
+                </button>
+
+                <div className="card-b" id={`module-body-${i}`} hidden={!isOpen(i)}>
                   <div className="f ac gp8 wrap mb10">
-                    <h4 className="fs14">Module {i + 1}</h4>
-                    <span className="flex1" />
                     <label className="f ac gp8 fs13">
-                      <input
-                        type="checkbox"
-                        checked={m.elective}
-                        onChange={(e) =>
-                          change({
-                            ...values,
-                            modules: values.modules.map((x, k) => (k === i ? { ...x, elective: e.target.checked } : x)),
-                          })
-                        }
-                      />
-                      Elective
-                    </label>
-                    <label className="f ac gp8 fs13">
-                      <input
-                        type="checkbox"
-                        checked={m.isActive}
-                        onChange={(e) =>
-                          change({
-                            ...values,
-                            modules: values.modules.map((x, k) => (k === i ? { ...x, isActive: e.target.checked } : x)),
-                          })
-                        }
-                      />
-                      {m.isActive ? 'Visible' : 'Hidden'}
+                      <input type="checkbox" checked={m.isActive} onChange={(e) => patchModule(i, { isActive: e.target.checked })} />
+                      {m.kind === 'ELECTIVE' ? 'Show on the website and count in the totals' : m.isActive ? 'Visible' : 'Hidden'}
                     </label>
                   </div>
 
                   <div className="grid g2">
-                    {numberField(`modules.${i}.no`, 'Number shown on the card', m.no, (no) =>
-                      change(
-                        {
-                          ...values,
-                          modules: values.modules.map((x, k) => (k === i ? { ...x, no } : x)),
-                        },
-                        [`modules.${i}.no`],
-                      ),
-                    )}
+                    {numberField(`modules.${i}.no`, 'Number shown on the card', m.no, (no) => patchModule(i, { no }, [`modules.${i}.no`]))}
+                    <MasterField
+                      id={`modules.${i}.kind`}
+                      label="Module type"
+                      required
+                      hint="An elective is one where the candidate chooses an employment domain."
+                    >
+                      <select
+                        className="inp"
+                        id={`modules.${i}.kind`}
+                        value={m.kind}
+                        onChange={(e) => patchModule(i, { kind: e.target.value as ModuleKind })}
+                      >
+                        {MODULE_KINDS.map((k) => (
+                          <option key={k} value={k}>
+                            {MODULE_KIND_LABEL[k]}
+                          </option>
+                        ))}
+                      </select>
+                    </MasterField>
+                  </div>
+
+                  <div className="grid g2 mt10">
                     <MasterField
                       id={`modules.${i}.code`}
                       label="Module code"
@@ -333,15 +474,7 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
                         maxLength={32}
                         {...fieldAria(`modules.${i}.code`, show(`modules.${i}.code`))}
                         value={m.code}
-                        onChange={(e) =>
-                          change(
-                            {
-                              ...values,
-                              modules: values.modules.map((x, k) => (k === i ? { ...x, code: e.target.value } : x)),
-                            },
-                            [`modules.${i}.code`],
-                          )
-                        }
+                        onChange={(e) => patchModule(i, { code: e.target.value }, [`modules.${i}.code`])}
                         onBlur={() => touch(`modules.${i}.code`)}
                       />
                     </MasterField>
@@ -353,12 +486,7 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
                       label="Certificate name"
                       maxLength={300}
                       value={m.name}
-                      onChange={(name) =>
-                        change({
-                          ...values,
-                          modules: values.modules.map((x, k) => (k === i ? { ...x, name } : x)),
-                        })
-                      }
+                      onChange={(name) => patchModule(i, { name })}
                       onBlur={(half) => touch(`modules.${i}.name.${half}`)}
                       errorMr={show(`modules.${i}.name.mr`)}
                       errorEn={show(`modules.${i}.name.en`)}
@@ -372,22 +500,17 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
                       maxLength={600}
                       multiline
                       value={m.description}
-                      onChange={(description) =>
-                        change({
-                          ...values,
-                          modules: values.modules.map((x, k) => (k === i ? { ...x, description } : x)),
-                        })
-                      }
+                      onChange={(description) => patchModule(i, { description })}
                       onBlur={(half) => touch(`modules.${i}.description.${half}`)}
                       errorMr={show(`modules.${i}.description.mr`)}
                       errorEn={show(`modules.${i}.description.en`)}
                     />
                   </div>
 
-                  {/* Every module carries its own list, elective or not. */}
+                  {timeSplitRows(i, m)}
                   {domainRows(i, m)}
 
-                  <div className="f ac gp8 wrap mt10">
+                  <div className="f ac gp8 wrap mt14">
                     <button
                       type="button"
                       className="btn sm"
@@ -413,12 +536,7 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
                     <button
                       type="button"
                       className="btn sm danger"
-                      onClick={() =>
-                        changeList({
-                          ...values,
-                          modules: values.modules.filter((_, k) => k !== i),
-                        })
-                      }
+                      onClick={() => changeList({ ...values, modules: values.modules.filter((_, k) => k !== i) })}
                     >
                       Remove module
                     </button>
@@ -428,56 +546,18 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
             ))}
 
             <div className="mt14">
-              <button type="button" className="btn" onClick={() => changeList({ ...values, modules: [...values.modules, emptyModule()] })}>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  changeList({ ...values, modules: [...values.modules, emptyModule()] });
+                  /* Open it — a new card that stayed collapsed would look like nothing happened. */
+                  setOpenModules(new Set([values.modules.length]));
+                }}
+              >
                 <Icon name="plus" />
                 Add a module
               </button>
-            </div>
-          </div>
-        </div>
-
-        {/* ── hours ────────────────────────────────────────────── */}
-        <div className="card mb14">
-          <div className="card-h">
-            <h3>Hours per module</h3>
-          </div>
-          <div className="card-b">
-            <p className="muted fs12 mb10">
-              The same split applies to every module. Training and assessment must add up to the module total.
-            </p>
-            <div className="grid g2">
-              {numberField('timeSplit.moduleHours', 'Total hours per module', values.timeSplit.moduleHours, (moduleHours) =>
-                change({ ...values, timeSplit: { ...values.timeSplit, moduleHours } }, ['timeSplit.moduleHours']),
-              )}
-              {numberField('timeSplit.trainingHours', 'Training hours', values.timeSplit.trainingHours, (trainingHours) =>
-                change({ ...values, timeSplit: { ...values.timeSplit, trainingHours } }, [
-                  'timeSplit.trainingHours',
-                  'timeSplit.moduleHours',
-                ]),
-              )}
-              {numberField('timeSplit.assessmentHours', 'Assessment hours', values.timeSplit.assessmentHours, (assessmentHours) =>
-                change({ ...values, timeSplit: { ...values.timeSplit, assessmentHours } }, [
-                  'timeSplit.assessmentHours',
-                  'timeSplit.moduleHours',
-                ]),
-              )}
-              {numberField('timeSplit.weeksPerModule', 'Weeks per module', values.timeSplit.weeksPerModule, (weeksPerModule) =>
-                change({ ...values, timeSplit: { ...values.timeSplit, weeksPerModule } }, ['timeSplit.weeksPerModule']),
-              )}
-              {numberField('timeSplit.daysPerWeek', 'Training days per week', values.timeSplit.daysPerWeek, (daysPerWeek) =>
-                change({ ...values, timeSplit: { ...values.timeSplit, daysPerWeek } }, ['timeSplit.daysPerWeek']),
-              )}
-              {numberField('timeSplit.hoursPerDay', 'Training hours per day', values.timeSplit.hoursPerDay, (hoursPerDay) =>
-                change({ ...values, timeSplit: { ...values.timeSplit, hoursPerDay } }, ['timeSplit.hoursPerDay']),
-              )}
-              {numberField(
-                'timeSplit.weeklyAssessmentHours',
-                'Assessment hours per week',
-                values.timeSplit.weeklyAssessmentHours,
-                (weeklyAssessmentHours) =>
-                  change({ ...values, timeSplit: { ...values.timeSplit, weeklyAssessmentHours } }, ['timeSplit.weeklyAssessmentHours']),
-                'May be fractional, such as 3.5.',
-              )}
             </div>
           </div>
         </div>
@@ -488,7 +568,7 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
             <h3>Learning path split</h3>
           </div>
           <div className="card-b">
-            <p className="muted fs12 mb10">Drawn as a doughnut on the public page, so the two shares must add up to 100.</p>
+            <p className="muted fs12 mb10">Drawn as a doughnut on the public Modules page, so the two shares must add up to 100.</p>
             <div className="grid g2">
               {numberField('learningPath.fixedPathPct', 'Fixed-path share (%)', values.learningPath.fixedPathPct, (fixedPathPct) =>
                 change({ ...values, learningPath: { ...values.learningPath, fixedPathPct } }, ['learningPath.fixedPathPct']),
@@ -529,6 +609,59 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
             </div>
           </div>
         </div>
+
+        {/* ── the /programme fact sheet ────────────────────────── */}
+        <div className="card mb14">
+          <div className="card-h">
+            <h3>Programme fact sheet &mdash; shown on /programme</h3>
+          </div>
+          <div className="card-b">
+            <Callout tone="info" title="Hours and counts are not entered here">
+              Total hours, the module line and the elective count on that fact sheet are worked out from the modules above, so they cannot
+              disagree with them. The fields below are the ones nothing else supplies.
+            </Callout>
+
+            <div className="grid g2 mt14">
+              {numberField('facts.idealMonths', 'Ideal duration (months)', values.facts.idealMonths, (idealMonths) =>
+                change({ ...values, facts: { ...values.facts, idealMonths } }, ['facts.idealMonths']),
+              )}
+              {numberField('facts.validityMonths', 'Validity (months)', values.facts.validityMonths, (validityMonths) =>
+                change({ ...values, facts: { ...values.facts, validityMonths } }, ['facts.validityMonths']),
+              )}
+              {numberField(
+                'facts.securityDeposit',
+                'Security deposit (₹)',
+                values.facts.securityDeposit,
+                (securityDeposit) => change({ ...values, facts: { ...values.facts, securityDeposit } }, ['facts.securityDeposit']),
+                'Entered as a plain number; the site adds the ₹ and the thousands separator.',
+              )}
+              {numberField('facts.applyLeadDays', 'Apply before (days)', values.facts.applyLeadDays, (applyLeadDays) =>
+                change({ ...values, facts: { ...values.facts, applyLeadDays } }, ['facts.applyLeadDays']),
+              )}
+              <MasterField
+                id="facts.partnerName"
+                label="Partner"
+                required
+                error={show('facts.partnerName')}
+                hint="A registered company name, so it is not translated."
+              >
+                <input
+                  className="inp"
+                  type="text"
+                  autoComplete="off"
+                  maxLength={150}
+                  {...fieldAria('facts.partnerName', show('facts.partnerName'))}
+                  value={values.facts.partnerName}
+                  onChange={(e) => change({ ...values, facts: { ...values.facts, partnerName: e.target.value } }, ['facts.partnerName'])}
+                  onBlur={() => touch('facts.partnerName')}
+                />
+              </MasterField>
+            </div>
+          </div>
+        </div>
+
+        {/* The home page's "Programme at a glance" figures have their own CMS menu (/cms/home),
+            because three of the four are summed from the modules above and only one is typed. */}
 
         {/* ── visibility ───────────────────────────────────────── */}
         <div className="card mb14">

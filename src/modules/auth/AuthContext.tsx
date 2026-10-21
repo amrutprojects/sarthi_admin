@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import { ApiError, onUnauthorized } from '../../services/api-client';
+import { AuthContext, SESSION_QUERY_KEY, type AuthStatus, type AuthValue } from './auth-context';
 import { authApi } from './services/authApi';
-import type { ApiRoleRef, CurrentUser } from './types/auth.types';
 
 /*
  * Authentication state backed by the admin backend (ADR-0003):
@@ -12,26 +12,11 @@ import type { ApiRoleRef, CurrentUser } from './types/auth.types';
  * - any 401 from the API signs the user out; network errors and 5xx are retried (a backend restart
  *   must not sign anyone out)
  * Permissions are the effective codes returned by the backend; the backend re-checks every call.
+ *
+ * This file exports only the provider component, so React Fast Refresh patches it in place instead of
+ * re-running it; the context object itself lives in auth-context.ts (see the note there).
  */
-export type AuthStatus = 'loading' | 'anonymous' | 'authenticated';
-
-export interface AuthValue {
-  status: AuthStatus;
-  user: CurrentUser | null;
-  /* First role, for display (the backend allows several). */
-  primaryRole: ApiRoleRef | null;
-  permissions: Set<string>;
-  hiddenMenus: Set<string>;
-  login: (email: string, password: string) => Promise<CurrentUser>;
-  logout: () => Promise<void>;
-  /* Re-load /auth/me, e.g. after the user's own roles changed. */
-  refresh: () => Promise<void>;
-}
-
-export const SESSION_QUERY_KEY = ['auth', 'me'] as const;
 const isUnauthorized = (e: unknown) => e instanceof ApiError && e.status === 401;
-
-const AuthContext = createContext<AuthValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
@@ -98,10 +83,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth(): AuthValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');
-  return ctx;
 }
