@@ -85,6 +85,18 @@ describe('<RegistrationDetailPage>', () => {
     await waitFor(() => expect(registrationApi.verifyDocument).toHaveBeenCalledWith('r1', 'f-photo'));
   });
 
+  it('shows full email, mobile and Aadhaar when the API returns them', async () => {
+    vi.mocked(registrationApi.get).mockResolvedValue({
+      ...detail,
+      unmasked: { email: 'asha@example.invalid', mobile: '+919876543210', aadhaar: '2345 6789 0124' },
+    });
+    render();
+    expect(await screen.findByText('2345 6789 0124')).toBeInTheDocument();
+    expect(screen.getByText('asha@example.invalid')).toBeInTheDocument();
+    expect(screen.getByText('+919876543210')).toBeInTheDocument();
+    expect(screen.queryByText('XXXX-XXXX-2341')).not.toBeInTheDocument();
+  });
+
   it('shows the Aadhaar card when hovering the Aadhaar number', async () => {
     const u = userEvent.setup();
     render();
