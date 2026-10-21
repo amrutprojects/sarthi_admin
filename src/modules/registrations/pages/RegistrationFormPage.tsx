@@ -103,10 +103,14 @@ export default function RegistrationFormPage() {
   /*
    * Edit mode: fill the form with the student's current (unmasked) details once they AND the dropdown options have
    * loaded. Filling earlier leaves a select empty (its option does not exist yet), and Next then fails on that field.
+   * Done once per student: a later refetch of the student or the options must not wipe what the user has typed.
    */
+  const prefilledId = useRef<string | null>(null);
   useEffect(() => {
     const r = existing.data;
     if (!r || !regions.data || !castes.data || !educations.data) return;
+    if (prefilledId.current === r.id) return;
+    prefilledId.current = r.id;
     reset({
       first_name: r.firstName,
       last_name: r.lastName,
