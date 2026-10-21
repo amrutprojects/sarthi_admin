@@ -38,7 +38,7 @@ const detail: RegistrationDetail = {
   createdAt: '2026-10-20T10:00:00Z',
   source: 'PUBLIC_REGISTRATION',
   isActive: true,
-  registrationNumber: '20261021123045127127456',
+  registrationNumber: '1021123045127456',
   regionId: 'r-pun',
   casteId: 'c-1',
   educationId: 'e-1',
