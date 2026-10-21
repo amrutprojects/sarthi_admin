@@ -33,7 +33,8 @@ export const fmtDate = (iso: string | null | undefined) =>
 export interface ServerColumn<T> {
   k: string;
   l: string;
-  render: (row: T) => ReactNode;
+  /* index = position on the current page (0-based), e.g. for a serial number column. */
+  render: (row: T, index: number) => ReactNode;
   className?: string;
 }
 
@@ -73,11 +74,11 @@ export function ServerTable<T extends { id: string }>({
           </thead>
           <tbody style={loading ? { opacity: 0.55 } : undefined}>
             {rows.length ? (
-              rows.map((r) => (
+              rows.map((r, i) => (
                 <tr key={r.id} className={onRowClick ? 'pointer' : ''} onClick={onRowClick ? () => onRowClick(r) : undefined}>
                   {columns.map((c) => (
                     <td key={c.k} className={c.className}>
-                      {c.render(r)}
+                      {c.render(r, i)}
                     </td>
                   ))}
                 </tr>

@@ -377,6 +377,12 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
           onRowClick={(s) => studentApi.get(s.id).then(setOpen).catch(toastError)}
           columns={[
             {
+              k: 'sr',
+              l: 'Sr. No.',
+              className: 'mono',
+              render: (_s, i) => (page - 1) * (meta?.limit ?? 25) + i + 1,
+            },
+            {
               k: 'code',
               l: 'Student',
               render: (s) => (
@@ -388,13 +394,6 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
                     {s.sourceRecordId ? ` · ${s.sourceRecordId}` : ''}
                   </div>
                 </div>
-              ),
-            },
-            {
-              k: 'source',
-              l: 'Source',
-              render: (s) => (
-                <Badge tone={s.source === 'IMPORT' ? 'blue' : 'saffron'}>{s.source === 'IMPORT' ? 'Import' : 'Registration'}</Badge>
               ),
             },
             { k: 'centre', l: 'Course centre', render: (s) => s.centreName ?? '—' },

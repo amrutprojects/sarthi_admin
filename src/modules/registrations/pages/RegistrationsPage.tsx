@@ -151,6 +151,7 @@ export default function RegistrationsPage() {
               <table className="tbl" aria-busy={list.isFetching}>
                 <thead>
                   <tr>
+                    <th scope="col">Sr. No.</th>
                     <th scope="col">Registration no.</th>
                     <th scope="col">Source</th>
                     <th scope="col">Name</th>
@@ -166,8 +167,9 @@ export default function RegistrationsPage() {
                   </tr>
                 </thead>
                 <tbody className={list.isFetching ? 'tw-opacity-60' : undefined}>
-                  {list.data.items.map((r) => (
+                  {list.data.items.map((r, i) => (
                     <tr key={r.id}>
+                      <td className="mono">{(page - 1) * list.data.meta.limit + i + 1}</td>
                       <td className="mono">{r.registrationNumber ?? '—'}</td>
                       <td>
                         <Badge tone={r.source === 'IMPORT' ? 'blue' : 'saffron'}>{SOURCE_LABEL[r.source]}</Badge>
