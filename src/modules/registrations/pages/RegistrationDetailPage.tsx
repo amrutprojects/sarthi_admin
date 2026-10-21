@@ -224,17 +224,21 @@ export default function RegistrationDetailPage() {
                     ['Last name', r.lastName],
                     ['Father name', r.fatherName],
                     ['Mother name', r.motherName],
-                    ['Email', r.email ?? '—'],
+                    ['Email', r.unmasked?.email ?? r.email ?? '—'],
                     ['Date of birth', r.dateOfBirth ?? '—'],
                     [
                       'Aadhaar',
                       r.aadhaar ? (
-                        <AadhaarHover registrationId={r.id} value={r.aadhaar} card={r.files.find((f) => f.docType === AADHAAR_DOC)} />
+                        <AadhaarHover
+                          registrationId={r.id}
+                          value={r.unmasked?.aadhaar ?? r.aadhaar}
+                          card={r.files.find((f) => f.docType === AADHAAR_DOC)}
+                        />
                       ) : (
                         '—'
                       ),
                     ],
-                    ['Mobile', r.mobile ?? '—'],
+                    ['Mobile', r.unmasked?.mobile ?? r.mobile ?? '—'],
                     ['Religion', r.religion],
                     ['Caste', r.caste],
                   ]}

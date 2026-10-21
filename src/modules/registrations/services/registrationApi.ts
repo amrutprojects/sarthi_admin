@@ -40,6 +40,8 @@ export interface RegistrationDetail extends Registration {
   declarationAccepted: boolean | null;
   documents: { key: string; label: string; required: boolean; supplied: boolean; barcode: string | null }[];
   files: RegistrationFile[];
+  /* Full values, returned only to reviewers (registrations.update); each view is audited by the backend. */
+  unmasked?: { email: string | null; mobile: string | null; aadhaar: string | null };
 }
 
 export interface RegistrationListParams {
