@@ -37,7 +37,7 @@ export default function ModulesView() {
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'CMS' }, { l: 'Modules Page' }]}
         title="Modules Page Management"
-        sub="Each module's type, hours and employment domains, plus the page heading and the programme fact sheet."
+        sub="Each module's type, hours and employment domains, plus the page heading and the learning path."
         actions={
           page ? (
             <div className="f ac gp8 wrap">
@@ -188,24 +188,6 @@ export default function ModulesView() {
                   ['Learning path', `${page.learningPath.fixedPathPct}% fixed-path / ${page.learningPath.selfPathPct}% self-path`],
                   ['Session length', pair(page.learningPath.sessionLength)],
                   ['Last updated', fmtDateTime(page.updatedAt)],
-                ]}
-              />
-            </div>
-          </div>
-
-          {/* The fact sheet on /programme. Hours and counts there are summed from the modules. */}
-          <div className="card mb14">
-            <div className="card-h">
-              <h3>Programme fact sheet &mdash; /programme</h3>
-            </div>
-            <div className="card-b">
-              <KvList
-                pairs={[
-                  ['Ideal duration', `${page.facts.idealMonths} months`],
-                  ['Validity', `${page.facts.validityMonths} months`],
-                  ['Security deposit', `₹${page.facts.securityDeposit.toLocaleString('en-IN')}`],
-                  ['Apply before', `${page.facts.applyLeadDays} days`],
-                  ['Partner', page.facts.partnerName],
                 ]}
               />
             </div>

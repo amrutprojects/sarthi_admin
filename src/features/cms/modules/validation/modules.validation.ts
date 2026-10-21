@@ -63,13 +63,6 @@ export interface ModulesFormValues {
     fixedPathPct: string;
     selfPathPct: string;
   };
-  facts: {
-    idealMonths: string;
-    validityMonths: string;
-    securityDeposit: string;
-    applyLeadDays: string;
-    partnerName: string;
-  };
   isPublished: boolean;
 }
 
@@ -138,13 +131,6 @@ export function toFormValues(page: ApiModulesPage): ModulesFormValues {
       fixedPathPct: String(page.learningPath.fixedPathPct),
       selfPathPct: String(page.learningPath.selfPathPct),
     },
-    facts: {
-      idealMonths: String(page.facts.idealMonths),
-      validityMonths: String(page.facts.validityMonths),
-      securityDeposit: String(page.facts.securityDeposit),
-      applyLeadDays: String(page.facts.applyLeadDays),
-      partnerName: page.facts.partnerName,
-    },
     isPublished: page.isPublished,
   };
 }
@@ -188,13 +174,6 @@ export function toPayload(v: ModulesFormValues): UpdateModulesPageInput {
       sessionLabel: trimPair(v.learningPath.sessionLabel),
       fixedPathPct: asNumber(v.learningPath.fixedPathPct),
       selfPathPct: asNumber(v.learningPath.selfPathPct),
-    },
-    facts: {
-      idealMonths: asNumber(v.facts.idealMonths),
-      validityMonths: asNumber(v.facts.validityMonths),
-      securityDeposit: asNumber(v.facts.securityDeposit),
-      applyLeadDays: asNumber(v.facts.applyLeadDays),
-      partnerName: v.facts.partnerName.trim(),
     },
     isPublished: v.isPublished,
   };
@@ -358,29 +337,6 @@ export function validateModulesForm(v: ModulesFormValues): FieldErrors<ModulesFi
       errors['learningPath.fixedPathPct'] = `The two shares add up to ${sum}, not 100`;
     }
   }
-
-  /* ---- the /programme fact sheet ---- */
-  errors['facts.idealMonths'] = requiredNumber(v.facts.idealMonths, 'Ideal duration', {
-    min: 0,
-    max: 120,
-    integer: true,
-  });
-  errors['facts.validityMonths'] = requiredNumber(v.facts.validityMonths, 'Validity', {
-    min: 0,
-    max: 240,
-    integer: true,
-  });
-  errors['facts.securityDeposit'] = requiredNumber(v.facts.securityDeposit, 'Security deposit', {
-    min: 0,
-    max: 10_000_000,
-    integer: true,
-  });
-  errors['facts.applyLeadDays'] = requiredNumber(v.facts.applyLeadDays, 'Apply before', {
-    min: 0,
-    max: 365,
-    integer: true,
-  });
-  errors['facts.partnerName'] = requiredText(v.facts.partnerName, 'Partner name', 150);
 
   return errors;
 }

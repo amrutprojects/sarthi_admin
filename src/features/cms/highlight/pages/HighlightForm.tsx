@@ -89,9 +89,10 @@ function validate(v: FormValues): FieldErrors<HighlightField> {
 /*
  * The home page's programme section editor.
  *
- * What is NOT here is the fact sheet beside it on the page — total duration, per module, schedule,
- * deposit. Several of those are summed from the modules, so they belong to the Modules Page screen;
- * editing them here would be a second place for the same numbers to disagree.
+ * What is NOT here is the fact sheet beside it on the page. Total duration, per module and schedule
+ * are summed from the modules, so they belong to the Modules Page screen; ideal completion, validity
+ * and the deposit are the Programme page's fact sheet (Programme Page Management). Editing any of
+ * them here would be a second place for the same numbers to disagree.
  */
 export default function HighlightForm({
   initial,
@@ -165,8 +166,8 @@ export default function HighlightForm({
     <>
       <form id={FORM_ID} onSubmit={submit} noValidate>
         <Callout tone="info" title="The fact sheet beside this is edited elsewhere">
-          Total duration, per module, schedule and the deposit come from the Modules Page screen — several of them are summed from the
-          modules themselves, so they are not repeated here.
+          Total duration, per module and schedule are summed from the modules on the Modules Page screen; ideal completion, validity and the
+          deposit come from the fact sheet in Programme Page Management. None of them is repeated here.
         </Callout>
 
         <div className="card mt14 mb14">

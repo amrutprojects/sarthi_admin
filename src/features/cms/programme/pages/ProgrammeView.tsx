@@ -1,4 +1,4 @@
-import { Callout, PageHead, useGo } from '../../../../components/ui';
+import { Callout, KvList, PageHead, useGo } from '../../../../components/ui';
 import { Can } from '../../../../modules/auth/components/Can';
 import Icon from '../../../../components/ui/Icon';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
@@ -21,8 +21,9 @@ function Pair({ value }: { value: Bilingual }) {
 
 /*
  * Programme Page Management — the read-only view of what the public /programme page shows: introduction, objectives,
- * learning methodology, assessment criteria and certification. View-only administrators get the whole picture; the
- * Edit and Publish buttons render only for cms-programme.update.
+ * learning methodology, assessment criteria, certification, and the fact sheet and training modes in the right-hand
+ * rail. View-only administrators get the whole picture; the Edit and Publish buttons render only for
+ * cms-programme.update.
  */
 export default function ProgrammeView() {
   usePageTitle('Programme Page');
@@ -36,7 +37,7 @@ export default function ProgrammeView() {
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'CMS' }, { l: 'Programme Page' }]}
         title="Programme Page Management"
-        sub="The content of the public Programme page, in Marathi and English."
+        sub="The content of the public Programme page, in Marathi and English, plus its fact sheet."
         actions={
           page ? (
             <div className="f ac gp8 wrap">
@@ -165,6 +166,24 @@ export default function ProgrammeView() {
                   </li>
                 ))}
               </ol>
+            </div>
+          </div>
+
+          {/* The fact sheet on /programme. Total hours, the module line and the elective count there are summed from the modules. */}
+          <div className="card mb14">
+            <div className="card-h">
+              <h3>Programme fact sheet &mdash; /programme</h3>
+            </div>
+            <div className="card-b">
+              <KvList
+                pairs={[
+                  ['Ideal duration', `${page.facts.idealMonths} months`],
+                  ['Validity', `${page.facts.validityMonths} months`],
+                  ['Security deposit', `₹${page.facts.securityDeposit.toLocaleString('en-IN')}`],
+                  ['Apply before', `${page.facts.applyLeadDays} days`],
+                  ['Partner', page.facts.partnerName],
+                ]}
+              />
             </div>
           </div>
 

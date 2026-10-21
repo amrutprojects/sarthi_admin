@@ -37,20 +37,6 @@ export interface LearningPath {
   selfPathPct: number;
 }
 
-/**
- * The fact sheet shown on the public /programme page.
- *
- * Total hours, the module count and the number of employment domains are deliberately absent:
- * the site sums those from the modules, so they cannot contradict the Modules page.
- */
-export interface ProgrammeFacts {
-  idealMonths: number;
-  validityMonths: number;
-  securityDeposit: number;
-  applyLeadDays: number;
-  partnerName: string;
-}
-
 /** Figures the home page prints that the module lists cannot supply. */
 export interface ProgrammeStats {
   districtCount: number;
@@ -94,7 +80,6 @@ export interface ApiModulesPage {
   pageSubtitle: Bilingual;
   modules: ApiModule[];
   learningPath: LearningPath;
-  facts: ProgrammeFacts;
   stats: ProgrammeStats;
   isPublished: boolean;
   createdAt: string;
@@ -122,7 +107,6 @@ export interface UpdateModulesPageInput {
     }[];
   }[];
   learningPath: LearningPath;
-  facts: ProgrammeFacts;
   isPublished: boolean;
 }
 
