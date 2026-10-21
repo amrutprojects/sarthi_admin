@@ -57,6 +57,15 @@ export type RouteName =
   | 'cmsFooterEdit'
   | 'cmsModulesView'
   | 'cmsModulesEdit'
+  | 'cmsFaqList'
+  | 'cmsFaqCreate'
+  | 'cmsFaqEdit'
+  | 'cmsFaqView'
+  | 'cmsEligibilityList'
+  | 'cmsEligibilityCreate'
+  | 'cmsEligibilityPageEdit'
+  | 'cmsEligibilityEdit'
+  | 'cmsEligibilityView'
   | 'cmsContactEdit'
   | 'cmsStateList'
   | 'cmsStateCreate'
@@ -70,6 +79,71 @@ export type RouteName =
   | 'cmsTalukaCreate'
   | 'cmsTalukaEdit'
   | 'cmsTalukaView'
+  | 'cmsDepartmentList'
+  | 'cmsDepartmentCreate'
+  | 'cmsDepartmentEdit'
+  | 'cmsDepartmentView'
+  | 'cmsCollegeList'
+  | 'cmsCollegeCreate'
+  | 'cmsCollegeEdit'
+  | 'cmsCollegeView'
+  | 'cmsDocumentList'
+  | 'cmsDocumentCreate'
+  | 'cmsDocumentEdit'
+  | 'cmsDocumentView'
+  | 'cmsBatchList'
+  | 'cmsBatchCreate'
+  | 'cmsBatchEdit'
+  | 'cmsBatchView'
+  | 'cmsBatchAssignmentList'
+  | 'cmsBatchAssignmentCreate'
+  | 'cmsBatchAssignmentEdit'
+  | 'cmsBatchAssignmentView'
+  | 'cmsCentreTypeList'
+  | 'cmsCentreTypeCreate'
+  | 'cmsCentreTypeEdit'
+  | 'cmsCentreTypeView'
+  | 'cmsTrainingCentreList'
+  | 'cmsTrainingCentreCreate'
+  | 'cmsTrainingCentreEdit'
+  | 'cmsTrainingCentreView'
+  | 'cmsCentreLocationList'
+  | 'cmsCentreLocationCreate'
+  | 'cmsCentreLocationEdit'
+  | 'cmsCentreLocationView'
+  | 'cmsCentreInfrastructureList'
+  | 'cmsCentreInfrastructureCreate'
+  | 'cmsCentreInfrastructureEdit'
+  | 'cmsCentreInfrastructureView'
+  | 'lmsLmsEntityList'
+  | 'lmsLmsEntityCreate'
+  | 'lmsLmsEntityEdit'
+  | 'lmsLmsEntityView'
+  | 'lmsBrandingList'
+  | 'lmsBrandingEdit'
+  | 'lmsBrandingView'
+  | 'lmsCalendarList'
+  | 'lmsCalendarCreate'
+  | 'lmsCalendarEdit'
+  | 'lmsCalendarView'
+  | 'lmsFormFieldList'
+  | 'lmsFormFieldCreate'
+  | 'lmsFormFieldEdit'
+  | 'lmsFormFieldView'
+  | 'lmsReferenceData'
+  | 'lmsCourseList'
+  | 'lmsCourseCreate'
+  | 'lmsCourseEdit'
+  | 'lmsCourseView'
+  | 'lmsCourseModuleList'
+  | 'lmsCourseModuleCreate'
+  | 'lmsCourseModuleEdit'
+  | 'lmsCourseModuleView'
+  | 'lmsTrackVariantList'
+  | 'lmsTrackVariantCreate'
+  | 'lmsTrackVariantEdit'
+  | 'lmsTrackVariantView'
+  | 'lmsLearningConfig'
   | 'lms'
   | 'studentApp'
   | 'administration'
@@ -133,6 +207,8 @@ export const NAV: NavEntry[] = [
   { k: 'cms-contact', l: 'Contact Page Management', i: 'mail', r: '/cms/contact' },
   { k: 'cms-footer', l: 'Footer Management', i: 'doc', r: '/cms/footer' },
   { k: 'cms-modules', l: 'Modules Page Management', i: 'book', r: '/cms/modules' },
+  { k: 'cms-faqs', l: 'FAQ Management', i: 'help', r: '/cms/faqs' },
+  { k: 'cms-eligibility', l: 'Eligibility Page Management', i: 'check', r: '/cms/eligibility' },
   { k: 'cms-states', l: 'State Master', i: 'globe', r: '/cms/states' },
   { k: 'cms-districts', l: 'District Master', i: 'map', r: '/cms/districts' },
   { k: 'cms-talukas', l: 'Taluka Master', i: 'pin', r: '/cms/talukas' },
@@ -146,6 +222,14 @@ export const NAV: NavEntry[] = [
   { k: 'cms-training-centres', l: 'Training Centre Master', i: 'home', r: '/cms/training-centres' },
   { k: 'cms-centre-locations', l: 'Location Information', i: 'pin', r: '/cms/centre-locations' },
   { k: 'cms-centre-infrastructure', l: 'Capacity & Infrastructure', i: 'monitor', r: '/cms/centre-infrastructure' },
+  /*
+   * Reference-data masters. One "Masters" heading for both sets: group titles are React keys in the
+   * sidebar and the permission/menu-visibility tables. Keys equal the backend permission prefixes (regions.view, …).
+   */
+  { k: 'regions', l: 'Regions', i: 'map', r: '/masters/regions' },
+  { k: 'castes', l: 'Castes', i: 'users', r: '/masters/castes' },
+  { k: 'document-types', l: 'Document Types', i: 'doc', r: '/masters/document-types' },
+  { k: 'education', l: 'Education', i: 'award', r: '/masters/education' },
   { g: 'LMS Admin' },
   { k: 'lms-entities', l: 'Entity Master', i: 'building', r: '/lms/entities' },
   { k: 'lms-branding', l: 'Branding & Settings', i: 'settings', r: '/lms/branding' },
@@ -163,12 +247,6 @@ export const NAV: NavEntry[] = [
   { k: 'users', l: 'Users & Roles', i: 'users', r: '/users' },
   { k: 'audit', l: 'Audit Log', i: 'doc', r: '/audit' },
   { k: 'settings', l: 'System Settings', i: 'settings', r: '/settings' },
-  { g: 'Masters' },
-  /* Keys equal the backend permission prefixes (regions.view, …). */
-  { k: 'regions', l: 'Regions', i: 'map', r: '/masters/regions' },
-  { k: 'castes', l: 'Castes', i: 'users', r: '/masters/castes' },
-  { k: 'document-types', l: 'Document Types', i: 'doc', r: '/masters/document-types' },
-  { k: 'education', l: 'Education', i: 'award', r: '/masters/education' },
   { g: 'Public Site' },
   { k: 'pubhome', l: 'AMRUT Public Site', i: 'globe', r: '/home' },
   { k: 'pubprog', l: 'AMRUT Kalash 2.0', i: 'award', r: '/programme' },
@@ -237,6 +315,15 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/footer/edit', 'cmsFooterEdit', 'cms-footer'],
   ['/cms/modules', 'cmsModulesView', 'cms-modules'],
   ['/cms/modules/edit', 'cmsModulesEdit', 'cms-modules'],
+  ['/cms/faqs', 'cmsFaqList', 'cms-faqs'],
+  ['/cms/faqs/create', 'cmsFaqCreate', 'cms-faqs'],
+  ['/cms/faqs/:id/edit', 'cmsFaqEdit', 'cms-faqs'],
+  ['/cms/faqs/:id', 'cmsFaqView', 'cms-faqs'],
+  ['/cms/eligibility', 'cmsEligibilityList', 'cms-eligibility'],
+  ['/cms/eligibility/create', 'cmsEligibilityCreate', 'cms-eligibility'],
+  ['/cms/eligibility/page/edit', 'cmsEligibilityPageEdit', 'cms-eligibility'],
+  ['/cms/eligibility/:id/edit', 'cmsEligibilityEdit', 'cms-eligibility'],
+  ['/cms/eligibility/:id', 'cmsEligibilityView', 'cms-eligibility'],
   ['/cms/states', 'cmsStateList', 'cms-states'],
   ['/cms/states/create', 'cmsStateCreate', 'cms-states'],
   ['/cms/states/:id/edit', 'cmsStateEdit', 'cms-states'],
@@ -249,6 +336,72 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/talukas/create', 'cmsTalukaCreate', 'cms-talukas'],
   ['/cms/talukas/:id/edit', 'cmsTalukaEdit', 'cms-talukas'],
   ['/cms/talukas/:id', 'cmsTalukaView', 'cms-talukas'],
+  ['/cms/departments', 'cmsDepartmentList', 'cms-departments'],
+  ['/cms/departments/create', 'cmsDepartmentCreate', 'cms-departments'],
+  ['/cms/departments/:id/edit', 'cmsDepartmentEdit', 'cms-departments'],
+  ['/cms/departments/:id', 'cmsDepartmentView', 'cms-departments'],
+  ['/cms/colleges', 'cmsCollegeList', 'cms-colleges'],
+  ['/cms/colleges/create', 'cmsCollegeCreate', 'cms-colleges'],
+  ['/cms/colleges/:id/edit', 'cmsCollegeEdit', 'cms-colleges'],
+  ['/cms/colleges/:id', 'cmsCollegeView', 'cms-colleges'],
+  ['/cms/documents', 'cmsDocumentList', 'cms-documents'],
+  ['/cms/documents/create', 'cmsDocumentCreate', 'cms-documents'],
+  ['/cms/documents/:id/edit', 'cmsDocumentEdit', 'cms-documents'],
+  ['/cms/documents/:id', 'cmsDocumentView', 'cms-documents'],
+  ['/cms/batches', 'cmsBatchList', 'cms-batches'],
+  ['/cms/batches/create', 'cmsBatchCreate', 'cms-batches'],
+  ['/cms/batches/:id/edit', 'cmsBatchEdit', 'cms-batches'],
+  ['/cms/batches/:id', 'cmsBatchView', 'cms-batches'],
+  ['/cms/batch-assignments', 'cmsBatchAssignmentList', 'cms-batch-assignments'],
+  ['/cms/batch-assignments/create', 'cmsBatchAssignmentCreate', 'cms-batch-assignments'],
+  ['/cms/batch-assignments/:id/edit', 'cmsBatchAssignmentEdit', 'cms-batch-assignments'],
+  ['/cms/batch-assignments/:id', 'cmsBatchAssignmentView', 'cms-batch-assignments'],
+  ['/cms/centre-types', 'cmsCentreTypeList', 'cms-centre-types'],
+  ['/cms/centre-types/create', 'cmsCentreTypeCreate', 'cms-centre-types'],
+  ['/cms/centre-types/:id/edit', 'cmsCentreTypeEdit', 'cms-centre-types'],
+  ['/cms/centre-types/:id', 'cmsCentreTypeView', 'cms-centre-types'],
+  ['/cms/training-centres', 'cmsTrainingCentreList', 'cms-training-centres'],
+  ['/cms/training-centres/create', 'cmsTrainingCentreCreate', 'cms-training-centres'],
+  ['/cms/training-centres/:id/edit', 'cmsTrainingCentreEdit', 'cms-training-centres'],
+  ['/cms/training-centres/:id', 'cmsTrainingCentreView', 'cms-training-centres'],
+  ['/cms/centre-locations', 'cmsCentreLocationList', 'cms-centre-locations'],
+  ['/cms/centre-locations/create', 'cmsCentreLocationCreate', 'cms-centre-locations'],
+  ['/cms/centre-locations/:id/edit', 'cmsCentreLocationEdit', 'cms-centre-locations'],
+  ['/cms/centre-locations/:id', 'cmsCentreLocationView', 'cms-centre-locations'],
+  ['/cms/centre-infrastructure', 'cmsCentreInfrastructureList', 'cms-centre-infrastructure'],
+  ['/cms/centre-infrastructure/create', 'cmsCentreInfrastructureCreate', 'cms-centre-infrastructure'],
+  ['/cms/centre-infrastructure/:id/edit', 'cmsCentreInfrastructureEdit', 'cms-centre-infrastructure'],
+  ['/cms/centre-infrastructure/:id', 'cmsCentreInfrastructureView', 'cms-centre-infrastructure'],
+  /* LMS Admin masters. Static paths (create) before :id patterns. */
+  ['/lms/entities', 'lmsLmsEntityList', 'lms-entities'],
+  ['/lms/entities/create', 'lmsLmsEntityCreate', 'lms-entities'],
+  ['/lms/entities/:id/edit', 'lmsLmsEntityEdit', 'lms-entities'],
+  ['/lms/entities/:id', 'lmsLmsEntityView', 'lms-entities'],
+  ['/lms/branding', 'lmsBrandingList', 'lms-branding'],
+  ['/lms/branding/:entityId/edit', 'lmsBrandingEdit', 'lms-branding'],
+  ['/lms/branding/:entityId', 'lmsBrandingView', 'lms-branding'],
+  ['/lms/calendars', 'lmsCalendarList', 'lms-calendars'],
+  ['/lms/calendars/create', 'lmsCalendarCreate', 'lms-calendars'],
+  ['/lms/calendars/:id/edit', 'lmsCalendarEdit', 'lms-calendars'],
+  ['/lms/calendars/:id', 'lmsCalendarView', 'lms-calendars'],
+  ['/lms/form-fields', 'lmsFormFieldList', 'lms-form-fields'],
+  ['/lms/form-fields/create', 'lmsFormFieldCreate', 'lms-form-fields'],
+  ['/lms/form-fields/:id/edit', 'lmsFormFieldEdit', 'lms-form-fields'],
+  ['/lms/form-fields/:id', 'lmsFormFieldView', 'lms-form-fields'],
+  ['/lms/reference-data', 'lmsReferenceData', 'lms-reference'],
+  ['/lms/courses', 'lmsCourseList', 'lms-courses'],
+  ['/lms/courses/create', 'lmsCourseCreate', 'lms-courses'],
+  ['/lms/courses/:id/edit', 'lmsCourseEdit', 'lms-courses'],
+  ['/lms/courses/:id', 'lmsCourseView', 'lms-courses'],
+  ['/lms/modules', 'lmsCourseModuleList', 'lms-course-modules'],
+  ['/lms/modules/create', 'lmsCourseModuleCreate', 'lms-course-modules'],
+  ['/lms/modules/:id/edit', 'lmsCourseModuleEdit', 'lms-course-modules'],
+  ['/lms/modules/:id', 'lmsCourseModuleView', 'lms-course-modules'],
+  ['/lms/track-variants', 'lmsTrackVariantList', 'lms-track-variants'],
+  ['/lms/track-variants/create', 'lmsTrackVariantCreate', 'lms-track-variants'],
+  ['/lms/track-variants/:id/edit', 'lmsTrackVariantEdit', 'lms-track-variants'],
+  ['/lms/track-variants/:id', 'lmsTrackVariantView', 'lms-track-variants'],
+  ['/lms/learning-config', 'lmsLearningConfig', 'lms-learning-config'],
   ['/lms', 'lms', 'lms'],
   ['/student-app', 'studentApp', 'app'],
   ['/administration', 'administration', 'admin'],
