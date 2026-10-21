@@ -124,9 +124,12 @@ export interface StudentView {
   mobile: string | null;
   email: string | null;
   aadhaar: string | null;
-  approvedAt: string;
-  importBatchId: string;
+  approvedAt: string | null;
+  importBatchId: string | null;
   createdAt: string;
+  /* IMPORT = imported student, PUBLIC_REGISTRATION = registration; both live in the one students table. */
+  source: 'IMPORT' | 'PUBLIC_REGISTRATION';
+  registrationNumber: string | null;
 }
 export interface StudentDetail extends StudentView {
   firstName: string;
@@ -195,8 +198,15 @@ export const importApi = {
 };
 
 export const studentApi = {
-  list: (q: { page?: number; limit?: number; search?: string; centre?: string; track?: string; batch?: string }) =>
-    paged<StudentView>('/students', q),
+  list: (q: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    centre?: string;
+    track?: string;
+    batch?: string;
+    source?: 'IMPORT' | 'PUBLIC_REGISTRATION';
+  }) => paged<StudentView>('/students', q),
   get: async (id: string) => (await request<StudentDetail>(`/students/${id}`)).data,
   documents: async (id: string) => (await request<StudentDocument[]>(`/students/${id}/documents`)).data,
   downloadDocument: (studentId: string, doc: StudentDocument) =>

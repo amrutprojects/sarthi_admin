@@ -269,6 +269,7 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
   const [search, setSearch] = useState('');
   const [centre, setCentre] = useState('');
   const [track, setTrack] = useState('');
+  const [source, setSource] = useState<'' | 'IMPORT' | 'PUBLIC_REGISTRATION'>('');
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState<StudentDetail | null>(null);
 
@@ -281,6 +282,7 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
         search: search || undefined,
         centre: centre || undefined,
         track: track || undefined,
+        source: source || undefined,
       });
       setRows(r.items);
       setMeta(r.meta);
@@ -289,7 +291,7 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
     } finally {
       setLoading(false);
     }
-  }, [page, search, centre, track]);
+  }, [page, search, centre, track, source]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -298,7 +300,7 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
     <>
       <div className="grid g4 mb14">
         <Kpi label="Students in register" value={(meta?.total ?? 0).toLocaleString('en-IN')} tone="b" />
-        <Kpi label="Source" value="Approved import" tone="g" sub="No manual entry" />
+        <Kpi label="Sources" value="Import + Registration" tone="g" sub="One students table" />
       </div>
       <div className="card">
         <div className="card-h">
@@ -316,6 +318,20 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
               }}
               style={{ width: 250 }}
             />
+            <select
+              className="inp sm"
+              style={{ width: 'auto' }}
+              aria-label="Filter by source"
+              value={source}
+              onChange={(e) => {
+                setSource(e.target.value as typeof source);
+                setPage(1);
+              }}
+            >
+              <option value="">All sources</option>
+              <option value="IMPORT">Import</option>
+              <option value="PUBLIC_REGISTRATION">Registration</option>
+            </select>
             <select
               className="inp sm"
               style={{ width: 'auto' }}
@@ -357,7 +373,7 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
           page={page}
           onPage={setPage}
           loading={loading}
-          empty="No students yet. Students appear here when an import batch is finalised."
+          empty="No students yet. Students appear here when an import batch is finalised or a registration is submitted."
           onRowClick={(s) => studentApi.get(s.id).then(setOpen).catch(toastError)}
           columns={[
             {
@@ -367,9 +383,16 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
                 <div>
                   <b>{s.name}</b>
                   <div className="fs11 muted mono">
-                    {s.code} · {s.sourceRecordId ?? '—'}
+                    {s.code} · {s.sourceRecordId ?? s.registrationNumber ?? '—'}
                   </div>
                 </div>
+              ),
+            },
+            {
+              k: 'source',
+              l: 'Source',
+              render: (s) => (
+                <Badge tone={s.source === 'IMPORT' ? 'blue' : 'saffron'}>{s.source === 'IMPORT' ? 'Import' : 'Registration'}</Badge>
               ),
             },
             { k: 'centre', l: 'Course centre', render: (s) => s.centreName ?? '—' },
@@ -388,7 +411,7 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
             { k: 'mobile', l: 'Mobile', className: 'mono', render: (s) => s.mobile ?? '—' },
             { k: 'aadhaar', l: 'Aadhaar', className: 'mono', render: (s) => s.aadhaar ?? '—' },
             { k: 'status', l: 'Status', render: (s) => <Badge tone="blue">{s.status === 'RECEIVED' ? 'Received' : s.status}</Badge> },
-            { k: 'at', l: 'Approved', render: (s) => fmtDate(s.approvedAt) },
+            { k: 'at', l: 'Approved', render: (s) => (s.approvedAt ? fmtDate(s.approvedAt) : '—') },
           ]}
         />
       </div>
