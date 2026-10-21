@@ -106,6 +106,14 @@ export const registrationApi = {
     return (await request<RegistrationDetail>(`/student-registrations/${id}`, { method: 'PATCH', body: data })).data;
   },
 
+  /* Replaces or adds documents and updates barcodes (edit form, step 3). Multipart like create. */
+  async replaceDocuments(id: string, barcodes: Record<string, string>, files: Record<string, File>): Promise<RegistrationDetail> {
+    const fd = new FormData();
+    fd.append('data', JSON.stringify({ barcodes }));
+    for (const [code, file] of Object.entries(files)) fd.append(code, file, file.name);
+    return (await request<RegistrationDetail>(`/student-registrations/${id}/documents`, { method: 'POST', body: fd })).data;
+  },
+
   async setStatus(id: string, isActive: boolean): Promise<RegistrationDetail> {
     return (await request<RegistrationDetail>(`/student-registrations/${id}/status`, { method: 'PATCH', body: { isActive } })).data;
   },

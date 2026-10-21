@@ -52,7 +52,7 @@ export default function RegistrationFormPage() {
   const qc = useQueryClient();
   const { id: editId } = useParams();
   const editing = !!editId;
-  const steps = editing ? STEPS.slice(0, 2) : STEPS;
+  const steps = STEPS;
   const lastStep = steps.length - 1;
   const existing = useQuery({
     queryKey: ['registrations', 'detail', editId],
@@ -119,7 +119,7 @@ export default function RegistrationFormPage() {
       region_id: r.regionId ?? '',
       technology: r.trackCode ?? '',
       education_id: r.educationId ?? '',
-      barcodes: {},
+      barcodes: Object.fromEntries(r.documents.filter((d) => d.barcode).map((d) => [d.key, d.barcode as string])),
     });
   }, [existing.data, reset]);
 
@@ -160,11 +160,13 @@ export default function RegistrationFormPage() {
     let ok = true;
     for (const t of docTypes.data ?? []) {
       const f = files[t.code];
+      /* When editing, a file already on record counts; a new file replaces it. */
+      const existingFile = existing.data?.files.some((x) => x.docType === t.code);
       if (f) {
         const issue = fileIssue(f);
         if (issue) fe[t.code] = issue;
-      } else if (t.isMandatory) fe[t.code] = `${t.name} is required`;
-      if (f && BARCODES[t.code] === 'required' && !getValues(`barcodes.${t.code}`)?.trim()) {
+      } else if (t.isMandatory && !existingFile) fe[t.code] = `${t.name} is required`;
+      if ((f || existingFile) && BARCODES[t.code] === 'required' && !getValues(`barcodes.${t.code}`)?.trim()) {
         setError(`barcodes.${t.code}`, { message: `${t.name} barcode is required` });
         ok = false;
       }
@@ -177,8 +179,22 @@ export default function RegistrationFormPage() {
     if (await trigger(STEP_FIELDS[step] as unknown as FieldPath<RegistrationFormValues>[])) setStep(step + 1);
   };
 
+  /* Edit: save the details, then (if anything changed in step 3) the documents and barcodes. */
   const save = useMutation({
-    mutationFn: (data: Omit<RegistrationData, 'declaration_accepted' | 'barcodes'>) => registrationApi.update(editId!, data),
+    mutationFn: async ({
+      data,
+      barcodes,
+      newFiles,
+    }: {
+      data: Omit<RegistrationData, 'declaration_accepted' | 'barcodes'>;
+      barcodes: Record<string, string>;
+      newFiles: Record<string, File>;
+    }) => {
+      await registrationApi.update(editId!, data);
+      const before = Object.fromEntries((existing.data?.documents ?? []).map((d) => [d.key, d.barcode ?? '']));
+      const changed = Object.fromEntries(Object.entries(barcodes).filter(([c, b]) => (before[c] ?? '') !== b.trim()));
+      if (Object.keys(newFiles).length || Object.keys(changed).length) await registrationApi.replaceDocuments(editId!, changed, newFiles);
+    },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['registrations'] });
       navigate(`/student-registrations/${editId}`);
@@ -186,13 +202,19 @@ export default function RegistrationFormPage() {
     },
     onError: (e) => {
       if (!(e instanceof ApiError) || !e.details.length) return toastError(e);
-      let first = 1;
+      let first = 2;
+      const fe: Record<string, string> = {};
       for (const d of e.details) {
         const f = (d.field ?? '').replace(/^body\./, '');
+        if (f.startsWith('files.')) {
+          fe[f.slice(6)] = d.message;
+          continue;
+        }
         setError(f as FieldPath<RegistrationFormValues>, { message: d.message });
         const s = STEP_FIELDS.findIndex((fields) => (fields as readonly string[]).includes(f));
         if (s >= 0) first = Math.min(first, s);
       }
+      setFileErrors(fe);
       setStep(first);
       toastError(e);
     },
@@ -200,8 +222,9 @@ export default function RegistrationFormPage() {
 
   const onValid = (v: RegistrationFormValues) => {
     if (editing) {
-      const { barcodes: _b, declaration_accepted: _d, ...rest } = v;
-      save.mutate(rest);
+      if (!checkDocuments()) return;
+      const { barcodes, declaration_accepted: _d, ...rest } = v;
+      save.mutate({ data: rest, barcodes: (barcodes ?? {}) as Record<string, string>, newFiles: files });
       return;
     }
     if (!checkDocuments()) return;
@@ -211,9 +234,7 @@ export default function RegistrationFormPage() {
   };
 
   /* Document checks run even when a field is invalid, so every problem on the step shows at once. */
-  const onInvalid = () => {
-    if (!editing) void checkDocuments();
-  };
+  const onInvalid = () => void checkDocuments();
   const openPreview = handleSubmit(() => {
     if (checkDocuments()) setPreview(true);
   }, onInvalid);
@@ -233,7 +254,7 @@ export default function RegistrationFormPage() {
         title={editing ? `Edit — ${existing.data?.name ?? ''}` : 'Registration Form — AMRUT KALASH'}
         sub={
           editing
-            ? 'Change the details and save. Documents are managed on the student page.'
+            ? 'Change the details in steps 1–2; in step 3 replace or add documents and update barcodes, then save.'
             : 'Please fill in all required fields marked with *.'
         }
       />
@@ -387,7 +408,8 @@ export default function RegistrationFormPage() {
                         <th scope="col">Sr. No.</th>
                         <th scope="col">Document</th>
                         <th scope="col">Required</th>
-                        <th scope="col">File</th>
+                        {editing ? <th scope="col">Current file</th> : null}
+                        <th scope="col">{editing ? 'Replace / upload' : 'File'}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -411,6 +433,22 @@ export default function RegistrationFormPage() {
                             ) : null}
                           </td>
                           <td>{t.isMandatory ? <span className="tw-text-danger">*</span> : '—'}</td>
+                          {editing ? (
+                            <td className="tw-break-all">
+                              {(() => {
+                                const cur = existing.data?.files.find((x) => x.docType === t.code);
+                                if (!cur) return <span className="tw-text-ink-muted">Not uploaded</span>;
+                                return (
+                                  <>
+                                    {cur.originalName}
+                                    <div className="tw-text-xs tw-text-ink-muted">
+                                      {cur.verifiedAt ? 'Verified — a replacement must be verified again' : 'Not verified yet'}
+                                    </div>
+                                  </>
+                                );
+                              })()}
+                            </td>
+                          ) : null}
                           <td>
                             <input
                               type="file"
@@ -444,15 +482,19 @@ export default function RegistrationFormPage() {
                     </tbody>
                   </table>
                 </div>
-                <label className="tw-mt-4 tw-flex tw-cursor-pointer tw-items-start tw-gap-2 tw-text-sm">
-                  <input type="checkbox" className="tw-mt-1 tw-accent-brand-600" {...register('declaration_accepted')} />
-                  <span>{DECLARATION}</span>
-                </label>
-                {err('declaration_accepted') ? (
-                  <span className={errorText} role="alert">
-                    {err('declaration_accepted')}
-                  </span>
-                ) : null}
+                {editing ? null : (
+                  <>
+                    <label className="tw-mt-4 tw-flex tw-cursor-pointer tw-items-start tw-gap-2 tw-text-sm">
+                      <input type="checkbox" className="tw-mt-1 tw-accent-brand-600" {...register('declaration_accepted')} />
+                      <span>{DECLARATION}</span>
+                    </label>
+                    {err('declaration_accepted') ? (
+                      <span className={errorText} role="alert">
+                        {err('declaration_accepted')}
+                      </span>
+                    ) : null}
+                  </>
+                )}
               </>
             ) : null}
           </div>

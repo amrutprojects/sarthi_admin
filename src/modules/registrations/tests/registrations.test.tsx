@@ -11,7 +11,15 @@ import { registrationApi } from '../services/registrationApi';
 const permissions = new Set<string>();
 vi.mock('../../auth', () => ({ useAuth: () => ({ user: { id: 'me' }, permissions }) }));
 vi.mock('../services/registrationApi', () => ({
-  registrationApi: { list: vi.fn(), get: vi.fn(), create: vi.fn(), update: vi.fn(), setStatus: vi.fn(), remove: vi.fn() },
+  registrationApi: {
+    list: vi.fn(),
+    get: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    setStatus: vi.fn(),
+    remove: vi.fn(),
+    replaceDocuments: vi.fn(),
+  },
 }));
 vi.mock('../../masters', () => ({
   MASTERS: [{ key: 'region' }, { key: 'caste' }, { key: 'education' }, { key: 'documentType' }],
@@ -187,7 +195,7 @@ describe('<RegistrationFormPage>', () => {
 });
 
 describe('<RegistrationFormPage> edit mode', () => {
-  it('prefills the student and saves with PATCH, without documents', async () => {
+  it('prefills the student, edits in three steps and saves details, then changed documents', async () => {
     const u = userEvent.setup();
     vi.mocked(registrationApi.get).mockResolvedValue({
       id: 's1',
@@ -202,6 +210,32 @@ describe('<RegistrationFormPage> edit mode', () => {
       regionId: 'r-pun',
       educationId: 'e-1',
       trackCode: 'T03',
+      documents: [
+        { key: 'PHOTO', label: 'Photo', required: true, supplied: true, barcode: null },
+        { key: 'INCOME_EWS', label: 'Income Certificate / EWS', required: true, supplied: true, barcode: 'EWS-1' },
+      ],
+      files: [
+        {
+          id: 'f1',
+          docType: 'PHOTO',
+          originalName: 'photo.pdf',
+          mimeType: 'application/pdf',
+          sizeBytes: 10,
+          uploadedAt: '',
+          verifiedAt: '2026-10-21T00:00:00Z',
+          verifiedBy: 'R',
+        },
+        {
+          id: 'f2',
+          docType: 'INCOME_EWS',
+          originalName: 'ews.pdf',
+          mimeType: 'application/pdf',
+          sizeBytes: 10,
+          uploadedAt: '',
+          verifiedAt: null,
+          verifiedBy: null,
+        },
+      ],
       unmasked: {
         email: 'asha@example.invalid',
         mobile: '+919876543210',
@@ -210,6 +244,7 @@ describe('<RegistrationFormPage> edit mode', () => {
       },
     } as never);
     vi.mocked(registrationApi.update).mockResolvedValue({} as never);
+    vi.mocked(registrationApi.replaceDocuments).mockResolvedValue({} as never);
     renderWithProviders(
       <Routes>
         <Route path="/student-registrations/:id/edit" element={<RegistrationFormPage />} />
@@ -218,16 +253,25 @@ describe('<RegistrationFormPage> edit mode', () => {
       { route: '/student-registrations/s1/edit' },
     );
     expect(await screen.findByDisplayValue('Asha')).toBeInTheDocument();
-    expect(screen.getByText('Step 1 of 2 – Basic Details')).toBeInTheDocument();
+    expect(screen.getByText('Step 1 of 3 – Basic Details')).toBeInTheDocument();
     await u.clear(screen.getByLabelText(/First Name/));
     await u.type(screen.getByLabelText(/First Name/), 'Kavita');
     await u.click(screen.getByRole('button', { name: 'Next' }));
-    await u.click(await screen.findByRole('button', { name: 'Save changes' }));
+    await u.click(await screen.findByRole('button', { name: 'Next' }));
+    /* Step 3: current files shown, mandatory ones already satisfied, no declaration asked again. */
+    expect(await screen.findByText('photo.pdf')).toBeInTheDocument();
+    expect(screen.getByText('Verified — a replacement must be verified again')).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    await u.upload(screen.getByLabelText('Photo file'), new File(['%PDF-1.4'], 'new-photo.pdf', { type: 'application/pdf' }));
+    await u.click(screen.getByRole('button', { name: 'Save changes' }));
     await waitFor(() =>
       expect(registrationApi.update).toHaveBeenCalledWith(
         's1',
         expect.objectContaining({ first_name: 'Kavita', mobile_number: '9876543210', aadhaar_number: AADHAAR, region_id: 'r-pun' }),
       ),
+    );
+    await waitFor(() =>
+      expect(registrationApi.replaceDocuments).toHaveBeenCalledWith('s1', {}, expect.objectContaining({ PHOTO: expect.any(File) })),
     );
     expect(await screen.findByText('detail page')).toBeInTheDocument();
   });

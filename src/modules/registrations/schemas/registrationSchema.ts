@@ -92,8 +92,10 @@ export const registrationFormSchema = basicSchema.merge(mainSchema).extend({
 });
 
 export type RegistrationFormValues = z.input<typeof registrationFormSchema>;
-/* Editing a student: steps 1 and 2 only (documents and declaration are not edited). */
-export const editFormSchema = basicSchema.merge(mainSchema);
+/* Editing a student: all three steps; the declaration is not asked again. */
+export const editFormSchema = basicSchema.merge(mainSchema).extend({
+  barcodes: z.record(z.string().trim().max(64, 'Barcode must be at most 64 characters')),
+});
 export const STEP_FIELDS = [Object.keys(basicSchema.shape), Object.keys(mainSchema.shape)] as const;
 
 /* File rules (backend registration-upload.middleware.ts / file-type.ts). */
