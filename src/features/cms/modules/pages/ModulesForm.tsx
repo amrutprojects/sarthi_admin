@@ -36,6 +36,8 @@ const FORM_ID = 'cms-modules-form';
  * The page-level cards below are the things that genuinely are page-level: the heading and the
  * learning-path split. The /programme fact sheet is edited on the Programme page (/cms/programme).
  *
+ * There is no publish switch: the website always shows the saved content, so saving makes it live.
+ *
  * Behaviour matches the other CMS forms: validate on submit, re-validate a field once it has been
  * touched, block a second submit while one is in flight, keep what was typed when a save fails, and
  * put the server's own field messages on the matching inputs. The whole page is one PUT.
@@ -423,6 +425,7 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
                       {m.electives.length} domain{m.electives.length === 1 ? '' : 's'}
                     </span>
                     {!m.isActive ? <span>Hidden</span> : null}
+                    {m.kind === 'ELECTIVE' && !m.showElectiveLabel ? <span>Label hidden</span> : null}
                     {moduleHasErrors(i) ? <span className="err">Needs attention</span> : null}
                   </span>
                   <Icon name="chevR" className="sec-x" />
@@ -458,6 +461,28 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
                       </select>
                     </MasterField>
                   </div>
+
+                  {/*
+                   * Offered only for an elective, the one type the website badges. The value stays
+                   * in the form whatever the type, so switching to Main and back keeps the choice.
+                   */}
+                  {m.kind === 'ELECTIVE' ? (
+                    <div className="mt10">
+                      <label className="f ac gp8 fs13">
+                        <input
+                          type="checkbox"
+                          checked={m.showElectiveLabel}
+                          aria-describedby={`modules.${i}.showElectiveLabel-hint`}
+                          onChange={(e) => patchModule(i, { showElectiveLabel: e.target.checked })}
+                        />
+                        Show 'Elective' label on website
+                      </label>
+                      <p className="muted fs12 mt4" id={`modules.${i}.showElectiveLabel-hint`}>
+                        Untick to hide only the &ldquo;Elective&rdquo; badge on this module&rsquo;s card. The module, its employment domains
+                        and its hours still show.
+                      </p>
+                    </div>
+                  ) : null}
 
                   <div className="grid g2 mt10">
                     <MasterField
@@ -615,24 +640,6 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
 
         {/* The home page's "Programme at a glance" figures have their own CMS menu (/cms/home),
             because three of the four are summed from the modules above and only one is typed. */}
-
-        {/* ── visibility ───────────────────────────────────────── */}
-        <div className="card mb14">
-          <div className="card-h">
-            <h3>Visibility</h3>
-          </div>
-          <div className="card-b">
-            <label className="f ac gp8 fs13">
-              <input type="checkbox" checked={values.isPublished} onChange={(e) => change({ ...values, isPublished: e.target.checked })} />
-              Publish this content on the public website
-            </label>
-            {!values.isPublished ? (
-              <p className="muted fs12 mt10">
-                While unpublished the website shows its own built-in Modules page, so visitors still see a complete page.
-              </p>
-            ) : null}
-          </div>
-        </div>
       </form>
 
       <MasterFormActions formId={FORM_ID} submitLabel="Save Modules page" busy={busy} dirty={dirty} backTo={backTo} />

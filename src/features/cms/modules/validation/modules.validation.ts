@@ -50,6 +50,11 @@ export interface ModuleFormValues {
   timeSplit: TimeSplitFormValues;
   /* Shown on the website and counted in the totals. For an elective this is the "include" box. */
   isActive: boolean;
+  /*
+   * The "Show 'Elective' label on website" box. Offered only while the type is Elective, but kept
+   * whatever the type, so switching to Main and back does not lose it.
+   */
+  showElectiveLabel: boolean;
   electives: DomainFormValues[];
 }
 
@@ -63,7 +68,6 @@ export interface ModulesFormValues {
     fixedPathPct: string;
     selfPathPct: string;
   };
-  isPublished: boolean;
 }
 
 const pairOf = (v: Bilingual | null | undefined): BilingualValue =>
@@ -88,6 +92,7 @@ export const emptyModule = (): ModuleFormValues => ({
   description: { mr: '', en: '' },
   timeSplit: emptyTimeSplit(),
   isActive: true,
+  showElectiveLabel: true,
   electives: [],
 });
 
@@ -118,6 +123,8 @@ export function toFormValues(page: ApiModulesPage): ModulesFormValues {
         weeklyAssessmentHours: String(m.timeSplit.weeklyAssessmentHours),
       },
       isActive: m.isActive,
+      /* An older server that predates the setting sends nothing: the badge then shows, as before. */
+      showElectiveLabel: typeof m.showElectiveLabel === 'boolean' ? m.showElectiveLabel : true,
       electives: m.electives.map((d) => ({
         no: String(d.no),
         domain: pairOf(d.domain),
@@ -131,7 +138,6 @@ export function toFormValues(page: ApiModulesPage): ModulesFormValues {
       fixedPathPct: String(page.learningPath.fixedPathPct),
       selfPathPct: String(page.learningPath.selfPathPct),
     },
-    isPublished: page.isPublished,
   };
 }
 
@@ -161,6 +167,7 @@ export function toPayload(v: ModulesFormValues): UpdateModulesPageInput {
       },
       displayOrder: index,
       isActive: m.isActive,
+      showElectiveLabel: m.showElectiveLabel,
       electives: m.electives.map((d, k) => ({
         no: asNumber(d.no),
         domain: trimPair(d.domain),
@@ -175,7 +182,6 @@ export function toPayload(v: ModulesFormValues): UpdateModulesPageInput {
       fixedPathPct: asNumber(v.learningPath.fixedPathPct),
       selfPathPct: asNumber(v.learningPath.selfPathPct),
     },
-    isPublished: v.isPublished,
   };
 }
 

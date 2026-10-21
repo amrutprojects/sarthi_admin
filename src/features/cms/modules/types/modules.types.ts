@@ -71,6 +71,12 @@ export interface ApiModule {
    * nothing to the hours.
    */
   isActive: boolean;
+  /*
+   * Whether the website prints the "Elective" badge on this module's card. Only meaningful for an
+   * ELECTIVE module; it is kept on a MAIN one so switching the type back does not lose it. Turning
+   * it off hides the badge alone — the module, its domains and its hours still show.
+   */
+  showElectiveLabel: boolean;
   electives: ApiElectiveDomain[];
 }
 
@@ -81,7 +87,10 @@ export interface ApiModulesPage {
   modules: ApiModule[];
   learningPath: LearningPath;
   stats: ProgrammeStats;
-  isPublished: boolean;
+  /*
+   * No isPublished: the website always shows this content. The server may still send the column,
+   * and the admin ignores it.
+   */
   createdAt: string;
   updatedAt: string;
 }
@@ -98,6 +107,7 @@ export interface UpdateModulesPageInput {
     timeSplit: ModuleTimeSplit;
     displayOrder: number;
     isActive: boolean;
+    showElectiveLabel: boolean;
     electives: {
       no: number;
       domain: Bilingual;
@@ -107,7 +117,6 @@ export interface UpdateModulesPageInput {
     }[];
   }[];
   learningPath: LearningPath;
-  isPublished: boolean;
 }
 
 /*
