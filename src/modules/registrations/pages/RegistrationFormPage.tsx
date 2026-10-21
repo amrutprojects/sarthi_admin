@@ -100,10 +100,13 @@ export default function RegistrationFormPage() {
       barcodes: {},
     },
   });
-  /* Edit mode: fill the form with the student's current (unmasked) details once they load. */
+  /*
+   * Edit mode: fill the form with the student's current (unmasked) details once they AND the dropdown options have
+   * loaded. Filling earlier leaves a select empty (its option does not exist yet), and Next then fails on that field.
+   */
   useEffect(() => {
     const r = existing.data;
-    if (!r) return;
+    if (!r || !regions.data || !castes.data || !educations.data) return;
     reset({
       first_name: r.firstName,
       last_name: r.lastName,
@@ -121,7 +124,7 @@ export default function RegistrationFormPage() {
       education_id: r.educationId ?? '',
       barcodes: Object.fromEntries(r.documents.filter((d) => d.barcode).map((d) => [d.key, d.barcode as string])),
     });
-  }, [existing.data, reset]);
+  }, [existing.data, regions.data, castes.data, educations.data, reset]);
 
   const err = (k: string) => (errors as Record<string, { message?: string } | undefined>)[k]?.message;
   const barcodeErr = (code: string) => (errors.barcodes as Record<string, { message?: string }> | undefined)?.[code]?.message;
@@ -176,7 +179,8 @@ export default function RegistrationFormPage() {
   };
 
   const next = async () => {
-    if (await trigger(STEP_FIELDS[step] as unknown as FieldPath<RegistrationFormValues>[])) setStep(step + 1);
+    /* shouldFocus scrolls to the first invalid field, so a problem further down the step is never missed. */
+    if (await trigger(STEP_FIELDS[step] as unknown as FieldPath<RegistrationFormValues>[], { shouldFocus: true })) setStep(step + 1);
   };
 
   /* Edit: save the details, then (if anything changed in step 3) the documents and barcodes. */
