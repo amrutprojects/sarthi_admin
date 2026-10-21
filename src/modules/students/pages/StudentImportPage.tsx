@@ -383,7 +383,8 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
                 <div>
                   <b>{s.name}</b>
                   <div className="fs11 muted mono">
-                    {s.code} · {s.sourceRecordId ?? s.registrationNumber ?? '—'}
+                    {s.registrationNumber ?? '—'}
+                    {s.sourceRecordId ? ` · ${s.sourceRecordId}` : ''}
                   </div>
                 </div>
               ),
@@ -430,7 +431,7 @@ function StudentDrawer({ s, onClose }: { s: StudentDetail; onClose: () => void }
   return (
     <Drawer title={s.name} onClose={onClose}>
       <div className="mono fs12 muted mb10">
-        {s.code} · source {s.sourceRecordId ?? '—'}
+        {s.registrationNumber ?? '—'} · source {s.sourceRecordId ?? '—'}
       </div>
       <h4 className="mb6">Personal</h4>
       <div className="kv-grid">

@@ -276,9 +276,9 @@ export default function RegistrationDetailPage() {
         crumbs={[
           { l: 'Dashboard', link: '#/dashboard' },
           { l: 'Student Registration', link: '#/student-registrations' },
-          { l: r?.code ?? 'Registration' },
+          { l: r?.registrationNumber ?? 'Student' },
         ]}
-        title={r ? `${r.name} — ${r.code}` : 'Registration'}
+        title={r ? `${r.name} — ${r.registrationNumber ?? '—'}` : 'Student'}
       />
       {q.isError ? (
         <Callout tone="err" title="Could not load the registration. ">

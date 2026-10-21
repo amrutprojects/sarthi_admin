@@ -113,7 +113,7 @@ export default function RegistrationsPage() {
               type="search"
               className="inp sm"
               style={{ width: 260, maxWidth: '100%' }}
-              placeholder="Search registration no., code, name, email or last 4 of mobile"
+              placeholder="Search registration no., name, email or last 4 of mobile"
               aria-label="Search registrations"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -167,10 +167,7 @@ export default function RegistrationsPage() {
                 <tbody className={list.isFetching ? 'tw-opacity-60' : undefined}>
                   {list.data.items.map((r) => (
                     <tr key={r.id}>
-                      <td className="mono">
-                        {r.registrationNumber ?? '—'}
-                        <div className="tw-text-xs tw-text-ink-muted">{r.code}</div>
-                      </td>
+                      <td className="mono">{r.registrationNumber ?? '—'}</td>
                       <td>
                         <Badge tone={r.source === 'IMPORT' ? 'blue' : 'saffron'}>{SOURCE_LABEL[r.source]}</Badge>
                       </td>
@@ -243,7 +240,7 @@ export default function RegistrationsPage() {
           danger
           busy={remove.isPending}
           confirmLabel="Delete"
-          message={`Delete ${deleting.name} (${deleting.code})? The record is soft-deleted: it disappears from lists but is kept, with its documents, for history and audit.`}
+          message={`Delete ${deleting.name} (${deleting.registrationNumber ?? 'no registration number'})? The record is soft-deleted: it disappears from lists but is kept, with its documents, for history and audit.`}
           onClose={() => setDeleting(null)}
           onConfirm={() => remove.mutate(deleting.id)}
         />
