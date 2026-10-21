@@ -45,7 +45,7 @@ export default function RegistrationsPage() {
         crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'Student Registration' }]}
         title="Student Registration"
         badge={<Badge tone="green">Live</Badge>}
-        sub="Registrations from the website and entered here. Aadhaar, mobile and email are masked."
+        sub="Registrations from the website and entered here. Mobile and email are shown in full to reviewers; every such view is recorded in the audit log."
         actions={
           permissions.has('registrations.create') ? (
             <Link className="btn primary" to="/student-registrations/new">
@@ -116,12 +116,14 @@ export default function RegistrationsPage() {
                     <tr key={r.id}>
                       <td className="mono">{r.code}</td>
                       <td>
-                        <b>{r.name}</b>
-                        <div className="tw-text-xs tw-text-ink-muted">{r.email}</div>
+                        <Link to={`/student-registrations/${r.id}`} className="tw-font-bold hover:tw-underline">
+                          {r.name}
+                        </Link>
+                        <div className="tw-text-xs tw-text-ink-muted">{r.unmasked?.email ?? r.email}</div>
                       </td>
                       <td>{r.centreName ?? r.centreCode ?? '—'}</td>
                       <td>{r.trackName ?? 'To be confirmed'}</td>
-                      <td className="mono">{r.mobile ?? '—'}</td>
+                      <td className="mono">{r.unmasked?.mobile ?? r.mobile ?? '—'}</td>
                       <td>
                         <GenBadge status={r.status} />
                       </td>

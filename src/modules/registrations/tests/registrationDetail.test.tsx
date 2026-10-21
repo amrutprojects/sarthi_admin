@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -95,6 +95,35 @@ describe('<RegistrationDetailPage>', () => {
     expect(screen.getByText('asha@example.invalid')).toBeInTheDocument();
     expect(screen.getByText('+919876543210')).toBeInTheDocument();
     expect(screen.queryByText('XXXX-XXXX-2341')).not.toBeInTheDocument();
+  });
+
+  it('steps through uploaded documents with Previous / Next', async () => {
+    const u = userEvent.setup();
+    render();
+    await u.click((await screen.findAllByRole('button', { name: 'Preview' }))[0]);
+    expect(await screen.findByText('Photo — 1 of 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Previous document' })).toBeDisabled();
+    await u.click(screen.getByRole('button', { name: 'Next document' }));
+    expect(await screen.findByText('Aadhaar Card — 2 of 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next document' })).toBeDisabled();
+    await u.keyboard('{ArrowLeft}');
+    expect(await screen.findByText('Photo — 1 of 2')).toBeInTheDocument();
+  });
+
+  it('verifies the Aadhaar card from the hover card', async () => {
+    const u = userEvent.setup();
+    vi.mocked(registrationApi.get).mockResolvedValue({
+      ...detail,
+      files: [file('f-photo', 'PHOTO'), file('f-aadhaar', 'AADHAAR_CARD')],
+    });
+    vi.mocked(registrationApi.verifyDocument).mockResolvedValue(file('f-aadhaar', 'AADHAAR_CARD', '2026-10-21T10:00:00Z'));
+    render();
+    await u.hover(await screen.findByText('XXXX-XXXX-2341'));
+    const card = await screen.findByRole('dialog', { name: 'Aadhaar card' });
+    await screen.findByAltText('aadhaar_card.png');
+    await u.hover(card);
+    await u.click(within(card).getByRole('button', { name: 'Verify' }));
+    await waitFor(() => expect(registrationApi.verifyDocument).toHaveBeenCalledWith('r1', 'f-aadhaar'));
   });
 
   it('shows the Aadhaar card when hovering the Aadhaar number', async () => {
