@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Badge, Callout, Kpi, PageHead } from '../../../components/ui';
 import { Drawer } from '../../../components/ui/Overlay';
 import Icon from '../../../components/ui/Icon';
-import { Can } from '../../auth';
+import { Can, useAuth } from '../../auth';
 import { ApiError, type PageMeta } from '../../../services/api-client';
 import { importApi, studentApi, type ImportBatch, type ImportReference, type StudentDetail, type StudentView } from '../services/importApi';
 import { toastError, toastOk } from '../../../components/feedback/apiFeedback';
@@ -263,6 +263,10 @@ function BatchesTab({ reference }: { reference: ImportReference | null }) {
 }
 
 function StudentsTab({ reference }: { reference: ImportReference | null }) {
+  /* Reviewers open the full student page (full details, documents with Preview / Verify); others get the masked panel. */
+  const navigate = useNavigate();
+  const { permissions } = useAuth();
+  const canOpenDetail = permissions.has('registrations.view');
   const [rows, setRows] = useState<StudentView[]>([]);
   const [meta, setMeta] = useState<PageMeta>();
   const [page, setPage] = useState(1);
@@ -374,7 +378,9 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
           onPage={setPage}
           loading={loading}
           empty="No students yet. Students appear here when an import batch is finalised or a registration is submitted."
-          onRowClick={(s) => studentApi.get(s.id).then(setOpen).catch(toastError)}
+          onRowClick={(s) =>
+            canOpenDetail ? navigate(`/student-registrations/${s.id}`) : studentApi.get(s.id).then(setOpen).catch(toastError)
+          }
           columns={[
             {
               k: 'sr',
