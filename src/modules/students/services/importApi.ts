@@ -130,6 +130,8 @@ export interface StudentView {
   /* IMPORT = imported student, PUBLIC_REGISTRATION = registration; both live in the one students table. */
   source: 'IMPORT' | 'PUBLIC_REGISTRATION';
   registrationNumber: string | null;
+  /* Full values for reviewers (registrations.update); the backend audits each list. */
+  unmasked?: { email: string | null; mobile: string | null; aadhaar: string | null };
 }
 export interface StudentDetail extends StudentView {
   firstName: string;

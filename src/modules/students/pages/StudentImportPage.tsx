@@ -305,7 +305,7 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
       <div className="card">
         <div className="card-h">
           <h3>
-            Student register <span className="sub">protected values are masked</span>
+            Student register <span className="sub">full details for reviewers; every view is audited</span>
           </h3>
           <div className="f gp8 wrap">
             <input
@@ -382,6 +382,7 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
               render: (s) => (
                 <div>
                   <b>{s.name}</b>
+                  <div className="fs11 muted">{s.unmasked?.email ?? s.email ?? ''}</div>
                   <div className="fs11 muted mono">
                     {s.registrationNumber ?? '—'}
                     {s.sourceRecordId ? ` · ${s.sourceRecordId}` : ''}
@@ -409,8 +410,8 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
                   </span>
                 ),
             },
-            { k: 'mobile', l: 'Mobile', className: 'mono', render: (s) => s.mobile ?? '—' },
-            { k: 'aadhaar', l: 'Aadhaar', className: 'mono', render: (s) => s.aadhaar ?? '—' },
+            { k: 'mobile', l: 'Mobile', className: 'mono', render: (s) => s.unmasked?.mobile ?? s.mobile ?? '—' },
+            { k: 'aadhaar', l: 'Aadhaar', className: 'mono', render: (s) => s.unmasked?.aadhaar ?? s.aadhaar ?? '—' },
             { k: 'status', l: 'Status', render: (s) => <Badge tone="blue">{s.status === 'RECEIVED' ? 'Received' : s.status}</Badge> },
             { k: 'at', l: 'Approved', render: (s) => (s.approvedAt ? fmtDate(s.approvedAt) : '—') },
           ]}

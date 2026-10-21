@@ -81,7 +81,7 @@ export default function RegistrationsPage() {
         crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'Student Registration' }]}
         title="Student Registration"
         badge={<Badge tone="green">Live</Badge>}
-        sub="Imported students and registrations, from one students table. Mobile and email are shown in full to reviewers; every such view is recorded in the audit log."
+        sub="Imported students and registrations, from one students table. Aadhaar, mobile and email are shown in full to reviewers; every such view is recorded in the audit log."
         actions={
           permissions.has('registrations.create') ? (
             <Link className="btn primary" to="/student-registrations/new">
@@ -157,6 +157,7 @@ export default function RegistrationsPage() {
                     <th scope="col">Course centre</th>
                     <th scope="col">Technology</th>
                     <th scope="col">Mobile</th>
+                    <th scope="col">Aadhaar</th>
                     <th scope="col">Submitted</th>
                     <th scope="col">Active</th>
                     <th scope="col">
@@ -180,6 +181,7 @@ export default function RegistrationsPage() {
                       <td>{r.centreName ?? r.centreCode ?? '—'}</td>
                       <td>{r.trackName ?? 'To be confirmed'}</td>
                       <td className="mono">{r.unmasked?.mobile ?? r.mobile ?? '—'}</td>
+                      <td className="mono tw-whitespace-nowrap">{r.unmasked?.aadhaar ?? r.aadhaar ?? '—'}</td>
                       <td className="tw-whitespace-nowrap">{fmtDateTime(r.createdAt)}</td>
                       <td>
                         <StatusToggle
