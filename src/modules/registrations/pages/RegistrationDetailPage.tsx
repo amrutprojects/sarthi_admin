@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams } from 'react-router-dom';
 import { fmtDateTime, toastError, toastOk } from '../../../components/feedback/apiFeedback';
 import { Badge, Callout, GenBadge, KvList, PageHead } from '../../../components/ui';
@@ -109,49 +110,55 @@ function FilePreview({
   );
 }
 
-/* Hovering the Aadhaar number shows the uploaded Aadhaar card beside it, for a quick cross-check. */
+/*
+ * Hovering the Aadhaar number shows the uploaded Aadhaar card beside it, for a quick cross-check. The card is drawn in a
+ * portal with fixed positioning, so the scrolling details column cannot clip it.
+ */
 function AadhaarHover({ registrationId, value, card }: { registrationId: string; value: string; card?: RegistrationFile }) {
-  const [open, setOpen] = useState(false);
-  const { url, error } = useFileUrl(registrationId, open ? card : undefined);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  const { url, error } = useFileUrl(registrationId, pos ? card : undefined);
+  const WIDTH = 420;
+  const show = (el: HTMLElement) => {
+    const r = el.getBoundingClientRect();
+    const fitsRight = r.right + 12 + WIDTH <= window.innerWidth - 8;
+    const left = fitsRight ? r.right + 12 : Math.max(8, r.left - WIDTH - 12);
+    const top = Math.min(Math.max(8, r.top + r.height / 2 - 170), window.innerHeight - 348);
+    setPos({ left, top });
+  };
   return (
     <span
-      style={{ position: 'relative', display: 'inline-block', cursor: card ? 'zoom-in' : 'default' }}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-      onFocus={() => setOpen(true)}
-      onBlur={() => setOpen(false)}
+      style={{ display: 'inline-block', cursor: card ? 'zoom-in' : 'default' }}
+      onMouseEnter={(e) => show(e.currentTarget)}
+      onMouseLeave={() => setPos(null)}
+      onFocus={(e) => show(e.currentTarget)}
+      onBlur={() => setPos(null)}
       tabIndex={0}
       aria-label={card ? 'Aadhaar number; hover to see the Aadhaar card' : 'Aadhaar number'}
     >
       <span className="mono" style={{ borderBottom: card ? '1px dashed currentColor' : undefined }}>
         {value}
       </span>
-      {open ? (
-        <div
-          role="tooltip"
-          className="card"
-          style={{
-            position: 'absolute',
-            left: 'calc(100% + 12px)',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: 420,
-            zIndex: 50,
-            padding: 8,
-          }}
-        >
-          <div className="tw-mb-1 tw-text-xs tw-font-semibold tw-text-ink-2">Aadhaar card</div>
-          {!card ? (
-            <div className="tw-text-xs tw-text-ink-muted">No Aadhaar card uploaded.</div>
-          ) : error ? (
-            <div className="tw-text-xs tw-text-danger">{error}</div>
-          ) : !url ? (
-            <div className="skel" style={{ height: 200 }} aria-busy="true" />
-          ) : (
-            <FileView url={url} file={card} height="300px" />
-          )}
-        </div>
-      ) : null}
+      {pos
+        ? createPortal(
+            <div
+              role="tooltip"
+              className="card"
+              style={{ position: 'fixed', left: pos.left, top: pos.top, width: WIDTH, zIndex: 300, padding: 8, pointerEvents: 'none' }}
+            >
+              <div className="tw-mb-1 tw-text-xs tw-font-semibold tw-text-ink-2">Aadhaar card</div>
+              {!card ? (
+                <div className="tw-text-xs tw-text-ink-muted">No Aadhaar card uploaded.</div>
+              ) : error ? (
+                <div className="tw-text-xs tw-text-danger">{error}</div>
+              ) : !url ? (
+                <div className="skel" style={{ height: 200 }} aria-busy="true" />
+              ) : (
+                <FileView url={url} file={card} height="300px" />
+              )}
+            </div>,
+            document.body,
+          )
+        : null}
     </span>
   );
 }
@@ -252,17 +259,18 @@ export default function RegistrationDetailPage() {
             </div>
           </div>
 
-          <div className="card">
+          {/* Scrolls on its own, like the details: the header stays visible while the table scrolls. */}
+          <div className="card tw-flex tw-flex-col lg:tw-sticky lg:tw-top-4 lg:tw-max-h-[calc(100vh-150px)]" aria-label="Documents">
             <div className="card-h">
               <h3>Documents</h3>
               <span className="tw-text-xs tw-text-ink-muted">
                 {verifiedCount} of {uploaded} uploaded verified
               </span>
             </div>
-            <div className="dt">
-              <div className="tbl-wrap">
+            <div className="dt tw-min-h-0 tw-flex-1 tw-overflow-auto">
+              <div className="tbl-wrap" style={{ overflow: 'visible' }}>
                 <table className="tbl">
-                  <thead>
+                  <thead style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--surface-2, #fff8f0)' }}>
                     <tr>
                       <th scope="col">Document</th>
                       <th scope="col">File</th>
