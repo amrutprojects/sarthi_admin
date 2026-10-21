@@ -130,7 +130,7 @@ export default function RegistrationFormPage() {
     mutationFn: (v: { data: RegistrationData; files: Record<string, File> }) => registrationApi.create(v.data, v.files, key.current),
     onSuccess: (r) => {
       void qc.invalidateQueries({ queryKey: ['registrations'] });
-      toastOk(`Registration ${r.registration_id} submitted`);
+      toastOk(`Registration submitted — registration no. ${r.registration_number}`);
       navigate(`/student-registrations/${r.id}`);
     },
     onError: (e) => {
