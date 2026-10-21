@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Badge, Callout, Kpi, PageHead } from '../../../components/ui';
 import { Drawer } from '../../../components/ui/Overlay';
 import Icon from '../../../components/ui/Icon';
-import { Can } from '../../auth';
+import { Can, useAuth } from '../../auth';
 import { ApiError, type PageMeta } from '../../../services/api-client';
 import { importApi, studentApi, type ImportBatch, type ImportReference, type StudentDetail, type StudentView } from '../services/importApi';
 import { toastError, toastOk } from '../../../components/feedback/apiFeedback';
+import DocumentList from '../components/DocumentList';
+import FileDrop from '../components/FileDrop';
 import { BATCH_STATUS_LABEL, ServerTable, StatusBadge, fmtDate } from '../components/importUi';
 
 type Tab = 'batches' | 'students' | 'guide';
@@ -34,10 +36,19 @@ export default function StudentImportPage() {
         badge={<Badge tone="green">Live</Badge>}
         sub="Upload the approved-student file (CSV or XLSX). Every row is validated, duplicates are flagged, and a second person finalises the batch into the student register."
         actions={
-          <button type="button" className="btn" onClick={() => importApi.template().catch(toastError)}>
-            <Icon name="download" />
-            Download template
-          </button>
+          <>
+            <button type="button" className="btn" onClick={() => importApi.templateXlsx().catch(toastError)}>
+              <Icon name="download" />
+              Excel template
+            </button>
+            <button type="button" className="btn" onClick={() => importApi.sampleDocuments().catch(toastError)}>
+              <Icon name="download" />
+              Sample documents ZIP
+            </button>
+            <button type="button" className="btn ghost" onClick={() => importApi.template().catch(toastError)}>
+              CSV template
+            </button>
+          </>
         }
       />
       <div className="tabs">
@@ -62,40 +73,22 @@ export default function StudentImportPage() {
 
 function UploadCard({ reference, onUploaded }: { reference: ImportReference | null; onUploaded: (b: ImportBatch) => void }) {
   const [file, setFile] = useState<File | null>(null);
+  const [zip, setZip] = useState<File | null>(null);
   const [sourceRef, setSourceRef] = useState('');
   const [busy, setBusy] = useState(false);
-  const [drag, setDrag] = useState(false);
-  const input = useRef<HTMLInputElement>(null);
   const maxMb = reference?.maxFileMb ?? 20;
-
-  const pick = (f: File | undefined) => {
-    if (!f) return;
-    if (!/\.(csv|xlsx)$/i.test(f.name)) {
-      toastError(new ApiError('Choose a .csv or .xlsx file', 400, 'BAD_FILE'));
-      return;
-    }
-    if (f.size > maxMb * 1024 * 1024) {
-      toastError(new ApiError(`The file is larger than ${maxMb} MB`, 400, 'TOO_LARGE'));
-      return;
-    }
-    setFile(f);
-  };
-  const onDrop = (e: DragEvent) => {
-    e.preventDefault();
-    setDrag(false);
-    pick(e.dataTransfer.files[0]);
-  };
+  const reject = (msg: string) => toastError(new ApiError(msg, 400, 'BAD_FILE'));
 
   async function submit() {
     if (!file) return;
     setBusy(true);
     try {
-      const res = await importApi.upload(file, sourceRef.trim() || undefined);
+      const res = await importApi.upload(file, sourceRef.trim() || undefined, zip ?? undefined);
       if (res.data.status === 'IMPORT_FAILED') toastError(new ApiError(res.message, 422, 'IMPORT_FAILED'));
       else toastOk(res.message);
       setFile(null);
+      setZip(null);
       setSourceRef('');
-      if (input.current) input.current.value = '';
       onUploaded(res.data);
     } catch (e) {
       toastError(e);
@@ -110,43 +103,33 @@ function UploadCard({ reference, onUploaded }: { reference: ImportReference | nu
         <h3>Upload approved-student file</h3>
       </div>
       <div className="card-b">
-        <div
-          className="import-drop"
-          data-drag={drag || undefined}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDrag(true);
-          }}
-          onDragLeave={() => setDrag(false)}
-          onDrop={onDrop}
-          onClick={() => input.current?.click()}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') input.current?.click();
-          }}
-        >
-          <Icon name="download" />
-          {file ? (
-            <div>
-              <b>{file.name}</b> <span className="muted">· {(file.size / 1024).toFixed(0)} KB</span>
-            </div>
-          ) : (
-            <div>
-              <b>Drop a CSV or XLSX file here</b>, or click to choose
-            </div>
-          )}
-          <div className="fs11 muted">
-            UTF-8 CSV or Excel · up to {maxMb} MB · up to {(reference?.maxRows ?? 50000).toLocaleString('en-IN')} rows · first sheet, first
-            row is the header
+        <div className="tw-grid tw-grid-cols-1 tw-gap-3 md:tw-grid-cols-2">
+          <div>
+            <div className="tw-mb-1 tw-text-xs tw-font-semibold tw-text-ink-2">1. Student data (required)</div>
+            <FileDrop
+              file={file}
+              accept=".csv,.xlsx"
+              prompt="Drop the Excel or CSV file here"
+              hint={`Excel (.xlsx) or UTF-8 CSV · up to ${maxMb} MB · up to ${(reference?.maxRows ?? 50000).toLocaleString('en-IN')} rows · first sheet, first row is the header`}
+              maxMb={maxMb}
+              onPick={setFile}
+              onReject={reject}
+              ariaLabel="Choose the student data file"
+            />
           </div>
-          <input
-            ref={input}
-            type="file"
-            accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            hidden
-            onChange={(e) => pick(e.target.files?.[0])}
-          />
+          <div>
+            <div className="tw-mb-1 tw-text-xs tw-font-semibold tw-text-ink-2">2. Documents ZIP (optional)</div>
+            <FileDrop
+              file={zip}
+              accept=".zip"
+              prompt="Drop the documents ZIP here"
+              hint="One folder per student, named by source_record_id (e.g. MA-0001/photo.jpg) — no other folders · the Excel doc_ columns name the file (photo.jpg) · PDF, JPG or PNG, up to 5 MB each"
+              maxMb={500}
+              onPick={setZip}
+              onReject={reject}
+              ariaLabel="Choose the documents ZIP"
+            />
+          </div>
         </div>
         <div className="f gp10 wrap mt10" style={{ alignItems: 'flex-end' }}>
           <div className="fld" style={{ flex: '1 1 240px' }}>
@@ -167,8 +150,9 @@ function UploadCard({ reference, onUploaded }: { reference: ImportReference | nu
           </button>
         </div>
         <div className="hint mt10">
-          Uploading creates an import batch only; no student is created until a second person reviews and finalises it. The same file cannot
-          be uploaded twice.
+          Uploading creates an import batch only; no student is created until a second person reviews and finalises it. Documents are stored
+          per student and move to the student's own folder when the batch is finalised. Documents can also be added later from the batch
+          page.
         </div>
       </div>
     </div>
@@ -279,12 +263,17 @@ function BatchesTab({ reference }: { reference: ImportReference | null }) {
 }
 
 function StudentsTab({ reference }: { reference: ImportReference | null }) {
+  /* Reviewers open the full student page (full details, documents with Preview / Verify); others get the masked panel. */
+  const navigate = useNavigate();
+  const { permissions } = useAuth();
+  const canOpenDetail = permissions.has('registrations.view');
   const [rows, setRows] = useState<StudentView[]>([]);
   const [meta, setMeta] = useState<PageMeta>();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [centre, setCentre] = useState('');
   const [track, setTrack] = useState('');
+  const [source, setSource] = useState<'' | 'IMPORT' | 'PUBLIC_REGISTRATION'>('');
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState<StudentDetail | null>(null);
 
@@ -297,6 +286,7 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
         search: search || undefined,
         centre: centre || undefined,
         track: track || undefined,
+        source: source || undefined,
       });
       setRows(r.items);
       setMeta(r.meta);
@@ -305,7 +295,7 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
     } finally {
       setLoading(false);
     }
-  }, [page, search, centre, track]);
+  }, [page, search, centre, track, source]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -314,12 +304,12 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
     <>
       <div className="grid g4 mb14">
         <Kpi label="Students in register" value={(meta?.total ?? 0).toLocaleString('en-IN')} tone="b" />
-        <Kpi label="Source" value="Approved import" tone="g" sub="No manual entry" />
+        <Kpi label="Sources" value="Import + Registration" tone="g" sub="One students table" />
       </div>
       <div className="card">
         <div className="card-h">
           <h3>
-            Student register <span className="sub">protected values are masked</span>
+            Student register <span className="sub">full details for reviewers; every view is audited</span>
           </h3>
           <div className="f gp8 wrap">
             <input
@@ -332,6 +322,20 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
               }}
               style={{ width: 250 }}
             />
+            <select
+              className="inp sm"
+              style={{ width: 'auto' }}
+              aria-label="Filter by source"
+              value={source}
+              onChange={(e) => {
+                setSource(e.target.value as typeof source);
+                setPage(1);
+              }}
+            >
+              <option value="">All sources</option>
+              <option value="IMPORT">Import</option>
+              <option value="PUBLIC_REGISTRATION">Registration</option>
+            </select>
             <select
               className="inp sm"
               style={{ width: 'auto' }}
@@ -373,17 +377,27 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
           page={page}
           onPage={setPage}
           loading={loading}
-          empty="No students yet. Students appear here when an import batch is finalised."
-          onRowClick={(s) => studentApi.get(s.id).then(setOpen).catch(toastError)}
+          empty="No students yet. Students appear here when an import batch is finalised or a registration is submitted."
+          onRowClick={(s) =>
+            canOpenDetail ? navigate(`/student-registrations/${s.id}`) : studentApi.get(s.id).then(setOpen).catch(toastError)
+          }
           columns={[
+            {
+              k: 'sr',
+              l: 'Sr. No.',
+              className: 'mono',
+              render: (_s, i) => (page - 1) * (meta?.limit ?? 25) + i + 1,
+            },
             {
               k: 'code',
               l: 'Student',
               render: (s) => (
                 <div>
                   <b>{s.name}</b>
+                  <div className="fs11 muted">{s.unmasked?.email ?? s.email ?? ''}</div>
                   <div className="fs11 muted mono">
-                    {s.code} · {s.sourceRecordId ?? '—'}
+                    {s.registrationNumber ?? '—'}
+                    {s.sourceRecordId ? ` · ${s.sourceRecordId}` : ''}
                   </div>
                 </div>
               ),
@@ -401,10 +415,10 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
                   </span>
                 ),
             },
-            { k: 'mobile', l: 'Mobile', className: 'mono', render: (s) => s.mobile ?? '—' },
-            { k: 'aadhaar', l: 'Aadhaar', className: 'mono', render: (s) => s.aadhaar ?? '—' },
+            { k: 'mobile', l: 'Mobile', className: 'mono', render: (s) => s.unmasked?.mobile ?? s.mobile ?? '—' },
+            { k: 'aadhaar', l: 'Aadhaar', className: 'mono', render: (s) => s.unmasked?.aadhaar ?? s.aadhaar ?? '—' },
             { k: 'status', l: 'Status', render: (s) => <Badge tone="blue">{s.status === 'RECEIVED' ? 'Received' : s.status}</Badge> },
-            { k: 'at', l: 'Approved', render: (s) => fmtDate(s.approvedAt) },
+            { k: 'at', l: 'Approved', render: (s) => (s.approvedAt ? fmtDate(s.approvedAt) : '—') },
           ]}
         />
       </div>
@@ -423,7 +437,7 @@ function StudentDrawer({ s, onClose }: { s: StudentDetail; onClose: () => void }
   return (
     <Drawer title={s.name} onClose={onClose}>
       <div className="mono fs12 muted mb10">
-        {s.code} · source {s.sourceRecordId ?? '—'}
+        {s.registrationNumber ?? '—'} · source {s.sourceRecordId ?? '—'}
       </div>
       <h4 className="mb6">Personal</h4>
       <div className="kv-grid">
@@ -457,7 +471,16 @@ function StudentDrawer({ s, onClose }: { s: StudentDetail; onClose: () => void }
         {field('Declaration', s.declarationAccepted === null ? 'Not supplied' : s.declarationAccepted ? 'Accepted' : 'Not accepted')}
       </div>
       <h4 className="mb6 mt14">
-        Documents <span className="muted fs11">(metadata from the source)</span>
+        Document files <span className="muted fs11">(stored in this student's folder)</span>
+      </h4>
+      <DocumentList
+        queryKey={['students', s.id, 'documents']}
+        load={() => studentApi.documents(s.id)}
+        download={(d) => studentApi.downloadDocument(s.id, d)}
+        emptyText="No document files were uploaded for this student."
+      />
+      <h4 className="mb6 mt14">
+        Documents declared by the source <span className="muted fs11">(metadata)</span>
       </h4>
       <div className="list">
         {s.documents.map((d) => (
@@ -539,6 +562,13 @@ function GuideTab({ reference }: { reference: ImportReference | null }) {
                 </li>
                 <li>
                   <b>Documents</b>: Yes/No presence flags; a missing required document can be accepted with a reason.
+                </li>
+                <li>
+                  <b>Documents ZIP</b>: one folder per student, named exactly like <span className="mono">source_record_id</span> (e.g.{' '}
+                  <span className="mono">MA-0001/photo.jpg</span>); files in any other folder are rejected. In the Excel document columns
+                  write the file name in that folder (<span className="mono">doc_photo</span> = <span className="mono">photo.jpg</span>), or
+                  write Yes and name files by type (<span className="mono">AADHAAR_CARD.pdf</span>). PDF, JPG or PNG up to 5 MB each; files
+                  move to the student’s own folder on finalise.
                 </li>
                 <li>
                   <b>Duplicates</b>: same source ID, same Aadhaar, or same name + date of birth + contact need a reviewer's decision.

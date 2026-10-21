@@ -1,7 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { PageHead } from '../../../../components/ui';
-import { Can } from '../../../../modules/auth';
-import BackButton from '../../components/BackButton';
+import { Can } from '../../../../modules/auth/components/Can';
 import MasterField from '../../components/MasterField';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { LoadState, toastOk, useAction, useApiData } from '../../shared';

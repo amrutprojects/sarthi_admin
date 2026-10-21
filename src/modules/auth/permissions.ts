@@ -26,6 +26,7 @@ const MENU_KEYS = [
   'lifecycle',
   'atrisk',
   'imports',
+  'registrations',
   'districts',
   'map',
   'centres',
@@ -51,9 +52,12 @@ const MENU_KEYS = [
   'documents',
   'lms',
   'app',
-  'cms-states', 'cms-districts', 'cms-talukas',
-  'cms-departments', 'cms-colleges', 'cms-documents', 'cms-batches', 'cms-batch-assignments', 'cms-centre-types', 'cms-training-centres', 'cms-centre-locations', 'cms-centre-infrastructure',
-  'lms-entities', 'lms-branding', 'lms-calendars', 'lms-learning-config', 'lms-form-fields', 'lms-reference', 'lms-courses', 'lms-course-modules', 'lms-track-variants',
+  'cms-contact',
+  'cms-footer',
+  'cms-modules',
+  'cms-states',
+  'cms-districts',
+  'cms-talukas',
   'admin',
   'audit',
   'settings',
@@ -61,6 +65,12 @@ const MENU_KEYS = [
 export const SCREEN_ACCESS: Record<string, string[]> = {
   ...Object.fromEntries(MENU_KEYS.map((k) => [k, [`${k}.view`]])),
   users: ['users.view', 'roles.view', 'permissions.view'],
+  /* Reference-data masters (Region, Caste, Document type, Education): opens with any one view code. */
+  masters: ['regions.view', 'castes.view', 'document-types.view', 'education.view'],
+  regions: ['regions.view'],
+  castes: ['castes.view'],
+  'document-types': ['document-types.view'],
+  education: ['education.view'],
 };
 
 /* Named actions → the action is available if the user holds ANY of these codes. */
@@ -102,7 +112,13 @@ export const ACTION_ACCESS = {
   assignPermissions: ['permissions.assign'],
   viewPermissions: ['permissions.view'],
   updatePermission: ['permissions.update'],
-  /* CMS geography masters (live backend). Seeded to Super Admin only; other roles need an explicit grant. */
+  /* CMS content and geography masters (live backend). Seeded to Super Admin only; other roles need an explicit grant. */
+  viewContactPage: ['cms-contact.view'],
+  updateContactPage: ['cms-contact.update'],
+  viewFooter: ['cms-footer.view'],
+  updateFooter: ['cms-footer.update'],
+  viewModulesPage: ['cms-modules.view'],
+  updateModulesPage: ['cms-modules.update'],
   viewStates: ['cms-states.view'],
   createState: ['cms-states.create'],
   updateState: ['cms-states.update'],

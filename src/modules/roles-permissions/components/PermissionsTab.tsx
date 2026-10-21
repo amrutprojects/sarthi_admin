@@ -1,76 +1,134 @@
-import { useMemo } from 'react';
-import { GenBadge, Kpi } from '../../../components/ui';
-import { useCan } from '../../auth';
-import { useAuth } from '../../auth';
-import { permissionsApi } from '../services/rbacApi';
-import { LoadState, useAction, useApiData } from '../../../components/feedback/apiFeedback';
+import { useCallback, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Kpi } from '../../../components/ui';
+import StatusToggle from '../../../components/ui/StatusToggle';
+import ListFilters, { statusParam, type ListFilterValues } from '../../../components/tables/ListFilters';
+import ServerTable, { type ServerColumn, type ServerSort } from '../../../components/tables/ServerTable';
+import type { ApiError } from '../../../services/api-client';
+import { useAuth, useCan } from '../../auth';
+import { permissionsApi, type ApiPermission } from '../services/rbacApi';
+import { countOf, usePagedPermissions } from '../hooks/usePagedRbac';
+import { LoadState, useAction } from '../../../components/feedback/apiFeedback';
 
-/* Permission catalogue grouped by module, with activation (a deactivated permission grants nothing). */
+const PAGE_SIZE = 20;
+
+/* Permission catalogue, paged, searched, filtered and sorted on the server, with activation (a deactivated permission grants nothing). */
 export default function PermissionsTab() {
   const can = useCan();
   const { refresh } = useAuth();
-  const perms = useApiData(() => permissionsApi.listAll());
   const { busy, run } = useAction();
+  const [filters, setFilters] = useState<ListFilterValues>({ search: '', status: 'all' });
+  const [module, setModule] = useState('');
+  const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<ServerSort>({ sortBy: 'module', sortOrder: 'ASC' });
+  const onFilters = useCallback((v: ListFilterValues) => {
+    setFilters(v);
+    setPage(1);
+  }, []);
 
-  const list = perms.data;
-  const groups = useMemo(() => {
-    const m = new Map<string, NonNullable<typeof list>>();
-    for (const p of list ?? []) m.set(p.module, [...(m.get(p.module) ?? []), p]);
-    return [...m.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [list]);
+  const perms = usePagedPermissions({
+    page,
+    limit: PAGE_SIZE,
+    search: filters.search || undefined,
+    isActive: statusParam(filters.status),
+    module: module || undefined,
+    ...sort,
+  });
+  /* Module names for the filter dropdown (the catalogue is small; cached). */
+  const catalogue = useQuery({ queryKey: ['permissions', 'all'], queryFn: () => permissionsApi.listAll(), staleTime: 300_000 });
+  const modules = useMemo(() => [...new Set((catalogue.data ?? []).map((p) => p.module))].sort(), [catalogue.data]);
+  const total = usePagedPermissions({ page: 1, limit: 1 });
+  const active = usePagedPermissions({ page: 1, limit: 1, isActive: true });
+  const inactive = usePagedPermissions({ page: 1, limit: 1, isActive: false });
+  const reload = async () => {
+    await Promise.all([perms.refetch(), total.refetch(), active.refetch(), inactive.refetch()]);
+    await refresh();
+  };
 
-  const all = perms.data ?? [];
+  const columns: ServerColumn<ApiPermission>[] = [
+    {
+      key: 'name',
+      label: 'Permission',
+      sortKey: 'name',
+      render: (p) => (
+        <div>
+          <b>{p.name}</b>
+          <div className="fs11 muted mono">{p.code}</div>
+        </div>
+      ),
+    },
+    { key: 'module', label: 'Module', sortKey: 'module', render: (p) => <span style={{ textTransform: 'capitalize' }}>{p.module}</span> },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (p) => (
+        <StatusToggle
+          active={p.isActive}
+          label={`Status of ${p.name}`}
+          busy={busy}
+          onChange={
+            can('updatePermission')
+              ? (isActive) =>
+                  run(() => permissionsApi.setStatus(p.id, isActive), isActive ? 'Permission activated' : 'Permission deactivated', reload)
+              : undefined
+          }
+        />
+      ),
+    },
+  ];
+
   return (
     <>
       <div className="grid g4 mb14">
-        <Kpi label="Permissions" value={all.length} tone="b" />
-        <Kpi label="Active" value={all.filter((p) => p.isActive).length} tone="g" />
-        <Kpi label="Inactive" value={all.filter((p) => !p.isActive).length} tone="" />
-        <Kpi label="Modules" value={groups.length} tone="v" />
+        <Kpi label="Permissions" value={countOf(total)} tone="b" />
+        <Kpi label="Active" value={countOf(active)} tone="g" />
+        <Kpi label="Inactive" value={countOf(inactive)} tone="" />
+        <Kpi label="Modules" value={catalogue.data ? modules.length : '—'} tone="v" />
       </div>
-      <LoadState loading={perms.loading && !perms.data} error={perms.error} onRetry={() => void perms.reload()} />
-      <div className="grid g2">
-        {groups.map(([module, list]) => (
-          <div key={module} className="card">
-            <div className="card-h">
-              <h3 style={{ textTransform: 'capitalize' }}>
-                {module} <span className="sub">{list.length} permissions</span>
-              </h3>
-            </div>
-            <div className="card-b flush">
-              <div className="list">
-                {list.map((p) => (
-                  <div key={p.id} className="list-row norow">
-                    <div className="lr-main">
-                      <b>{p.name}</b>
-                      <span className="mono">{p.code}</span>
-                    </div>
-                    <GenBadge status={p.isActive ? 'ACTIVE' : 'INACTIVE'} />
-                    {can('updatePermission') ? (
-                      <button
-                        type="button"
-                        className="btn xs"
-                        disabled={busy}
-                        onClick={() =>
-                          run(
-                            () => permissionsApi.setStatus(p.id, !p.isActive),
-                            p.isActive ? 'Permission deactivated' : 'Permission activated',
-                            async () => {
-                              await perms.reload();
-                              await refresh();
-                            },
-                          )
-                        }
-                      >
-                        {p.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="card">
+        <div className="card-h">
+          <h3>
+            Permissions <span className="sub">live from the backend</span>
+          </h3>
+        </div>
+        <div className="card-b">
+          <ListFilters value={filters} onChange={onFilters} placeholder="Search permission name or code" label="Search permissions">
+            <select
+              className="inp sm tw-w-auto"
+              aria-label="Filter by module"
+              value={module}
+              onChange={(e) => {
+                setModule(e.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">All modules</option>
+              {modules.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </ListFilters>
+        </div>
+        <LoadState loading={perms.isLoading} error={perms.error as ApiError | null} onRetry={() => void perms.refetch()} />
+        {perms.data ? (
+          <ServerTable
+            rows={perms.data.data}
+            rowKey={(p) => p.id}
+            columns={columns}
+            meta={perms.data.meta}
+            page={page}
+            onPage={setPage}
+            sort={sort}
+            onSort={(s) => {
+              setSort(s);
+              setPage(1);
+            }}
+            fetching={perms.isFetching}
+            emptyText="No permissions match the filters"
+          />
+        ) : null}
       </div>
     </>
   );

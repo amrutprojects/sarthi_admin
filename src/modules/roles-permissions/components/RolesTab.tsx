@@ -1,6 +1,11 @@
-import { useMemo, useState, type FormEvent } from 'react';
-import { Badge, Callout, GenBadge, Kpi } from '../../../components/ui';
-import DataTable, { type Column } from '../../../components/tables/DataTable';
+import StatusToggle from '../../../components/ui/StatusToggle';
+import { useCallback, useMemo, useState, type FormEvent } from 'react';
+import { Badge, Callout, Kpi } from '../../../components/ui';
+import type { Column } from '../../../components/tables/DataTable';
+import ServerTable, { type ServerSort } from '../../../components/tables/ServerTable';
+import ListFilters, { statusParam, type ListFilterValues } from '../../../components/tables/ListFilters';
+import type { ApiError } from '../../../services/api-client';
+import { countOf, usePagedRoles } from '../hooks/usePagedRbac';
 import { Drawer, Modal } from '../../../components/ui/Overlay';
 import Icon from '../../../components/ui/Icon';
 import { Can, useCan } from '../../auth';
@@ -16,23 +21,42 @@ type Dialog =
   | { type: 'delete'; role: ApiRole };
 
 const PROTECTED = 'SUPER_ADMIN';
+const PAGE_SIZE = 15;
+/* Columns the backend can sort roles by. */
+const SORTABLE: Record<string, string | undefined> = { name: 'name' };
 
 export default function RolesTab() {
   const can = useCan();
   const { refresh } = useAuth();
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const { busy, run } = useAction();
-  const roles = useApiData(() => rolesApi.listAll());
+  const [filters, setFilters] = useState<ListFilterValues>({ search: '', status: 'all' });
+  const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<ServerSort>({ sortBy: 'name', sortOrder: 'ASC' });
+  const onFilters = useCallback((v: ListFilterValues) => {
+    setFilters(v);
+    setPage(1);
+  }, []);
+  const roles = usePagedRoles({
+    page,
+    limit: PAGE_SIZE,
+    search: filters.search || undefined,
+    isActive: statusParam(filters.status),
+    ...sort,
+  });
+  const total = usePagedRoles({ page: 1, limit: 1 });
+  const active = usePagedRoles({ page: 1, limit: 1, isActive: true });
+  const inactive = usePagedRoles({ page: 1, limit: 1, isActive: false });
   const perms = useApiData(
     () => (can('viewPermissions') ? permissionsApi.listAll() : Promise.resolve([] as ApiPermission[])),
     [can('viewPermissions')],
   );
 
-  const rows = roles.data ?? [];
+  const rows = roles.data?.data ?? [];
   const close = () => setDialog(null);
   /* Role changes may change the signed-in user's own effective permissions. */
   const reload = async () => {
-    await roles.reload();
+    await Promise.all([roles.refetch(), total.refetch(), active.refetch(), inactive.refetch()]);
     await refresh();
   };
 
@@ -58,7 +82,18 @@ export default function RolesTab() {
       k: 'isActive',
       l: 'Status',
       exportVal: (r) => (r.isActive ? 'Active' : 'Inactive'),
-      render: (r) => <GenBadge status={r.isActive ? 'ACTIVE' : 'INACTIVE'} />,
+      render: (r) => (
+        <StatusToggle
+          active={r.isActive}
+          label={`Status of ${r.name}`}
+          busy={busy}
+          onChange={
+            can('updateRole') && r.code !== PROTECTED
+              ? (isActive) => run(() => rolesApi.setStatus(r.id, isActive), isActive ? 'Role activated' : 'Role deactivated', reload)
+              : undefined
+          }
+        />
+      ),
     },
     {
       k: 'act',
@@ -77,16 +112,6 @@ export default function RolesTab() {
                 Edit
               </button>
             </Can>
-            {can('updateRole') && !locked ? (
-              <button
-                type="button"
-                className="btn xs"
-                disabled={busy}
-                onClick={() => run(() => rolesApi.setStatus(r.id, !r.isActive), r.isActive ? 'Role deactivated' : 'Role activated', reload)}
-              >
-                {r.isActive ? 'Deactivate' : 'Activate'}
-              </button>
-            ) : null}
             {can('deleteRole') && !locked && !r.isSystem ? (
               <button
                 type="button"
@@ -106,9 +131,9 @@ export default function RolesTab() {
   return (
     <>
       <div className="grid g4 mb14">
-        <Kpi label="Roles" value={rows.length} tone="b" />
-        <Kpi label="Active" value={rows.filter((r) => r.isActive).length} tone="g" />
-        <Kpi label="System roles" value={rows.filter((r) => r.isSystem).length} tone="v" />
+        <Kpi label="Roles" value={countOf(total)} tone="b" />
+        <Kpi label="Active" value={countOf(active)} tone="g" />
+        <Kpi label="Inactive" value={countOf(inactive)} tone="v" />
         <Kpi label="Permissions available" value={perms.data ? perms.data.filter((p) => p.isActive).length : '—'} tone="" />
       </div>
       <div className="card">
@@ -123,9 +148,26 @@ export default function RolesTab() {
             </button>
           </Can>
         </div>
-        <LoadState loading={roles.loading && !roles.data} error={roles.error} onRetry={() => void roles.reload()} />
+        <div className="card-b">
+          <ListFilters value={filters} onChange={onFilters} placeholder="Search role name or code" label="Search roles" />
+        </div>
+        <LoadState loading={roles.isLoading} error={roles.error as ApiError | null} onRetry={() => void roles.refetch()} />
         {roles.data ? (
-          <DataTable rows={rows} columns={columns} pageSize={15} exportName="Roles" search={['name', 'code']} searchLabel="role" />
+          <ServerTable
+            rows={rows}
+            rowKey={(r) => r.id}
+            columns={columns.map((c) => ({ key: c.k, label: c.l, render: c.render!, sortKey: SORTABLE[c.k] }))}
+            meta={roles.data.meta}
+            page={page}
+            onPage={setPage}
+            sort={sort}
+            onSort={(s) => {
+              setSort(s);
+              setPage(1);
+            }}
+            fetching={roles.isFetching}
+            emptyText="No roles match the filters"
+          />
         ) : null}
       </div>
 

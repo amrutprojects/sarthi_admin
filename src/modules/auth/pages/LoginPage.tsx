@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [lang, setLangState] = useState(CT.getLang());
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -168,14 +169,52 @@ export default function LoginPage() {
               </div>
               <div className="fld mb10">
                 <label htmlFor="lg-pass">{T('पासवर्ड', 'Password')}</label>
-                <input
-                  className="inp"
-                  id="lg-pass"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    className="inp"
+                    id="lg-pass"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    style={{ paddingRight: 44 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? T('पासवर्ड लपवा', 'Hide password') : T('पासवर्ड दाखवा', 'Show password')}
+                    aria-pressed={showPassword}
+                    title={showPassword ? T('पासवर्ड लपवा', 'Hide password') : T('पासवर्ड दाखवा', 'Show password')}
+                    style={{
+                      position: 'absolute',
+                      right: 6,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'transparent',
+                      border: 0,
+                      padding: 6,
+                      cursor: 'pointer',
+                      color: 'var(--ink-3, #6b7280)',
+                      display: 'flex',
+                    }}
+                  >
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                      <circle cx="12" cy="12" r="3" />
+                      {showPassword ? <line x1="3" y1="3" x2="21" y2="21" /> : null}
+                    </svg>
+                  </button>
+                </div>
               </div>
               <div className="f jb ac mb14">
                 <span className="fs12 muted">{T('सत्र हा टॅब बंद होईपर्यंत राहते.', 'Your session lasts until this tab is closed.')}</span>

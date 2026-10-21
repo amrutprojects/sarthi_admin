@@ -54,7 +54,7 @@ function buildSections(perms: MatrixPermission[]): Section[] {
     }
     if (n.k === 'users') {
       for (const r of IDENTITY_ROWS) {
-        const row = buildRow(r.module, 'Users & Roles — ' + r.label, perms);
+        const row = buildRow(r.module, `${n.l} — ${r.label}`, perms);
         if (row) {
           current?.rows.push(row);
           used.add(r.module);
