@@ -1,5 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHead } from '../../../../components/ui';
+import BackButton from '../../components/BackButton';
 import { toastOk } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import { districtService } from '../services/districtService';
@@ -18,6 +19,7 @@ export default function DistrictCreate() {
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'District Master', link: '/cms/districts' }, { l: 'Add District' }]}
         title="Add District"
         sub="A district always belongs to one state, and its name and code must be unique within it."
+        back={<BackButton to="/cms/districts" />}
       />
       <DistrictForm
         initial={emptyDistrictForm(params.get('stateId') ?? '')}

@@ -1,0 +1,34 @@
+/* =========================================================
+   CMS master listings — presentation only.
+   The panel's tables never wrap cell text (styles.css: table.tbl td { white-space: nowrap }), so a
+   long district / centre name widened the table until the Action column scrolled out of view.
+   In the master listings (recognised by the status switch in their Action column) text cells may
+   wrap; the Action cell stays on one line and only as wide as its buttons.
+   ========================================================= */
+table.tbl:has(td .switch) td {
+  white-space: normal;
+}
+table.tbl:has(td .switch) td:last-child {
+  white-space: nowrap;
+  width: 1%;
+}
+table.tbl:has(td .switch) td:last-child > .f {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+/* Small status switch for the Action column, sized to sit with the 28px icon buttons. */
+.switch.sm {
+  width: 30px;
+  height: 17px;
+  flex: 0 0 30px;
+}
+.switch.sm::after {
+  top: 2px;
+  left: 2px;
+  width: 13px;
+  height: 13px;
+}
+.switch.sm.on::after {
+  transform: translateX(13px);
+}

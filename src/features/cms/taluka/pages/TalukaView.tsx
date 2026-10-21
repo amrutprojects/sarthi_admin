@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { Dash, KvList, PageHead, useGo } from '../../../../components/ui';
 import { Can } from '../../../../modules/auth';
+import BackButton from '../../components/BackButton';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { LoadState, fmtDateTime, useAction, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
@@ -23,9 +24,9 @@ export default function TalukaView() {
         title={taluka ? taluka.name : 'Taluka'}
         badge={taluka?.code ? <span className="tag">{taluka.code}</span> : undefined}
         sub={taluka ? `${taluka.districtName}, ${taluka.stateName}` : undefined}
+        back={<BackButton to="/cms/talukas" />}
         actions={
           <div className="f ac gp8 wrap">
-            <button type="button" className="btn" onClick={() => go('/cms/talukas')}>Back to list</button>
             {taluka ? (
               <>
                 <Can action="updateTaluka">

@@ -143,12 +143,15 @@ interface PageHeadProps {
   badge?: ReactNode;
   sub?: ReactNode;
   actions?: ReactNode;
+  /* Shown at the left of the header, before the title (e.g. a Back button). */
+  back?: ReactNode;
 }
-export function PageHead({ crumbs, title, badge, sub, actions }: PageHeadProps) {
+export function PageHead({ crumbs, title, badge, sub, actions, back }: PageHeadProps) {
   return (
     <>
       {crumbs ? <Crumbs items={crumbs} /> : null}
       <div className="page-head">
+        {back ? <div className="ph-back">{back}</div> : null}
         <div className="ph-l">
           <h1>
             {title}

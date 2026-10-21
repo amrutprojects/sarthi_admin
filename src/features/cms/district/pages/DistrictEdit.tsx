@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
 import { Can } from '../../../../modules/auth';
+import BackButton from '../../components/BackButton';
 import MasterField from '../../components/MasterField';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { LoadState, toastOk, useAction, useApiData } from '../../shared';
@@ -29,6 +30,7 @@ export default function DistrictEdit() {
         ]}
         title={district ? `Edit ${district.name}` : 'Edit District'}
         sub="Changing the state re-checks the name and code against the districts of the new state."
+        back={<BackButton to={district ? `/cms/districts/${district.id}` : '/cms/districts'} />}
       />
 
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />

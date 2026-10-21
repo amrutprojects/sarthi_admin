@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { KvList, PageHead, useGo } from '../../../../components/ui';
 import { Can } from '../../../../modules/auth';
+import BackButton from '../../components/BackButton';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { LoadState, fmtDateTime, useAction, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
@@ -22,9 +23,9 @@ export default function StateView() {
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'State Master', link: '/cms/states' }, { l: state ? state.name : 'State' }]}
         title={state ? state.name : 'State'}
         badge={state ? <span className="tag">{state.code}</span> : undefined}
+        back={<BackButton to="/cms/states" />}
         actions={
           <div className="f ac gp8 wrap">
-            <button type="button" className="btn" onClick={() => go('/cms/states')}>Back to list</button>
             {state ? (
               <>
                 <Can action="updateState">

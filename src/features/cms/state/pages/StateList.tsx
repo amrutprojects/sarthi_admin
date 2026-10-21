@@ -2,9 +2,11 @@ import { useMemo, useState } from 'react';
 import Icon from '../../../../components/ui/Icon';
 import { FilterBar, PageHead, useGo } from '../../../../components/ui';
 import { Can, useCan } from '../../../../modules/auth';
+import BackButton from '../../components/BackButton';
 import MasterKpis from '../../components/MasterKpis';
 import { STATUS_OPTIONS } from '../../components/MasterFilters';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
+import StatusToggle from '../../components/StatusToggle';
 import MasterTable, { masterQuery, type MasterColumn, type MasterQuery } from '../../components/MasterTable';
 import { ConfirmModal, fmtDateTime, useAction, useApiData } from '../../shared';
 import { usePageTitle, useMasterQuery } from '../../useMasterQuery';
@@ -42,7 +44,7 @@ export default function StateList() {
   };
 
   const columns: MasterColumn<ApiState>[] = [
-    { k: 'srNo', l: '#', w: '56px', sortable: false, render: (_r, srNo) => <span className="muted fs12">{srNo}</span> },
+    { k: 'srNo', l: 'Sr. No.', w: '76px', sortable: false, render: (_r, srNo) => <span className="muted fs12">{srNo}</span> },
     { k: 'name', l: 'State Name', render: (r) => <b className="lnk">{r.name}</b> },
     { k: 'code', l: 'State Code', render: (r) => <span className="mono fs12">{r.code}</span> },
     { k: 'isActive', l: 'Status', sortable: false, render: (r) => <MasterStatusBadge isActive={r.isActive} /> },
@@ -60,17 +62,7 @@ export default function StateList() {
             <button type="button" className="btn xs" title="Edit" aria-label="Edit" onClick={() => go(`/cms/states/${r.id}/edit`)}><Icon name="edit" /></button>
           </Can>
           <Can action="updateState">
-            <button
-              type="button"
-              className="btn xs"
-              title={r.isActive ? 'Deactivate' : 'Activate'}
-              aria-label={r.isActive ? 'Deactivate' : 'Activate'}
-              style={{ color: r.isActive ? 'var(--amber)' : 'var(--green)' }}
-              disabled={busy}
-              onClick={() => setConfirming({ kind: 'status', row: r })}
-            >
-              <Icon name="power" />
-            </button>
+            <StatusToggle compact isActive={r.isActive} name={r.name} canChange disabled={busy} onToggle={() => setConfirming({ kind: 'status', row: r })} />
           </Can>
           <Can action="deleteState">
             <button type="button" className="btn xs" title="Delete" aria-label="Delete" style={{ color: 'var(--red)' }} onClick={() => setDeleting(r)}><Icon name="trash" /></button>
@@ -88,12 +80,15 @@ export default function StateList() {
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'CMS' }, { l: 'State Master' }]}
         title="State Master"
         sub="States available to the District and Taluka masters, and to the public website forms."
+        back={<BackButton to="/dashboard" />}
         actions={
-          <Can action="createState">
-            <button type="button" className="btn primary" onClick={() => go('/cms/states/create')}>
-              <Icon name="plus" />Add State
-            </button>
-          </Can>
+          <div className="f ac gp8 wrap">
+            <Can action="createState">
+              <button type="button" className="btn primary" onClick={() => go('/cms/states/create')}>
+                <Icon name="plus" />Add State
+              </button>
+            </Can>
+          </div>
         }
       />
 

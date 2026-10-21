@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, onUnauthorized, request, setCsrfToken } from '../src/services/api-client';
+import { ApiError, onUnauthorized, request, requestBlob, setCsrfToken } from '../src/services/api-client';
 
 const respond = (status: number, body: unknown) =>
   vi.fn().mockResolvedValue({ ok: status < 400, status, statusText: '', json: () => Promise.resolve(body) } as Response);
@@ -63,5 +63,22 @@ describe('api-client', () => {
   it('reports network failures as NETWORK_ERROR', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
     await expect(request('/users')).rejects.toMatchObject({ status: 0, code: 'NETWORK_ERROR' });
+  });
+
+  it('requestBlob: reads a binary body with the session cookie; 401 notifies the app; errors carry the envelope', async () => {
+    const blob = new Blob(['png'], { type: 'image/png' });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, blob: () => Promise.resolve(blob) } as unknown as Response);
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(requestBlob('/lms/branding/e1/logo', { accept: 'image/png' })).resolves.toBe(blob);
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/lms/branding/e1/logo', expect.objectContaining({ credentials: 'include', headers: { Accept: 'image/png' } }));
+
+    const handler = vi.fn();
+    onUnauthorized(handler);
+    vi.stubGlobal('fetch', respond(401, { success: false, message: 'Authentication required', error: { code: 'UNAUTHORIZED' } }));
+    await expect(requestBlob('/lms/branding/e1/logo')).rejects.toMatchObject({ status: 401, code: 'UNAUTHORIZED' });
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    vi.stubGlobal('fetch', respond(404, { success: false, message: 'No logo uploaded', error: { code: 'NOT_FOUND' } }));
+    await expect(requestBlob('/lms/branding/e1/logo')).rejects.toMatchObject({ status: 404, message: 'No logo uploaded' });
   });
 });
