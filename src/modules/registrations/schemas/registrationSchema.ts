@@ -92,6 +92,8 @@ export const registrationFormSchema = basicSchema.merge(mainSchema).extend({
 });
 
 export type RegistrationFormValues = z.input<typeof registrationFormSchema>;
+/* Editing a student: steps 1 and 2 only (documents and declaration are not edited). */
+export const editFormSchema = basicSchema.merge(mainSchema);
 export const STEP_FIELDS = [Object.keys(basicSchema.shape), Object.keys(mainSchema.shape)] as const;
 
 /* File rules (backend registration-upload.middleware.ts / file-type.ts). */

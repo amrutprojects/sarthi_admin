@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useForm, type FieldPath } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toastError, toastOk } from '../../../components/feedback/apiFeedback';
 import { Callout, KvList, PageHead } from '../../../components/ui';
 import { Modal } from '../../../components/ui/Overlay';
@@ -11,6 +11,7 @@ import { MASTERS, useMasterOptions, type MasterKey } from '../../masters';
 import { BARCODES, DECLARATION, RELIGIONS, TRACKS } from '../constants';
 import {
   ACCEPT,
+  editFormSchema,
   fileIssue,
   registrationFormSchema,
   STEP_FIELDS,
@@ -43,11 +44,21 @@ function Field({ id, title, error, children, wide }: { id: string; title: string
 /*
  * Registration form (Student Registration menu), in three steps as the programme's form: basic details, main form,
  * documents. Each step is validated before moving on; the server validates everything again on submit and its field
- * errors are shown on the step they belong to.
+ * errors are shown on the step they belong to. At /student-registrations/:id/edit the same form edits an existing
+ * student: steps 1 and 2 only, prefilled, saved with PATCH.
  */
 export default function RegistrationFormPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { id: editId } = useParams();
+  const editing = !!editId;
+  const steps = editing ? STEPS.slice(0, 2) : STEPS;
+  const lastStep = steps.length - 1;
+  const existing = useQuery({
+    queryKey: ['registrations', 'detail', editId],
+    queryFn: () => registrationApi.get(editId!),
+    enabled: editing,
+  });
   const [step, setStep] = useState(0);
   const [files, setFiles] = useState<Record<string, File>>({});
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
@@ -67,9 +78,10 @@ export default function RegistrationFormPage() {
     trigger,
     getValues,
     setError,
+    reset,
     formState: { errors },
   } = useForm<RegistrationFormValues>({
-    resolver: zodResolver(registrationFormSchema),
+    resolver: zodResolver(editing ? (editFormSchema as unknown as typeof registrationFormSchema) : registrationFormSchema),
     defaultValues: {
       first_name: '',
       last_name: '',
@@ -88,6 +100,29 @@ export default function RegistrationFormPage() {
       barcodes: {},
     },
   });
+  /* Edit mode: fill the form with the student's current (unmasked) details once they load. */
+  useEffect(() => {
+    const r = existing.data;
+    if (!r) return;
+    reset({
+      first_name: r.firstName,
+      last_name: r.lastName,
+      father_name: r.fatherName,
+      mother_name: r.motherName,
+      email: r.unmasked?.email ?? '',
+      date_of_birth: r.dateOfBirth ?? '',
+      current_address: r.unmasked?.currentAddress ?? '',
+      aadhaar_number: (r.unmasked?.aadhaar ?? '').replace(/\s/g, ''),
+      mobile_number: (r.unmasked?.mobile ?? '').replace(/^\+91/, ''),
+      religion: r.religion,
+      caste_id: r.casteId ?? '',
+      region_id: r.regionId ?? '',
+      technology: r.trackCode ?? '',
+      education_id: r.educationId ?? '',
+      barcodes: {},
+    });
+  }, [existing.data, reset]);
+
   const err = (k: string) => (errors as Record<string, { message?: string } | undefined>)[k]?.message;
   const barcodeErr = (code: string) => (errors.barcodes as Record<string, { message?: string }> | undefined)?.[code]?.message;
 
@@ -142,7 +177,33 @@ export default function RegistrationFormPage() {
     if (await trigger(STEP_FIELDS[step] as unknown as FieldPath<RegistrationFormValues>[])) setStep(step + 1);
   };
 
+  const save = useMutation({
+    mutationFn: (data: Omit<RegistrationData, 'declaration_accepted' | 'barcodes'>) => registrationApi.update(editId!, data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['registrations'] });
+      navigate(`/student-registrations/${editId}`);
+      toastOk('Student details updated');
+    },
+    onError: (e) => {
+      if (!(e instanceof ApiError) || !e.details.length) return toastError(e);
+      let first = 1;
+      for (const d of e.details) {
+        const f = (d.field ?? '').replace(/^body\./, '');
+        setError(f as FieldPath<RegistrationFormValues>, { message: d.message });
+        const s = STEP_FIELDS.findIndex((fields) => (fields as readonly string[]).includes(f));
+        if (s >= 0) first = Math.min(first, s);
+      }
+      setStep(first);
+      toastError(e);
+    },
+  });
+
   const onValid = (v: RegistrationFormValues) => {
+    if (editing) {
+      const { barcodes: _b, declaration_accepted: _d, ...rest } = v;
+      save.mutate(rest);
+      return;
+    }
     if (!checkDocuments()) return;
     const barcodes = Object.fromEntries(Object.entries(v.barcodes).filter(([c, b]) => files[c] && b.trim()));
     const { barcodes: _b, declaration_accepted: _d, ...rest } = v;
@@ -150,13 +211,16 @@ export default function RegistrationFormPage() {
   };
 
   /* Document checks run even when a field is invalid, so every problem on the step shows at once. */
-  const onInvalid = () => void checkDocuments();
+  const onInvalid = () => {
+    if (!editing) void checkDocuments();
+  };
   const openPreview = handleSubmit(() => {
     if (checkDocuments()) setPreview(true);
   }, onInvalid);
 
   const name = (list: { id: string; name: string }[] | undefined, id: string) => list?.find((o) => o.id === id)?.name ?? '—';
-  const loadingMasters = regions.isPending || castes.isPending || educations.isPending || docTypes.isPending;
+  const loadingMasters =
+    regions.isPending || castes.isPending || educations.isPending || docTypes.isPending || (editing && existing.isPending);
 
   return (
     <div className="page">
@@ -164,14 +228,18 @@ export default function RegistrationFormPage() {
         crumbs={[
           { l: 'Dashboard', link: '#/dashboard' },
           { l: 'Student Registration', link: '#/student-registrations' },
-          { l: 'Registration form' },
+          { l: editing ? 'Edit student' : 'Registration form' },
         ]}
-        title="Registration Form — AMRUT KALASH"
-        sub="Please fill in all required fields marked with *."
+        title={editing ? `Edit — ${existing.data?.name ?? ''}` : 'Registration Form — AMRUT KALASH'}
+        sub={
+          editing
+            ? 'Change the details and save. Documents are managed on the student page.'
+            : 'Please fill in all required fields marked with *.'
+        }
       />
 
       <ol className="tw-mb-4 tw-flex tw-list-none tw-flex-wrap tw-gap-2 tw-p-0" aria-label="Steps">
-        {STEPS.map((s, i) => (
+        {steps.map((s, i) => (
           <li key={s}>
             <span
               className={`tw-inline-block tw-rounded-full tw-px-3 tw-py-1 tw-text-xs tw-font-semibold ${
@@ -183,7 +251,7 @@ export default function RegistrationFormPage() {
               }`}
               aria-current={i === step ? 'step' : undefined}
             >
-              Step {i + 1} of 3 – {s}
+              Step {i + 1} of {steps.length} – {s}
             </span>
           </li>
         ))}
@@ -391,12 +459,22 @@ export default function RegistrationFormPage() {
         </div>
 
         <div className="tw-mt-4 tw-flex tw-flex-wrap tw-justify-between tw-gap-2">
-          <button type="button" className="btn" onClick={() => (step === 0 ? navigate('/student-registrations') : setStep(step - 1))}>
+          <button
+            type="button"
+            className="btn"
+            onClick={() =>
+              step === 0 ? navigate(editing ? `/student-registrations/${editId}` : '/student-registrations') : setStep(step - 1)
+            }
+          >
             {step === 0 ? 'Cancel' : 'Previous'}
           </button>
-          {step < 2 ? (
+          {step < lastStep ? (
             <button type="button" className="btn primary" onClick={() => void next()}>
               Next
+            </button>
+          ) : editing ? (
+            <button type="submit" className="btn primary" disabled={save.isPending}>
+              {save.isPending ? 'Saving…' : 'Save changes'}
             </button>
           ) : (
             <div className="tw-flex tw-gap-2">

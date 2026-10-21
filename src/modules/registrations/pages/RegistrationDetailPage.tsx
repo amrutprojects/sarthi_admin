@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams } from 'react-router-dom';
-import { fmtDateTime, toastError, toastOk } from '../../../components/feedback/apiFeedback';
+import { ConfirmModal, fmtDateTime, toastError, toastOk } from '../../../components/feedback/apiFeedback';
 import { Badge, Callout, KvList, PageHead } from '../../../components/ui';
 import { Modal } from '../../../components/ui/Overlay';
 import { ApiError } from '../../../services/api-client';
@@ -242,9 +242,13 @@ export default function RegistrationDetailPage() {
   const [slide, setSlide] = useState<number | null>(null);
   /* Verify becomes available once the reviewer has opened the file in this visit. */
   const [previewed, setPreviewed] = useState<Set<string>>(new Set());
+  /* Every Verify asks for confirmation first: verification is recorded with the reviewer's name and cannot be undone here. */
+  const [confirming, setConfirming] = useState<{ file: RegistrationFile; title: string } | null>(null);
+  const askVerify = (file: RegistrationFile, title: string) => setConfirming({ file, title });
   const verify = useMutation({
     mutationFn: (fileId: string) => registrationApi.verifyDocument(id, fileId),
     onSuccess: () => {
+      setConfirming(null);
       toastOk('Document verified');
       void qc.invalidateQueries({ queryKey: ['registrations', 'detail', id] });
     },
@@ -310,7 +314,7 @@ export default function RegistrationDetailPage() {
                           card={aadhaarCard}
                           canVerify={canVerify}
                           verifying={verify.isPending}
-                          onVerify={() => aadhaarCard && verify.mutate(aadhaarCard.id)}
+                          onVerify={() => aadhaarCard && askVerify(aadhaarCard, 'Aadhaar Card')}
                         />
                       ) : (
                         '—'
@@ -396,7 +400,7 @@ export default function RegistrationDetailPage() {
                                     className="btn xs primary"
                                     disabled={!previewed.has(f.id) || verify.isPending}
                                     title={previewed.has(f.id) ? 'Mark this document as verified' : 'Preview the document first'}
-                                    onClick={() => verify.mutate(f.id)}
+                                    onClick={() => askVerify(f, d.label)}
                                   >
                                     Verify
                                   </button>
@@ -425,10 +429,20 @@ export default function RegistrationDetailPage() {
           total={slides.length}
           canVerify={canVerify}
           verifying={verify.isPending}
-          onVerify={() => verify.mutate(current.file.id)}
+          onVerify={() => askVerify(current.file, current.title)}
           onPrev={() => goTo(slide - 1)}
           onNext={() => goTo(slide + 1)}
           onClose={() => setSlide(null)}
+        />
+      ) : null}
+      {confirming ? (
+        <ConfirmModal
+          title="Verify document"
+          busy={verify.isPending}
+          confirmLabel="Yes, verify"
+          message={`Verify "${confirming.title}" (${confirming.file.originalName})? You confirm that you checked it against the student's details. Your name and the time are recorded.`}
+          onClose={() => setConfirming(null)}
+          onConfirm={() => verify.mutate(confirming.file.id)}
         />
       ) : null}
     </div>

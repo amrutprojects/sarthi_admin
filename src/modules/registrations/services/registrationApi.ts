@@ -14,6 +14,9 @@ export interface Registration {
   email: string | null;
   aadhaar: string | null;
   createdAt: string;
+  /* IMPORT = imported student, PUBLIC_REGISTRATION = registration (both live in the one students table). */
+  source: 'IMPORT' | 'PUBLIC_REGISTRATION';
+  isActive: boolean;
   /* Full email and mobile, returned only to reviewers (registrations.update); the backend audits each list. */
   unmasked?: { email: string | null; mobile: string | null };
 }
@@ -30,6 +33,9 @@ export interface RegistrationFile {
 }
 
 export interface RegistrationDetail extends Omit<Registration, 'unmasked'> {
+  regionId: string | null;
+  casteId: string | null;
+  educationId: string | null;
   firstName: string;
   lastName: string;
   fatherName: string;
@@ -43,7 +49,7 @@ export interface RegistrationDetail extends Omit<Registration, 'unmasked'> {
   documents: { key: string; label: string; required: boolean; supplied: boolean; barcode: string | null }[];
   files: RegistrationFile[];
   /* Full values, returned only to reviewers (registrations.update); each view is audited by the backend. */
-  unmasked?: { email: string | null; mobile: string | null; aadhaar?: string | null };
+  unmasked?: { email: string | null; mobile: string | null; aadhaar?: string | null; currentAddress?: string };
 }
 
 export interface RegistrationListParams {
@@ -52,6 +58,7 @@ export interface RegistrationListParams {
   search?: string;
   sortBy?: 'createdAt' | 'code' | 'firstName';
   sortOrder?: 'ASC' | 'DESC';
+  source?: 'IMPORT' | 'PUBLIC_REGISTRATION';
 }
 
 /* The registration JSON sent in the "data" field (backend registration-admin.validation.ts). */
@@ -90,6 +97,19 @@ export const registrationApi = {
     const res = await fetch(`${API_BASE_URL}/student-registrations/${id}/documents/${documentId}/file`, { credentials: 'include' });
     if (!res.ok) throw new ApiError(`Could not load the file (${res.status})`, res.status, 'FILE_ERROR');
     return res.blob();
+  },
+
+  /* Edits a student's details (same fields and validation as a registration, without documents). */
+  async update(id: string, data: Omit<RegistrationData, 'declaration_accepted' | 'barcodes'>): Promise<RegistrationDetail> {
+    return (await request<RegistrationDetail>(`/student-registrations/${id}`, { method: 'PATCH', body: data })).data;
+  },
+
+  async setStatus(id: string, isActive: boolean): Promise<RegistrationDetail> {
+    return (await request<RegistrationDetail>(`/student-registrations/${id}/status`, { method: 'PATCH', body: { isActive } })).data;
+  },
+
+  async remove(id: string): Promise<void> {
+    await request<null>(`/student-registrations/${id}`, { method: 'DELETE' });
   },
 
   /* Marks one uploaded document as verified (repeat calls keep the first verification). */

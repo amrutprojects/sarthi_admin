@@ -36,6 +36,11 @@ const detail: RegistrationDetail = {
   email: 'a***@example.invalid',
   aadhaar: 'XXXX-XXXX-2341',
   createdAt: '2026-10-20T10:00:00Z',
+  source: 'PUBLIC_REGISTRATION',
+  isActive: true,
+  regionId: 'r-pun',
+  casteId: 'c-1',
+  educationId: 'e-1',
   firstName: 'Asha',
   lastName: 'Patil',
   fatherName: 'Ramesh',
@@ -82,6 +87,9 @@ describe('<RegistrationDetailPage>', () => {
     expect(await screen.findByAltText('photo.png')).toBeInTheDocument();
     vi.mocked(registrationApi.verifyDocument).mockResolvedValue(file('f-photo', 'PHOTO', '2026-10-20T12:00:00Z'));
     await u.click(screen.getByRole('button', { name: 'Verify document' }));
+    expect(registrationApi.verifyDocument).not.toHaveBeenCalled();
+    expect(await screen.findByText(/You confirm that you checked it/)).toBeInTheDocument();
+    await u.click(screen.getByRole('button', { name: 'Yes, verify' }));
     await waitFor(() => expect(registrationApi.verifyDocument).toHaveBeenCalledWith('r1', 'f-photo'));
   });
 
@@ -123,6 +131,7 @@ describe('<RegistrationDetailPage>', () => {
     await screen.findByAltText('aadhaar_card.png');
     await u.hover(card);
     await u.click(within(card).getByRole('button', { name: 'Verify' }));
+    await u.click(await screen.findByRole('button', { name: 'Yes, verify' }));
     await waitFor(() => expect(registrationApi.verifyDocument).toHaveBeenCalledWith('r1', 'f-aadhaar'));
   });
 

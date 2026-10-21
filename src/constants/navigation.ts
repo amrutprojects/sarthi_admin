@@ -78,6 +78,7 @@ export type RouteName =
   | 'registrations'
   | 'registrationNew'
   | 'registrationDetail'
+  | 'registrationEdit'
   | 'masterList'
   | 'audit'
   | 'settings'
@@ -174,6 +175,7 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/student-registrations', 'registrations', 'registrations'],
   ['/student-registrations/new', 'registrationNew', 'registrations'],
   ['/student-registrations/:id', 'registrationDetail', 'registrations'],
+  ['/student-registrations/:id/edit', 'registrationEdit', 'registrations'],
   ['/districts', 'districts', 'districts'],
   ['/districts/:id', 'districtDetail', 'districts'],
   ['/districts/:id/talukas/:t', 'talukaDetail', 'districts'],
