@@ -24,6 +24,7 @@ const PAGES: Record<RouteName, LazyExoticComponent<ComponentType>> = {
   registrations: page(() => import('../modules/registrations/pages/RegistrationsPage')),
   registrationNew: page(() => import('../modules/registrations/pages/RegistrationFormPage')),
   registrationDetail: page(() => import('../modules/registrations/pages/RegistrationDetailPage')),
+  registrationEdit: page(() => import('../modules/registrations/pages/RegistrationFormPage')),
   districts: page(() => import('../modules/network/pages/DistrictsPage')),
   districtDetail: page(() => import('../modules/network/pages/DistrictDetailPage')),
   talukaDetail: page(() => import('../modules/network/pages/TalukaDetailPage')),

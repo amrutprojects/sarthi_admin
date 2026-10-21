@@ -1,19 +1,48 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { fmtDateTime } from '../../../components/feedback/apiFeedback';
+import { ConfirmModal, fmtDateTime, toastError, toastOk } from '../../../components/feedback/apiFeedback';
 import { Badge, Callout, PageHead } from '../../../components/ui';
 import Icon from '../../../components/ui/Icon';
+import StatusToggle from '../../../components/ui/StatusToggle';
 import { ApiError } from '../../../services/api-client';
 import { useAuth } from '../../auth';
-import { registrationApi, type RegistrationListParams } from '../services/registrationApi';
+import { registrationApi, type Registration, type RegistrationListParams } from '../services/registrationApi';
 
 const PAGE_SIZE = 20;
+type SourceFilter = 'all' | 'IMPORT' | 'PUBLIC_REGISTRATION';
+const SOURCE_LABEL: Record<Registration['source'], string> = { IMPORT: 'Import', PUBLIC_REGISTRATION: 'Registration' };
 
-/* Student Registration menu: server-paged list of registrations, with the registration form at the top right. */
+/*
+ * Student Registration menu: imported students and registrations from the one students table, server-paged, with a
+ * Source filter, an active/inactive toggle, Edit and Delete per row, and the registration form at the top right.
+ */
 export default function RegistrationsPage() {
   const { permissions } = useAuth();
   const navigate = useNavigate();
+  const qc = useQueryClient();
+  const canUpdate = permissions.has('registrations.update');
+  const canDelete = permissions.has('registrations.delete');
+  const [source, setSource] = useState<SourceFilter>('all');
+  const [deleting, setDeleting] = useState<Registration | null>(null);
+  const refresh = () => qc.invalidateQueries({ queryKey: ['registrations'] });
+  const setActive = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => registrationApi.setStatus(id, isActive),
+    onSuccess: (_d, v) => {
+      toastOk(v.isActive ? 'Student activated' : 'Student deactivated');
+      void refresh();
+    },
+    onError: toastError,
+  });
+  const remove = useMutation({
+    mutationFn: (id: string) => registrationApi.remove(id),
+    onSuccess: () => {
+      toastOk('Student deleted');
+      setDeleting(null);
+      void refresh();
+    },
+    onError: toastError,
+  });
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -30,7 +59,14 @@ export default function RegistrationsPage() {
     return () => clearTimeout(t);
   }, [searchInput, search]);
 
-  const params: RegistrationListParams = { page, limit: PAGE_SIZE, search: search || undefined, sortBy: 'createdAt', sortOrder: 'DESC' };
+  const params: RegistrationListParams = {
+    page,
+    limit: PAGE_SIZE,
+    search: search || undefined,
+    sortBy: 'createdAt',
+    sortOrder: 'DESC',
+    source: source === 'all' ? undefined : source,
+  };
   const list = useQuery({
     queryKey: ['registrations', 'list', params],
     queryFn: ({ signal }) => registrationApi.list(params, signal),
@@ -45,7 +81,7 @@ export default function RegistrationsPage() {
         crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'Student Registration' }]}
         title="Student Registration"
         badge={<Badge tone="green">Live</Badge>}
-        sub="Registrations from the website and entered here. Mobile and email are shown in full to reviewers; every such view is recorded in the audit log."
+        sub="Imported students and registrations, from one students table. Mobile and email are shown in full to reviewers; every such view is recorded in the audit log."
         actions={
           permissions.has('registrations.create') ? (
             <Link className="btn primary" to="/student-registrations/new">
@@ -57,16 +93,32 @@ export default function RegistrationsPage() {
       />
       <div className="card">
         <div className="card-h">
-          <h3>Registrations</h3>
-          <input
-            type="search"
-            className="inp sm"
-            style={{ width: 260, maxWidth: '100%' }}
-            placeholder="Search code, name, email or last 4 of mobile"
-            aria-label="Search registrations"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
+          <h3>Students</h3>
+          <div className="tw-flex tw-flex-wrap tw-items-center tw-justify-end tw-gap-2">
+            <select
+              className="inp sm"
+              style={{ width: 170 }}
+              aria-label="Filter by source"
+              value={source}
+              onChange={(e) => {
+                setSource(e.target.value as SourceFilter);
+                setPage(1);
+              }}
+            >
+              <option value="all">All sources</option>
+              <option value="IMPORT">Import</option>
+              <option value="PUBLIC_REGISTRATION">Registration</option>
+            </select>
+            <input
+              type="search"
+              className="inp sm"
+              style={{ width: 260, maxWidth: '100%' }}
+              placeholder="Search code, name, email or last 4 of mobile"
+              aria-label="Search registrations"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+          </div>
         </div>
         {forbidden ? (
           <div className="card-b">
@@ -99,12 +151,14 @@ export default function RegistrationsPage() {
               <table className="tbl" aria-busy={list.isFetching}>
                 <thead>
                   <tr>
-                    <th scope="col">Registration</th>
+                    <th scope="col">Code</th>
+                    <th scope="col">Source</th>
                     <th scope="col">Name</th>
                     <th scope="col">Course centre</th>
                     <th scope="col">Technology</th>
                     <th scope="col">Mobile</th>
                     <th scope="col">Submitted</th>
+                    <th scope="col">Active</th>
                     <th scope="col">
                       <span className="tw-sr-only">Actions</span>
                     </th>
@@ -114,6 +168,9 @@ export default function RegistrationsPage() {
                   {list.data.items.map((r) => (
                     <tr key={r.id}>
                       <td className="mono">{r.code}</td>
+                      <td>
+                        <Badge tone={r.source === 'IMPORT' ? 'blue' : 'saffron'}>{SOURCE_LABEL[r.source]}</Badge>
+                      </td>
                       <td>
                         <Link to={`/student-registrations/${r.id}`} className="tw-font-bold hover:tw-underline">
                           {r.name}
@@ -125,9 +182,29 @@ export default function RegistrationsPage() {
                       <td className="mono">{r.unmasked?.mobile ?? r.mobile ?? '—'}</td>
                       <td className="tw-whitespace-nowrap">{fmtDateTime(r.createdAt)}</td>
                       <td>
-                        <button type="button" className="btn xs" onClick={() => navigate(`/student-registrations/${r.id}`)}>
-                          View
-                        </button>
+                        <StatusToggle
+                          active={r.isActive}
+                          label={`Status of ${r.name}`}
+                          busy={setActive.isPending && setActive.variables?.id === r.id}
+                          onChange={canUpdate ? (isActive) => setActive.mutate({ id: r.id, isActive }) : undefined}
+                        />
+                      </td>
+                      <td>
+                        <div className="tw-flex tw-flex-wrap tw-gap-1">
+                          <button type="button" className="btn xs" onClick={() => navigate(`/student-registrations/${r.id}`)}>
+                            View
+                          </button>
+                          {canUpdate ? (
+                            <button type="button" className="btn xs" onClick={() => navigate(`/student-registrations/${r.id}/edit`)}>
+                              Edit
+                            </button>
+                          ) : null}
+                          {canDelete ? (
+                            <button type="button" className="btn xs tw-text-danger" onClick={() => setDeleting(r)}>
+                              Delete
+                            </button>
+                          ) : null}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -157,6 +234,17 @@ export default function RegistrationsPage() {
           </div>
         )}
       </div>
+      {deleting ? (
+        <ConfirmModal
+          title="Delete student"
+          danger
+          busy={remove.isPending}
+          confirmLabel="Delete"
+          message={`Delete ${deleting.name} (${deleting.code})? The record is soft-deleted: it disappears from lists but is kept, with its documents, for history and audit.`}
+          onClose={() => setDeleting(null)}
+          onConfirm={() => remove.mutate(deleting.id)}
+        />
+      ) : null}
     </div>
   );
 }
