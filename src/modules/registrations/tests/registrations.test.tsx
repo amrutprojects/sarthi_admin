@@ -61,14 +61,14 @@ describe('<RegistrationsPage>', () => {
           createdAt: '2026-10-19T10:00:00Z',
           source: 'PUBLIC_REGISTRATION',
           isActive: true,
-          registrationNumber: '20261021123045127127456',
+          registrationNumber: '1021123045127456',
         },
       ],
       meta: { page: 1, limit: 20, total: 1, totalPages: 1 },
     });
     const { unmount } = renderWithProviders(<RegistrationsPage />);
     expect(await screen.findByRole('link', { name: 'Asha Patil' })).toHaveAttribute('href', '/student-registrations/s1');
-    expect(screen.getByText('20261021123045127127456')).toBeInTheDocument();
+    expect(screen.getByText('1021123045127456')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Registration form/ })).not.toBeInTheDocument();
     unmount();
     permissions.add('registrations.create');
@@ -93,7 +93,7 @@ describe('<RegistrationsPage> row actions', () => {
     createdAt: '2026-10-19T10:00:00Z',
     source: 'IMPORT' as const,
     isActive: true,
-    registrationNumber: '20261021123045127127456',
+    registrationNumber: '1021123045127456',
     ...over,
   });
   beforeEach(() => {
@@ -165,7 +165,7 @@ describe('<RegistrationFormPage>', () => {
     vi.mocked(registrationApi.create).mockResolvedValue({
       id: 's1',
       registration_id: 'REG-000001',
-      registration_number: '20261021123045127127456',
+      registration_number: '1021123045127456',
       status: 'REGISTRATION_PENDING',
     });
     await u.type(screen.getByLabelText(/Income Certificate \/ EWS Barcode/), 'EWS-1');
