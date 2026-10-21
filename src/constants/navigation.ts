@@ -57,6 +57,8 @@ export type RouteName =
   | 'cmsFooterEdit'
   | 'cmsModulesView'
   | 'cmsModulesEdit'
+  | 'cmsProgrammeView'
+  | 'cmsProgrammeEdit'
   | 'cmsContactEdit'
   | 'cmsStateList'
   | 'cmsStateCreate'
@@ -133,6 +135,7 @@ export const NAV: NavEntry[] = [
   { k: 'cms-contact', l: 'Contact Page Management', i: 'mail', r: '/cms/contact' },
   { k: 'cms-footer', l: 'Footer Management', i: 'doc', r: '/cms/footer' },
   { k: 'cms-modules', l: 'Modules Page Management', i: 'book', r: '/cms/modules' },
+  { k: 'cms-programme', l: 'Programme Page Management', i: 'award', r: '/cms/programme' },
   { k: 'cms-states', l: 'State Master', i: 'globe', r: '/cms/states' },
   { k: 'cms-districts', l: 'District Master', i: 'map', r: '/cms/districts' },
   { k: 'cms-talukas', l: 'Taluka Master', i: 'pin', r: '/cms/talukas' },
@@ -217,6 +220,8 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/footer/edit', 'cmsFooterEdit', 'cms-footer'],
   ['/cms/modules', 'cmsModulesView', 'cms-modules'],
   ['/cms/modules/edit', 'cmsModulesEdit', 'cms-modules'],
+  ['/cms/programme', 'cmsProgrammeView', 'cms-programme'],
+  ['/cms/programme/edit', 'cmsProgrammeEdit', 'cms-programme'],
   ['/cms/states', 'cmsStateList', 'cms-states'],
   ['/cms/states/create', 'cmsStateCreate', 'cms-states'],
   ['/cms/states/:id/edit', 'cmsStateEdit', 'cms-states'],
