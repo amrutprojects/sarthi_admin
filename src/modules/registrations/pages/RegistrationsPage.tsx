@@ -113,7 +113,7 @@ export default function RegistrationsPage() {
               type="search"
               className="inp sm"
               style={{ width: 260, maxWidth: '100%' }}
-              placeholder="Search code, name, email or last 4 of mobile"
+              placeholder="Search registration no., code, name, email or last 4 of mobile"
               aria-label="Search registrations"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -151,7 +151,7 @@ export default function RegistrationsPage() {
               <table className="tbl" aria-busy={list.isFetching}>
                 <thead>
                   <tr>
-                    <th scope="col">Code</th>
+                    <th scope="col">Registration no.</th>
                     <th scope="col">Source</th>
                     <th scope="col">Name</th>
                     <th scope="col">Course centre</th>
@@ -167,7 +167,10 @@ export default function RegistrationsPage() {
                 <tbody className={list.isFetching ? 'tw-opacity-60' : undefined}>
                   {list.data.items.map((r) => (
                     <tr key={r.id}>
-                      <td className="mono">{r.code}</td>
+                      <td className="mono">
+                        {r.registrationNumber ?? '—'}
+                        <div className="tw-text-xs tw-text-ink-muted">{r.code}</div>
+                      </td>
                       <td>
                         <Badge tone={r.source === 'IMPORT' ? 'blue' : 'saffron'}>{SOURCE_LABEL[r.source]}</Badge>
                       </td>

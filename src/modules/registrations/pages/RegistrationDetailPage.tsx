@@ -338,6 +338,7 @@ export default function RegistrationDetailPage() {
                     ['Technology', r.trackName ?? r.trackSourceValue],
                     ['Education qualification', r.educationQualification],
                     ['Declaration accepted', r.declarationAccepted ? 'Yes' : 'No'],
+                    ['Registration no.', <span className="mono">{r.registrationNumber ?? '—'}</span>],
                     ['Submitted', fmtDateTime(r.createdAt)],
                   ]}
                 />
