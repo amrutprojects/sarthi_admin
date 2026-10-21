@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams } from 'react-router-dom';
 import { fmtDateTime, toastError, toastOk } from '../../../components/feedback/apiFeedback';
@@ -56,32 +56,58 @@ function VerifiedTag({ file }: { file: RegistrationFile }) {
   );
 }
 
-/* One uploaded file in a modal, with Verify once the reviewer has looked at it. */
+/*
+ * Uploaded files in a modal, one at a time, with Previous / Next (buttons or the arrow keys) through every uploaded
+ * document, and Verify for the one on screen.
+ */
 function FilePreview({
   registrationId,
   file,
   title,
+  index,
+  total,
   canVerify,
   verifying,
   onVerify,
+  onPrev,
+  onNext,
   onClose,
 }: {
   registrationId: string;
   file: RegistrationFile;
   title: string;
+  index: number;
+  total: number;
   canVerify: boolean;
   verifying: boolean;
   onVerify: () => void;
+  onPrev: () => void;
+  onNext: () => void;
   onClose: () => void;
 }) {
   const { url, error } = useFileUrl(registrationId, file);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' && index > 0) onPrev();
+      if (e.key === 'ArrowRight' && index < total - 1) onNext();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [index, total, onPrev, onNext]);
   return (
     <Modal
-      title={title}
+      title={`${title} — ${index + 1} of ${total}`}
       size="xl"
       onClose={onClose}
       footer={
         <>
+          <button type="button" className="btn" disabled={index === 0} onClick={onPrev} aria-label="Previous document">
+            ‹ Previous
+          </button>
+          <button type="button" className="btn" disabled={index >= total - 1} onClick={onNext} aria-label="Next document">
+            Next ›
+          </button>
+          <span style={{ flex: 1 }} />
           {url ? (
             <a className="btn" href={url} download={file.originalName}>
               Download
@@ -114,9 +140,34 @@ function FilePreview({
  * Hovering the Aadhaar number shows the uploaded Aadhaar card beside it, for a quick cross-check. The card is drawn in a
  * portal with fixed positioning, so the scrolling details column cannot clip it.
  */
-function AadhaarHover({ registrationId, value, card }: { registrationId: string; value: string; card?: RegistrationFile }) {
+function AadhaarHover({
+  registrationId,
+  value,
+  card,
+  canVerify,
+  verifying,
+  onVerify,
+}: {
+  registrationId: string;
+  value: string;
+  card?: RegistrationFile;
+  canVerify: boolean;
+  verifying: boolean;
+  onVerify: () => void;
+}) {
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const { url, error } = useFileUrl(registrationId, pos ? card : undefined);
+  /* The card stays open while the pointer moves from the number onto it, so its Verify button can be clicked. */
+  const closeTimer = useRef<number | null>(null);
+  const cancelClose = () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+  };
+  const closeSoon = () => {
+    cancelClose();
+    closeTimer.current = window.setTimeout(() => setPos(null), 200);
+  };
+  useEffect(() => cancelClose, []);
   const WIDTH = 420;
   const show = (el: HTMLElement) => {
     const r = el.getBoundingClientRect();
@@ -128,10 +179,12 @@ function AadhaarHover({ registrationId, value, card }: { registrationId: string;
   return (
     <span
       style={{ display: 'inline-block', cursor: card ? 'zoom-in' : 'default' }}
-      onMouseEnter={(e) => show(e.currentTarget)}
-      onMouseLeave={() => setPos(null)}
+      onMouseEnter={(e) => {
+        cancelClose();
+        show(e.currentTarget);
+      }}
+      onMouseLeave={closeSoon}
       onFocus={(e) => show(e.currentTarget)}
-      onBlur={() => setPos(null)}
       tabIndex={0}
       aria-label={card ? 'Aadhaar number; hover to see the Aadhaar card' : 'Aadhaar number'}
     >
@@ -141,11 +194,25 @@ function AadhaarHover({ registrationId, value, card }: { registrationId: string;
       {pos
         ? createPortal(
             <div
-              role="tooltip"
+              role="dialog"
+              aria-label="Aadhaar card"
               className="card"
-              style={{ position: 'fixed', left: pos.left, top: pos.top, width: WIDTH, zIndex: 300, padding: 8, pointerEvents: 'none' }}
+              style={{ position: 'fixed', left: pos.left, top: pos.top, width: WIDTH, zIndex: 300, padding: 8 }}
+              onMouseEnter={cancelClose}
+              onMouseLeave={closeSoon}
             >
-              <div className="tw-mb-1 tw-text-xs tw-font-semibold tw-text-ink-2">Aadhaar card</div>
+              <div className="tw-mb-1 tw-flex tw-items-center tw-justify-between tw-gap-2">
+                <span className="tw-text-xs tw-font-semibold tw-text-ink-2">Aadhaar card</span>
+                {card ? (
+                  card.verifiedAt ? (
+                    <VerifiedTag file={card} />
+                  ) : canVerify ? (
+                    <button type="button" className="btn xs primary" disabled={!url || verifying} onClick={onVerify}>
+                      {verifying ? 'Verifying…' : 'Verify'}
+                    </button>
+                  ) : null
+                ) : null}
+              </div>
               {!card ? (
                 <div className="tw-text-xs tw-text-ink-muted">No Aadhaar card uploaded.</div>
               ) : error ? (
@@ -171,7 +238,8 @@ export default function RegistrationDetailPage() {
   const canVerify = permissions.has('registrations.update');
   const q = useQuery({ queryKey: ['registrations', 'detail', id], queryFn: () => registrationApi.get(id), enabled: !!id });
   const r = q.data;
-  const [preview, setPreview] = useState<{ fileId: string; title: string } | null>(null);
+  /* Index into `slides` (uploaded documents in table order) of the file open in the preview. */
+  const [slide, setSlide] = useState<number | null>(null);
   /* Verify becomes available once the reviewer has opened the file in this visit. */
   const [previewed, setPreviewed] = useState<Set<string>>(new Set());
   const verify = useMutation({
@@ -182,11 +250,19 @@ export default function RegistrationDetailPage() {
     },
     onError: toastError,
   });
-  const open = (file: RegistrationFile, title: string) => {
-    setPreviewed((s) => new Set(s).add(file.id));
-    setPreview({ fileId: file.id, title });
+  const slides = (r?.documents ?? []).flatMap((d) => {
+    const file = r?.files.find((x) => x.docType === d.key);
+    return file ? [{ file, title: d.label }] : [];
+  });
+  const goTo = (i: number) => {
+    const target = slides[i];
+    if (!target) return;
+    setPreviewed((p) => new Set(p).add(target.file.id));
+    setSlide(i);
   };
-  const previewFile = r?.files.find((f) => f.id === preview?.fileId);
+  const open = (file: RegistrationFile) => goTo(slides.findIndex((x) => x.file.id === file.id));
+  const current = slide !== null ? slides[slide] : undefined;
+  const aadhaarCard = r?.files.find((f) => f.docType === AADHAAR_DOC);
   const uploaded = r?.files.length ?? 0;
   const verifiedCount = r?.files.filter((f) => f.verifiedAt).length ?? 0;
 
@@ -232,7 +308,10 @@ export default function RegistrationDetailPage() {
                         <AadhaarHover
                           registrationId={r.id}
                           value={r.unmasked?.aadhaar ?? r.aadhaar}
-                          card={r.files.find((f) => f.docType === AADHAAR_DOC)}
+                          card={aadhaarCard}
+                          canVerify={canVerify}
+                          verifying={verify.isPending}
+                          onVerify={() => aadhaarCard && verify.mutate(aadhaarCard.id)}
                         />
                       ) : (
                         '—'
@@ -309,7 +388,7 @@ export default function RegistrationDetailPage() {
                           <td>
                             {f ? (
                               <div className="tw-flex tw-flex-wrap tw-gap-1">
-                                <button type="button" className="btn xs" onClick={() => open(f, d.label)}>
+                                <button type="button" className="btn xs" onClick={() => open(f)}>
                                   Preview
                                 </button>
                                 {canVerify && !f.verifiedAt ? (
@@ -338,15 +417,19 @@ export default function RegistrationDetailPage() {
           </div>
         </div>
       )}
-      {preview && r && previewFile ? (
+      {r && current && slide !== null ? (
         <FilePreview
           registrationId={r.id}
-          file={previewFile}
-          title={preview.title}
+          file={current.file}
+          title={current.title}
+          index={slide}
+          total={slides.length}
           canVerify={canVerify}
           verifying={verify.isPending}
-          onVerify={() => verify.mutate(previewFile.id)}
-          onClose={() => setPreview(null)}
+          onVerify={() => verify.mutate(current.file.id)}
+          onPrev={() => goTo(slide - 1)}
+          onNext={() => goTo(slide + 1)}
+          onClose={() => setSlide(null)}
         />
       ) : null}
     </div>

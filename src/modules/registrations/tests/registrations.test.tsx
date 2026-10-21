@@ -61,7 +61,7 @@ describe('<RegistrationsPage>', () => {
       meta: { page: 1, limit: 20, total: 1, totalPages: 1 },
     });
     const { unmount } = renderWithProviders(<RegistrationsPage />);
-    expect(await screen.findByText('Asha Patil')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Asha Patil' })).toHaveAttribute('href', '/student-registrations/s1');
     expect(screen.queryByRole('link', { name: /Registration form/ })).not.toBeInTheDocument();
     unmount();
     permissions.add('registrations.create');
