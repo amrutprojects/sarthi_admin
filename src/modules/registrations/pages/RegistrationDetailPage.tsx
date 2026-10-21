@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams } from 'react-router-dom';
 import { fmtDateTime, toastError, toastOk } from '../../../components/feedback/apiFeedback';
-import { Badge, Callout, GenBadge, KvList, PageHead } from '../../../components/ui';
+import { Badge, Callout, KvList, PageHead } from '../../../components/ui';
 import { Modal } from '../../../components/ui/Overlay';
 import { ApiError } from '../../../services/api-client';
 import { useAuth } from '../../auth';
@@ -275,7 +275,6 @@ export default function RegistrationDetailPage() {
           { l: r?.code ?? 'Registration' },
         ]}
         title={r ? `${r.name} — ${r.code}` : 'Registration'}
-        badge={r ? <GenBadge status={r.status} /> : undefined}
       />
       {q.isError ? (
         <Callout tone="err" title="Could not load the registration. ">

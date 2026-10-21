@@ -2,7 +2,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { fmtDateTime } from '../../../components/feedback/apiFeedback';
-import { Badge, Callout, GenBadge, PageHead } from '../../../components/ui';
+import { Badge, Callout, PageHead } from '../../../components/ui';
 import Icon from '../../../components/ui/Icon';
 import { ApiError } from '../../../services/api-client';
 import { useAuth } from '../../auth';
@@ -104,7 +104,6 @@ export default function RegistrationsPage() {
                     <th scope="col">Course centre</th>
                     <th scope="col">Technology</th>
                     <th scope="col">Mobile</th>
-                    <th scope="col">Status</th>
                     <th scope="col">Submitted</th>
                     <th scope="col">
                       <span className="tw-sr-only">Actions</span>
@@ -124,9 +123,6 @@ export default function RegistrationsPage() {
                       <td>{r.centreName ?? r.centreCode ?? '—'}</td>
                       <td>{r.trackName ?? 'To be confirmed'}</td>
                       <td className="mono">{r.unmasked?.mobile ?? r.mobile ?? '—'}</td>
-                      <td>
-                        <GenBadge status={r.status} />
-                      </td>
                       <td className="tw-whitespace-nowrap">{fmtDateTime(r.createdAt)}</td>
                       <td>
                         <button type="button" className="btn xs" onClick={() => navigate(`/student-registrations/${r.id}`)}>
