@@ -22,6 +22,7 @@ describe('<UserForm>', () => {
         code: 'VIEWER',
         description: null,
         isSystem: false,
+        platform: 'ADMIN' as const,
         isActive: true,
         createdAt: '',
         updatedAt: '',

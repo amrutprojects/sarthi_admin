@@ -10,14 +10,16 @@ import { Drawer, Modal } from '../../../components/ui/Overlay';
 import Icon from '../../../components/ui/Icon';
 import { Can, useCan } from '../../auth';
 import { useAuth } from '../../auth';
-import { permissionsApi, rolesApi, type ApiPermission, type ApiRole } from '../services/rbacApi';
+import { ROLE_PLATFORM_LABEL, permissionsApi, rolesApi, type ApiPermission, type ApiRole, type RolePlatform } from '../services/rbacApi';
 import PermissionMatrix from './PermissionMatrix';
+import LmsMenusDrawer from './LmsMenusDrawer';
 import { ConfirmModal, LoadState, useAction, useApiData } from '../../../components/feedback/apiFeedback';
 
 type Dialog =
   | { type: 'create' }
   | { type: 'edit'; role: ApiRole }
   | { type: 'permissions'; role: ApiRole }
+  | { type: 'lms'; role: ApiRole }
   | { type: 'delete'; role: ApiRole };
 
 const PROTECTED = 'SUPER_ADMIN';
@@ -79,6 +81,12 @@ export default function RolesTab() {
       render: (r) => (r.isSystem ? <Badge tone="violet">System</Badge> : <Badge tone="grey">Custom</Badge>),
     },
     {
+      k: 'platform',
+      l: 'Application',
+      exportVal: (r) => ROLE_PLATFORM_LABEL[r.platform],
+      render: (r) => <Badge tone={r.platform === 'LMS' ? 'saffron' : 'blue'}>{ROLE_PLATFORM_LABEL[r.platform]}</Badge>,
+    },
+    {
       k: 'isActive',
       l: 'Status',
       exportVal: (r) => (r.isActive ? 'Active' : 'Inactive'),
@@ -104,9 +112,15 @@ export default function RolesTab() {
         const locked = r.code === PROTECTED;
         return (
           <div className="f gp4 wrap">
-            <button type="button" className="btn xs" onClick={() => setDialog({ type: 'permissions', role: r })}>
-              {can('assignPermissions') && !locked ? 'Permissions' : 'View permissions'}
-            </button>
+            {r.platform === 'LMS' ? (
+              <button type="button" className="btn xs" onClick={() => setDialog({ type: 'lms', role: r })}>
+                {can('assignPermissions') ? 'LMS menus' : 'View LMS menus'}
+              </button>
+            ) : (
+              <button type="button" className="btn xs" onClick={() => setDialog({ type: 'permissions', role: r })}>
+                {can('assignPermissions') && !locked ? 'Permissions' : 'View permissions'}
+              </button>
+            )}
             <Can action="updateRole">
               <button type="button" className="btn xs" onClick={() => setDialog({ type: 'edit', role: r })}>
                 Edit
@@ -183,6 +197,7 @@ export default function RolesTab() {
           onSaved={reload}
         />
       )}
+      {dialog?.type === 'lms' && <LmsMenusDrawer role={dialog.role} editable={can('assignPermissions')} onClose={close} onSaved={reload} />}
       {dialog?.type === 'delete' && (
         <ConfirmModal
           title="Delete role"
@@ -212,6 +227,7 @@ function RoleFormModal({ role, onClose, onSaved }: { role?: ApiRole; onClose: ()
   const [name, setName] = useState(role?.name ?? '');
   const [code, setCode] = useState(role?.code ?? '');
   const [description, setDescription] = useState(role?.description ?? '');
+  const [platform, setPlatform] = useState<RolePlatform>(role?.platform ?? 'ADMIN');
   const { busy, run } = useAction();
 
   async function submit(e: FormEvent) {
@@ -219,8 +235,12 @@ function RoleFormModal({ role, onClose, onSaved }: { role?: ApiRole; onClose: ()
     const ok = await run(
       () =>
         editing
-          ? rolesApi.update(role.id, { name: name.trim(), description: description.trim() || null })
-          : rolesApi.create({ name: name.trim(), code: code.trim(), description: description.trim() || null }),
+          ? rolesApi.update(role.id, {
+              name: name.trim(),
+              description: description.trim() || null,
+              ...(platform !== role.platform ? { platform } : {}),
+            })
+          : rolesApi.create({ name: name.trim(), code: code.trim(), description: description.trim() || null, platform }),
       editing ? 'Role updated' : 'Role created',
     );
     if (ok) {
@@ -264,10 +284,34 @@ function RoleFormModal({ role, onClose, onSaved }: { role?: ApiRole; onClose: ()
           </div>
         </div>
         <div className="fld mt10">
+          <label htmlFor="rf-platform">Application</label>
+          <select
+            className="inp"
+            id="rf-platform"
+            value={platform}
+            disabled={role?.isSystem}
+            onChange={(e) => setPlatform(e.target.value as RolePlatform)}
+          >
+            <option value="ADMIN">Admin Panel role — Admin Panel menus and permissions</option>
+            <option value="LMS">LMS role — LMS menus only (sign-in to the LMS)</option>
+          </select>
+          <div className="hint">
+            {editing
+              ? 'A role can change application only after its permissions (or LMS menus) are cleared.'
+              : 'An LMS role never opens Admin Panel menus; an Admin Panel role never opens LMS menus.'}
+          </div>
+        </div>
+        <div className="fld mt10">
           <label htmlFor="rf-desc">Description</label>
           <textarea className="inp" id="rf-desc" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
-        {!editing ? <div className="hint mt10">Add permissions after creating the role, from its Permissions button.</div> : null}
+        {!editing ? (
+          <div className="hint mt10">
+            {platform === 'LMS'
+              ? 'Tick its LMS menus after creating the role, from its LMS menus button.'
+              : 'Add permissions after creating the role, from its Permissions button.'}
+          </div>
+        ) : null}
       </form>
     </Modal>
   );

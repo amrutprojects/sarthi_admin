@@ -12,12 +12,17 @@ export interface ApiPermission {
   updatedAt: string;
 }
 
+/* ADMIN: Admin Panel role (Admin Panel permissions). LMS: LMS role (LMS menus only). */
+export type RolePlatform = 'ADMIN' | 'LMS';
+export const ROLE_PLATFORM_LABEL: Record<RolePlatform, string> = { ADMIN: 'Admin Panel', LMS: 'LMS' };
+
 export interface ApiRole {
   id: string;
   name: string;
   code: string;
   description: string | null;
   isSystem: boolean;
+  platform: RolePlatform;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -28,11 +33,13 @@ export interface CreateRoleInput {
   name: string;
   code: string;
   description?: string | null;
+  platform?: RolePlatform;
   permissionIds?: string[];
 }
 export interface UpdateRoleInput {
   name?: string;
   description?: string | null;
+  platform?: RolePlatform;
 }
 
 const enc = encodeURIComponent;
@@ -88,4 +95,30 @@ export const menuVisibilityApi = {
   get: async () => (await request<MenuVisibilityMatrix>('/menu-visibility')).data,
   save: async (changes: MenuVisibilityChange[]) =>
     (await request<MenuVisibilityMatrix>('/menu-visibility', { method: 'PUT', body: { changes } })).data,
+};
+
+/* ---------- LMS menus on LMS roles (backend /lms-access) ---------- */
+export interface LmsCatalogueArea {
+  area: string;
+  label: string;
+  /* LMS sidebar menus these codes open: holding any one of `view` shows the menu in the LMS. */
+  menus: { label: string; view: string[] }[];
+  permissions: { code: string; label: string; sensitive: boolean; description: string }[];
+}
+export interface LmsCatalogueGroup {
+  group: string;
+  areas: LmsCatalogueArea[];
+}
+export interface RoleLmsAccess {
+  roleId: string;
+  code: string;
+  name: string;
+  codes: string[];
+}
+
+export const lmsAccessApi = {
+  catalogue: async () => (await request<LmsCatalogueGroup[]>('/lms-access/catalogue')).data,
+  forRole: async (roleId: string) => (await request<RoleLmsAccess>(`/lms-access/roles/${enc(roleId)}`)).data,
+  save: async (roleId: string, codes: string[]) =>
+    (await request<RoleLmsAccess>(`/lms-access/roles/${enc(roleId)}`, { method: 'PUT', body: { codes } })).data,
 };
