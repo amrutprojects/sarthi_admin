@@ -1,5 +1,5 @@
 import type { FieldErrors } from '../../validation';
-import type { ApiContactPage, Bilingual, ContactField, OrgType, UpdateContactPageInput } from '../types/contact.types';
+import type { ApiContactPage, Bilingual, ContactField, DistrictRef, OrgType, UpdateContactPageInput } from '../types/contact.types';
 
 /*
  * Contact page form rules, deliberately identical to the server rules in
@@ -27,13 +27,47 @@ export interface OrgFormValues {
   isActive: boolean;
 }
 
+/* `key` is a client-side id so React keeps each card's inputs stable while cards are added or removed. */
+export interface CoordinatorFormValues {
+  key: string;
+  name: string;
+  phone: string;
+  email: string;
+  districts: DistrictRef[];
+  isActive: boolean;
+}
+
+export interface OfficeFormValues {
+  key: string;
+  district: DistrictRef;
+  collectorName: string;
+  address: BilingualValue;
+  phone: string;
+  email: string;
+  officeHours: BilingualValue;
+  isActive: boolean;
+}
+
 export interface ContactFormValues {
   pageTitle: BilingualValue;
   pageSubtitle: BilingualValue;
   isPublished: boolean;
   amrut: OrgFormValues;
   partner: OrgFormValues;
+  coordinators: CoordinatorFormValues[];
+  offices: OfficeFormValues[];
 }
+
+let keySeq = 0;
+export const newKey = (): string => `k${++keySeq}`;
+
+export const emptyCoordinator = (): CoordinatorFormValues => ({
+  key: newKey(), name: '', phone: '', email: '', districts: [], isActive: true,
+});
+
+export const emptyOffice = (district: DistrictRef): OfficeFormValues => ({
+  key: newKey(), district, collectorName: '', address: { mr: '', en: '' }, phone: '', email: '', officeHours: { mr: '', en: '' }, isActive: true,
+});
 
 const emptyPair = (): BilingualValue => ({ mr: '', en: '' });
 
@@ -63,6 +97,24 @@ export function toFormValues(page: ApiContactPage): ContactFormValues {
     isPublished: page.isPublished,
     amrut: card('AMRUT', 0),
     partner: card('IMPLEMENTATION_PARTNER', 1),
+    coordinators: page.coordinators.map((c) => ({
+      key: newKey(),
+      name: c.name,
+      phone: c.phone,
+      email: c.email ?? '',
+      districts: c.districts,
+      isActive: c.isActive,
+    })),
+    offices: page.districtOffices.map((o) => ({
+      key: newKey(),
+      district: o.district,
+      collectorName: o.collectorName ?? '',
+      address: pairOf(o.address),
+      phone: o.phone ?? '',
+      email: o.email ?? '',
+      officeHours: pairOf(o.officeHours),
+      isActive: o.isActive,
+    })),
   };
 }
 
@@ -105,6 +157,23 @@ export function toPayload(v: ContactFormValues): UpdateContactPageInput {
         isActive: v.partner.isActive,
       },
     ],
+    coordinators: v.coordinators.map((c, index) => ({
+      name: c.name.trim(),
+      phone: c.phone.trim(),
+      email: blankToNull(c.email),
+      districtIds: c.districts.map((d) => d.id),
+      displayOrder: index,
+      isActive: c.isActive,
+    })),
+    districtOffices: v.offices.map((o) => ({
+      districtId: o.district.id,
+      collectorName: blankToNull(o.collectorName),
+      address: pairToNull(o.address),
+      phone: blankToNull(o.phone),
+      email: blankToNull(o.email),
+      officeHours: pairToNull(o.officeHours),
+      isActive: o.isActive,
+    })),
   };
 }
 
@@ -183,5 +252,56 @@ export function validateContactForm(v: ContactFormValues): FieldErrors<ContactFi
   errors['IMPLEMENTATION_PARTNER.email'] = validateEmail(v.partner.email, 'Programme desk email');
   pairErrors(errors, 'IMPLEMENTATION_PARTNER.helpdeskHours', v.partner.helpdeskHours, 'Helpdesk hours', 120);
 
+  return errors;
+}
+
+/* ---------------- coordinators & district offices ---------------- */
+
+/* Errors keyed "coord.<key>.<field>" / "office.<key>.<field>", so each lands on its own card. */
+export type SectionErrors = Record<string, string | undefined>;
+
+const optional = (fn: (v: string, label: string) => string | undefined) => (value: string, label: string) =>
+  value.trim() ? fn(value, label) : undefined;
+
+/* An optional pair is all-or-nothing: one half without the other would show a blank line. */
+const optionalPair = (value: BilingualValue, label: string, max: number): { mr?: string; en?: string } => {
+  const mr = value.mr.trim();
+  const en = value.en.trim();
+  if (!mr && !en) return {};
+  return {
+    mr: !mr ? `${label} (Marathi) is required when English is given` : mr.length > max ? `${label} (Marathi) must be at most ${max} characters` : undefined,
+    en: !en ? `${label} (English) is required when Marathi is given` : en.length > max ? `${label} (English) must be at most ${max} characters` : undefined,
+  };
+};
+
+/* Like validatePhone, but X may mask a digit ("+91 98XXX 41201"), as the public site shows coordinators. */
+export const validateCoordinatorPhone = (value: string, label: string): string | undefined => {
+  const v = value.trim();
+  if (!v) return `${label} is required`;
+  if (v.length > 32) return `${label} must be at most 32 characters`;
+  if (!/^\+?[0-9Xx ()-]+$/.test(v)) return `${label} may use digits (or X for a masked digit), spaces, brackets and hyphens, optionally starting with +`;
+  const digits = v.replace(/[^0-9Xx]/g, '').length;
+  if (digits < 6 || digits > 20) return `${label} must contain between 6 and 20 digits`;
+  return undefined;
+};
+
+export function validateSections(v: ContactFormValues): SectionErrors {
+  const errors: SectionErrors = {};
+  for (const c of v.coordinators) {
+    errors[`coord.${c.key}.name`] = required(c.name, 'Coordinator name', 120);
+    errors[`coord.${c.key}.phone`] = validateCoordinatorPhone(c.phone, 'Phone');
+    errors[`coord.${c.key}.email`] = optional(validateEmail)(c.email, 'Email');
+  }
+  for (const o of v.offices) {
+    errors[`office.${o.key}.collectorName`] = o.collectorName.trim().length > 150 ? 'Collector name must be at most 150 characters' : undefined;
+    const address = optionalPair(o.address, 'Office address', 500);
+    errors[`office.${o.key}.address.mr`] = address.mr;
+    errors[`office.${o.key}.address.en`] = address.en;
+    errors[`office.${o.key}.phone`] = optional(validatePhone)(o.phone, 'Official phone');
+    errors[`office.${o.key}.email`] = optional(validateEmail)(o.email, 'Official email');
+    const hours = optionalPair(o.officeHours, 'Office hours', 120);
+    errors[`office.${o.key}.officeHours.mr`] = hours.mr;
+    errors[`office.${o.key}.officeHours.en`] = hours.en;
+  }
   return errors;
 }

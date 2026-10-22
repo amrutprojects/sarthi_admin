@@ -28,7 +28,7 @@ export default function ContactView() {
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'CMS' }, { l: 'Contact Page' }]}
         title="Contact Page Management"
-        sub="The banner and the two cards shown on the public Contact page."
+        sub="The banner, contact cards, district coordinators and district offices shown on the public Contact page."
         actions={
           page ? (
             <div className="f ac gp8 wrap">
@@ -91,6 +91,68 @@ export default function ContactView() {
           <div className="grid g2">
             <OrganizationCard title="AMRUT contact details" org={card('AMRUT')} />
             <OrganizationCard title="Implementation partner" org={card('IMPLEMENTATION_PARTNER')} />
+          </div>
+
+          <div className="card mt14">
+            <div className="card-h">
+              <h3>District / cluster coordinators <span className="sub">{page.coordinators.length}</span></h3>
+            </div>
+            <div className="card-b">
+              {page.coordinators.length === 0 ? (
+                <div className="hint">None added. The website shows its built-in coordinator list.</div>
+              ) : (
+                <div className="tbl-wrap">
+                  <table className="tbl">
+                    <thead>
+                      <tr><th>Name</th><th>Phone</th><th>Email</th><th>Districts covered</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                      {page.coordinators.map((c) => (
+                        <tr key={c.id}>
+                          <td><b>{c.name}</b></td>
+                          <td>{c.phone}</td>
+                          <td>{c.email ?? <Dash />}</td>
+                          <td>{c.districts.length ? c.districts.map((d) => d.name).join(', ') : <Dash />}</td>
+                          <td><MasterStatusBadge isActive={c.isActive} /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="card mt14">
+            <div className="card-h">
+              <h3>District offices <span className="sub">{page.districtOffices.length}</span></h3>
+            </div>
+            <div className="card-b">
+              {page.districtOffices.length === 0 ? (
+                <div className="hint">None added. Each district page shows &ldquo;to be supplied from official records&rdquo;.</div>
+              ) : (
+                <div className="tbl-wrap">
+                  <table className="tbl">
+                    <thead>
+                      <tr><th>District</th><th>District Collector</th><th>Address</th><th>Phone</th><th>Email</th><th>Office hours</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                      {page.districtOffices.map((o) => (
+                        <tr key={o.id}>
+                          <td><b>{o.district.name}</b></td>
+                          <td>{o.collectorName ?? <Dash />}</td>
+                          <td>{bi(o.address)}</td>
+                          <td>{o.phone ?? <Dash />}</td>
+                          <td>{o.email ?? <Dash />}</td>
+                          <td>{bi(o.officeHours)}</td>
+                          <td><MasterStatusBadge isActive={o.isActive} /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         </>
       ) : null}

@@ -27,6 +27,36 @@ export interface ApiContactOrganization {
   isActive: boolean;
 }
 
+/* A district as the Contact sections reference it. */
+export interface DistrictRef {
+  id: string;
+  name: string;
+  code: string;
+}
+
+/* A district / cluster coordinator card and the districts it covers. */
+export interface ApiCoordinator {
+  id: string;
+  name: string;
+  phone: string;
+  email: string | null;
+  districts: DistrictRef[];
+  displayOrder: number;
+  isActive: boolean;
+}
+
+/* Collectorate / District Office details for one district. Every field is optional. */
+export interface ApiDistrictOffice {
+  id: string;
+  district: DistrictRef;
+  collectorName: string | null;
+  address: Bilingual | null;
+  phone: string | null;
+  email: string | null;
+  officeHours: Bilingual | null;
+  isActive: boolean;
+}
+
 export interface ApiContactPage {
   id: string;
   pageTitle: Bilingual;
@@ -35,6 +65,8 @@ export interface ApiContactPage {
   createdAt: string;
   updatedAt: string;
   organizations: ApiContactOrganization[];
+  coordinators: ApiCoordinator[];
+  districtOffices: ApiDistrictOffice[];
 }
 
 /* The whole page is submitted at once; the backend saves it in a single transaction. */
@@ -52,6 +84,23 @@ export interface UpdateContactPageInput {
     websiteUrl?: string | null;
     helpdeskHours?: Bilingual | null;
     displayOrder: number;
+    isActive: boolean;
+  }[];
+  coordinators: {
+    name: string;
+    phone: string;
+    email: string | null;
+    districtIds: string[];
+    displayOrder: number;
+    isActive: boolean;
+  }[];
+  districtOffices: {
+    districtId: string;
+    collectorName: string | null;
+    address: Bilingual | null;
+    phone: string | null;
+    email: string | null;
+    officeHours: Bilingual | null;
     isActive: boolean;
   }[];
 }

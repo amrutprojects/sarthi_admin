@@ -8,8 +8,10 @@ import { toastError } from '../../shared';
 import { isValid, type FieldErrors } from '../../validation';
 import { CONTACT_FIELDS, type ContactField } from '../types/contact.types';
 import {
-  toPayload, validateContactForm, type ContactFormValues, type OrgFormValues,
+  toPayload, validateContactForm, validateSections, type ContactFormValues, type OrgFormValues, type SectionErrors,
 } from '../validation/contact.validation';
+import { useDistrictOptions } from '../services/districtOptions';
+import { CoordinatorsSection, DistrictOfficesSection } from './ContactSections';
 
 interface ContactFormProps {
   initial: ContactFormValues;
@@ -20,8 +22,9 @@ interface ContactFormProps {
 const FORM_ID = 'cms-contact-form';
 
 /*
- * The Contact page editor, on its own page (no modal), in four clearly separated sections:
- * page information, the AMRUT card, the implementation partner card, and visibility.
+ * The Contact page editor, on its own page (no modal), in clearly separated sections: page
+ * information, the AMRUT card, the implementation partner card, the district / cluster coordinators,
+ * the district offices, and visibility.
  *
  * Behaviour matches the other CMS forms: validate on submit, re-validate a field once it has been
  * touched, block a second submit while one is in flight, keep what was typed when a save fails, and
@@ -38,7 +41,16 @@ export default function ContactForm({ initial, onSave, backTo }: ContactFormProp
   const [busy, setBusy] = useState(false);
   const [dirty, setDirty] = useState(false);
 
+  const [sectionTouched, setSectionTouched] = useState<Record<string, boolean>>({});
+  const districts = useDistrictOptions();
+
   const local = validateContactForm(values);
+  const sectionLocal = validateSections(values);
+  const sectionErrors: SectionErrors = Object.fromEntries(
+    Object.entries(sectionLocal).map(([k, msg]) => [k, submitted || sectionTouched[k] ? msg : undefined]),
+  );
+  const sectionsValid = Object.values(sectionLocal).every((m) => !m);
+  const touchSection = (f: string) => setSectionTouched((t) => ({ ...t, [f]: true }));
   const show = (f: ContactField) => (submitted || touched[f] ? local[f] : undefined) ?? serverErrors[f];
   const touch = (f: ContactField) => setTouched((t) => ({ ...t, [f]: true }));
 
@@ -61,7 +73,7 @@ export default function ContactForm({ initial, onSave, backTo }: ContactFormProp
   async function submit(e: FormEvent) {
     e.preventDefault();
     setSubmitted(true);
-    if (busy || !isValid(local)) return;
+    if (busy || !isValid(local) || !sectionsValid) return;
 
     setBusy(true);
     setServerErrors({});
@@ -252,6 +264,22 @@ export default function ContactForm({ initial, onSave, backTo }: ContactFormProp
             />
           </div>
         </div>
+
+        <CoordinatorsSection
+          items={values.coordinators}
+          onChange={(coordinators) => change({ ...values, coordinators }, [])}
+          errors={sectionErrors}
+          onBlur={touchSection}
+          districts={districts}
+        />
+
+        <DistrictOfficesSection
+          items={values.offices}
+          onChange={(offices) => change({ ...values, offices }, [])}
+          errors={sectionErrors}
+          onBlur={touchSection}
+          districts={districts}
+        />
 
         <div className="card mb14">
           <div className="card-h"><h3>Page visibility</h3></div>
