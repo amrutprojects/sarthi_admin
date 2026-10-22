@@ -23,6 +23,10 @@ interface GeoFilterArgs {
   /* Shown instead when a parent selection is still missing, e.g. "All districts (pick a state)". */
   waitingLabel?: string;
   waiting?: boolean;
+  /* The current filter value (often from a deep link such as ?centreId=). */
+  selected?: string;
+  /* Label for selected when the list does not contain it, e.g. "Pune Centre (PNC) (inactive)". */
+  selectedLabel?: string;
 }
 
 /*
@@ -31,9 +35,17 @@ interface GeoFilterArgs {
  * FilterBar has no loading or disabled state of its own, so the placeholder entry carries that
  * information: the field still reads sensibly while the list is on its way, instead of looking like a
  * filter with nothing in it.
+ *
+ * The lists hold active records only. A deep link may name an inactive one; it is then added as its own
+ * entry, so the field shows what the listing is really filtered by (not "All …" while filtering) and
+ * choosing "All …" is a real change that clears it.
  */
-export function geoFilterOptions({ options, loading, allLabel, waitingLabel, waiting }: GeoFilterArgs): Option[] {
-  if (waiting) return [{ v: '', l: waitingLabel ?? allLabel }];
-  if (loading) return [{ v: '', l: 'Loading…' }];
-  return [{ v: '', l: allLabel }, ...options.map((o) => ({ v: o.id, l: optionLabel(o) }))];
+export function geoFilterOptions({ options, loading, allLabel, waitingLabel, waiting, selected, selectedLabel }: GeoFilterArgs): Option[] {
+  const out: Option[] = waiting
+    ? [{ v: '', l: waitingLabel ?? allLabel }]
+    : loading
+      ? [{ v: '', l: 'Loading…' }]
+      : [{ v: '', l: allLabel }, ...options.map((o) => ({ v: o.id, l: optionLabel(o) }))];
+  if (selected && !loading && !out.some((o) => o.v === selected)) out.push({ v: selected, l: selectedLabel ?? 'Selected record (inactive)' });
+  return out;
 }

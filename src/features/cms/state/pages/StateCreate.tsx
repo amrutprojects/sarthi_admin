@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { PageHead } from '../../../../components/ui';
+import BackButton from '../../components/BackButton';
 import { toastOk } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import { stateService } from '../services/stateService';
@@ -16,6 +17,7 @@ export default function StateCreate() {
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'State Master', link: '/cms/states' }, { l: 'Add State' }]}
         title="Add State"
         sub="Creates a state that the District master and the public website forms can then use."
+        back={<BackButton to="/cms/states" />}
       />
       <StateForm
         submitLabel="Create state"

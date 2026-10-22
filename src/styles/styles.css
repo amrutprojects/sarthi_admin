@@ -611,6 +611,9 @@ svg.ico {
   min-width: 0;
   flex: 1;
 }
+.page-head .ph-back {
+  flex: 0 0 auto;
+}
 .page-head h1 {
   display: flex;
   align-items: center;
@@ -2590,7 +2593,8 @@ select.inp {
   .sidebar,
   .topbar,
   .mnav,
-  .page-actions {
+  .page-actions,
+  .ph-back {
     display: none !important;
   }
   .main {

@@ -1,0 +1,1269 @@
+/* =========================================================
+   Visual refresh — loaded last (after styles.css and amrut.css).
+   Presentation only: typography, spacing, contrast and component polish.
+   No markup or behaviour depends on this file; deleting it restores the previous look.
+   ========================================================= */
+
+/* =========================================================
+   1. TOKENS
+   Darker secondary / tertiary text so every small label passes WCAG AA,
+   still warm brown so the brand tone is unchanged. New --line token
+   replaces the leftover cool blue-grey (#eef1f6) dividers.
+   ========================================================= */
+:root {
+  --text-2: #5e4a3b; /* 8.3:1 on white (was #6b5647, 6.9:1) */
+  --muted: #7a6756; /* 5.4:1 on white, 5.0:1 on --bg (was #93816f, 3.7 / 3.5) */
+  --amber: #96500a; /* amber badge / callout text 5.4:1 on --amber-bg (was 4.5) */
+  --grey: #6b5b4e; /* grey badge text 5.6:1 on --grey-bg (was 4.5) */
+  --line: #f3e6d8; /* warm row divider */
+  --ph: #8c7866; /* placeholder: readable but lighter than typed text */
+  --focus: var(--brand-600);
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath d='M3 5 7 9 11 5' stroke='%238a4116' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --chevron-off: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath d='M3 5 7 9 11 5' stroke='%23c4ad96' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --kpi-neutral: #8c7866; /* accent for KPI tiles without a tone */
+}
+
+/* =========================================================
+   2. TYPOGRAPHY
+   ========================================================= */
+/* Chips never inherit the serif of the heading they sit in: Georgia's
+   old-style figures made "TC0001" read as "TCooo1". */
+.badge,
+.tag,
+.live,
+.mode-tag,
+.chip,
+.demo-pill,
+.card-h .sub,
+.statpanel-h .sp-sub {
+  font-family: var(--font);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.page-head h1,
+.card-h h3,
+.statpanel-h h3,
+.stat-value b {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Breadcrumb: links look clickable, the current page is the strongest item. */
+.crumb {
+  font-size: 12.5px;
+  gap: 7px;
+  color: var(--text-2);
+  margin-bottom: 10px;
+}
+.crumb a {
+  color: var(--brand-700);
+  font-weight: 500;
+}
+.crumb a:hover {
+  color: var(--brand-600);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.crumb > span:last-child {
+  color: var(--text);
+  font-weight: 600;
+}
+.crumb i {
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+/* Page title: same centre line as the 36px Back / action buttons. */
+.page-head {
+  column-gap: 14px;
+  row-gap: 10px;
+  margin-bottom: 18px;
+}
+.page-head h1 {
+  min-height: 36px;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+  column-gap: 10px;
+  row-gap: 4px;
+}
+.page-sub {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-2);
+  max-width: 100ch;
+  margin-top: 3px;
+}
+.page-head h1 .tag {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: var(--brand-700);
+  background: var(--brand-050);
+  border-color: var(--border-strong);
+}
+
+/* Card / modal / drawer titles a step above body bold. */
+.card-h h3 {
+  font-size: 16px;
+  line-height: 1.3;
+  letter-spacing: 0;
+  flex-wrap: wrap;
+  column-gap: 10px;
+  row-gap: 2px;
+  text-wrap: balance; /* "Attendance trend (28 days)" breaks before the bracket, not inside it */
+}
+.card-h .sub {
+  flex: 0 1 auto;
+  font-size: 12.5px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.modal-h h3,
+.drawer-h h3 {
+  font-size: 16px;
+  line-height: 1.3;
+}
+h4 {
+  font-size: 14px;
+}
+
+/* Secondary lines in lists, feeds, legends and notes. */
+.list-row .lr-main b,
+.alert-card .ac-b b,
+.tl-i b {
+  font-size: 13.5px;
+}
+.list-row .lr-main span,
+.alert-card .ac-b span,
+.tl-i span {
+  font-size: 12px;
+  line-height: 1.45;
+}
+.legend,
+.map-legend {
+  font-size: 12px;
+}
+.disclaim {
+  font-size: 12px;
+}
+.empty p {
+  font-size: 13px;
+  color: var(--text-2);
+}
+.donut-mid span {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.ring .rv span {
+  color: var(--text-2);
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.statpanel-f,
+.statpanel-h .sp-sub {
+  font-size: 12px;
+}
+
+/* Monospace codes scale with their context, never below 12px (was a fixed 11.5px). */
+.mono {
+  font-size: max(12px, 0.95em);
+  letter-spacing: 0.02em;
+  font-variant-ligatures: none;
+}
+.mono.muted {
+  color: var(--text-2);
+}
+/* A code column (Department / Batch / Centre code) matches the 13px text beside it. */
+table.tbl td > .mono {
+  font-size: max(12.5px, 0.96em);
+}
+
+/* =========================================================
+   3. LAYOUT
+   ========================================================= */
+/* Three KPI tiles in a 4-column row share the full width (desktop and tablet).
+   On phones they keep the 2-up grid, so every tile stays the same size. */
+@media (min-width: 521px) {
+  .grid.g4:has(> .kpi:nth-child(3):last-child) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Detail pages: a card beside a stack of cards hugs its own content instead of
+   stretching into a tall empty block (Training Centre / Document view). */
+.grid.g2:has(> div:not([class]) > .card) {
+  align-items: start;
+}
+
+/* Forms: more air between field groups so a hint reads with its own field. */
+form .grid.g2,
+form .grid.g3 {
+  row-gap: 18px;
+  column-gap: 20px;
+}
+
+/* Users page: the card-header search and status filter sit on one row. */
+@media (min-width: 761px) {
+  .card-h select.inp.sm {
+    width: auto;
+  }
+  .card-h input.inp.sm {
+    width: 15rem;
+    max-width: 100%;
+  }
+}
+
+/* =========================================================
+   4. COMPONENTS
+   ========================================================= */
+/* ---------- Sidebar ---------- */
+.sb-group {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: #cdb196; /* 5.8:1 on --brand-800 (was 3.9) */
+}
+.sb-brand-txt span {
+  font-size: 11px;
+  color: #d2b89f;
+}
+.sb-item {
+  font-size: 13.5px;
+}
+.sb-count {
+  font-size: 11px;
+}
+.sb-demo {
+  font-size: 11px;
+  line-height: 1.4;
+}
+/* The 50-item menu fades out at the bottom so it is obvious more modules sit
+   below; the extra bottom padding lets the last item scroll clear of the fade. */
+.sb-scroll {
+  padding-bottom: 32px;
+  -webkit-mask-image: linear-gradient(#000 calc(100% - 32px), transparent);
+  mask-image: linear-gradient(#000 calc(100% - 32px), transparent);
+}
+
+/* ---------- Topbar: darker glass so white text reads on saffron ---------- */
+/* The search takes most of the free room (up to its 520px cap) instead of
+   sharing it half-and-half with the empty spacer, so the full placeholder fits
+   at 1440px and a laptop keeps a usable box. Both still start from 0, so the
+   pill and the user button never shrink. */
+.tb-spacer {
+  flex-grow: 0.25;
+}
+.tb-search input {
+  text-overflow: ellipsis;
+}
+.topbar .demo-pill {
+  background: rgba(63, 27, 6, 0.3);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+.topbar .tb-btn {
+  color: #fff;
+}
+.topbar .tb-user {
+  background: rgba(63, 27, 6, 0.22);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.topbar .tb-user:hover {
+  background: rgba(63, 27, 6, 0.34);
+}
+.topbar .tb-user-meta b {
+  font-size: 13px;
+}
+.topbar .tb-user-meta span {
+  color: #fff3e6;
+  font-size: 11px;
+}
+
+/* ---------- Buttons ---------- */
+.btn.primary {
+  box-shadow:
+    0 1px 2px rgba(92, 42, 13, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+.btn.primary:hover {
+  box-shadow: 0 2px 6px rgba(92, 42, 13, 0.26);
+}
+.btn.danger:hover:not(:disabled) {
+  background: #95201a;
+  border-color: #95201a;
+}
+.btn.xs {
+  height: 28px;
+  min-width: 28px;
+}
+/* The users table's Delete was meant to be red (tailwind.css loads before .btn's colour). */
+.btn.tw-text-danger {
+  color: var(--red);
+}
+.btn.tw-text-danger:hover:not(:disabled) {
+  background: var(--red-bg);
+  border-color: #e9a9a3;
+}
+/* Disabled reads as unavailable (neutral, no hover / press), not as a paler colour. */
+.btn:disabled,
+.btn.primary:disabled,
+.btn.accent:disabled,
+.btn.danger:disabled {
+  opacity: 1;
+  background: var(--grey-bg);
+  border-color: var(--border);
+  color: #9a8673;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+/* ...but a disabled Verify / Reject keeps a hint of its tone, so the two stay distinguishable. */
+.btn.primary:disabled {
+  color: #b98a63;
+}
+.btn.danger:disabled {
+  color: #c08a85;
+}
+.btn.ghost:disabled {
+  background: transparent;
+  border-color: transparent;
+}
+.btn:disabled:active {
+  transform: none;
+}
+
+/* ---------- Badges, tags, pills ---------- */
+.badge {
+  font-size: 11.5px;
+  padding: 3px 9px;
+  letter-spacing: 0.01em;
+}
+.tag {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  padding: 2px 7px;
+  letter-spacing: 0.01em;
+}
+/* Tone text colours. Each is grouped with its KvList twin (see section 7)
+   so a badge inside a detail row keeps the same colour as in a table. */
+.b-green,
+.kv > b .b-green {
+  color: var(--green);
+}
+.b-amber,
+.kv > b .b-amber {
+  color: var(--amber);
+}
+.b-red,
+.kv > b .b-red {
+  color: var(--red);
+}
+.b-grey,
+.kv > b .b-grey {
+  color: var(--grey);
+}
+.b-blue,
+.kv > b .b-blue {
+  color: var(--brand-700); /* 5.95:1 on --brand-100 (was 3.96) */
+}
+.b-info,
+.kv > b .b-info {
+  color: var(--info);
+}
+.b-violet,
+.kv > b .b-violet {
+  color: var(--violet);
+}
+.b-saffron,
+.demo-pill,
+.kv > b .b-saffron {
+  color: #97470f; /* 5.7:1 on --saffron-100 (was 4.4) */
+}
+.mode-on,
+.kv > b .mode-on {
+  color: #046c4e;
+}
+.mode-off,
+.kv > b .mode-off {
+  color: #3730a3;
+}
+.live,
+.kv > b .live {
+  color: var(--red);
+}
+.b-blue {
+  border-color: #f3cfa9;
+}
+.b-grey {
+  border-color: #e2d6c9;
+}
+
+/* ---------- KPI tiles ---------- */
+.kpi {
+  padding: 14px 13px 13px;
+}
+/* The hover-only left bar becomes a permanent top accent in the tile's tone. */
+.kpi::after {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: auto;
+  width: auto;
+  height: 3px;
+  opacity: 1;
+  background: var(--kpi-accent, var(--kpi-neutral));
+}
+.kpi.b {
+  --kpi-accent: var(--brand-500);
+}
+.kpi.g {
+  --kpi-accent: var(--green);
+}
+.kpi.a {
+  --kpi-accent: #dd9d33; /* golden amber: stands apart from the brand-orange TOTAL bar */
+}
+.kpi.r {
+  --kpi-accent: var(--red);
+}
+.kpi.s {
+  --kpi-accent: var(--saffron);
+}
+.kpi.v {
+  --kpi-accent: var(--violet);
+}
+.kpi-t {
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.04em; /* 0.05em wraps "TRAINING ACTIVE" in the 8-up dashboard row */
+  color: var(--text-2);
+}
+.kpi-d {
+  color: var(--text-2);
+}
+.kpi.s .kpi-v {
+  color: #b8730c; /* saffron-gold, 3.8:1 on white (was 2.6); distinct from the brand-orange values */
+}
+
+/* ---------- Callouts ---------- */
+.callout {
+  font-size: 13px;
+  line-height: 1.5;
+  border-left-width: 4px;
+}
+.c-info {
+  border-color: #f1d2b0;
+  border-left-color: var(--brand-500);
+}
+.c-warn {
+  border-left-color: var(--amber);
+}
+.c-err {
+  border-left-color: var(--red);
+}
+.c-ok {
+  border-left-color: var(--green);
+}
+.c-grey {
+  border-left-color: var(--border-strong);
+}
+
+/* ---------- Lists, timelines, progress, skeleton, switches ---------- */
+.list-row,
+.alert-card {
+  border-bottom-color: var(--line);
+}
+.list-row:hover,
+.alert-card:hover {
+  background: #fff3e6;
+}
+.prog {
+  background: #f3e7d8;
+}
+.skel {
+  background-image: linear-gradient(90deg, #f5ebe0 25%, #fdf7f0 37%, #f5ebe0 63%);
+}
+.switch {
+  background: #a08a75; /* off track 3.3:1 against white */
+}
+.mapwrap {
+  background: linear-gradient(180deg, #fffaf4, #fbf0e3);
+}
+
+/* ---------- Charts (legacy SVG) ---------- */
+/* Axis labels, "x% of previous" captions and calendar day letters were
+   #B3A08D (2.3:1) and #8A7566; CSS beats the presentation attribute. */
+.chart svg text[fill='#B3A08D' i] {
+  fill: #7a6756;
+}
+.chart svg text[fill='#8A7566' i] {
+  fill: #5e4a3b;
+}
+/* The funnel's top value ("1,245") is drawn past the SVG's right edge. */
+.chart:has(> svg .funnel-s) {
+  padding-right: 4%;
+}
+/* District map tiles: names and values were ~6px on screen. */
+.mh-lbl {
+  font-size: 8.8px;
+}
+.mh-val {
+  font-size: 7.4px;
+  fill: #fff;
+}
+
+/* ---------- Clickable cards (Reports tiles, Centre cards) ---------- */
+.card.pointer {
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.card.pointer:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--sh-2);
+}
+.card.pointer:hover > .f > svg:last-child {
+  color: var(--brand-600);
+}
+.card.pointer b.fs13 {
+  font-size: 14px;
+}
+.card.pointer .fs11 {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* ---------- Modals, drawers, popovers ---------- */
+.ov {
+  background: rgba(46, 20, 5, 0.48);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+.drawer-ov {
+  background: rgba(46, 20, 5, 0.42);
+}
+.modal {
+  border: 1px solid var(--border);
+}
+.modal-h {
+  padding: 16px 20px;
+}
+.modal-b {
+  padding: 18px 20px;
+}
+.modal-b > p:only-child {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+.modal-f {
+  padding: 13px 20px;
+}
+.x-btn {
+  background: transparent;
+}
+.x-btn:hover {
+  background: var(--brand-100);
+  color: var(--brand-700);
+}
+.menu-item:hover {
+  background: var(--saffron-100);
+}
+/* SearchSelect keyboard-active option (inline background: var(--brand-050), see SearchSelect.tsx) */
+.pop-b[role='listbox'] .menu-item[style*='brand-050'] {
+  box-shadow: inset 3px 0 0 var(--brand-600);
+  color: var(--brand-800);
+}
+.pop-b[role='listbox'] .menu-item[aria-selected='true'] {
+  font-weight: 650;
+}
+
+/* ---------- Scrollbars ---------- */
+*::-webkit-scrollbar-thumb {
+  background-color: #dcc8b3;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #c9ad91;
+}
+
+/* =========================================================
+   5. TABLES
+   ========================================================= */
+.tbl-top {
+  padding: 12px 16px;
+}
+/* Search box keeps a readable width; any toolbar buttons sit at the right edge. */
+.tbl-top .grow {
+  flex: 1 1 260px;
+  max-width: 440px;
+  margin-right: auto;
+}
+.tbl-top .grow > input.inp {
+  text-overflow: ellipsis;
+  padding-left: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237a6756' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 11px center;
+  background-size: 14px 14px;
+}
+
+/* Soft edge shadow only on the side that has more columns to scroll to. */
+.tbl-wrap {
+  --edge-a: 0.16;
+  --edge-w: 12px;
+  background:
+    linear-gradient(to right, var(--surface) 30%, rgba(255, 255, 255, 0)) left center / 32px 100% no-repeat local,
+    linear-gradient(to left, var(--surface) 30%, rgba(255, 255, 255, 0)) right center / 32px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(90, 50, 20, var(--edge-a)), rgba(90, 50, 20, 0)) left center / var(--edge-w) 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(90, 50, 20, var(--edge-a)), rgba(90, 50, 20, 0)) right center / var(--edge-w) 100% no-repeat scroll;
+  background-color: var(--surface);
+}
+
+/* A table inside a padded card body (Facilities) runs edge to edge, so its
+   first column lines up with the card text above it instead of sitting 16px in. */
+.card-b > .tbl-wrap {
+  margin-inline: -16px;
+  border-top: 1px solid var(--border);
+}
+
+table.tbl {
+  font-size: 13px;
+}
+table.tbl th {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  background: #fcf2e6;
+  padding: 10px;
+  border-bottom-color: var(--border);
+}
+/* Inside a scroll wrapper (which never scrolls vertically, so the sticky header
+   never covers rows) the header tint is see-through: the same #fcf2e6 on white,
+   but the right-edge scroll shadow now shows on the header row too. */
+.tbl-wrap > table.tbl th {
+  background: rgba(246, 218, 184, 0.35);
+}
+table.tbl th.sortable:hover {
+  color: var(--brand-700);
+}
+table.tbl th .arw {
+  opacity: 0.55;
+  font-size: 10px;
+}
+table.tbl th.sortable:hover .arw {
+  opacity: 1;
+}
+table.tbl td {
+  padding: 10px;
+  border-bottom-color: var(--line);
+  font-variant-numeric: tabular-nums;
+}
+/* One 16px gutter shared by card header, toolbar, first / last column and footer. */
+table.tbl th:first-child,
+table.tbl td:first-child {
+  padding-left: 16px;
+}
+table.tbl th:last-child,
+table.tbl td:last-child {
+  padding-right: 16px;
+}
+table.tbl tbody tr:hover {
+  background: #fff3e6;
+}
+/* Clickable rows get a brand edge on hover; .norow rows (not links) stay plain. */
+table.tbl tbody tr:not(.norow):hover > td:first-child {
+  box-shadow: inset 3px 0 0 var(--brand-500);
+}
+
+/* Row action icons (View / Edit / Activate / Delete): square, tone-aware hover. */
+table.tbl td .btn.xs[aria-label] {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+  border-color: var(--border);
+  background: #fff;
+}
+table.tbl td .btn.xs[aria-label] svg {
+  width: 16px;
+  height: 16px;
+  flex-basis: 16px;
+}
+table.tbl td .btn.xs[aria-label]:hover:not(:disabled) {
+  border-color: currentColor;
+  background: var(--brand-050);
+  background: color-mix(in srgb, currentColor 9%, #fff);
+}
+
+/* Row actions stay on one line; a narrow screen scrolls the table sideways
+   (the edge shadow signals it) instead of stacking four buttons per row. */
+table.tbl td:last-child > .tw-flex-wrap {
+  flex-wrap: nowrap;
+}
+
+/* Disabled inputs repeated down a table (Facilities remarks) stay calm: the
+   dashed "locked" edge is kept for standalone fields such as Centre Code. */
+table.tbl .inp:disabled {
+  border-style: solid;
+  border-color: var(--border);
+  background-color: #faf6f1;
+}
+
+/* Empty state in a table may wrap and stays in view on a phone. */
+table.tbl td .empty {
+  white-space: normal;
+  position: sticky;
+  left: 0;
+  max-width: calc(100vw - 40px);
+  padding: 36px 16px;
+}
+
+.perm-matrix thead th {
+  font-size: 11.5px;
+}
+.perm-matrix .pm-sec td {
+  font-size: 11.5px;
+  color: var(--text-2);
+}
+
+/* =========================================================
+   6. FORMS
+   ========================================================= */
+.fld {
+  gap: 6px;
+}
+.fld label {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text);
+  letter-spacing: 0.005em;
+}
+/* Required marker (MasterField's red " *") keeps a bold weight next to the calmer label. */
+.fld label > span[aria-hidden='true'] {
+  font-weight: 800;
+}
+/* Status row in edit forms: the badge gets the same 28px line box as the
+   Deactivate / Activate button beside it, text centred. */
+.fld > .f.ac > .badge {
+  min-height: 28px;
+  padding-block: 0;
+}
+.hint {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.inp,
+select.inp,
+textarea.inp {
+  font-size: 13.5px;
+}
+.inp.sm {
+  font-size: 12.5px;
+}
+.inp.mono {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+.inp::placeholder,
+.tb-search input::placeholder {
+  color: var(--ph);
+  opacity: 1;
+}
+.inp:hover:not(:focus):not(:disabled):not([aria-invalid='true']) {
+  border-color: #d4b08a;
+}
+.inp:focus {
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 3px rgba(210, 105, 30, 0.18);
+  /* Invisible normally; becomes the focus ring in Windows high-contrast mode. */
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+}
+
+/* Native select: a clearly visible warm chevron with room for it. */
+select.inp {
+  background-image: var(--chevron);
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  background-position: right 10px center;
+  padding-right: 34px;
+  text-overflow: ellipsis;
+}
+select.inp.sm {
+  padding-right: 30px;
+  background-size: 12px 12px;
+  background-position: right 9px center;
+}
+
+/* Disabled fields read as locked: neutral fill and a dashed edge. */
+.inp:disabled {
+  background-color: #f7f1ea;
+  border-color: var(--border-strong);
+  border-style: dashed;
+  color: var(--text-2);
+  -webkit-text-fill-color: var(--text-2);
+  cursor: not-allowed;
+  opacity: 1;
+}
+.inp:disabled::placeholder {
+  color: var(--muted);
+  -webkit-text-fill-color: var(--muted);
+}
+select.inp:disabled {
+  background-image: var(--chevron-off);
+}
+
+/* Invalid fields (aria-invalid set by fieldAria) carry the red edge, not just the hint. */
+.inp[aria-invalid='true'] {
+  border-color: var(--red);
+  box-shadow: inset 0 0 0 1px var(--red);
+  background-color: #fffaf9;
+}
+.inp[aria-invalid='true']:focus {
+  border-color: var(--red);
+  box-shadow:
+    inset 0 0 0 1px var(--red),
+    0 0 0 3px var(--red-bg);
+}
+
+/* =========================================================
+   7. KVLIST — detail rows
+   Label column + value beside it, left-aligned, on one line.
+   (styles.css had two .kv blocks; the later one stacked every row and the
+   earlier one pushed the value to the far right.)
+   A wrapping flex row, not a grid: when the row is too narrow for label +
+   value (phone centre cards are ~72px wide) the value drops under the
+   label by itself instead of overflowing.
+   ========================================================= */
+.kv {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: baseline;
+  column-gap: 16px;
+  row-gap: 2px;
+  padding: 9px 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 13.5px;
+}
+.card-b > .kv:first-child {
+  padding-top: 2px;
+}
+.card-b > .kv:last-child {
+  padding-bottom: 2px;
+}
+.kv > span {
+  flex: 0 1 clamp(7rem, 45%, 14rem); /* label column: "Offline — training active" fits on one line */
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-2);
+  min-width: 0;
+}
+.kv > b {
+  flex: 1 1 4.5rem; /* wraps under the label only when less than 4.5rem is left */
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--text);
+  text-align: left;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* The legacy label rule (.kv span) also hit spans inside the value. Reset
+   them to the value's style, then give classed content back its own size
+   (tone colours are restored in section 4, next to each badge tone). */
+.kv > b span {
+  font-size: inherit;
+  color: inherit;
+}
+.kv > b .badge {
+  font-size: 11.5px;
+  /* Centred on the text line and not taller than it, so a Status row keeps
+     the same height and label position as the plain rows. */
+  vertical-align: middle;
+  margin-block: -3px;
+}
+.kv > b .tag {
+  font-size: 11.5px;
+  color: var(--text-2);
+}
+.kv > b .mode-tag,
+.kv > b .live {
+  font-size: 11px;
+}
+.kv > b .mono {
+  font-size: 1em; /* a code reads at the same size and weight as the other values */
+  font-weight: 600;
+}
+.kv > b .muted {
+  color: var(--muted);
+}
+.kv > b .t2 {
+  color: var(--text-2);
+}
+/* Student Import drawers and the certificate grid keep label-over-value tiles. */
+.kv-grid > .kv,
+.grid > .kv {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.kv-grid > .kv > span,
+.grid > .kv > span {
+  font-size: 12px;
+}
+.kv-grid > .kv > span,
+.kv-grid > .kv > b,
+.grid > .kv > span,
+.grid > .kv > b {
+  flex: 0 0 auto;
+}
+.kv-grid > .kv > b,
+.grid > .kv > b {
+  text-align: left;
+}
+
+/* =========================================================
+   8. FILTERS
+   ========================================================= */
+/* One or two filters no longer stretch across the whole page (Reset sits beside
+   them); three or more fill the bar as before. A 160px basis keeps four filters
+   plus Reset on one row down to a ~1100px window. */
+.filterbar .fld {
+  flex: 1 1 160px;
+  max-width: 320px;
+}
+.filterbar:has(> .fld ~ .fld ~ .fld) > .fld {
+  max-width: none;
+}
+
+/* =========================================================
+   9. PAGINATION / TABLE FOOTER
+   ========================================================= */
+.tbl-bot {
+  padding: 11px 16px;
+  gap: 12px;
+}
+.tbl-bot .info {
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.tbl-bot .info b {
+  color: var(--text);
+  font-weight: 650;
+}
+.tbl-bot select.inp.sm {
+  height: 32px;
+}
+.pager {
+  gap: 5px;
+}
+.pager button {
+  min-width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border-color: var(--border-strong);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  transition:
+    background-color 0.13s,
+    border-color 0.13s,
+    color 0.13s;
+}
+.pager button:hover:not([disabled]) {
+  background: var(--brand-050);
+}
+/* Hovering the current page used to paint brand text on a brand fill. */
+.pager button.on,
+.pager button.on:hover:not([disabled]) {
+  background: var(--brand-600);
+  border-color: var(--brand-600);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(92, 42, 13, 0.25);
+}
+/* « ‹ › » arrows: bigger glyphs (the page-number button between them keeps 13px). */
+.pager button:is(:first-child, :nth-child(2), :nth-last-child(-n + 2)):not(.on) {
+  font-size: 18px;
+  line-height: 1;
+  padding-bottom: 4px; /* these glyphs sit on the x-height, below the button's centre */
+}
+.pager button[disabled] {
+  opacity: 1;
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: #a8937e; /* visibly unavailable, but still legible */
+}
+
+/* =========================================================
+   10. FOCUS (keyboard)
+   ========================================================= */
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible,
+input[type='checkbox']:focus-visible,
+input[type='radio']:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+/* Light ring on the dark sidebar and the saffron topbar. */
+.sidebar :focus-visible,
+.topbar :focus-visible,
+.toast :focus-visible {
+  outline-color: #fff;
+}
+/* Inside overflow-clipping containers the ring sits inside the control. */
+.tabs button:focus-visible,
+.menu-item:focus-visible,
+.sb-item:focus-visible,
+.mnav button:focus-visible {
+  outline-offset: -2px;
+}
+
+/* =========================================================
+   11. PHONE
+   ========================================================= */
+@media (max-width: 760px) {
+  /* 16px stops iOS Safari zooming the page when a field gets focus. */
+  .inp,
+  .inp.sm,
+  .inp.mono,
+  select.inp,
+  textarea.inp {
+    font-size: 16px;
+  }
+  .mnav button {
+    font-size: 11px;
+    color: var(--text-2);
+  }
+  .tbl-top .grow {
+    max-width: none;
+  }
+  .tbl-bot {
+    padding: 10px 12px;
+    row-gap: 8px;
+  }
+  /* Count and pager share a line when they fit, and wrap only when they don't. */
+  .tbl-bot .info {
+    flex: 1 1 auto;
+  }
+  .tbl-bot .pager {
+    margin-left: auto;
+  }
+  /* Stronger scroll-edge shadow: hidden columns are easy to miss on a phone. */
+  .tbl-wrap {
+    --edge-a: 0.22;
+    --edge-w: 16px;
+  }
+  /* Filters 2-up (as before the refresh) so the KPIs stay near the top. */
+  .filterbar .fld {
+    flex-basis: calc(50% - 5px);
+  }
+  /* Bigger tap target for the Deactivate / Activate button in edit forms. */
+  .fld > .f.ac > .btn.xs {
+    height: 32px;
+    padding: 0 12px;
+  }
+  .kpi {
+    padding: 12px 12px 11px;
+  }
+  /* Card-header button groups wrap instead of pushing the page sideways
+     (the dashboard map card's three buttons overflowed a 390px screen). */
+  .card-h > .f {
+    flex-wrap: wrap;
+  }
+  .page-head h1 {
+    column-gap: 8px;
+  }
+  .page-head h1 .tag {
+    font-size: 11.5px;
+    padding: 1px 6px;
+  }
+}
+@media (max-width: 520px) {
+  .filterbar .fld {
+    max-width: none;
+  }
+  form .grid.g2,
+  form .grid.g3 {
+    row-gap: 16px;
+  }
+  /* Clickable card grids (Reports tiles, Centre cards) go one per row, so
+     titles stop breaking mid-word and detail rows keep label and value together. */
+  .grid.g3:has(> .card.pointer) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* =========================================================
+   12. MOTION + PRINT
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .live i,
+  .skel,
+  .boot-bar span,
+  .modal,
+  .drawer,
+  .pop,
+  .toast,
+  .ov,
+  .drawer-ov {
+    animation: none;
+  }
+  .kpi:hover,
+  .btn:active {
+    transform: none;
+  }
+}
+@media print {
+  .tbl-wrap {
+    background: none;
+  }
+  table.tbl th {
+    position: static;
+  }
+  .badge,
+  .tag,
+  .mode-tag,
+  .live {
+    border-color: currentColor;
+  }
+  .kv {
+    break-inside: avoid;
+  }
+}
+
+/* =========================================================
+   13. LARGER TYPE
+   One step up for every text size the panel uses (about +1px), so all screens read a little larger.
+   Layout sizes are unchanged. Phones keep the sizes tuned in section 11 (16px inputs stop iOS zoom).
+   ========================================================= */
+@media (min-width: 761px) {
+  body {
+    font-size: 15px;
+  }
+  .page-head h1 {
+    font-size: 24px;
+  }
+  .page-sub {
+    font-size: 14.5px;
+  }
+  .crumb {
+    font-size: 13px;
+  }
+  .card-h h3,
+  .modal-h h3,
+  .drawer-h h3 {
+    font-size: 17px;
+  }
+  .card-h .sub {
+    font-size: 13px;
+  }
+  h4 {
+    font-size: 15px;
+  }
+
+  .btn {
+    font-size: 14px;
+  }
+  .btn.sm {
+    font-size: 13px;
+  }
+  .btn.xs {
+    font-size: 12.5px;
+  }
+  .inp,
+  select.inp,
+  textarea.inp,
+  .inp.mono {
+    font-size: 14px;
+  }
+  .inp.sm {
+    font-size: 13.5px;
+  }
+  .fld label {
+    font-size: 13.5px;
+  }
+  .hint {
+    font-size: 12.5px;
+  }
+
+  table.tbl {
+    font-size: 14px;
+  }
+  table.tbl th {
+    font-size: 12px;
+  }
+  .tbl-bot .info {
+    font-size: 13px;
+  }
+  .pager button {
+    font-size: 13.5px;
+  }
+
+  .kv,
+  .kv > b {
+    font-size: 14.5px;
+  }
+  .kv > span {
+    font-size: 13px;
+  }
+  .badge,
+  .tag,
+  .kv > b .badge,
+  .kv > b .tag {
+    font-size: 12px;
+  }
+  .kpi-t {
+    font-size: 12px;
+  }
+  .kpi-v {
+    font-size: 28px;
+  }
+  .callout {
+    font-size: 14px;
+  }
+  .modal-b > p:only-child {
+    font-size: 15px;
+  }
+  .empty p {
+    font-size: 14px;
+  }
+
+  .sb-item {
+    font-size: 14px;
+  }
+  .sb-group {
+    font-size: 11px;
+  }
+  .list-row .lr-main b,
+  .alert-card .ac-b b,
+  .tl-i b {
+    font-size: 14px;
+  }
+  .list-row .lr-main span,
+  .alert-card .ac-b span,
+  .tl-i span {
+    font-size: 12.5px;
+  }
+
+  /* Small-text utilities used across the older screens and table cells. */
+  .fs11 {
+    font-size: 11.5px;
+  }
+  .fs12 {
+    font-size: 12.5px;
+  }
+  .fs13 {
+    font-size: 13.5px;
+  }
+}

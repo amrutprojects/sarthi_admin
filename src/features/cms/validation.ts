@@ -21,6 +21,92 @@ export function validateName(raw: string, label: string): string | undefined {
   return undefined;
 }
 
+/*
+ * Names of organisations and catalogue entries (departments, colleges, centres, batches). Same rules as
+ * the backend's entityName: may start with a digit and may contain "&", unlike place names.
+ */
+const ENTITY_NAME_RE = /^[\p{L}\p{M}\d][\p{L}\p{M}\d .,'’()/&-]*$/u;
+
+export function validateEntityName(raw: string, label: string, { min = 2, max = 100 }: { min?: number; max?: number } = {}): string | undefined {
+  const value = normalizeName(raw);
+  if (!value) return `${label} is required`;
+  if (value.length < min) return `${label} must be at least ${min} characters`;
+  if (value.length > max) return `${label} must be at most ${max} characters`;
+  if (!ENTITY_NAME_RE.test(value)) return `${label} may use letters, digits, spaces and . , ( ) - / & only`;
+  return undefined;
+}
+
+/* Free text. Optional unless `required`; length is counted after trimming, as the server does. */
+export function validateText(raw: string, label: string, { max, min = 0, required = false }: { max: number; min?: number; required?: boolean }): string | undefined {
+  const value = raw.trim();
+  if (!value) return required ? `${label} is required` : undefined;
+  if (value.length < min) return `${label} must be at least ${min} characters`;
+  if (value.length > max) return `${label} must be at most ${max} characters`;
+  return undefined;
+}
+
+/* Optional value sent to the API: trimmed, and null when empty so the server stores "not recorded". */
+export const optionalValue = (raw: string): string | null => (raw.trim() ? raw.trim() : null);
+
+export const validatePinCode = (raw: string): string | undefined => (!raw.trim() || /^\d{6}$/.test(raw.trim()) ? undefined : 'Enter a 6-digit PIN code');
+
+export const validateMobile = (raw: string): string | undefined =>
+  !raw.trim() || /^[6-9]\d{9}$/.test(raw.trim()) ? undefined : 'Enter a valid 10-digit mobile number';
+
+/* Mobile, or a landline with its STD code (0XX-XXXXXXX). Spaces are ignored, as on the server. */
+export const validatePhone = (raw: string): string | undefined => {
+  const v = raw.replace(/\s+/g, '');
+  return !v || /^(?:[6-9]\d{9}|0\d{2,4}-?\d{6,8})$/.test(v) ? undefined : 'Enter a 10-digit mobile number or a landline with STD code';
+};
+
+export const validateEmail = (raw: string): string | undefined => {
+  const v = raw.trim();
+  if (!v) return undefined;
+  if (v.length > 254) return 'Email must be at most 254 characters';
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? undefined : 'Enter a valid email address';
+};
+
+/*
+ * Same rule as the server's optionalHttpsUrl and the column's CHECK (LIKE 'https://%'): a lower-case
+ * "https://" prefix and a link that parses, with a host. Checking only the parsed protocol is not
+ * enough — the URL parser lower-cases "Https://…" / "HTTPS://…" and accepts "https:host", all of which
+ * the server rejects.
+ */
+export const validateHttpsUrl = (raw: string, max = 500): string | undefined => {
+  const v = raw.trim();
+  if (!v) return undefined;
+  if (v.length > max) return `The link must be at most ${max} characters`;
+  if (!v.startsWith('https://')) return 'Enter a valid https link';
+  try {
+    return new URL(v).hostname ? undefined : 'Enter a valid https link';
+  } catch {
+    return 'Enter a valid https link';
+  }
+};
+
+/* Whole number typed into a text box. Empty is allowed unless `required`. */
+export function validateWholeNumber(raw: string, label: string, { min, max, required = false }: { min: number; max: number; required?: boolean }): string | undefined {
+  const v = raw.trim();
+  if (!v) return required ? `${label} is required` : undefined;
+  if (!/^\d+$/.test(v)) return `${label} must be a whole number`;
+  const n = Number(v);
+  if (n < min) return `${label} must be at least ${min}`;
+  if (n > max) return `${label} must be at most ${max}`;
+  return undefined;
+}
+
+/* Number sent to the API, or null when the box was left empty. */
+export const optionalNumber = (raw: string): number | null => (raw.trim() ? Number(raw.trim()) : null);
+
+/* Keystroke filter for a whole-number box. */
+export const digitsKeystroke = (raw: string, maxLength = 6): string => raw.replace(/\D/g, '').slice(0, maxLength);
+
+/* A date input's value (YYYY-MM-DD). */
+export const validateDate = (raw: string, label: string, required = false): string | undefined => {
+  if (!raw) return required ? `${label} is required` : undefined;
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw) && !Number.isNaN(Date.parse(raw)) ? undefined : `Enter a valid ${label.toLowerCase()}`;
+};
+
 export const normalizeCode = (raw: string): string => raw.trim().toUpperCase();
 
 interface CodeRules {

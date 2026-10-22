@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { setFormDirty } from '../formDirty';
 import { ConfirmModal } from '../shared';
 
 /*
@@ -25,6 +26,12 @@ export default function MasterFormActions({ formId, submitLabel, busy, dirty, ba
   const [confirming, setConfirming] = useState(false);
 
   const leave = () => navigate(backTo);
+
+  /* Lets the header's Back button warn about the same unsaved changes Cancel does. */
+  useEffect(() => {
+    setFormDirty(formId, dirty);
+    return () => setFormDirty(formId, false);
+  }, [formId, dirty]);
 
   return (
     <>
