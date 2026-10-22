@@ -3,8 +3,9 @@ import { Badge, Callout, PageHead } from '../../../components/ui';
 import { useAuth, useCan } from '../../auth';
 import { MenuVisibilityTab, PermissionsTab, RolesTab } from '../../roles-permissions';
 import UsersTab from '../components/UsersTab';
+import WebsiteAdminsTab from '../components/WebsiteAdminsTab';
 
-type Tab = 'users' | 'roles' | 'permissions' | 'menus';
+type Tab = 'users' | 'website' | 'roles' | 'permissions' | 'menus';
 
 /* Identity & access management, backed by the live backend (/users, /roles, /permissions). */
 export default function UsersPage() {
@@ -13,6 +14,7 @@ export default function UsersPage() {
   const tabs = (
     [
       ['users', 'Users', can('viewUsers')],
+      ['website', 'Website Admins', can('viewUsers') && can('viewRoles')],
       ['roles', 'Roles', can('viewRoles')],
       ['permissions', 'Permissions', can('viewPermissions')],
       ['menus', 'Menu visibility', can('viewRoles')],
@@ -47,6 +49,7 @@ export default function UsersPage() {
         ))}
       </div>
       {tab === 'users' && can('viewUsers') ? <UsersTab /> : null}
+      {tab === 'website' && can('viewUsers') && can('viewRoles') ? <WebsiteAdminsTab /> : null}
       {tab === 'roles' && can('viewRoles') ? <RolesTab /> : null}
       {tab === 'permissions' && can('viewPermissions') ? <PermissionsTab /> : null}
       {tab === 'menus' && can('viewRoles') ? <MenuVisibilityTab /> : null}

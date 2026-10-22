@@ -172,7 +172,7 @@ export default function ApplyPageForm({ initial, onSave, backTo }: ApplyPageForm
   return (
     <div className="card">
       <div className="card-b">
-        {/* Grouped as on the Page Text tab: by where each piece appears on the public Apply page. */}
+        {/* Grouped as on the Page text tab: by where each piece appears on the public Apply page. */}
         <form id={FORM_ID} onSubmit={submit} noValidate>
           {SETTINGS_GROUPS.map((group, index) => (
             <section key={group.title} aria-label={group.title}>

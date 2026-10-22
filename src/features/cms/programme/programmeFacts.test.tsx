@@ -138,7 +138,8 @@ describe('Programme fact sheet', () => {
 
   it('shows the fact sheet on the view page, with the deposit in Indian grouping', async () => {
     vi.mocked(programmeService.get).mockResolvedValue({ ...page(), facts: { ...page().facts, securityDeposit: 125000 } });
-    renderWithProviders(<ProgrammeView />);
+    /* The fact sheet has its own tab on the view. */
+    renderWithProviders(<ProgrammeView />, { route: '/cms/programme?tab=facts' });
     expect(await screen.findByRole('heading', { name: /Programme fact sheet/ })).toBeInTheDocument();
     expect(screen.getByText('6 months')).toBeInTheDocument();
     expect(screen.getByText('12 months')).toBeInTheDocument();

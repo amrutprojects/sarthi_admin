@@ -7,7 +7,7 @@ import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { LoadState, toastOk, useAction, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import { eligibilityService } from '../services/eligibilityService';
-import { KIND_LABEL } from '../types/eligibility.types';
+import { KIND_LABEL, KIND_TAB, eligibilityListPath } from '../types/eligibility.types';
 import { toEligibilityItemFormValues } from '../validation/eligibility.validation';
 import EligibilityForm from './EligibilityForm';
 
@@ -28,7 +28,7 @@ export default function EligibilityEdit() {
       <PageHead
         crumbs={[
           { l: 'Dashboard', link: '/dashboard' },
-          { l: 'Eligibility Page Management', link: '/cms/eligibility' },
+          { l: 'Eligibility Page Management', link: item ? eligibilityListPath(KIND_TAB[item.kind]) : '/cms/eligibility' },
           ...(item ? [{ l: item.label.en, link: `/cms/eligibility/${item.id}` }] : []),
           { l: 'Edit' },
         ]}

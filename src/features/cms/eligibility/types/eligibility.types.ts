@@ -47,6 +47,23 @@ export interface UpdateEligibilityItemInput {
   displayOrder?: number;
 }
 
+/*
+ * The three tabs of Eligibility Page Management: the page text and the two lists. The active tab is kept in
+ * the URL (?tab=), as on Modules Page Management, so Back from an item or the page-text form returns to it.
+ */
+export const ELIGIBILITY_TABS = [
+  { k: 'page', l: 'Page text' },
+  { k: 'criteria', l: 'Eligibility criteria' },
+  { k: 'documents', l: 'Required documents' },
+] as const;
+export type EligibilityTab = (typeof ELIGIBILITY_TABS)[number]['k'];
+
+/* The tab each kind of item is listed on. */
+export const KIND_TAB: Record<EligibilityKind, EligibilityTab> = { CRITERION: 'criteria', DOCUMENT: 'documents' };
+
+/* The listing, opened on one tab. */
+export const eligibilityListPath = (tab: EligibilityTab): string => `/cms/eligibility?tab=${tab}`;
+
 /* Field names of the item form, as the API reports them in 422 details ("body.label.mr"). */
 export const ELIGIBILITY_ITEM_FIELDS = ['kind', 'label.mr', 'label.en', 'value.mr', 'value.en', 'displayOrder'] as const;
 export type EligibilityItemField = (typeof ELIGIBILITY_ITEM_FIELDS)[number];

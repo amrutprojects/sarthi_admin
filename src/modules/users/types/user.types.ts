@@ -22,6 +22,8 @@ export interface UserListParams {
   isActive?: boolean;
   sortBy?: UserSortField;
   sortOrder?: 'ASC' | 'DESC';
+  /* Only the holders of this role. */
+  roleId?: string;
 }
 
 export interface CreateUserInput {

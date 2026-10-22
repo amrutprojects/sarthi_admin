@@ -52,3 +52,14 @@ export interface ApiProgrammePage extends Required<UpdateProgrammePageInput> {
   id: string;
   updatedAt: string;
 }
+
+/* The tabs of the read-only Programme page view, one per part of the public page, in website order. */
+export const PROGRAMME_TABS = [
+  { k: 'about', l: 'About the programme' },
+  { k: 'methodology', l: 'Learning methodology' },
+  { k: 'assessment', l: 'Assessment' },
+  { k: 'certification', l: 'Certification' },
+  { k: 'facts', l: 'Fact sheet' },
+  { k: 'modes', l: 'Training modes' },
+] as const;
+export type ProgrammeTab = (typeof PROGRAMME_TABS)[number]['k'];

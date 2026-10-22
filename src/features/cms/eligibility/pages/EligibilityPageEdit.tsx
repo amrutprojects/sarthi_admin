@@ -5,6 +5,7 @@ import BackButton from '../../components/BackButton';
 import { LoadState, toastOk, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import { eligibilityService } from '../services/eligibilityService';
+import { eligibilityListPath } from '../types/eligibility.types';
 import { toEligibilitySettingsFormValues } from '../validation/eligibility.validation';
 import EligibilityPageForm from './EligibilityPageForm';
 
@@ -24,6 +25,8 @@ export default function EligibilityPageEdit() {
    * here gets an explanation instead of a form whose Save the server would refuse with a 403.
    */
   const canEdit = can('updateEligibility');
+  /* Back, Cancel and Save all return to the Page text tab this form is opened from. */
+  const listPath = eligibilityListPath('page');
 
   return (
     <div className="page">
@@ -31,12 +34,12 @@ export default function EligibilityPageEdit() {
         crumbs={[
           { l: 'Dashboard', link: '/dashboard' },
           { l: 'CMS' },
-          { l: 'Eligibility Page Management', link: '/cms/eligibility' },
+          { l: 'Eligibility Page Management', link: listPath },
           { l: 'Edit page text' },
         ]}
         title="Edit Eligibility Page Text"
         sub="Every text field is stored in Marathi and English — the public site defaults to Marathi."
-        back={<BackButton to="/cms/eligibility" />}
+        back={<BackButton to={listPath} />}
       />
 
       {canEdit ? (
@@ -46,11 +49,11 @@ export default function EligibilityPageEdit() {
           {settings ? (
             <EligibilityPageForm
               initial={toEligibilitySettingsFormValues(settings)}
-              backTo="/cms/eligibility"
+              backTo={listPath}
               onSave={async (values) => {
                 await eligibilityService.updateSettings(values);
                 toastOk('Eligibility page text updated');
-                navigate('/cms/eligibility');
+                navigate(listPath);
               }}
             />
           ) : null}

@@ -76,7 +76,19 @@ const renderAt = (route = '/cms/apply') =>
     { route },
   );
 
+const TAB_NAMES = ['Page text', 'Application steps', 'At a glance', 'Documents to keep ready'];
+
 const tab = (name: string) => screen.getByRole('tab', { name });
+const panel = () => screen.getByRole('tabpanel');
+/* The Page text card headed with a group's title. */
+const card = async (title: string) =>
+  (await within(panel()).findByRole('heading', { name: new RegExp(`^${title}`) })).closest('.card') as HTMLElement;
+const headers = (table: HTMLElement) =>
+  within(table)
+    .getAllByRole('columnheader')
+    .map((h) => h.textContent);
+/* The body rows of a table, without its header row. */
+const bodyRows = (table: HTMLElement) => within(table).getAllByRole('row').slice(1);
 
 describe('<ApplyList> tabs', () => {
   beforeEach(() => {
@@ -89,111 +101,161 @@ describe('<ApplyList> tabs', () => {
       .mockImplementation(async (q) => page(q.kind === 'FACT' ? [FACT] : [STEP]));
   });
 
-  it('shows one tab per section of the public page, opening on Page Text', async () => {
+  it('shows one tab per section of the public page in the Modules-style strip, opening on Page text', async () => {
     renderAt();
 
     const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(4);
-    ['Page Text', 'Application Steps', 'At a Glance', 'Documents to Keep Ready'].forEach((name, i) =>
-      expect(tabs[i]).toHaveAccessibleName(name),
-    );
-    expect(tab('Page Text')).toHaveAttribute('aria-selected', 'true');
+    expect(tabs.map((t) => t.textContent)).toEqual(TAB_NAMES);
+    TAB_NAMES.forEach((name, i) => expect(tabs[i]).toHaveAccessibleName(name));
+    expect(tab('Page text')).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tablist')).toHaveClass('tabs', 'tabs-fit');
+    expect(tab('Page text')).toHaveAttribute('aria-controls', panel().id);
 
-    /* Each list tab carries its count (hidden from screen readers: the KPI tiles say it too). */
-    await waitFor(() => expect(tab('Application Steps').querySelector('.cnt')).toHaveTextContent('3'));
-    expect(tab('At a Glance').querySelector('.cnt')).toHaveTextContent('3');
-    await waitFor(() => expect(tab('Documents to Keep Ready').querySelector('.cnt')).toHaveTextContent('2'));
-    expect(tab('Page Text').querySelector('.cnt')).toBeNull();
-
-    /* The page text, grouped by where each piece appears on the website. */
-    for (const group of ['Page heading', 'Important note', 'Apply box', 'Card headings']) {
-      expect(await screen.findByRole('heading', { name: new RegExp(group) })).toBeInTheDocument();
-    }
-    expect(screen.getByText('अर्ज कसा करावा')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: settings.ctaUrl })).toHaveAttribute('target', '_blank');
+    /* No count badges on the tabs, even once the totals have loaded: the KPI tiles carry them. */
+    await waitFor(() => expect(applyService.count).toHaveBeenCalledTimes(4));
+    await waitFor(() => expect(screen.getByText('Documents to keep ready', { selector: '.kpi-t' }).parentElement).toHaveTextContent('2'));
+    tabs.forEach((t) => expect(t.querySelector('.cnt')).toBeNull());
 
     /* No list on this tab. */
     expect(applyService.list).not.toHaveBeenCalled();
   });
 
+  it('shows the page text as one table per place it appears on the website, Marathi first', async () => {
+    renderAt();
+
+    const expected: [string, string[]][] = [
+      ['Page heading', ['Page title', 'Page subtitle']],
+      ['Important note', ['Note title', 'Note text']],
+      ['Apply box', ['Apply box text', 'Apply button label', 'Portal link', 'Apply button hint']],
+      ['Card headings', ['At-a-glance heading', 'Documents heading']],
+    ];
+    for (const [title, fields] of expected) {
+      const table = within(await card(title)).getByRole('table');
+      expect(headers(table)).toEqual(['Sr. No.', 'Field', 'Content']);
+      expect(bodyRows(table).map((r) => within(r).getAllByRole('cell')[0].textContent)).toEqual(fields.map((_f, i) => String(i + 1)));
+      expect(bodyRows(table).map((r) => within(r).getAllByRole('cell')[1].textContent)).toEqual(fields);
+    }
+
+    expect(within(await card('Page heading')).getByText('अर्ज कसा करावा')).toHaveAttribute('lang', 'mr');
+    expect(within(await card('Page heading')).getByText('How to Apply')).toHaveAttribute('lang', 'en');
+    /* The portal link, once for both languages, opens in a new tab. */
+    expect(within(await card('Apply box')).getByRole('link', { name: settings.ctaUrl })).toHaveAttribute('target', '_blank');
+    expect(screen.getByText(/Last updated/)).toBeInTheDocument();
+  });
+
   it('lists only the application steps on their tab, in website order, and keeps the tab in the URL', async () => {
     permissions.add('createApplyItem');
     renderAt();
-    await userEvent.click(tab('Application Steps'));
+    await userEvent.click(tab('Application steps'));
 
-    expect(tab('Application Steps')).toHaveAttribute('aria-selected', 'true');
-    expect(await screen.findByText('Online application')).toBeInTheDocument();
+    expect(tab('Application steps')).toHaveAttribute('aria-selected', 'true');
+    expect(tab('Application steps')).toHaveAttribute('aria-controls', panel().id);
+    expect(await within(panel()).findByText('Online application')).toBeInTheDocument();
     expect(screen.queryByText('Security deposit')).not.toBeInTheDocument();
     expect(applyService.list).toHaveBeenLastCalledWith(expect.objectContaining({ kind: 'STEP', sortBy: 'displayOrder', sortOrder: 'asc' }));
     expect(screen.getByTestId('location')).toHaveTextContent('/cms/apply?tab=steps');
-    expect(document.querySelector('.sec-note')).toHaveTextContent(
-      'The "Important" note shown under the steps is edited on the Page Text tab.',
-    );
+    expect(
+      within(panel())
+        .getByText(/note shown under the steps/)
+        .closest('.sec-note'),
+    ).toHaveTextContent('The "Important" note shown under the steps is edited on the Page text tab.');
 
     /* The header action follows the tab. */
     expect(screen.getByRole('button', { name: /Add Step/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Add At-a-glance Row/ })).not.toBeInTheDocument();
   });
 
-  it('opens At a Glance from the URL, with its card heading and its own Add button', async () => {
+  it('opens At a glance from the URL, with its card heading and its own Add button', async () => {
     permissions.add('createApplyItem');
     renderAt('/cms/apply?tab=facts');
 
-    expect(tab('At a Glance')).toHaveAttribute('aria-selected', 'true');
-    expect(await screen.findByText('Security deposit')).toBeInTheDocument();
+    expect(tab('At a glance')).toHaveAttribute('aria-selected', 'true');
+    expect(await within(panel()).findByText('Security deposit')).toBeInTheDocument();
     expect(screen.queryByText('Online application')).not.toBeInTheDocument();
-    expect(applyService.list).toHaveBeenLastCalledWith(expect.objectContaining({ kind: 'FACT' }));
-    expect(await screen.findByText('लक्षात ठेवा')).toBeInTheDocument();
+    expect(applyService.list).toHaveBeenLastCalledWith(expect.objectContaining({ kind: 'FACT', sortBy: 'displayOrder' }));
+    expect(await within(panel()).findByText('लक्षात ठेवा')).toBeInTheDocument();
+    expect(within(panel()).getByText(/Card heading on the website/)).toHaveTextContent('change it on the Page text tab.');
 
     await userEvent.click(screen.getByRole('button', { name: /Add At-a-glance Row/ }));
     expect(screen.getByTestId('location')).toHaveTextContent('/cms/apply/create?kind=FACT');
   });
 
-  it('shows the documents list as the website does, edited in Eligibility Page Management', async () => {
+  it('shows the documents list as the website does, as table rows, edited in Eligibility Page Management', async () => {
     permissions.add('viewEligibility');
     renderAt('/cms/apply?tab=documents');
 
-    const items = await screen.findAllByRole('listitem');
-    expect(items.map((li) => within(li).getByText(/./, { selector: '[lang="en"]' }).textContent)).toEqual([
+    const table = await within(panel()).findByRole('table');
+    expect(headers(table)).toEqual(['Sr. No.', 'Document']);
+    const rows = bodyRows(table);
+    expect(rows.map((r) => within(r).getAllByRole('cell')[0].textContent)).toEqual(['1', '2']);
+    expect(rows.map((r) => within(r).getByText(/./, { selector: '[lang="en"]' }).textContent)).toEqual([
       'Aadhaar card',
       'Photograph and signature',
     ]);
-    expect(screen.getByText('आवश्यक कागदपत्रे')).toBeInTheDocument();
-    expect(screen.getByText(/Edited in Eligibility Page Management/)).toBeInTheDocument();
+    expect(within(rows[0]).getByText('आधार कार्ड')).toHaveAttribute('lang', 'mr');
+    expect(within(panel()).getByText('2 listed')).toBeInTheDocument();
+    expect(within(panel()).getByText('आवश्यक कागदपत्रे')).toBeInTheDocument();
+    expect(within(panel()).getByText(/Edited in Eligibility Page Management/)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /Manage in Eligibility Page Management/ }));
-    expect(screen.getByTestId('location')).toHaveTextContent('/cms/eligibility');
+    /* Straight to the Required documents tab, where the list is edited. */
+    expect(screen.getByTestId('location')).toHaveTextContent('/cms/eligibility?tab=documents');
+  });
+
+  it('says so when the website lists no documents', async () => {
+    vi.mocked(applyService.publicDocuments).mockResolvedValue([]);
+    renderAt('/cms/apply?tab=documents');
+
+    expect(await within(panel()).findByText('No documents are listed')).toBeInTheDocument();
+    expect(within(panel()).queryByRole('table')).not.toBeInTheDocument();
+    expect(within(panel()).getByText('0 listed')).toBeInTheDocument();
+    expect(within(panel()).getByText(/Edited in Eligibility Page Management/)).toBeInTheDocument();
   });
 
   it('opens a tab from its KPI tile', async () => {
     renderAt();
-    await userEvent.click(await screen.findByText('At-a-glance rows'));
+    await userEvent.click(await screen.findByText('At-a-glance rows', { selector: '.kpi-t' }));
 
-    expect(tab('At a Glance')).toHaveAttribute('aria-selected', 'true');
-    expect(await screen.findByText('Security deposit')).toBeInTheDocument();
+    expect(tab('At a glance')).toHaveAttribute('aria-selected', 'true');
+    expect(await within(panel()).findByText('Security deposit')).toBeInTheDocument();
   });
 
-  it('falls back to Page Text for an unknown tab', async () => {
+  it('moves between tabs with the arrow, Home and End keys', async () => {
+    renderAt();
+    tab('Page text').focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(tab('Application steps')).toHaveAttribute('aria-selected', 'true');
+    expect(tab('Application steps')).toHaveFocus();
+    expect(screen.getByTestId('location')).toHaveTextContent('/cms/apply?tab=steps');
+    await userEvent.keyboard('{End}');
+    expect(tab('Documents to keep ready')).toHaveAttribute('aria-selected', 'true');
+    expect(tab('Documents to keep ready')).toHaveFocus();
+    await userEvent.keyboard('{Home}');
+    expect(tab('Page text')).toHaveAttribute('aria-selected', 'true');
+    expect(tab('Page text')).toHaveFocus();
+  });
+
+  it('falls back to Page text for an unknown tab', async () => {
     renderAt('/cms/apply?tab=nonsense');
-    expect(tab('Page Text')).toHaveAttribute('aria-selected', 'true');
-    expect(await screen.findByRole('heading', { name: /Page heading/ })).toBeInTheDocument();
+    expect(tab('Page text')).toHaveAttribute('aria-selected', 'true');
+    expect(await within(panel()).findByRole('heading', { name: /Page heading/ })).toBeInTheDocument();
   });
 
   it('offers no Edit or Add actions to a view-only user', async () => {
     renderAt();
-    await screen.findByRole('heading', { name: /Page heading/ });
+    await within(panel()).findByRole('heading', { name: /Page heading/ });
     expect(screen.queryByRole('button', { name: /Edit Page Text/ })).not.toBeInTheDocument();
 
-    await userEvent.click(tab('Application Steps'));
-    await screen.findByText('Online application');
+    await userEvent.click(tab('Application steps'));
+    await within(panel()).findByText('Online application');
     expect(screen.queryByRole('button', { name: /Add Step/ })).not.toBeInTheDocument();
 
-    await userEvent.click(tab('Documents to Keep Ready'));
-    await screen.findAllByRole('listitem');
+    await userEvent.click(tab('Documents to keep ready'));
+    await within(panel()).findByRole('table');
     expect(screen.queryByRole('button', { name: /Manage in Eligibility/ })).not.toBeInTheDocument();
   });
 
-  it('shows the Edit Page Text action to an editor on the Page Text tab', async () => {
+  it('shows the Edit Page Text action to an editor on the Page text tab', async () => {
     permissions.add('updateApplyPage');
     renderAt();
     await userEvent.click(await screen.findByRole('button', { name: /Edit Page Text/ }));

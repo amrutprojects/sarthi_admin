@@ -2,6 +2,9 @@ import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from 're
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ADMIN_ROUTES, type RouteName } from '../constants/navigation';
 import AdminLayout from '../layouts/AdminLayout';
+import { useAuth } from '../modules/auth/auth-context';
+import { useHome } from '../modules/auth/components/Can';
+import { homePath } from '../modules/auth/home';
 import LoginPage from '../modules/auth/pages/LoginPage';
 import ProtectedRoute from './routing/ProtectedRoute';
 import RequireAccess from './routing/RequireAccess';
@@ -178,16 +181,23 @@ function PageLoading() {
 }
 
 function NotFound() {
+  const home = useHome();
   return (
     <div className="page">
       <div className="page-head">
         <h1>Page not found</h1>
       </div>
-      <a className="btn primary" href="/dashboard">
-        Go to Dashboard
+      <a className="btn primary" href={home.r}>
+        {'Go to ' + home.l}
       </a>
     </div>
   );
+}
+
+/* "/" opens the signed-in user's start screen; signed out, the Dashboard route sends them to the login page. */
+function HomeRedirect() {
+  const { status, permissions, hiddenMenus, portal } = useAuth();
+  return <Navigate to={status === 'authenticated' ? homePath({ permissions, hiddenMenus, portal }) : '/dashboard'} replace />;
 }
 
 export function AppRoutes() {
@@ -215,7 +225,7 @@ export function AppRoutes() {
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<HomeRedirect />} />
     </Routes>
   );
 }

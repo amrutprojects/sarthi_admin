@@ -75,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       primaryRole: user?.roles[0] ?? null,
       permissions: new Set(user?.permissions ?? []),
       hiddenMenus: new Set(user?.hiddenMenus ?? []),
+      portal: user?.portal ?? 'admin',
       login,
       logout,
       refresh,

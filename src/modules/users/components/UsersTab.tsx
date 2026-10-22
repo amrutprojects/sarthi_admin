@@ -1,31 +1,21 @@
 import StatusToggle from '../../../components/ui/StatusToggle';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ConfirmModal, toastError, toastOk } from '../../../components/feedback/apiFeedback';
 import { Callout, Kpi } from '../../../components/ui';
 import Icon from '../../../components/ui/Icon';
-import { Drawer, Modal } from '../../../components/ui/Overlay';
-import { ApiError, newIdempotencyKey } from '../../../services/api-client';
-import { useAuth, useCan } from '../../auth';
+import { Drawer } from '../../../components/ui/Overlay';
+import { ApiError } from '../../../services/api-client';
+import { WEBSITE_ADMIN_ROLE, useAuth, useCan } from '../../auth';
 import { useRoles } from '../../roles-permissions';
-import { useCreateUser, useDeleteUser, useReplaceUserRoles, useSetUserStatus, useUpdateUser, useUsers } from '../hooks/useUsers';
-import type { UserFormValues } from '../schemas/userSchema';
+import { useDeleteUser, useReplaceUserRoles, useSetUserStatus, useUsers } from '../hooks/useUsers';
 import type { User, UserListParams } from '../types/user.types';
+import { toggleRole } from './roleSelection';
+import { CreateUserDialog, EditUserDialog } from './UserDialogs';
 import UserFilters, { type UserFilterValues } from './UserFilters';
-import UserForm from './UserForm';
 import UserTable from './UserTable';
 
 type Dialog = { type: 'create' } | { type: 'edit'; user: User } | { type: 'roles'; user: User } | { type: 'delete'; user: User };
 const PAGE_SIZE = 20;
-
-/* Field errors from a 422 / 409 response, mapped onto the form. */
-function serverFieldErrors(err: unknown): Partial<Record<keyof UserFormValues, string>> {
-  if (!(err instanceof ApiError)) return {};
-  if (err.status === 409 && /email/i.test(err.message)) return { email: err.message };
-  const out: Partial<Record<keyof UserFormValues, string>> = {};
-  for (const d of err.details)
-    if (d.field && ['name', 'email', 'password'].includes(d.field)) out[d.field as keyof UserFormValues] = d.message;
-  return out;
-}
 
 /*
  * Users screen (sample feature for the module conventions, see docs/development-guidelines/frontend-modules.md):
@@ -193,80 +183,12 @@ export default function UsersTab() {
   );
 }
 
-function CreateUserDialog({ roles, onClose }: { roles: Parameters<typeof UserForm>[0]['roles']; onClose: () => void }) {
-  const create = useCreateUser();
-  /* One key per dialog: a retry of the same submission is replayed, not duplicated. */
-  const key = useRef(newIdempotencyKey());
-  const serverErrors = useMemo(() => serverFieldErrors(create.error), [create.error]);
-  return (
-    <Modal title="Add user" onClose={onClose}>
-      <UserForm
-        mode="create"
-        roles={roles}
-        submitting={create.isPending}
-        serverErrors={serverErrors}
-        onCancel={onClose}
-        onSubmit={(v) =>
-          create.mutate(
-            {
-              name: v.name,
-              email: v.email,
-              password: v.password,
-              roleIds: v.roleIds.length ? v.roleIds : undefined,
-              idempotencyKey: key.current,
-            },
-            {
-              onSuccess: () => {
-                toastOk('User created');
-                onClose();
-              },
-              onError: (e) => {
-                if (!Object.keys(serverFieldErrors(e)).length) toastError(e);
-              },
-            },
-          )
-        }
-      />
-    </Modal>
-  );
-}
-
-function EditUserDialog({ user, onClose }: { user: User; onClose: () => void }) {
-  const update = useUpdateUser();
-  const serverErrors = useMemo(() => serverFieldErrors(update.error), [update.error]);
-  return (
-    <Modal title={`Edit ${user.name}`} onClose={onClose}>
-      <UserForm
-        mode="edit"
-        defaultValues={{ name: user.name, email: user.email }}
-        submitting={update.isPending}
-        serverErrors={serverErrors}
-        onCancel={onClose}
-        onSubmit={(v) =>
-          update.mutate(
-            { id: user.id, input: { name: v.name, email: v.email, ...(v.password ? { password: v.password } : {}) } },
-            {
-              onSuccess: () => {
-                toastOk('User updated');
-                onClose();
-              },
-              onError: (e) => {
-                if (!Object.keys(serverFieldErrors(e)).length) toastError(e);
-              },
-            },
-          )
-        }
-      />
-    </Modal>
-  );
-}
-
 function UserRolesDrawer({ user, onClose }: { user: User; onClose: () => void }) {
   const roles = useRoles(true);
   const save = useReplaceUserRoles();
   const [selected, setSelected] = useState<string[]>(() => (user.roles ?? []).map((r) => r.id));
   const usable = (roles.data ?? []).filter((r) => r.isActive || selected.includes(r.id));
-  const toggle = (id: string) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const toggle = (role: { id: string; code: string }) => setSelected((s) => toggleRole(s, role, roles.data ?? []));
   return (
     <Drawer
       title={`Roles — ${user.name}`}
@@ -301,12 +223,13 @@ function UserRolesDrawer({ user, onClose }: { user: User; onClose: () => void })
       <Callout tone="info" title="Privilege rules. ">
         You can only grant or remove roles whose permissions you hold, and you cannot change your own roles. The server enforces these
         rules.
+        {usable.some((r) => r.code === WEBSITE_ADMIN_ROLE) ? ' Website Admin is held on its own: it sees only the CMS menu.' : null}
       </Callout>
       {roles.isPending ? <div className="skel tw-mt-4" style={{ height: 120 }} /> : null}
       <div className="list mt14">
         {usable.map((r) => (
           <label key={r.id} className="list-row tw-cursor-pointer">
-            <input type="checkbox" className="tw-accent-brand-600" checked={selected.includes(r.id)} onChange={() => toggle(r.id)} />
+            <input type="checkbox" className="tw-accent-brand-600" checked={selected.includes(r.id)} onChange={() => toggle(r)} />
             <div className="lr-main">
               <b>{r.name}</b>
               <span className="mono">{r.code}</span>

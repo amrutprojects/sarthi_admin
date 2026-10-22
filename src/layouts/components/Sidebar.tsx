@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../components/ui/Icon';
 import { NAV, isNavGroup, type NavEntry } from '../../constants/navigation';
+import { useAuth } from '../../modules/auth/auth-context';
 import { useCanOpen } from '../../modules/auth/components/Can';
 import { goTo } from '../../hooks/useLegacyEvents';
 import { useLegacyTick } from '../../utils/legacyBus';
@@ -16,6 +17,7 @@ export default function Sidebar({ active, collapsed, open, onToggle }: SidebarPr
   const navigate = useNavigate();
   useLegacyTick(); // task counts change when legacy pages update data
   const canOpen = useCanOpen();
+  const { portal } = useAuth();
 
   /* Only screens the role may open; a group heading is dropped when nothing under it is visible. */
   const visible = NAV.filter((n) => isNavGroup(n) || canOpen(n.k)).filter((n, i, arr): n is NavEntry => {
@@ -30,7 +32,7 @@ export default function Sidebar({ active, collapsed, open, onToggle }: SidebarPr
         <div className="sb-logo">A×S</div>
         <div className="sb-brand-txt">
           <b>AMRUT × SUMAGO</b>
-          <span>Programme Management Portal</span>
+          <span>{portal === 'website' ? 'Website Admin' : 'Programme Management Portal'}</span>
         </div>
       </div>
       <div className="sb-scroll">

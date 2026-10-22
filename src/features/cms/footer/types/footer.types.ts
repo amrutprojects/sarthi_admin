@@ -35,6 +35,18 @@ export const LINKING_KINDS: readonly FooterLinkKind[] = ['INTERNAL', 'EXTERNAL']
  */
 export const MAX_LINK_COLUMNS = 2;
 
+/*
+ * The four tabs of Footer Management, one per part of the public footer, named as in the edit form. The
+ * active tab is kept in the URL (?tab=), as on Modules Page Management.
+ */
+export const FOOTER_TABS = [
+  { k: 'about', l: 'About column' },
+  { k: 'links', l: 'Link columns' },
+  { k: 'contact', l: 'Contact column' },
+  { k: 'bottom', l: 'Bottom bar' },
+] as const;
+export type FooterTab = (typeof FOOTER_TABS)[number]['k'];
+
 export interface ApiFooterLink {
   id: string;
   kind: FooterLinkKind;

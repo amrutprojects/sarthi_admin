@@ -9,6 +9,7 @@
  * here and the <AuthProvider> component in AuthContext.tsx makes that impossible.
  */
 import { createContext, useContext } from 'react';
+import type { Portal } from './permissions';
 import type { ApiRoleRef, CurrentUser } from './types/auth.types';
 
 export type AuthStatus = 'loading' | 'anonymous' | 'authenticated';
@@ -20,7 +21,9 @@ export interface AuthValue {
   primaryRole: ApiRoleRef | null;
   permissions: Set<string>;
   hiddenMenus: Set<string>;
-  login: (email: string, password: string) => Promise<CurrentUser>;
+  /* 'website': a Website Admin, who works in the CMS menu only. */
+  portal: Portal;
+  login:(email: string, password: string) => Promise<CurrentUser>;
   logout: () => Promise<void>;
   /* Re-load /auth/me, e.g. after the user's own roles changed. */
   refresh: () => Promise<void>;

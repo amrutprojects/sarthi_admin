@@ -25,7 +25,7 @@ export default function ApplyPageEdit() {
    * here gets an explanation instead of a form whose Save the server would refuse with a 403.
    */
   const canEdit = can('updateApplyPage');
-  /* Back, Cancel and Save all return to the Page Text tab this form is opened from. */
+  /* Back, Cancel and Save all return to the Page text tab this form is opened from. */
   const listPath = applyListPath('page');
 
   return (

@@ -7,7 +7,7 @@ import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { ConfirmModal, LoadState, fmtDateTime, useAction, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import { eligibilityService } from '../services/eligibilityService';
-import { KIND_LABEL, type ApiEligibilityItem, type Bilingual } from '../types/eligibility.types';
+import { KIND_LABEL, KIND_TAB, eligibilityListPath, type ApiEligibilityItem, type Bilingual } from '../types/eligibility.types';
 import { labelName } from '../validation/eligibility.validation';
 
 /* One language's label (and, for a criterion, value), as the public Eligibility page shows it. */
@@ -44,6 +44,8 @@ export default function EligibilityView() {
   const kindLabel = item ? KIND_LABEL[item.kind] : 'Item';
   /* Where the item appears on the public page, for the details and the confirmations. */
   const listName = item?.kind === 'DOCUMENT' ? 'required documents checklist' : 'eligibility criteria card';
+  /* The listing tab this item is on, for Back and after a delete. */
+  const listPath = item ? eligibilityListPath(KIND_TAB[item.kind]) : '/cms/eligibility';
   usePageTitle(item ? item.label.en : 'Eligibility item');
 
   return (
@@ -51,7 +53,7 @@ export default function EligibilityView() {
       <PageHead
         crumbs={[
           { l: 'Dashboard', link: '/dashboard' },
-          { l: 'Eligibility Page Management', link: '/cms/eligibility' },
+          { l: 'Eligibility Page Management', link: listPath },
           { l: item ? item.label.en : 'Eligibility item' },
         ]}
         title={item ? item.label.en : 'Eligibility item'}
@@ -62,7 +64,7 @@ export default function EligibilityView() {
             </span>
           ) : undefined
         }
-        back={<BackButton to="/cms/eligibility" />}
+        back={<BackButton to={listPath} />}
         actions={
           <div className="f ac gp8 wrap">
             {item ? (
@@ -142,7 +144,7 @@ export default function EligibilityView() {
               `${kindLabel} deleted`,
               () => {
                 setDeleting(false);
-                navigate('/cms/eligibility');
+                navigate(listPath);
               },
             )
           }

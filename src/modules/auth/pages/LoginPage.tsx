@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import AS from '../../../legacy';
 import { api } from '../../../services/mock/api';
 import { useAuth } from '../auth-context';
+import { canOpenPath, homePath } from '../home';
 import { ApiError } from '../../../services/api-client';
 import { publicUrl } from '../../../utils/publicSite';
 
@@ -13,7 +14,7 @@ import { publicUrl } from '../../../utils/publicSite';
 export default function LoginPage() {
   const CT = AS.content;
   const U = AS.ui;
-  const { status, login } = useAuth();
+  const { status, login, permissions, hiddenMenus, portal } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [lang, setLangState] = useState(CT.getLang());
@@ -27,12 +28,12 @@ export default function LoginPage() {
     document.title = 'Sign in — AMRUT × SUMAGO Admin';
   }, []);
 
-  if (status === 'authenticated') return <Navigate to="/dashboard" replace />;
+  if (status === 'authenticated') return <Navigate to={homePath({ permissions, hiddenMenus, portal })} replace />;
 
   const mr = lang === 'mr';
   const T = (m: string, en: string): string => (mr ? m : en);
   const cfg = api.config();
-  const dest = (location.state as { from?: string } | null)?.from || '/dashboard';
+  const from = (location.state as { from?: string } | null)?.from;
 
   function setLang(l: 'mr' | 'en') {
     CT.setLang(l);
@@ -50,7 +51,9 @@ export default function LoginPage() {
     try {
       const me = await login(email.trim(), password);
       U.toast('Signed in as ' + me.name, 'ok');
-      navigate(dest, { replace: true });
+      /* Back to the page that asked for the sign-in when this account may open it, else the account's start screen. */
+      const access = { permissions: new Set(me.permissions), hiddenMenus: new Set(me.hiddenMenus ?? []), portal: me.portal };
+      navigate(from && canOpenPath(from, access) ? from : homePath(access), { replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) setError(T('ईमेल किंवा पासवर्ड चुकीचा आहे.', 'Invalid email or password.'));
       else if (err instanceof ApiError && err.status === 429)
