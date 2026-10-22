@@ -71,10 +71,14 @@ export type RouteName =
   | 'cmsApplyPageEdit'
   | 'cmsApplyEdit'
   | 'cmsApplyView'
-  | 'cmsHomeView'
-  | 'cmsHomeEdit'
+  | 'cmsHeroView'
+  | 'cmsHeroEdit'
   | 'cmsHighlightView'
   | 'cmsHighlightEdit'
+  | 'cmsImpactList'
+  | 'cmsImpactCreate'
+  | 'cmsImpactEdit'
+  | 'cmsImpactSettings'
   | 'cmsProgrammeView'
   | 'cmsProgrammeEdit'
   | 'cmsContactEdit'
@@ -221,8 +225,9 @@ export const NAV: NavEntry[] = [
   { k: 'cms-faqs', l: 'FAQ Management', i: 'help', r: '/cms/faqs' },
   { k: 'cms-eligibility', l: 'Eligibility Page Management', i: 'check', r: '/cms/eligibility' },
   { k: 'cms-apply', l: 'Apply Page Management', i: 'clipboard', r: '/cms/apply' },
-  { k: 'cms-home', l: 'Home Page Figures', i: 'grid', r: '/cms/home' },
+  { k: 'cms-hero', l: 'Home Hero Section', i: 'home', r: '/cms/hero' },
   { k: 'cms-highlight', l: 'Home Programme Section', i: 'doc', r: '/cms/highlight' },
+  { k: 'cms-impact', l: 'AMRUT Impact Management', i: 'chart', r: '/cms/impact' },
   { k: 'cms-programme', l: 'Programme Page Management', i: 'award', r: '/cms/programme' },
   { k: 'cms-states', l: 'State Master', i: 'globe', r: '/cms/states' },
   { k: 'cms-districts', l: 'District Master', i: 'map', r: '/cms/districts' },
@@ -344,10 +349,14 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/apply/page/edit', 'cmsApplyPageEdit', 'cms-apply'],
   ['/cms/apply/:id/edit', 'cmsApplyEdit', 'cms-apply'],
   ['/cms/apply/:id', 'cmsApplyView', 'cms-apply'],
-  ['/cms/home', 'cmsHomeView', 'cms-home'],
-  ['/cms/home/edit', 'cmsHomeEdit', 'cms-home'],
+  ['/cms/hero', 'cmsHeroView', 'cms-hero'],
+  ['/cms/hero/edit', 'cmsHeroEdit', 'cms-hero'],
   ['/cms/highlight', 'cmsHighlightView', 'cms-highlight'],
   ['/cms/highlight/edit', 'cmsHighlightEdit', 'cms-highlight'],
+  ['/cms/impact', 'cmsImpactList', 'cms-impact'],
+  ['/cms/impact/create', 'cmsImpactCreate', 'cms-impact'],
+  ['/cms/impact/settings', 'cmsImpactSettings', 'cms-impact'],
+  ['/cms/impact/:id/edit', 'cmsImpactEdit', 'cms-impact'],
   ['/cms/programme', 'cmsProgrammeView', 'cms-programme'],
   ['/cms/programme/edit', 'cmsProgrammeEdit', 'cms-programme'],
   ['/cms/states', 'cmsStateList', 'cms-states'],
