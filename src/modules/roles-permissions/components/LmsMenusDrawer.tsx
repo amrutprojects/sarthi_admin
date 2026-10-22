@@ -37,7 +37,8 @@ export default function LmsMenusDrawer({
     }
     setSelected(next);
   };
-  const codesOf = (a: LmsCatalogueArea) => a.permissions.map((p) => p.code);
+  /* Sensitive LMS codes are granted only inside the LMS (reason and two-person checks); never from here. */
+  const codesOf = (a: LmsCatalogueArea) => a.permissions.filter((p) => !p.sensitive).map((p) => p.code);
   const allOn = (codes: string[]) => codes.length > 0 && codes.every((c) => granted.has(c));
 
   return (
@@ -75,7 +76,8 @@ export default function LmsMenusDrawer({
       <Callout tone="info" title="LMS role. ">
         Users holding this role sign in to the LMS with their Admin Panel email and password. The LMS sidebar shows only the LMS menus
         ticked here ({shownMenus} {shownMenus === 1 ? 'menu' : 'menus'} now); Admin Panel menus never appear in the LMS, and these ticks
-        grant nothing in the Admin Panel. A menu appears once one of its View permissions is ticked.
+        grant nothing in the Admin Panel. A menu appears once one of its View permissions is ticked. Greyed-out permissions are sensitive:
+        they are granted only inside the LMS, where a reason and the two-person checks apply.
       </Callout>
       <LoadState
         loading={catalogue.loading || current.loading}
@@ -120,15 +122,23 @@ export default function LmsMenusDrawer({
                         <td style={{ textAlign: 'left' }}>
                           <div className="pm-extras" style={{ fontSize: 12, color: 'inherit' }}>
                             {a.permissions.map((p) => (
-                              <label key={p.code} title={`${p.code} — ${p.description}`}>
+                              <label
+                                key={p.code}
+                                title={
+                                  p.sensitive
+                                    ? `${p.code}: sensitive. Granted only inside the LMS, on an LMS role, with a reason.`
+                                    : `${p.code} — ${p.description}`
+                                }
+                                style={p.sensitive ? { opacity: 0.45, cursor: 'not-allowed' } : undefined}
+                              >
                                 <input
                                   type="checkbox"
-                                  checked={granted.has(p.code)}
-                                  disabled={!editable}
+                                  checked={!p.sensitive && granted.has(p.code)}
+                                  disabled={!editable || p.sensitive}
                                   onChange={() => set([p.code], !granted.has(p.code))}
                                 />{' '}
                                 {p.label}
-                                {p.sensitive ? <span className="muted fs11"> (sensitive)</span> : null}
+                                {p.sensitive ? <span className="fs11"> (LMS only)</span> : null}
                               </label>
                             ))}
                           </div>
