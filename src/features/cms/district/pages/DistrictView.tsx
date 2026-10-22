@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { KvList, PageHead, useGo } from '../../../../components/ui';
-import { Can } from '../../../../modules/auth/components/Can';
+import { Can } from '../../../../modules/auth';
+import BackButton from '../../components/BackButton';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { LoadState, fmtDateTime, useAction, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
@@ -27,9 +28,9 @@ export default function DistrictView() {
         title={district ? district.name : 'District'}
         badge={district ? <span className="tag">{district.code}</span> : undefined}
         sub={district ? `${district.stateName} (${district.stateCode})` : undefined}
+        back={<BackButton to="/cms/districts" />}
         actions={
           <div className="f ac gp8 wrap">
-            <button type="button" className="btn" onClick={() => go('/cms/districts')}>Back to list</button>
             {district ? (
               <>
                 <Can action="updateDistrict">
@@ -81,14 +82,15 @@ export default function DistrictView() {
             <div className="card-h"><h3>Talukas</h3></div>
             <div className="card-b">
               <KvList pairs={[['Talukas attached', String(district.talukaCount ?? 0)]]} />
+              {/* Only the taluka count comes with the record; colleges, training centres and documents block the delete too. */}
               <div className="hint mt10">
-                {district.talukaCount
-                  ? 'A district with talukas cannot be deleted. Deactivate it instead if it should no longer be offered.'
-                  : 'No talukas reference this district yet.'}
+                {district.talukaCount ? '' : 'No talukas reference this district yet. '}
+                A district that still has talukas, colleges, training centres or documents cannot be deleted. Deactivate it
+                instead if it should no longer be offered.
               </div>
               <div className="f gp8 wrap mt10">
                 <Can action="viewTalukas">
-                  <button type="button" className="btn sm" onClick={() => go(`/cms/talukas?districtId=${district.id}`)}>
+                  <button type="button" className="btn sm" onClick={() => go(`/cms/talukas?stateId=${district.stateId}&districtId=${district.id}`)}>
                     Open talukas of this district
                   </button>
                 </Can>

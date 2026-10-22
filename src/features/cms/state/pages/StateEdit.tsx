@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { PageHead } from '../../../../components/ui';
-import { Can } from '../../../../modules/auth/components/Can';
+import { Can } from '../../../../modules/auth';
+import BackButton from '../../components/BackButton';
 import MasterField from '../../components/MasterField';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { LoadState, toastOk, useAction, useApiData } from '../../shared';
@@ -29,6 +30,7 @@ export default function StateEdit() {
         ]}
         title={state ? `Edit ${state.name}` : 'Edit State'}
         sub="Renaming a state or correcting its code does not affect the districts attached to it."
+        back={<BackButton to={state ? `/cms/states/${state.id}` : '/cms/states'} />}
       />
 
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
@@ -37,7 +39,6 @@ export default function StateEdit() {
         <StateForm
           initial={{ name: state.name, code: state.code, isActive: state.isActive }}
           submitLabel="Save changes"
-
           confirmMessage="Are you sure you want to save the changes to this state?"
           backTo={`/cms/states/${state.id}`}
           onSave={async (values) => {

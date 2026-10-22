@@ -308,7 +308,10 @@ function UserRolesDrawer({ user, onClose }: { user: User; onClose: () => void })
           <label key={r.id} className="list-row tw-cursor-pointer">
             <input type="checkbox" className="tw-accent-brand-600" checked={selected.includes(r.id)} onChange={() => toggle(r.id)} />
             <div className="lr-main">
-              <b>{r.name}</b>
+              <b>
+                {r.name}
+                {r.platform === 'LMS' ? <span className="muted fs11"> · LMS role</span> : null}
+              </b>
               <span className="mono">{r.code}</span>
             </div>
           </label>

@@ -82,6 +82,19 @@ export default function MasterTable<T extends { id: string }>({
     }
   }, [query.search]);
 
+  /*
+   * A page that no longer exists — its last row was deleted or deactivated under a status filter, or
+   * another admin shrank the list — comes back empty with a smaller totalPages. Step back to the last
+   * real page instead of showing "No records found" beside a non-zero total. Math.max(1, …): an empty
+   * list reports 0 pages and still lands on page 1.
+   */
+  const lastPage = meta ? Math.max(1, meta.totalPages) : null;
+  useEffect(() => {
+    if (loading || error || lastPage === null) return;
+    if (query.page > lastPage) onQuery({ page: lastPage });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, error, lastPage, query.page]);
+
   const toggleSort = (k: string) =>
     onQuery(query.sortBy === k ? { sortOrder: query.sortOrder === 'asc' ? 'desc' : 'asc' } : { sortBy: k, sortOrder: 'asc' });
 

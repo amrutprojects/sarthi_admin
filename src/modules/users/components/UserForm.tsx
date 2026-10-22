@@ -102,6 +102,7 @@ export default function UserForm({ mode, defaultValues, roles = [], submitting, 
                     onChange={(e) => setValue('roleIds', e.target.checked ? [...roleIds, r.id] : roleIds.filter((x) => x !== r.id))}
                   />
                   {r.name}
+                  {r.platform === 'LMS' ? <span className="tw-text-xs tw-text-ink-muted">(LMS role)</span> : null}
                 </label>
               ))}
           </div>
