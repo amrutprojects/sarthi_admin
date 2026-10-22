@@ -777,7 +777,7 @@ export default function ModulesForm({ initial, onSave, backTo }: ModulesFormProp
         {/* The /programme fact sheet (duration, validity, deposit, apply-before, partner) is edited
             on the Programme page (/cms/programme); its hours and counts are summed from the modules. */}
 
-        {/* The home page's "Programme at a glance" figures have their own CMS menu (/cms/home),
+        {/* The home page's "Programme at a glance" figures are edited in Home Hero Section (/cms/hero),
             because three of the four are summed from the modules and only one is typed. */}
       </form>
 
