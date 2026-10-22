@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import AS from '../../legacy';
 import { Modal } from '../ui/Overlay';
 import { ApiError } from '../../services/api-client';
@@ -90,6 +90,7 @@ export function ConfirmModal({
   busy,
   onConfirm,
   onClose,
+  children,
 }: {
   title: string;
   message: string;
@@ -98,6 +99,8 @@ export function ConfirmModal({
   busy?: boolean;
   onConfirm: () => void;
   onClose: () => void;
+  /* Optional detail under the message, e.g. a list of what the action affects. */
+  children?: ReactNode;
 }) {
   return (
     <Modal
@@ -115,6 +118,7 @@ export function ConfirmModal({
       }
     >
       <p style={{ margin: 0 }}>{message}</p>
+      {children}
     </Modal>
   );
 }
