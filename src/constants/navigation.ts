@@ -66,6 +66,11 @@ export type RouteName =
   | 'cmsEligibilityPageEdit'
   | 'cmsEligibilityEdit'
   | 'cmsEligibilityView'
+  | 'cmsApplyList'
+  | 'cmsApplyCreate'
+  | 'cmsApplyPageEdit'
+  | 'cmsApplyEdit'
+  | 'cmsApplyView'
   | 'cmsContactEdit'
   | 'cmsStateList'
   | 'cmsStateCreate'
@@ -209,6 +214,7 @@ export const NAV: NavEntry[] = [
   { k: 'cms-modules', l: 'Modules Page Management', i: 'book', r: '/cms/modules' },
   { k: 'cms-faqs', l: 'FAQ Management', i: 'help', r: '/cms/faqs' },
   { k: 'cms-eligibility', l: 'Eligibility Page Management', i: 'check', r: '/cms/eligibility' },
+  { k: 'cms-apply', l: 'Apply Page Management', i: 'clipboard', r: '/cms/apply' },
   { k: 'cms-states', l: 'State Master', i: 'globe', r: '/cms/states' },
   { k: 'cms-districts', l: 'District Master', i: 'map', r: '/cms/districts' },
   { k: 'cms-talukas', l: 'Taluka Master', i: 'pin', r: '/cms/talukas' },
@@ -324,6 +330,11 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/eligibility/page/edit', 'cmsEligibilityPageEdit', 'cms-eligibility'],
   ['/cms/eligibility/:id/edit', 'cmsEligibilityEdit', 'cms-eligibility'],
   ['/cms/eligibility/:id', 'cmsEligibilityView', 'cms-eligibility'],
+  ['/cms/apply', 'cmsApplyList', 'cms-apply'],
+  ['/cms/apply/create', 'cmsApplyCreate', 'cms-apply'],
+  ['/cms/apply/page/edit', 'cmsApplyPageEdit', 'cms-apply'],
+  ['/cms/apply/:id/edit', 'cmsApplyEdit', 'cms-apply'],
+  ['/cms/apply/:id', 'cmsApplyView', 'cms-apply'],
   ['/cms/states', 'cmsStateList', 'cms-states'],
   ['/cms/states/create', 'cmsStateCreate', 'cms-states'],
   ['/cms/states/:id/edit', 'cmsStateEdit', 'cms-states'],
