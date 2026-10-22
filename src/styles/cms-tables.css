@@ -1,0 +1,193 @@
+/* =========================================================
+   CMS master listings — presentation only.
+   The panel's tables never wrap cell text (styles.css: table.tbl td { white-space: nowrap }), so a
+   long district / centre name widened the table until the Action column scrolled out of view.
+   In the master listings (recognised by the status switch in their Action column) text cells may
+   wrap; the Action cell stays on one line and only as wide as its buttons.
+   ========================================================= */
+table.tbl:has(td .switch) td {
+  white-space: normal;
+}
+table.tbl:has(td .switch) td:last-child {
+  white-space: nowrap;
+  width: 1%;
+}
+table.tbl:has(td .switch) td:last-child > .f {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+/* Small status switch for the Action column, sized to sit with the 28px icon buttons. */
+.switch.sm {
+  width: 30px;
+  height: 17px;
+  flex: 0 0 30px;
+}
+.switch.sm::after {
+  top: 2px;
+  left: 2px;
+  width: 13px;
+  height: 13px;
+}
+.switch.sm.on::after {
+  transform: translateX(13px);
+}
+
+/* =========================================================
+   Sectioned CMS pages (Apply Page Management): one tab per section of the public page.
+   Bigger, higher-contrast tabs and text than the panel defaults, so the section being edited —
+   and both languages of every line — read at a glance. Everything is scoped to .cms-sections,
+   so no other screen changes.
+   ========================================================= */
+.cms-sections .sec-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px;
+  margin-bottom: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.cms-sections .sec-tabs button {
+  flex: 1 1 200px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 46px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+.cms-sections .sec-tabs button:hover {
+  background: var(--brand-050);
+  color: var(--brand-700);
+}
+.cms-sections .sec-tabs button.on {
+  background: var(--brand-600);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(138, 65, 22, 0.25);
+}
+.cms-sections .sec-tabs button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.cms-sections .sec-tabs svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+.cms-sections .sec-tabs .cnt {
+  min-width: 26px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: var(--brand-100);
+  color: var(--brand-700);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+}
+.cms-sections .sec-tabs button.on .cnt {
+  background: rgba(255, 255, 255, 0.24);
+  color: #fff;
+}
+
+/* The note at the top of a tab: where the section's surrounding text is edited. */
+.cms-sections .sec-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--brand-500);
+  border-radius: var(--r);
+  background: var(--brand-050);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.cms-sections .sec-note svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  margin-top: 1px;
+  color: var(--brand-600);
+}
+
+/* Section titles, their explanations, filter labels and notices a size up. */
+.cms-sections .card-h h3 {
+  font-size: 17px;
+}
+.cms-sections .card-h .sub {
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+.cms-sections .filterbar .fld label {
+  font-size: 13px;
+  color: var(--text);
+}
+.cms-sections .callout {
+  font-size: 14px;
+}
+
+/* The lists: larger text, top-aligned rows, and both languages in strong colours. */
+.cms-sections table.tbl {
+  font-size: 14px;
+}
+.cms-sections table.tbl th {
+  font-size: 12.5px;
+  color: var(--text);
+}
+.cms-sections table.tbl td {
+  padding-top: 13px;
+  padding-bottom: 13px;
+  vertical-align: top;
+}
+.cms-sections table.tbl td .lnk {
+  font-size: 15px;
+}
+.cms-sections .bi-main {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.cms-sections .bi-alt {
+  margin-top: 2px;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* Page text and the documents list: label / value rows and list items a size up. */
+.cms-sections .kv {
+  padding: 10px 0;
+  font-size: 14px;
+}
+.cms-sections .kv span {
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
+}
+.cms-sections .sec-list {
+  margin: 0;
+  padding-left: 24px;
+}
+.cms-sections .sec-list li {
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+.cms-sections .sec-list li::marker {
+  color: var(--brand-600);
+  font-weight: 700;
+}

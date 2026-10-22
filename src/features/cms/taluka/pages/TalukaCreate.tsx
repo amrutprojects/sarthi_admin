@@ -1,5 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHead } from '../../../../components/ui';
+import BackButton from '../../components/BackButton';
 import { toastOk } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import { talukaService } from '../services/talukaService';
@@ -18,6 +19,7 @@ export default function TalukaCreate() {
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'Taluka Master', link: '/cms/talukas' }, { l: 'Add Taluka' }]}
         title="Add Taluka"
         sub="Choose a state, then one of its districts. The taluka is stored against the district."
+        back={<BackButton to="/cms/talukas" />}
       />
       <TalukaForm
         initial={emptyTalukaForm(params.get('stateId') ?? '', params.get('districtId') ?? '')}

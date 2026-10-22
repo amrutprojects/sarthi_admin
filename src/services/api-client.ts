@@ -133,11 +133,29 @@ export async function requestAll<T>(path: string, query: RequestOptions['query']
   return out;
 }
 
-/* Authenticated file download (e.g. CSV templates): fetched with the session cookie and saved via a temporary link. */
+/*
+ * Authenticated file download (e.g. CSV templates): fetched with the session cookie and saved via a temporary link.
+ * A failure carries the server's reason ("The file of this document is missing", "Document not found") from its
+ * JSON error envelope, as request() does, so the toast can tell a missing file from a missing record.
+ */
 export async function downloadFile(path: string, fileName: string): Promise<void> {
-  const res = await fetch(API_BASE_URL + path, { credentials: 'include' });
+  let res: Response;
+  try {
+    res = await fetch(API_BASE_URL + path, { credentials: 'include' });
+  } catch (err) {
+    if ((err as Error).name === 'AbortError') throw err;
+    throw new ApiError('Cannot reach the server. Check that the backend is running.', 0, 'NETWORK_ERROR');
+  }
   if (res.status === 401) unauthorizedHandler?.();
-  if (!res.ok) throw new ApiError(`Download failed (${res.status})`, res.status, 'DOWNLOAD_FAILED');
+  if (!res.ok) {
+    const json = (await res.json().catch(() => null)) as Envelope<unknown> | null;
+    throw new ApiError(
+      json?.message || `Download failed (${res.status})`,
+      res.status,
+      json?.error?.code ?? 'DOWNLOAD_FAILED',
+      json?.error?.details ?? [],
+    );
+  }
   const url = URL.createObjectURL(await res.blob());
   const a = document.createElement('a');
   a.href = url;
@@ -146,6 +164,30 @@ export async function downloadFile(path: string, fileName: string): Promise<void
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/*
+ * Authenticated binary read (e.g. an image shown through an object URL): fetched with the session cookie like
+ * request(), a 401 notifies the app the same way, and a failure carries the server's JSON error envelope.
+ */
+export async function requestBlob(path: string, opts: { signal?: AbortSignal; accept?: string } = {}): Promise<Blob> {
+  let res: Response;
+  try {
+    res = await fetch(API_BASE_URL + path, {
+      credentials: 'include',
+      signal: opts.signal,
+      headers: opts.accept ? { Accept: opts.accept } : undefined,
+    });
+  } catch (err) {
+    if ((err as Error).name === 'AbortError') throw err;
+    throw new ApiError('Cannot reach the server. Check that the backend is running.', 0, 'NETWORK_ERROR');
+  }
+  if (res.status === 401) unauthorizedHandler?.();
+  if (!res.ok) {
+    const json = (await res.json().catch(() => null)) as Envelope<unknown> | null;
+    throw new ApiError(json?.message || `Request failed (${res.status})`, res.status, json?.error?.code ?? 'ERROR', json?.error?.details ?? []);
+  }
+  return res.blob();
 }
 
 /* A fresh key per user action, reused if that action is retried. */

@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
-import { Can } from '../../../../modules/auth/components/Can';
+import { Can } from '../../../../modules/auth';
+import BackButton from '../../components/BackButton';
 import MasterField from '../../components/MasterField';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { LoadState, toastOk, useAction, useApiData } from '../../shared';
@@ -33,7 +34,8 @@ export default function TalukaEdit() {
           { l: 'Edit' },
         ]}
         title={taluka ? `Edit ${taluka.name}` : 'Edit Taluka'}
-        sub="Changing the state clears the district, and the name is re-checked against the new district."
+        sub="Changing the state clears the district, and the name is re-checked against the new district. A taluka used by colleges or training centres cannot move to another district."
+        back={<BackButton to={taluka ? `/cms/talukas/${taluka.id}` : '/cms/talukas'} />}
       />
 
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
@@ -58,7 +60,6 @@ export default function TalukaEdit() {
               isActive: taluka.isActive,
             }}
             submitLabel="Save changes"
-
             confirmMessage="Are you sure you want to save the changes to this taluka?"
             backTo={`/cms/talukas/${taluka.id}`}
             currentState={{ id: taluka.stateId, name: taluka.stateName, code: taluka.stateCode }}
