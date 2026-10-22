@@ -21,4 +21,6 @@ export interface CurrentUser extends ApiUser {
   permissions: string[];
   /* Menus hidden from this user by the per-role Menu Visibility settings. */
   hiddenMenus?: string[];
+  /* 'website' for a Website Admin (CMS menu only); 'admin' (the default) for the full panel. */
+  portal?: 'admin' | 'website';
 }

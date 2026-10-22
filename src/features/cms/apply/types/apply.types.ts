@@ -111,7 +111,7 @@ export const CTA_URL_LABEL = 'Portal link';
 
 /*
  * The page text, grouped by where each piece appears on the public Apply page, in reading order. The
- * Page Text tab and the page-text form both show it this way, so a field is easy to find from the page.
+ * Page text tab and the page-text form both show it this way, so a field is easy to find from the page.
  */
 export const SETTINGS_GROUPS: { title: string; sub: string; keys: readonly (SettingsKey | 'ctaUrl')[] }[] = [
   { title: 'Page heading', sub: 'the banner at the top of the page', keys: ['pageTitle', 'pageSubtitle'] },
@@ -125,10 +125,10 @@ export const SETTINGS_GROUPS: { title: string; sub: string; keys: readonly (Sett
  * kept in the URL (?tab=), so Back from a step, a row or the page-text form returns to the tab it came from.
  */
 export const APPLY_TABS = [
-  { k: 'page', l: 'Page Text' },
-  { k: 'steps', l: 'Application Steps' },
-  { k: 'facts', l: 'At a Glance' },
-  { k: 'documents', l: 'Documents to Keep Ready' },
+  { k: 'page', l: 'Page text' },
+  { k: 'steps', l: 'Application steps' },
+  { k: 'facts', l: 'At a glance' },
+  { k: 'documents', l: 'Documents to keep ready' },
 ] as const;
 export type ApplyTab = (typeof APPLY_TABS)[number]['k'];
 

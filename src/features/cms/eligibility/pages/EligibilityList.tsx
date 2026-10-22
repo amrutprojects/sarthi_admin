@@ -1,98 +1,149 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import Icon from '../../../../components/ui/Icon';
-import { FilterBar, KvList, PageHead, useGo } from '../../../../components/ui';
+import { FilterBar, PageHead, useGo } from '../../../../components/ui';
 import { Can, useCan } from '../../../../modules/auth';
-import type { Option } from '../../../../types/legacy';
 import BackButton from '../../components/BackButton';
+import FieldTable, { Bi } from '../../components/FieldTable';
 import MasterKpis from '../../components/MasterKpis';
 import { STATUS_OPTIONS } from '../../components/MasterFilters';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
+import { SectionTabBar, SectionTabPanel } from '../../components/SectionTabs';
 import StatusToggle from '../../components/StatusToggle';
 import MasterTable, { masterQuery, type MasterColumn } from '../../components/MasterTable';
 import { ConfirmModal, LoadState, fmtDateTime, useAction, useApiData } from '../../shared';
 import { usePageTitle, useMasterQuery } from '../../useMasterQuery';
+import { useSectionTab } from '../../useSectionTab';
 import { eligibilityService, type EligibilityQuery } from '../services/eligibilityService';
-import { KIND_LABEL, SETTINGS_KEYS, SETTINGS_LABEL, type ApiEligibilityItem, type Bilingual } from '../types/eligibility.types';
-
-/* The listing with no search and no filters: criteria first, then documents, each in website order. */
-const emptyQuery = (): EligibilityQuery => ({ ...masterQuery('kind'), kind: '' });
-
-const TYPE_OPTIONS: Option[] = [
-  { v: '', l: 'All types' },
-  { v: 'CRITERION', l: 'Eligibility criteria' },
-  { v: 'DOCUMENT', l: 'Required documents' },
-];
+import {
+  ELIGIBILITY_TABS,
+  KIND_LABEL,
+  SETTINGS_KEYS,
+  SETTINGS_LABEL,
+  eligibilityListPath,
+  type ApiEligibilityItem,
+  type EligibilityKind,
+} from '../types/eligibility.types';
 
 /* Where an item appears on the public page, for the confirmations. */
 const listName = (r: ApiEligibilityItem) => (r.kind === 'DOCUMENT' ? 'required documents checklist' : 'eligibility criteria card');
 
-/* Marathi first, as on the public site; English underneath so both are checkable at a glance. */
-const pair = (value: Bilingual) => (
-  <div>
-    <div lang="mr" style={{ whiteSpace: 'pre-line' }}>
-      {value.mr}
-    </div>
-    <div className="muted fs12" lang="en" style={{ whiteSpace: 'pre-line' }}>
-      {value.en}
-    </div>
-  </div>
-);
+/* The wording of the two list tabs. */
+const LIST_COPY: Record<
+  EligibilityKind,
+  { title: string; sub: string; labelCol: string; search: string; empty: string; emptyFiltered: string }
+> = {
+  CRITERION: {
+    title: 'Eligibility criteria',
+    sub: 'the label and value rows of the criteria card, in website order',
+    labelCol: 'Criterion',
+    search: 'criterion or value',
+    empty: 'No criteria have been added yet. Use Add Criterion to create the first one.',
+    emptyFiltered: 'No criterion matches the current search and filters.',
+  },
+  DOCUMENT: {
+    title: 'Required documents',
+    sub: 'the lines of the required documents checklist, in website order',
+    labelCol: 'Document',
+    search: 'document',
+    empty: 'No documents have been added yet. Use Add Document to create the first one.',
+    emptyFiltered: 'No document matches the current search and filters.',
+  },
+};
+
+/* Page text tab: the heading, card titles and note around the two lists. */
+function PageTextTab() {
+  const go = useGo();
+  const settings = useApiData(() => eligibilityService.getSettings(), []);
+  const pageText = settings.data;
+  return (
+    <>
+      <div className="card">
+        <div className="card-h">
+          <h3>
+            Page text <span className="sub">heading, card titles and note</span>
+          </h3>
+          {pageText ? (
+            <Can action="updateEligibility">
+              <button type="button" className="btn sm" onClick={() => go('/cms/eligibility/page/edit')}>
+                <Icon name="edit" />
+                Edit page text
+              </button>
+            </Can>
+          ) : null}
+        </div>
+        {settings.loading || settings.error ? (
+          <div className="card-b">
+            <LoadState loading={settings.loading} error={settings.error} onRetry={() => void settings.reload()} />
+          </div>
+        ) : null}
+        {pageText ? (
+          <FieldTable rows={SETTINGS_KEYS.map((k): [string, ReactNode] => [SETTINGS_LABEL[k], <Bi value={pageText[k]} />])} />
+        ) : null}
+      </div>
+      {pageText ? <div className="fs13 t2 mt10">Last updated {fmtDateTime(pageText.updatedAt)}.</div> : null}
+    </>
+  );
+}
 
 /*
- * Eligibility Page Management: the page text of the public Eligibility page, and its two lists — the
- * eligibility criteria and the required documents — with search, type and status filters, sorting and
- * paging, all served by the backend.
+ * Eligibility criteria / Required documents tab: one of the two lists, with its own search, status filter,
+ * sorting and paging, all served by the backend, in website order by default.
  */
-export default function EligibilityList() {
-  usePageTitle('Eligibility Page Management');
+function ItemsTab({ kind, onChanged }: { kind: EligibilityKind; onChanged: () => void }) {
   const go = useGo();
   const can = useCan();
-  const initial = useMemo(() => emptyQuery(), []);
+  const copy = LIST_COPY[kind];
+  const initial = useMemo((): EligibilityQuery => ({ ...masterQuery('displayOrder'), kind }), [kind]);
   const { query, patch, reset } = useMasterQuery<EligibilityQuery>(initial);
   const page = useApiData(() => eligibilityService.list(query), [query]);
-  const settings = useApiData(() => eligibilityService.getSettings(), []);
   const { busy, run } = useAction();
   const [deleting, setDeleting] = useState<ApiEligibilityItem | null>(null);
   const [confirming, setConfirming] = useState<ApiEligibilityItem | null>(null);
 
-  /* Totals for the KPI row: counted by the backend, so they ignore the current page and filters. */
-  const [statsKey, setStatsKey] = useState(0);
-  const stats = useApiData(async () => {
-    const [criteria, documents, active] = await Promise.all([
-      eligibilityService.count({ kind: 'CRITERION' }),
-      eligibilityService.count({ kind: 'DOCUMENT' }),
-      eligibilityService.count({ isActive: 'true' }),
-    ]);
-    return { criteria, documents, active, inactive: criteria + documents - active };
-  }, [statsKey]);
-
-  const rows = page.data?.items ?? [];
-  const pageText = settings.data;
-  /* Any write changes both the page and the totals. */
+  /* Any write changes both this list and the totals above the tabs. */
   const reload = async () => {
-    setStatsKey((n) => n + 1);
+    onChanged();
     await page.reload();
   };
 
   const columns: MasterColumn<ApiEligibilityItem>[] = [
-    { k: 'srNo', l: 'Sr. No.', w: '76px', sortable: false, render: (_r, srNo) => <span className="muted fs12">{srNo}</span> },
-    { k: 'kind', l: 'Type', w: '110px', render: (r) => <span className="tag">{KIND_LABEL[r.kind]}</span> },
-    { k: 'displayOrder', l: 'Order', w: '86px', render: (r) => <span className="mono fs12">{r.displayOrder}</span> },
+    { k: 'srNo', l: 'Sr. No.', w: '76px', sortable: false, render: (_r, srNo) => <span className="t2">{srNo}</span> },
+    { k: 'displayOrder', l: 'Order', w: '86px', render: (r) => <b className="mono">{r.displayOrder}</b> },
     {
       k: 'labelEn',
-      l: 'Item',
+      l: copy.labelCol,
       render: (r) => (
         <div>
           <b className="lnk">{r.label.en}</b>
-          <div className="muted fs12" lang="mr">
+          <div className="bi-alt" lang="mr">
             {r.label.mr}
           </div>
-          {r.value ? <div className="muted fs11 mt4">{r.value.en}</div> : null}
         </div>
       ),
     },
+    /* Only a criterion carries a value; a document is a single line. */
+    ...(kind === 'CRITERION'
+      ? [
+          {
+            k: 'value',
+            l: 'Value',
+            sortable: false,
+            render: (r: ApiEligibilityItem) =>
+              r.value ? (
+                <div>
+                  <div className="bi-main" style={{ whiteSpace: 'pre-line' }}>
+                    {r.value.en}
+                  </div>
+                  <div className="bi-alt" lang="mr" style={{ whiteSpace: 'pre-line' }}>
+                    {r.value.mr}
+                  </div>
+                </div>
+              ) : null,
+          },
+        ]
+      : []),
     { k: 'isActive', l: 'Status', sortable: false, render: (r) => <MasterStatusBadge isActive={r.isActive} /> },
-    { k: 'updatedAt', l: 'Updated', render: (r) => <span className="fs12">{fmtDateTime(r.updatedAt)}</span> },
+    { k: 'updatedAt', l: 'Updated', render: (r) => <span className="t2">{fmtDateTime(r.updatedAt)}</span> },
     {
       k: 'actions',
       l: 'Action',
@@ -128,76 +179,14 @@ export default function EligibilityList() {
     },
   ];
 
-  const filtered = query.search !== '' || query.status !== '' || query.kind !== '';
+  const filtered = query.search !== '' || query.status !== '';
 
   return (
-    <div className="page">
-      <PageHead
-        crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'CMS' }, { l: 'Eligibility Page Management' }]}
-        title="Eligibility Page Management"
-        sub="The public website's Eligibility page: its heading and note, the eligibility criteria and the required documents, in Marathi and English."
-        back={<BackButton to="/dashboard" />}
-        actions={
-          <div className="f ac gp8 wrap">
-            <Can action="createEligibility">
-              <button type="button" className="btn" onClick={() => go('/cms/eligibility/create?kind=DOCUMENT')}>
-                <Icon name="plus" />
-                Add Document
-              </button>
-            </Can>
-            <Can action="createEligibility">
-              <button type="button" className="btn primary" onClick={() => go('/cms/eligibility/create?kind=CRITERION')}>
-                <Icon name="plus" />
-                Add Criterion
-              </button>
-            </Can>
-          </div>
-        }
-      />
-
-      <MasterKpis
-        items={[
-          { label: 'Criteria', value: stats.data?.criteria, tone: 'b', title: 'Rows of the eligibility criteria card' },
-          { label: 'Required documents', value: stats.data?.documents, tone: 'v', title: 'Lines of the required documents checklist' },
-          { label: 'Active', value: stats.data?.active, tone: 'g', title: 'Shown on the public Eligibility page' },
-          { label: 'Inactive', value: stats.data?.inactive, tone: 'a', title: 'Kept here but hidden from the website' },
-        ]}
-      />
-
-      <div className="card mb14">
-        <div className="card-h">
-          <h3>
-            Page text <span className="sub">heading, card titles and note</span>
-          </h3>
-          {pageText ? (
-            <Can action="updateEligibility">
-              <button type="button" className="btn sm" onClick={() => go('/cms/eligibility/page/edit')}>
-                <Icon name="edit" />
-                Edit page text
-              </button>
-            </Can>
-          ) : null}
-        </div>
-        <div className="card-b">
-          <LoadState loading={settings.loading} error={settings.error} onRetry={() => void settings.reload()} />
-          {pageText ? (
-            <KvList
-              pairs={[
-                ...SETTINGS_KEYS.map((k): [string, ReactNode] => [SETTINGS_LABEL[k], pair(pageText[k])]),
-                ['Last updated', fmtDateTime(pageText.updatedAt)],
-              ]}
-            />
-          ) : null}
-        </div>
-      </div>
-
+    <>
       <FilterBar
-        id="cms-eligibility"
-        fields={[
-          { k: 'kind', l: 'Type', options: TYPE_OPTIONS },
-          { k: 'status', l: 'Status', options: STATUS_OPTIONS },
-        ]}
-        value={{ kind: query.kind, status: query.status }}
+        id={`cms-eligibility-${kind.toLowerCase()}`}
+        fields={[{ k: 'status', l: 'Status', options: STATUS_OPTIONS }]}
+        value={{ status: query.status }}
         onChange={(key, value) => patch({ [key]: value } as Partial<EligibilityQuery>)}
         onReset={reset}
       />
@@ -205,25 +194,21 @@ export default function EligibilityList() {
       <div className="card">
         <div className="card-h">
           <h3>
-            Criteria and documents <span className="sub">live from the backend</span>
+            {copy.title} <span className="sub">{copy.sub}</span>
           </h3>
           {filtered ? <span className="tag">filtered</span> : null}
         </div>
         <MasterTable
           columns={columns}
-          rows={rows}
+          rows={page.data?.items ?? []}
           meta={page.data?.meta}
           loading={page.loading}
           error={page.error}
           query={query}
           onQuery={patch}
           onRetry={reload}
-          searchLabel="criterion, value or document"
-          emptyMsg={
-            filtered
-              ? 'No criterion or document matches the current search and filters.'
-              : 'Nothing has been added yet. Use Add Criterion or Add Document to create the first one.'
-          }
+          searchLabel={copy.search}
+          emptyMsg={filtered ? copy.emptyFiltered : copy.empty}
           rowLink={can('viewEligibility') ? (r) => `/cms/eligibility/${r.id}` : undefined}
         />
       </div>
@@ -272,6 +257,94 @@ export default function EligibilityList() {
           }
         />
       ) : null}
+    </>
+  );
+}
+
+/*
+ * Eligibility Page Management: the page text of the public Eligibility page, and its two lists — the
+ * eligibility criteria and the required documents — one per tab, with the same tab strip as Modules Page
+ * Management. Each list has its own search, status filter, sorting and paging, all served by the backend.
+ * The active tab is kept in the URL (?tab=), so Back from an item or the page-text form returns to it.
+ */
+export default function EligibilityList() {
+  usePageTitle('Eligibility Page Management');
+  const go = useGo();
+  const [tab, selectTab] = useSectionTab(ELIGIBILITY_TABS);
+
+  /* Totals for the KPI row: counted by the backend, so they ignore the current page and filters. */
+  const [statsKey, setStatsKey] = useState(0);
+  const stats = useApiData(async () => {
+    const [criteria, documents, active] = await Promise.all([
+      eligibilityService.count({ kind: 'CRITERION' }),
+      eligibilityService.count({ kind: 'DOCUMENT' }),
+      eligibilityService.count({ isActive: 'true' }),
+    ]);
+    return { criteria, documents, active, inactive: criteria + documents - active };
+  }, [statsKey]);
+  const onChanged = () => setStatsKey((n) => n + 1);
+
+  return (
+    <div className="page">
+      <PageHead
+        crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'CMS' }, { l: 'Eligibility Page Management' }]}
+        title="Eligibility Page Management"
+        sub="The public website's Eligibility page: its heading and note, the eligibility criteria and the required documents, in Marathi and English."
+        back={<BackButton to="/dashboard" />}
+        actions={
+          <div className="f ac gp8 wrap">
+            <Can action="createEligibility">
+              <button type="button" className="btn" onClick={() => go('/cms/eligibility/create?kind=DOCUMENT')}>
+                <Icon name="plus" />
+                Add Document
+              </button>
+            </Can>
+            <Can action="createEligibility">
+              <button type="button" className="btn primary" onClick={() => go('/cms/eligibility/create?kind=CRITERION')}>
+                <Icon name="plus" />
+                Add Criterion
+              </button>
+            </Can>
+          </div>
+        }
+      />
+
+      {/* The two list tiles open their tab. */}
+      <MasterKpis
+        items={[
+          {
+            label: 'Criteria',
+            value: stats.data?.criteria,
+            tone: 'b',
+            title: 'Rows of the eligibility criteria card',
+            link: eligibilityListPath('criteria'),
+          },
+          {
+            label: 'Required documents',
+            value: stats.data?.documents,
+            tone: 'v',
+            title: 'Lines of the required documents checklist',
+            link: eligibilityListPath('documents'),
+          },
+          { label: 'Active', value: stats.data?.active, tone: 'g', title: 'Shown on the public Eligibility page' },
+          { label: 'Inactive', value: stats.data?.inactive, tone: 'a', title: 'Kept here but hidden from the website' },
+        ]}
+      />
+
+      {/* Larger, higher-contrast table text than the panel defaults: see .cms-sections in cms-tables.css. */}
+      <div className="cms-sections">
+        <SectionTabBar tabs={ELIGIBILITY_TABS} active={tab} onChange={selectTab} idPrefix="eligibility" label="Eligibility page sections" />
+
+        <SectionTabPanel tab="page" active={tab} idPrefix="eligibility">
+          <PageTextTab />
+        </SectionTabPanel>
+        <SectionTabPanel tab="criteria" active={tab} idPrefix="eligibility">
+          <ItemsTab kind="CRITERION" onChanged={onChanged} />
+        </SectionTabPanel>
+        <SectionTabPanel tab="documents" active={tab} idPrefix="eligibility">
+          <ItemsTab kind="DOCUMENT" onChanged={onChanged} />
+        </SectionTabPanel>
+      </div>
     </div>
   );
 }

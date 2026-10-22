@@ -122,3 +122,34 @@ export const CONTACT_FIELDS = [
 ] as const;
 
 export type ContactField = (typeof CONTACT_FIELDS)[number];
+
+/*
+ * The five tabs of Contact Page Management, one per section of the public Contact page. The active tab
+ * is kept in the URL (?tab=), as on Modules Page Management.
+ */
+export const CONTACT_TABS = [
+  { k: 'page', l: 'Page information' },
+  { k: 'amrut', l: 'AMRUT contact details' },
+  { k: 'partner', l: 'Implementation partner' },
+  { k: 'coordinators', l: 'District / cluster coordinators' },
+  { k: 'offices', l: 'District offices' },
+] as const;
+export type ContactTab = (typeof CONTACT_TABS)[number]['k'];
+
+/* The rows each card shows on the view, in order. Email, phone and website are one value for both languages. */
+export type CardFieldKey = 'name' | 'role' | 'address' | 'email' | 'phone' | 'websiteUrl' | 'helpdeskHours';
+export const CARD_FIELDS: Record<OrgType, readonly { key: CardFieldKey; label: string }[]> = {
+  AMRUT: [
+    { key: 'name', label: 'Organisation name' },
+    { key: 'address', label: 'Address' },
+    { key: 'email', label: 'Email' },
+    { key: 'phone', label: 'Phone' },
+    { key: 'websiteUrl', label: 'Website' },
+  ],
+  IMPLEMENTATION_PARTNER: [
+    { key: 'name', label: 'Organisation name' },
+    { key: 'role', label: 'Role' },
+    { key: 'email', label: 'Programme desk' },
+    { key: 'helpdeskHours', label: 'Helpdesk hours' },
+  ],
+};

@@ -1,17 +1,19 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import Icon from '../../../../components/ui/Icon';
-import { Callout, EmptyState, FilterBar, KvList, PageHead, useGo } from '../../../../components/ui';
+import { Callout, EmptyState, FilterBar, PageHead, useGo } from '../../../../components/ui';
 import { Can, useCan } from '../../../../modules/auth';
 import type { ApiError } from '../../../../services/api-client';
 import BackButton from '../../components/BackButton';
+import FieldTable, { Bi } from '../../components/FieldTable';
 import MasterKpis from '../../components/MasterKpis';
 import { STATUS_OPTIONS } from '../../components/MasterFilters';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
+import { SectionNote, SectionTabBar, SectionTabPanel } from '../../components/SectionTabs';
 import StatusToggle from '../../components/StatusToggle';
 import MasterTable, { masterQuery, type MasterColumn } from '../../components/MasterTable';
 import { ConfirmModal, LoadState, fmtDateTime, useAction, useApiData } from '../../shared';
 import { usePageTitle, useMasterQuery } from '../../useMasterQuery';
+import { useSectionTab } from '../../useSectionTab';
 import { applyService, type ApplyQuery } from '../services/applyService';
 import {
   APPLY_TABS,
@@ -20,39 +22,11 @@ import {
   SETTINGS_GROUPS,
   SETTINGS_LABEL,
   applyListPath,
-  isApplyTab,
   type ApiApplyItem,
   type ApiApplySettings,
   type ApplyKind,
-  type ApplyTab,
   type Bilingual,
 } from '../types/apply.types';
-
-/*
- * Marathi first, as on the public site; English underneath. Both lines use the strong text colours of
- * .cms-sections (cms-tables.css) rather than the greyed-out muted style, so each language is easy to check.
- */
-const pair = (value: Bilingual) => (
-  <div>
-    <div className="bi-main" lang="mr" style={{ whiteSpace: 'pre-line' }}>
-      {value.mr}
-    </div>
-    <div className="bi-alt" lang="en" style={{ whiteSpace: 'pre-line' }}>
-      {value.en}
-    </div>
-  </div>
-);
-
-/* The icon of each tab, so the four sections can be told apart at a glance. */
-const TAB_ICON: Record<ApplyTab, string> = { page: 'doc', steps: 'layers', facts: 'eye', documents: 'folder' };
-
-/* A short note at the top of a tab, about where that section's surrounding text is edited. */
-const sectionNote = (children: ReactNode) => (
-  <div className="sec-note">
-    <Icon name="help" />
-    <div>{children}</div>
-  </div>
-);
 
 /* The portal link, opened in a new tab so it can be checked without leaving the panel. */
 const portalLink = (url: string) => (
@@ -62,12 +36,11 @@ const portalLink = (url: string) => (
 );
 
 /* "Card heading on the website: …" — the title the public page prints above a tab's list. */
-const headingLine = (heading: Bilingual) =>
-  sectionNote(
-    <>
-      Card heading on the website: <b lang="mr">{heading.mr}</b> · <b>{heading.en}</b> — change it on the <b>Page Text</b> tab.
-    </>,
-  );
+const headingLine = (heading: Bilingual) => (
+  <SectionNote>
+    Card heading on the website: <b lang="mr">{heading.mr}</b> · <b>{heading.en}</b> — change it on the <b>Page text</b> tab.
+  </SectionNote>
+);
 
 /* The wording of the two list tabs. */
 const LIST_COPY: Record<
@@ -96,7 +69,10 @@ const LIST_COPY: Record<
   },
 };
 
-/* Page Text tab: the page's own words, grouped by where each appears on the public page. */
+/*
+ * Page text tab: the page's own words, one card per place they appear on the public page, in reading
+ * order. Marathi first, English underneath; the portal link is a single link for both languages.
+ */
 function PageTextTab({
   settings,
   loading,
@@ -113,24 +89,20 @@ function PageTextTab({
       <LoadState loading={loading} error={error} onRetry={onRetry} />
       {settings ? (
         <>
-          <div className="grid g2">
-            {SETTINGS_GROUPS.map((group) => (
-              <div className="card" key={group.title}>
-                <div className="card-h">
-                  <h3>
-                    {group.title} <span className="sub">{group.sub}</span>
-                  </h3>
-                </div>
-                <div className="card-b">
-                  <KvList
-                    pairs={group.keys.map((key): [string, ReactNode] =>
-                      key === 'ctaUrl' ? [CTA_URL_LABEL, portalLink(settings.ctaUrl)] : [SETTINGS_LABEL[key], pair(settings[key])],
-                    )}
-                  />
-                </div>
+          {SETTINGS_GROUPS.map((group, i) => (
+            <div className={i < SETTINGS_GROUPS.length - 1 ? 'card mb14' : 'card'} key={group.title}>
+              <div className="card-h">
+                <h3>
+                  {group.title} <span className="sub">{group.sub}</span>
+                </h3>
               </div>
-            ))}
-          </div>
+              <FieldTable
+                rows={group.keys.map((key): [string, ReactNode] =>
+                  key === 'ctaUrl' ? [CTA_URL_LABEL, portalLink(settings.ctaUrl)] : [SETTINGS_LABEL[key], <Bi value={settings[key]} />],
+                )}
+              />
+            </div>
+          ))}
           <div className="fs13 t2 mt10">Last updated {fmtDateTime(settings.updatedAt)}.</div>
         </>
       ) : null}
@@ -139,9 +111,9 @@ function PageTextTab({
 }
 
 /*
- * Application Steps / At a Glance tab: one of the two lists, with its own search, status filter,
- * sorting and paging, all served by the backend. Keyed by kind in the parent, so each tab starts from
- * its own clean query.
+ * Application steps / At a glance tab: one of the two lists, with its own search, status filter,
+ * sorting and paging, all served by the backend. Each tab has its own panel, which renders only while
+ * open, so each tab starts from its own clean query.
  */
 function ItemsTab({ kind, context, onChanged }: { kind: ApplyKind; context?: ReactNode; onChanged: () => void }) {
   const go = useGo();
@@ -313,8 +285,9 @@ function ItemsTab({ kind, context, onChanged }: { kind: ApplyKind; context?: Rea
 }
 
 /*
- * Documents to Keep Ready tab: the list exactly as the public Apply page shows it. It is the Eligibility
- * page's required documents list — one list for both pages — so it is shown here and edited there.
+ * Documents to keep ready tab: the list exactly as the public Apply page shows it, one row per document
+ * in website order. It is the Eligibility page's required documents list — one list for both pages — so
+ * it is shown here and edited there.
  */
 function DocumentsTab({
   heading,
@@ -339,27 +312,46 @@ function DocumentsTab({
           </h3>
           {documents ? <span className="tag">{documents.length} listed</span> : null}
         </div>
+        {documents?.length ? (
+          <div className="tbl-wrap">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th scope="col" style={{ width: '76px' }}>
+                    Sr. No.
+                  </th>
+                  <th scope="col">Document</th>
+                </tr>
+              </thead>
+              <tbody>
+                {documents.map((doc, index) => (
+                  <tr className="norow" key={index}>
+                    <td>
+                      <span className="t2">{index + 1}</span>
+                    </td>
+                    {/* Panel cells never wrap (styles.css: table.tbl td { white-space: nowrap }); a long document line may. */}
+                    <td style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>
+                      <Bi value={doc} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
         <div className="card-b">
           <LoadState loading={loading} error={error} onRetry={onRetry} />
-          {documents ? (
-            documents.length ? (
-              <ol className="sec-list">
-                {documents.map((doc, index) => (
-                  <li key={index}>{pair(doc)}</li>
-                ))}
-              </ol>
-            ) : (
-              <EmptyState
-                title="No documents are listed"
-                msg="The public Apply page shows no documents: every document is inactive in Eligibility Page Management."
-              />
-            )
+          {documents?.length === 0 ? (
+            <EmptyState
+              title="No documents are listed"
+              msg="The public Apply page shows no documents: every document is inactive in Eligibility Page Management."
+            />
           ) : null}
-          <div className="mt14">
+          {/* Spaced from the loading state or the empty message above it; under the table it needs no gap. */}
+          <div className={documents?.length ? undefined : 'mt14'}>
             <Callout tone="info" title="Edited in Eligibility Page Management. ">
               This is the Eligibility page&apos;s required documents list, so it is kept once and both pages show it. Add, edit, reorder or
-              deactivate documents there (choose &quot;Required documents&quot; in its Type filter); only active documents appear here and
-              on the website.
+              deactivate documents there (on its &quot;Required documents&quot; tab); only active documents appear here and on the website.
             </Callout>
           </div>
         </div>
@@ -371,26 +363,14 @@ function DocumentsTab({
 /*
  * Apply Page Management: the public Apply ("How to Apply") page, one tab per section of that page — its
  * page text (heading, Important note and Apply box), the application steps, the "At a glance" rows and
- * the documents list. The active tab is kept in the URL (?tab=), so Back from a step, a row or the
- * page-text form returns to it.
+ * the documents list — with the same tab strip as Modules Page Management. The active tab is kept in the
+ * URL (?tab=), so Back from a step, a row or the page-text form returns to it.
  */
 export default function ApplyList() {
   usePageTitle('Apply Page Management');
   const go = useGo();
   const can = useCan();
-  const [params, setParams] = useSearchParams();
-  const requested = params.get('tab');
-  const tab: ApplyTab = isApplyTab(requested) ? requested : 'page';
-
-  const selectTab = (k: ApplyTab) =>
-    setParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        next.set('tab', k);
-        return next;
-      },
-      { replace: true },
-    );
+  const [tab, selectTab] = useSectionTab(APPLY_TABS);
 
   const settings = useApiData(() => applyService.getSettings(), []);
   const documents = useApiData(() => applyService.publicDocuments(), []);
@@ -408,13 +388,7 @@ export default function ApplyList() {
   }, [statsKey]);
   const s = stats.data;
   const pageText = settings.data;
-  /* The badge on each list tab; undefined (no badge) while loading. */
-  const counts: Record<ApplyTab, number | undefined> = {
-    page: undefined,
-    steps: s?.steps,
-    facts: s?.facts,
-    documents: documents.data?.length,
-  };
+  const onChanged = () => setStatsKey((n) => n + 1);
 
   /* The header action follows the tab: whatever that section of the page is changed with. */
   const action =
@@ -442,7 +416,7 @@ export default function ApplyList() {
         </button>
       </Can>
     ) : can('viewEligibility') ? (
-      <button type="button" className="btn" onClick={() => go('/cms/eligibility')}>
+      <button type="button" className="btn" onClick={() => go('/cms/eligibility?tab=documents')}>
         <Icon name="edit" />
         Manage in Eligibility Page Management
       </button>
@@ -486,64 +460,37 @@ export default function ApplyList() {
         ]}
       />
 
-      {/* Larger, higher-contrast tabs and text than the panel defaults: see .cms-sections in cms-tables.css. */}
+      {/* Larger, higher-contrast table text than the panel defaults: see .cms-sections in cms-tables.css. */}
       <div className="cms-sections">
-        <div className="sec-tabs" role="tablist" aria-label="Apply page sections">
-          {APPLY_TABS.map((t) => (
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === t.k}
-              key={t.k}
-              className={tab === t.k ? 'on' : ''}
-              onClick={() => selectTab(t.k)}
-            >
-              <Icon name={TAB_ICON[t.k]} />
-              {t.l}
-              {/* The count is also on the KPI tiles; hidden from screen readers so the tab name stays clean. */}
-              {counts[t.k] !== undefined ? (
-                <span className="cnt" aria-hidden="true">
-                  {counts[t.k]}
-                </span>
-              ) : null}
-            </button>
-          ))}
-        </div>
+        {/* No count badges on the tabs: the KPI tiles above carry the counts. */}
+        <SectionTabBar tabs={APPLY_TABS} active={tab} onChange={selectTab} idPrefix="apply" label="Apply page sections" />
 
-        <div role="tabpanel" aria-label={APPLY_TABS.find((t) => t.k === tab)?.l}>
-          {tab === 'page' ? (
-            <PageTextTab settings={pageText} loading={settings.loading} error={settings.error} onRetry={() => void settings.reload()} />
-          ) : null}
-          {tab === 'steps' ? (
-            <ItemsTab
-              key="STEP"
-              kind="STEP"
-              context={sectionNote(
-                <>
-                  The <b>&quot;Important&quot;</b> note shown under the steps is edited on the <b>Page Text</b> tab.
-                </>,
-              )}
-              onChanged={() => setStatsKey((n) => n + 1)}
-            />
-          ) : null}
-          {tab === 'facts' ? (
-            <ItemsTab
-              key="FACT"
-              kind="FACT"
-              context={pageText ? headingLine(pageText.glanceHeading) : null}
-              onChanged={() => setStatsKey((n) => n + 1)}
-            />
-          ) : null}
-          {tab === 'documents' ? (
-            <DocumentsTab
-              heading={pageText?.documentsHeading}
-              documents={documents.data}
-              loading={documents.loading}
-              error={documents.error}
-              onRetry={() => void documents.reload()}
-            />
-          ) : null}
-        </div>
+        <SectionTabPanel tab="page" active={tab} idPrefix="apply">
+          <PageTextTab settings={pageText} loading={settings.loading} error={settings.error} onRetry={() => void settings.reload()} />
+        </SectionTabPanel>
+        <SectionTabPanel tab="steps" active={tab} idPrefix="apply">
+          <ItemsTab
+            kind="STEP"
+            context={
+              <SectionNote>
+                The <b>&quot;Important&quot;</b> note shown under the steps is edited on the <b>Page text</b> tab.
+              </SectionNote>
+            }
+            onChanged={onChanged}
+          />
+        </SectionTabPanel>
+        <SectionTabPanel tab="facts" active={tab} idPrefix="apply">
+          <ItemsTab kind="FACT" context={pageText ? headingLine(pageText.glanceHeading) : null} onChanged={onChanged} />
+        </SectionTabPanel>
+        <SectionTabPanel tab="documents" active={tab} idPrefix="apply">
+          <DocumentsTab
+            heading={pageText?.documentsHeading}
+            documents={documents.data}
+            loading={documents.loading}
+            error={documents.error}
+            onRetry={() => void documents.reload()}
+          />
+        </SectionTabPanel>
       </div>
     </div>
   );

@@ -11,11 +11,12 @@ export const userKeys = {
 };
 
 /* Paged, filtered user list. Keeps the previous page on screen while the next one loads. */
-export function useUsers(params: UserListParams) {
+export function useUsers(params: UserListParams, enabled = true) {
   return useQuery({
     queryKey: userKeys.list(params),
     queryFn: ({ signal }) => userApi.list(params, signal),
     placeholderData: keepPreviousData,
+    enabled,
   });
 }
 

@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import type { ApiRole } from '../../roles-permissions';
+import { toggleRole } from './roleSelection';
 import { createUserSchema, editUserSchema, type UserFormValues } from '../schemas/userSchema';
 
 export interface UserFormProps {
@@ -99,7 +100,7 @@ export default function UserForm({ mode, defaultValues, roles = [], submitting, 
                     type="checkbox"
                     className="tw-accent-brand-600"
                     checked={roleIds.includes(r.id)}
-                    onChange={(e) => setValue('roleIds', e.target.checked ? [...roleIds, r.id] : roleIds.filter((x) => x !== r.id))}
+                    onChange={() => setValue('roleIds', toggleRole(roleIds, r, roles))}
                   />
                   {r.name}
                   {r.platform === 'LMS' ? <span className="tw-text-xs tw-text-ink-muted">(LMS role)</span> : null}

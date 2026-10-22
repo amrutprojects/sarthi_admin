@@ -1,18 +1,196 @@
-import { Callout, Dash, KvList, PageHead, useGo } from '../../../../components/ui';
+import type { ReactNode } from 'react';
+import { Callout, PageHead, useGo } from '../../../../components/ui';
 import { Can } from '../../../../modules/auth/components/Can';
 import Icon from '../../../../components/ui/Icon';
+import FieldTable, { Bi, FieldValue } from '../../components/FieldTable';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
+import { SectionNote, SectionTabBar, SectionTabPanel } from '../../components/SectionTabs';
 import { LoadState, fmtDateTime, useAction, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
+import { useSectionTab } from '../../useSectionTab';
 import { contactService } from '../services/contactService';
-import type { ApiContactOrganization, Bilingual, OrgType } from '../types/contact.types';
+import {
+  CARD_FIELDS, CONTACT_TABS, type ApiContactOrganization, type ApiContactPage, type ApiCoordinator, type ApiDistrictOffice, type OrgType,
+} from '../types/contact.types';
+
+/* The wording of the two card tabs. */
+const CARD_COPY: Record<OrgType, { title: string; sub: string; note: string }> = {
+  AMRUT: {
+    title: 'AMRUT contact details',
+    sub: 'the first card on the public Contact page',
+    note: 'Marathi is shown first, English underneath. Email, phone and website are the same in both languages, so they show once.',
+  },
+  IMPLEMENTATION_PARTNER: {
+    title: 'Implementation partner',
+    sub: 'the second card on the public Contact page',
+    note: 'Marathi is shown first, English underneath. The programme desk email is the same in both languages, so it shows once.',
+  },
+};
+
+/* Page Information tab: the banner at the top of the public page, in both languages. */
+function PageInfoTab({ page }: { page: ApiContactPage }) {
+  return (
+    <>
+      <SectionNote>Marathi is shown first, English underneath. Publishing applies to the whole page: the cards, coordinators and district offices included.</SectionNote>
+      <div className="card">
+        <div className="card-h">
+          <h3>
+            Page information <span className="sub">the banner at the top of the public Contact page</span>
+          </h3>
+          <MasterStatusBadge isActive={page.isPublished} />
+        </div>
+        <FieldTable
+          rows={[
+            ['Page title', <Bi value={page.pageTitle} />],
+            ['Page subtitle', <Bi value={page.pageSubtitle} />],
+          ]}
+        />
+      </div>
+    </>
+  );
+}
+
+/* AMRUT Contact Details / Implementation Partner tab: one card, with only the rows that apply to its type. */
+function CardTab({ type, org }: { type: OrgType; org?: ApiContactOrganization }) {
+  const copy = CARD_COPY[type];
+  return (
+    <>
+      <SectionNote>{copy.note}</SectionNote>
+      {org && !org.isActive ? (
+        <div className="mb14">
+          <Callout tone="warn">Hidden: this card is not sent to the website.</Callout>
+        </div>
+      ) : null}
+      <div className="card">
+        <div className="card-h">
+          <h3>
+            {copy.title} <span className="sub">{copy.sub}</span>
+          </h3>
+          {org ? <MasterStatusBadge isActive={org.isActive} /> : null}
+        </div>
+        {org ? (
+          <FieldTable rows={CARD_FIELDS[org.orgType].map((f): [string, ReactNode] => [f.label, <FieldValue value={org[f.key]} />])} />
+        ) : (
+          <div className="card-b">
+            <div className="hint">This card is not configured.</div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* District / cluster coordinators tab: one row per card, in the order the website shows them. */
+function CoordinatorsTab({ coordinators }: { coordinators: ApiCoordinator[] }) {
+  return (
+    <>
+      <SectionNote>The coordinator cards on the public Contact page. Each district links to its own District Office page.</SectionNote>
+      <div className="card">
+        <div className="card-h">
+          <h3>
+            District / cluster coordinators <span className="sub">{coordinators.length} on the page</span>
+          </h3>
+        </div>
+        {coordinators.length === 0 ? (
+          <div className="card-b">
+            <div className="hint">None added. The website shows its built-in coordinator list.</div>
+          </div>
+        ) : (
+          <div className="tbl-wrap">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th scope="col" style={{ width: '76px' }}>Sr. No.</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Phone</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Districts covered</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {coordinators.map((c, i) => (
+                  <tr className="norow" key={c.id}>
+                    <td><span className="t2">{i + 1}</span></td>
+                    <td><b>{c.name}</b></td>
+                    <td>{c.phone}</td>
+                    <td><FieldValue value={c.email} /></td>
+                    <td style={{ whiteSpace: 'normal' }}>
+                      <FieldValue value={c.districts.map((d) => d.name).join(', ')} />
+                    </td>
+                    <td><MasterStatusBadge isActive={c.isActive} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* District offices tab: the Collectorate details shown on each district's page. */
+function OfficesTab({ offices }: { offices: ApiDistrictOffice[] }) {
+  return (
+    <>
+      <SectionNote>
+        Shown on each district&rsquo;s page. A blank field reads &ldquo;to be supplied from official records&rdquo; on the website.
+      </SectionNote>
+      <div className="card">
+        <div className="card-h">
+          <h3>
+            District offices <span className="sub">{offices.length} districts</span>
+          </h3>
+        </div>
+        {offices.length === 0 ? (
+          <div className="card-b">
+            <div className="hint">None added. Each district page shows &ldquo;to be supplied from official records&rdquo;.</div>
+          </div>
+        ) : (
+          <div className="tbl-wrap">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th scope="col" style={{ width: '76px' }}>Sr. No.</th>
+                  <th scope="col">District</th>
+                  <th scope="col">District Collector</th>
+                  <th scope="col">Address</th>
+                  <th scope="col">Phone</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Office hours</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {offices.map((o, i) => (
+                  <tr className="norow" key={o.id}>
+                    <td><span className="t2">{i + 1}</span></td>
+                    <td><b>{o.district.name}</b></td>
+                    <td><FieldValue value={o.collectorName} /></td>
+                    <td style={{ whiteSpace: 'normal' }}><FieldValue value={o.address} /></td>
+                    <td><FieldValue value={o.phone} /></td>
+                    <td><FieldValue value={o.email} /></td>
+                    <td style={{ whiteSpace: 'normal' }}><FieldValue value={o.officeHours} /></td>
+                    <td><MasterStatusBadge isActive={o.isActive} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
 
 /*
  * Contact Page Settings — the read-only view of what the public page is showing.
  *
  * This is the landing screen for the menu because cms-contact.view and cms-contact.update are
  * separate permissions: a view-only administrator gets the whole picture without an editable form,
- * and the Edit button simply is not rendered for them.
+ * and the Edit button simply is not rendered for them. The page is shown one section per tab, with the
+ * same tab strip as Modules Page Management, and the tab kept in the URL (?tab=).
  */
 export default function ContactView() {
   usePageTitle('Contact Page');
@@ -22,6 +200,11 @@ export default function ContactView() {
 
   const page = detail.data;
   const card = (type: OrgType) => page?.organizations.find((o) => o.orgType === type);
+
+  const [tab, selectTab] = useSectionTab(CONTACT_TABS);
+
+  const amrut = card('AMRUT');
+  const partner = card('IMPLEMENTATION_PARTNER');
 
   return (
     <div className="page">
@@ -45,12 +228,14 @@ export default function ContactView() {
                     )
                   }
                 >
+                  <Icon name="globe" />
                   {page.isPublished ? 'Unpublish' : 'Publish'}
                 </button>
               </Can>
               <Can action="updateContactPage">
                 <button type="button" className="btn primary" onClick={() => go('/cms/contact/edit')}>
-                  <Icon name="doc" />Edit content
+                  <Icon name="edit" />
+                  Edit content
                 </button>
               </Can>
             </div>
@@ -60,8 +245,9 @@ export default function ContactView() {
 
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
 
+      {/* Larger, higher-contrast table text than the panel defaults: see .cms-sections in cms-tables.css. */}
       {page ? (
-        <>
+        <div className="cms-sections">
           {!page.isPublished ? (
             <div className="mb14">
               <Callout tone="warn" title="This content is not published">
@@ -70,140 +256,27 @@ export default function ContactView() {
             </div>
           ) : null}
 
-          <div className="card mb14">
-            <div className="card-h">
-              <h3>Page information</h3>
-              <MasterStatusBadge isActive={page.isPublished} />
-            </div>
-            <div className="card-b">
-              <KvList
-                pairs={[
-                  ['Page title (Marathi)', <span lang="mr">{page.pageTitle.mr}</span>],
-                  ['Page title (English)', page.pageTitle.en],
-                  ['Page subtitle (Marathi)', <span lang="mr">{page.pageSubtitle.mr}</span>],
-                  ['Page subtitle (English)', page.pageSubtitle.en],
-                  ['Last updated', fmtDateTime(page.updatedAt)],
-                ]}
-              />
-            </div>
-          </div>
+          <SectionTabBar tabs={CONTACT_TABS} active={tab} onChange={selectTab} idPrefix="contact" label="Contact page sections" />
 
-          <div className="grid g2">
-            <OrganizationCard title="AMRUT contact details" org={card('AMRUT')} />
-            <OrganizationCard title="Implementation partner" org={card('IMPLEMENTATION_PARTNER')} />
-          </div>
-
-          <div className="card mt14">
-            <div className="card-h">
-              <h3>District / cluster coordinators <span className="sub">{page.coordinators.length}</span></h3>
-            </div>
-            <div className="card-b">
-              {page.coordinators.length === 0 ? (
-                <div className="hint">None added. The website shows its built-in coordinator list.</div>
-              ) : (
-                <div className="tbl-wrap">
-                  <table className="tbl">
-                    <thead>
-                      <tr><th>Name</th><th>Phone</th><th>Email</th><th>Districts covered</th><th>Status</th></tr>
-                    </thead>
-                    <tbody>
-                      {page.coordinators.map((c) => (
-                        <tr key={c.id}>
-                          <td><b>{c.name}</b></td>
-                          <td>{c.phone}</td>
-                          <td>{c.email ?? <Dash />}</td>
-                          <td>{c.districts.length ? c.districts.map((d) => d.name).join(', ') : <Dash />}</td>
-                          <td><MasterStatusBadge isActive={c.isActive} /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="card mt14">
-            <div className="card-h">
-              <h3>District offices <span className="sub">{page.districtOffices.length}</span></h3>
-            </div>
-            <div className="card-b">
-              {page.districtOffices.length === 0 ? (
-                <div className="hint">None added. Each district page shows &ldquo;to be supplied from official records&rdquo;.</div>
-              ) : (
-                <div className="tbl-wrap">
-                  <table className="tbl">
-                    <thead>
-                      <tr><th>District</th><th>District Collector</th><th>Address</th><th>Phone</th><th>Email</th><th>Office hours</th><th>Status</th></tr>
-                    </thead>
-                    <tbody>
-                      {page.districtOffices.map((o) => (
-                        <tr key={o.id}>
-                          <td><b>{o.district.name}</b></td>
-                          <td>{o.collectorName ?? <Dash />}</td>
-                          <td>{bi(o.address)}</td>
-                          <td>{o.phone ?? <Dash />}</td>
-                          <td>{o.email ?? <Dash />}</td>
-                          <td>{bi(o.officeHours)}</td>
-                          <td><MasterStatusBadge isActive={o.isActive} /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        </>
+          <SectionTabPanel tab="page" active={tab} idPrefix="contact">
+            <PageInfoTab page={page} />
+          </SectionTabPanel>
+          <SectionTabPanel tab="amrut" active={tab} idPrefix="contact">
+            <CardTab type="AMRUT" org={amrut} />
+          </SectionTabPanel>
+          <SectionTabPanel tab="partner" active={tab} idPrefix="contact">
+            <CardTab type="IMPLEMENTATION_PARTNER" org={partner} />
+          </SectionTabPanel>
+          <SectionTabPanel tab="coordinators" active={tab} idPrefix="contact">
+            <CoordinatorsTab coordinators={page.coordinators} />
+          </SectionTabPanel>
+          <SectionTabPanel tab="offices" active={tab} idPrefix="contact">
+            <OfficesTab offices={page.districtOffices} />
+          </SectionTabPanel>
+          {/* One save updates the whole page, so the time is shown on every tab. */}
+          <div className="fs13 t2 mt10">Last updated {fmtDateTime(page.updatedAt)}.</div>
+        </div>
       ) : null}
-    </div>
-  );
-}
-
-const bi = (value: Bilingual | null) =>
-  value ? (
-    <span>
-      <span lang="mr">{value.mr}</span>
-      <span className="muted"> · </span>
-      {value.en}
-    </span>
-  ) : (
-    <Dash />
-  );
-
-/* One card, rendered with only the rows that apply to its type. */
-function OrganizationCard({ title, org }: { title: string; org?: ApiContactOrganization }) {
-  if (!org) {
-    return (
-      <div className="card">
-        <div className="card-h"><h3>{title}</h3></div>
-        <div className="card-b"><div className="hint">This card is not configured.</div></div>
-      </div>
-    );
-  }
-
-  const rows: [string, React.ReactNode][] = [['Organisation name', bi(org.name)]];
-  if (org.orgType === 'AMRUT') {
-    rows.push(['Address', bi(org.address)]);
-    rows.push(['Email', org.email ?? <Dash />]);
-    rows.push(['Phone', org.phone ?? <Dash />]);
-    rows.push(['Website', org.websiteUrl ?? <Dash />]);
-  } else {
-    rows.push(['Role', bi(org.role)]);
-    rows.push(['Programme desk', org.email ?? <Dash />]);
-    rows.push(['Helpdesk hours', bi(org.helpdeskHours)]);
-  }
-
-  return (
-    <div className="card">
-      <div className="card-h">
-        <h3>{title}</h3>
-        <MasterStatusBadge isActive={org.isActive} />
-      </div>
-      <div className="card-b">
-        <KvList pairs={rows} />
-        {!org.isActive ? <div className="hint mt10">Hidden: this card is not sent to the website.</div> : null}
-      </div>
     </div>
   );
 }

@@ -25,7 +25,9 @@ type PopKind = 'notif' | 'profile' | 'search';
 
 export default function Topbar({ onBurger }: { onBurger: () => void }) {
   const navigate = useNavigate();
-  const { user, primaryRole, logout } = useAuth();
+  const { user, primaryRole, portal, logout } = useAuth();
+  /* Search, alerts and the guided tours cover programme data, which a Website Admin does not work with. */
+  const programme = portal !== 'website';
   const [pop, setPop] = useState<PopKind | null>(null);
   const [q, setQ] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
@@ -100,42 +102,49 @@ export default function Topbar({ onBurger }: { onBurger: () => void }) {
       <button type="button" className="tb-burger" onClick={onBurger}>
         <Icon name="menu" />
       </button>
-      <div className="tb-search">
-        <span className="si">
-          <Icon name="search" />
-        </span>
-        <input
-          id="globalSearch"
-          ref={searchRef}
-          autoComplete="off"
-          value={q}
-          placeholder="Search candidates, centres, batches, districts, certificates…"
-          onChange={(e) => {
-            setQ(e.target.value);
-            setPop(e.target.value.length >= 2 ? 'search' : null);
-          }}
-          onFocus={() => {
-            if (q.length >= 2) setPop('search');
-          }}
-        />
-        <kbd>Ctrl K</kbd>
-      </div>
-      <div className="tb-spacer" />
+      {programme ? (
+        <div className="tb-search">
+          <span className="si">
+            <Icon name="search" />
+          </span>
+          <input
+            id="globalSearch"
+            ref={searchRef}
+            autoComplete="off"
+            value={q}
+            placeholder="Search candidates, centres, batches, districts, certificates…"
+            onChange={(e) => {
+              setQ(e.target.value);
+              setPop(e.target.value.length >= 2 ? 'search' : null);
+            }}
+            onFocus={() => {
+              if (q.length >= 2) setPop('search');
+            }}
+          />
+          <kbd>Ctrl K</kbd>
+        </div>
+      ) : null}
+      {/* The spacer normally shares the free room with the search box (refresh.css); without it, it takes it all, so the pill and user stay right. */}
+      <div className="tb-spacer" style={programme ? undefined : { flexGrow: 1 }} />
       <span className="demo-pill">DEMO ENVIRONMENT — SAMPLE DATA</span>
       <div className="tb-actions">
-        <button
-          type="button"
-          ref={notifRef}
-          className="tb-btn"
-          title="Notifications"
-          onClick={() => setPop(pop === 'notif' ? null : 'notif')}
-        >
-          <Icon name="bell" />
-          <span className="dot">{notifications.length}</span>
-        </button>
-        <button type="button" className="tb-btn" title="Help" onClick={openHelp}>
-          <Icon name="help" />
-        </button>
+        {programme ? (
+          <>
+            <button
+              type="button"
+              ref={notifRef}
+              className="tb-btn"
+              title="Notifications"
+              onClick={() => setPop(pop === 'notif' ? null : 'notif')}
+            >
+              <Icon name="bell" />
+              <span className="dot">{notifications.length}</span>
+            </button>
+            <button type="button" className="tb-btn" title="Help" onClick={openHelp}>
+              <Icon name="help" />
+            </button>
+          </>
+        ) : null}
         <button type="button" ref={profileRef} className="tb-user" onClick={() => setPop(pop === 'profile' ? null : 'profile')}>
           <Avatar name={user ? user.name : 'Guest'} />
           <span className="tb-user-meta">

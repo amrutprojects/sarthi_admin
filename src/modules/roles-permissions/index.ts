@@ -2,5 +2,6 @@
 export { default as RolesTab } from './components/RolesTab';
 export { default as PermissionsTab } from './components/PermissionsTab';
 export { default as MenuVisibilityTab } from './components/MenuVisibilityTab';
+export { default as WebsiteAdminPermissions } from './components/WebsiteAdminPermissions';
 export { roleKeys, useRoles } from './hooks/useRoles';
 export type { ApiPermission, ApiRole } from './services/rbacApi';

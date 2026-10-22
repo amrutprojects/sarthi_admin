@@ -8,7 +8,7 @@ import type { ApiError } from '../../../services/api-client';
 import { countOf, usePagedRoles } from '../hooks/usePagedRbac';
 import { Drawer, Modal } from '../../../components/ui/Overlay';
 import Icon from '../../../components/ui/Icon';
-import { Can, useCan } from '../../auth';
+import { Can, WEBSITE_ADMIN_ROLE, WEBSITE_MENUS, useCan } from '../../auth';
 import { useAuth } from '../../auth';
 import { ROLE_PLATFORM_LABEL, permissionsApi, rolesApi, type ApiPermission, type ApiRole, type RolePlatform } from '../services/rbacApi';
 import PermissionMatrix from './PermissionMatrix';
@@ -337,10 +337,12 @@ function RolePermissionsDrawer({
 
   const granted = useMemo(() => selected ?? new Set((detail.data?.permissions ?? []).map((p) => p.id)), [selected, detail.data]);
   /* The full active catalogue; falls back to the role's own grants when the catalogue is not visible. */
-  const source = useMemo(
-    () => (catalogue.length ? catalogue.filter((p) => p.isActive || granted.has(p.id)) : (detail.data?.permissions ?? [])),
-    [catalogue, detail.data, granted],
-  );
+  const website = role.code === WEBSITE_ADMIN_ROLE;
+  const source = useMemo(() => {
+    const all = catalogue.length ? catalogue.filter((p) => p.isActive || granted.has(p.id)) : (detail.data?.permissions ?? []);
+    /* The backend refuses any code outside the CMS menu for the Website Admin role. */
+    return website ? all.filter((p) => WEBSITE_MENUS.includes(p.module)) : all;
+  }, [catalogue, detail.data, granted, website]);
 
   return (
     <Drawer
@@ -377,6 +379,11 @@ function RolePermissionsDrawer({
       {role.code === PROTECTED ? (
         <Callout tone="info" title="Protected role">
           Super Admin always holds every permission; its grants cannot be edited.
+        </Callout>
+      ) : null}
+      {website ? (
+        <Callout tone="info" title="Website Admin role">
+          Holds CMS menu permissions only, and its holders hold no other role. Manage its accounts in the Website Admins tab.
         </Callout>
       ) : null}
       {editable ? (

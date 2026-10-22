@@ -247,12 +247,36 @@ export const ACTION_ACCESS = {
 
 export type Action = keyof typeof ACTION_ACCESS;
 
+/*
+ * Website Admin accounts (backend role WEBSITE_ADMIN, GET /auth/me → portal 'website') work in the CMS sidebar group
+ * only: the website's content pages and the geography masters. The backend confines the role to these menus.
+ */
+export const WEBSITE_ADMIN_ROLE = 'WEBSITE_ADMIN';
+export const WEBSITE_MENUS: readonly string[] = [
+  'cms-contact',
+  'cms-footer',
+  'cms-modules',
+  'cms-faqs',
+  'cms-eligibility',
+  'cms-apply',
+  'cms-home',
+  'cms-highlight',
+  'cms-programme',
+  'cms-states',
+  'cms-districts',
+  'cms-talukas',
+];
+export type Portal = 'admin' | 'website';
+
 export function hasAny(permissions: Set<string>, required: readonly string[] | undefined): boolean {
   if (!required) return true;
   return required.some((p) => permissions.has(p));
 }
 
-/* A menu opens when the user holds its view permission and no Menu Visibility setting hides it. */
-export const canOpen = (permissions: Set<string>, navKey: string, hidden?: Set<string>): boolean =>
-  !hidden?.has(navKey) && hasAny(permissions, SCREEN_ACCESS[navKey]);
+/*
+ * A menu opens when the user holds its view permission and no Menu Visibility setting hides it. In the website
+ * portal nothing outside the CMS menu opens, not even the screens open to every signed-in user.
+ */
+export const canOpen = (permissions: Set<string>, navKey: string, hidden?: Set<string>, portal: Portal = 'admin'): boolean =>
+  (portal !== 'website' || WEBSITE_MENUS.includes(navKey)) && !hidden?.has(navKey) && hasAny(permissions, SCREEN_ACCESS[navKey]);
 export const canDo = (permissions: Set<string>, action: Action): boolean => hasAny(permissions, ACTION_ACCESS[action]);
