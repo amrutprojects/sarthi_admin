@@ -75,10 +75,14 @@ const PAGES: Record<RouteName, LazyExoticComponent<ComponentType>> = {
   cmsApplyPageEdit: page(() => import('../features/cms/apply/pages/ApplyPageEdit')),
   cmsApplyEdit: page(() => import('../features/cms/apply/pages/ApplyEdit')),
   cmsApplyView: page(() => import('../features/cms/apply/pages/ApplyView')),
-  cmsHomeView: page(() => import('../features/cms/home/pages/HomeGlanceView')),
-  cmsHomeEdit: page(() => import('../features/cms/home/pages/HomeGlanceEdit')),
+  cmsHeroView: page(() => import('../features/cms/hero/pages/HeroView')),
+  cmsHeroEdit: page(() => import('../features/cms/hero/pages/HeroEdit')),
   cmsHighlightView: page(() => import('../features/cms/highlight/pages/HighlightView')),
   cmsHighlightEdit: page(() => import('../features/cms/highlight/pages/HighlightEdit')),
+  cmsImpactList: page(() => import('../features/cms/impact/pages/ImpactPage')),
+  cmsImpactCreate: page(() => import('../features/cms/impact/pages/ImpactStatCreate')),
+  cmsImpactEdit: page(() => import('../features/cms/impact/pages/ImpactStatEdit')),
+  cmsImpactSettings: page(() => import('../features/cms/impact/pages/ImpactSettingsEdit')),
   cmsProgrammeView: page(() => import('../features/cms/programme/pages/ProgrammeView')),
   cmsProgrammeEdit: page(() => import('../features/cms/programme/pages/ProgrammeEdit')),
   cmsStateList: page(() => import('../features/cms/state/pages/StateList')),
@@ -212,6 +216,9 @@ export function AppRoutes() {
               />
             );
           })}
+          {/* Home Page Figures was merged into Home Hero Section: old links land there, and its own route applies the access rules. */}
+          <Route path="/cms/home" element={<Navigate to="/cms/hero" replace />} />
+          <Route path="/cms/home/edit" element={<Navigate to="/cms/hero/edit" replace />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>
