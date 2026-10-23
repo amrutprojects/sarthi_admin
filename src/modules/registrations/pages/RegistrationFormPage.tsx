@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useForm, type FieldPath } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
-import { toastError, toastOk } from '../../../components/feedback/apiFeedback';
+import { ConfirmModal, toastError, toastOk } from '../../../components/feedback/apiFeedback';
 import { Callout, KvList, PageHead } from '../../../components/ui';
 import { Modal } from '../../../components/ui/Overlay';
 import { ApiError, newIdempotencyKey } from '../../../services/api-client';
@@ -25,6 +25,12 @@ const label = 'tw-text-xs tw-font-semibold tw-text-ink-2';
 const errorText = 'tw-text-xs tw-text-danger';
 const master = (key: MasterKey) => MASTERS.find((m) => m.key === key)!;
 
+type SavePayload = {
+  data: Omit<RegistrationData, 'declaration_accepted' | 'barcodes'>;
+  barcodes: Record<string, string>;
+  newFiles: Record<string, File>;
+};
+
 function Field({ id, title, error, children, wide }: { id: string; title: string; error?: string; children: ReactNode; wide?: boolean }) {
   return (
     <div className={`tw-flex tw-flex-col tw-gap-1 ${wide ? 'sm:tw-col-span-2' : ''}`}>
@@ -45,7 +51,8 @@ function Field({ id, title, error, children, wide }: { id: string; title: string
  * Registration form (Student Registration menu), in three steps as the programme's form: basic details, main form,
  * documents. Each step is validated before moving on; the server validates everything again on submit and its field
  * errors are shown on the step they belong to. At /student-registrations/:id/edit the same form edits an existing
- * student: steps 1 and 2 only, prefilled, saved with PATCH.
+ * student in the same three steps, prefilled, saved with PATCH. In step 3 a new file for a document that already has one
+ * replaces it: the old file is deleted permanently on save, so the save asks for confirmation first.
  */
 export default function RegistrationFormPage() {
   const navigate = useNavigate();
@@ -63,6 +70,10 @@ export default function RegistrationFormPage() {
   const [files, setFiles] = useState<Record<string, File>>({});
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState(false);
+  /* Edit: the save waiting for the "replace documents" confirmation. */
+  const [pendingSave, setPendingSave] = useState<SavePayload | null>(null);
+  /* Step 3 file inputs by document type, so "Keep current file" can clear the one it undoes. */
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const key = useRef(newIdempotencyKey());
   const regions = useMasterOptions(master('region'));
   const castes = useMasterOptions(master('caste'));
@@ -189,26 +200,20 @@ export default function RegistrationFormPage() {
 
   /* Edit: save the details, then (if anything changed in step 3) the documents and barcodes. */
   const save = useMutation({
-    mutationFn: async ({
-      data,
-      barcodes,
-      newFiles,
-    }: {
-      data: Omit<RegistrationData, 'declaration_accepted' | 'barcodes'>;
-      barcodes: Record<string, string>;
-      newFiles: Record<string, File>;
-    }) => {
+    mutationFn: async ({ data, barcodes, newFiles }: SavePayload) => {
       await registrationApi.update(editId!, data);
       const before = Object.fromEntries((existing.data?.documents ?? []).map((d) => [d.key, d.barcode ?? '']));
       const changed = Object.fromEntries(Object.entries(barcodes).filter(([c, b]) => (before[c] ?? '') !== b.trim()));
       if (Object.keys(newFiles).length || Object.keys(changed).length) await registrationApi.replaceDocuments(editId!, changed, newFiles);
     },
     onSuccess: () => {
+      setPendingSave(null);
       void qc.invalidateQueries({ queryKey: ['registrations'] });
       navigate(`/student-registrations/${editId}`);
       toastOk('Student details updated');
     },
     onError: (e) => {
+      setPendingSave(null);
       if (!(e instanceof ApiError) || !e.details.length) return toastError(e);
       let first = 2;
       const fe: Record<string, string> = {};
@@ -228,11 +233,40 @@ export default function RegistrationFormPage() {
     },
   });
 
+  /* Step 3: set or clear the file chosen for a document type, with its file error. */
+  const chooseFile = (code: string, f: File | undefined) => {
+    setFiles((s) => {
+      const n = { ...s };
+      if (f) n[code] = f;
+      else delete n[code];
+      return n;
+    });
+    setFileErrors((s) => {
+      const n = { ...s };
+      const issue = f ? fileIssue(f) : null;
+      if (issue) n[code] = issue;
+      else delete n[code];
+      return n;
+    });
+  };
+
+  /* Edit: documents that already have a file and got a new one; their old file is deleted on save. */
+  const replacementsOf = (chosen: Record<string, File>) =>
+    (docTypes.data ?? []).flatMap((t) => {
+      const cur = existing.data?.files.find((x) => x.docType === t.code);
+      const f = chosen[t.code];
+      return editing && cur && f ? [{ code: t.code, name: t.name, oldName: cur.originalName, newName: f.name }] : [];
+    });
+  const replacements = replacementsOf(files);
+
   const onValid = (v: RegistrationFormValues) => {
     if (editing) {
       if (!checkDocuments()) return;
       const { barcodes, declaration_accepted: _d, ...rest } = v;
-      save.mutate({ data: rest, barcodes: (barcodes ?? {}) as Record<string, string>, newFiles: files });
+      const payload = { data: rest, barcodes: (barcodes ?? {}) as Record<string, string>, newFiles: files };
+      /* Replacing deletes the old files for good: confirm first. New uploads and barcode changes alone save straight away. */
+      if (replacements.length) setPendingSave(payload);
+      else save.mutate(payload);
       return;
     }
     if (!checkDocuments()) return;
@@ -409,6 +443,14 @@ export default function RegistrationFormPage() {
                 <Callout tone="info" title="File upload guidelines. ">
                   Accepted formats: PDF, JPG, JPEG, PNG. Maximum file size: {MAX_FILE_MB} MB.
                 </Callout>
+                {editing ? (
+                  <div className="mt10">
+                    <Callout tone="info" title="Replacing a document. ">
+                      Choosing a new file for a document that already has one replaces it: the old file is permanently deleted when you save
+                      the changes.
+                    </Callout>
+                  </div>
+                ) : null}
                 <div className="tbl-wrap mt14">
                   <table className="tbl">
                     <thead>
@@ -462,28 +504,42 @@ export default function RegistrationFormPage() {
                               type="file"
                               accept={ACCEPT}
                               aria-label={`${t.name} file`}
-                              onChange={(e) => {
-                                const f = e.target.files?.[0];
-                                setFiles((s) => {
-                                  const n = { ...s };
-                                  if (f) n[t.code] = f;
-                                  else delete n[t.code];
-                                  return n;
-                                });
-                                setFileErrors((s) => {
-                                  const n = { ...s };
-                                  const issue = f ? fileIssue(f) : null;
-                                  if (issue) n[t.code] = issue;
-                                  else delete n[t.code];
-                                  return n;
-                                });
+                              ref={(el) => {
+                                fileInputs.current[t.code] = el;
                               }}
+                              onChange={(e) => chooseFile(t.code, e.target.files?.[0])}
                             />
                             {fileErrors[t.code] ? (
                               <div className={errorText} role="alert">
                                 {fileErrors[t.code]}
                               </div>
-                            ) : null}
+                            ) : (
+                              /*
+                               * The chosen file stays pending after Previous / Next although the input shows none, and a
+                               * file input cannot be cleared in every browser: "Keep current file" undoes the replacement.
+                               */
+                              replacements
+                                .filter((r) => r.code === t.code)
+                                .map((r) => (
+                                  <div key={r.code} className="tw-mt-1 tw-flex tw-flex-wrap tw-items-center tw-gap-2">
+                                    <span className={`${errorText} tw-break-all`}>
+                                      Will delete {r.oldName} and replace it with {r.newName} on save.
+                                    </span>
+                                    <button
+                                      type="button"
+                                      className="btn xs"
+                                      aria-label={`Keep current file for ${t.name}`}
+                                      onClick={() => {
+                                        chooseFile(t.code, undefined);
+                                        const input = fileInputs.current[t.code];
+                                        if (input) input.value = '';
+                                      }}
+                                    >
+                                      Keep current file
+                                    </button>
+                                  </div>
+                                ))
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -573,6 +629,30 @@ export default function RegistrationFormPage() {
             ]}
           />
         </Modal>
+      ) : null}
+
+      {pendingSave ? (
+        <ConfirmModal
+          title="Replace documents?"
+          danger
+          busy={save.isPending}
+          confirmLabel="Delete old and replace"
+          message="Saving permanently deletes these old files and replaces them with the new ones. This cannot be undone."
+          /* Once confirmed the request is under way and cannot be called back: the dialog stays until the save ends. */
+          onClose={() => {
+            if (!save.isPending) setPendingSave(null);
+          }}
+          onConfirm={() => save.mutate(pendingSave)}
+        >
+          {/* Listed from the files being sent, so the list is exactly what the save deletes. */}
+          <ul className="tw-mb-0 tw-mt-2 tw-pl-5">
+            {replacementsOf(pendingSave.newFiles).map((r) => (
+              <li key={r.code} className="tw-break-all">
+                <b>{r.name}</b>: {r.oldName} (replaced by {r.newName})
+              </li>
+            ))}
+          </ul>
+        </ConfirmModal>
       ) : null}
     </div>
   );
