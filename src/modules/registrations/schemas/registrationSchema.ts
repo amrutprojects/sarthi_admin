@@ -54,8 +54,8 @@ function dobIssue(v: string): string | null {
 export const basicSchema = z.object({
   first_name: personName('First name', 100),
   last_name: personName('Last name', 100),
-  father_name: text('Father name', 150),
-  mother_name: text('Mother name', 150),
+  father_name: personName('Father name', 150),
+  mother_name: personName('Mother name', 150),
   email: text('Email', 254).email('Email address is not valid'),
   date_of_birth: z.string().superRefine((v, ctx) => {
     const issue = dobIssue(v);
@@ -86,15 +86,27 @@ export const mainSchema = z.object({
   education_id: pick('Education qualification'),
 });
 
+/*
+ * Certificate barcode numbers (Income / EWS, Domicile): exactly 18 digits (backend BARCODE_RE). An empty value means
+ * none given; the page asks for a required barcode only when its document is uploaded.
+ */
+export const BARCODE_RE = /^\d{18}$/;
+const barcodeMap = z.record(
+  z
+    .string()
+    .trim()
+    .refine((v) => v === '' || BARCODE_RE.test(v), 'Barcode must be exactly 18 digits (numbers only, no spaces, letters or symbols)'),
+);
+
 export const registrationFormSchema = basicSchema.merge(mainSchema).extend({
-  barcodes: z.record(z.string().trim().max(64, 'Barcode must be at most 64 characters')),
+  barcodes: barcodeMap,
   declaration_accepted: z.literal(true, { errorMap: () => ({ message: 'The declaration must be accepted' }) }),
 });
 
 export type RegistrationFormValues = z.input<typeof registrationFormSchema>;
 /* Editing a student: all three steps; the declaration is not asked again. */
 export const editFormSchema = basicSchema.merge(mainSchema).extend({
-  barcodes: z.record(z.string().trim().max(64, 'Barcode must be at most 64 characters')),
+  barcodes: barcodeMap,
 });
 export const STEP_FIELDS = [Object.keys(basicSchema.shape), Object.keys(mainSchema.shape)] as const;
 

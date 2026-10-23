@@ -18,7 +18,7 @@ export const TRACKS: { code: string; name: string }[] = [
 ];
 
 /* Document types that carry a barcode (backend DOCUMENTS[].barcode). */
-export const BARCODES: Record<string, 'required' | 'optional'> = { INCOME_EWS: 'required', DOMICILE: 'optional' };
+export const BARCODES: Record<string, 'required' | 'optional'> = { INCOME_EWS: 'required', DOMICILE: 'required' };
 
 export const DECLARATION =
   'I hereby declare that all the above information is true to my personal knowledge and belief. Also, these are true copies of the original documents. I am aware that if the said information and documents are found to be false, a case will be registered against me under the Indian Penal Code and/or the relevant law, and I will be liable for punishment accordingly.';
