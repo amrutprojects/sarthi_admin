@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
+import BackButton from '../../components/BackButton';
 import { useCan } from '../../../../modules/auth/components/Can';
 import { ApiError } from '../../../../services/api-client';
 import BilingualField from '../../components/BilingualField';
@@ -9,7 +10,7 @@ import MasterFormActions from '../../components/MasterFormActions';
 import { LoadState, toastError, toastOk, useApiData } from '../../shared';
 import { isValid, type FieldErrors } from '../../validation';
 import { usePageTitle } from '../../useMasterQuery';
-import { SCHEMES_CRUMBS } from '../constants';
+import { SCHEMES_CRUMBS, SCHEMES_TAB_PATH } from '../constants';
 import { schemesService } from '../services/schemesService';
 import type { ApiSchemesSection, SchemesField } from '../types/schemes.types';
 import { sectionPayload, sectionToForm, serverErrors, validateSectionForm, type SectionFormValues } from '../validation/schemes.validation';
@@ -32,6 +33,7 @@ export default function SchemesSettingsEdit() {
         crumbs={[...SCHEMES_CRUMBS, { l: 'Section settings' }]}
         title="Section Settings"
         sub="The heading and subtitle above the scheme cards on the public website, the default button label, and the section's visibility."
+        back={<BackButton to={SCHEMES_TAB_PATH} />}
       />
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
       {detail.data && !can('updateScheme') ? (
@@ -73,7 +75,7 @@ function SettingsForm({ section }: { section: ApiSchemesSection }) {
       await schemesService.updateSection(sectionPayload(values, section.updatedAt));
       setDirty(false);
       toastOk('Section settings updated');
-      navigate('/cms/amrut-schemes');
+      navigate(SCHEMES_TAB_PATH);
     } catch (err) {
       if (err instanceof ApiError && err.status === 422 && err.details.length) {
         const mapped = serverErrors(err.details);
@@ -142,7 +144,7 @@ function SettingsForm({ section }: { section: ApiSchemesSection }) {
           </div>
         </div>
       </form>
-      <MasterFormActions formId={FORM_ID} submitLabel="Save settings" busy={busy} dirty={dirty} backTo="/cms/amrut-schemes" />
+      <MasterFormActions formId={FORM_ID} submitLabel="Save settings" busy={busy} dirty={dirty} backTo={SCHEMES_TAB_PATH} />
     </>
   );
 }

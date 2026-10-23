@@ -125,6 +125,34 @@ table.tbl:has(td .switch) td:last-child > .f {
   color: var(--brand-600);
 }
 
+/*
+ * The head of a tab that is a section with buttons of its own (Home Page Management): what the tab shows on
+ * the left, its Publish / Edit / Add buttons on the right; on a phone the buttons wrap under the text.
+ */
+.cms-sections .cms-tab-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 14px;
+}
+.cms-sections .cms-tab-head-sub {
+  flex: 1 1 320px;
+  margin: 0;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.cms-sections .cms-tab-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
+}
+
 /* Section titles, their explanations, filter labels and notices a size up. */
 .cms-sections .card-h h3 {
   font-size: 17px;

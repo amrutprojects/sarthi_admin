@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
+import BackButton from '../../components/BackButton';
 import { useCan } from '../../../../modules/auth/components/Can';
 import { ApiError } from '../../../../services/api-client';
 import BilingualField from '../../components/BilingualField';
@@ -9,7 +10,7 @@ import MasterFormActions from '../../components/MasterFormActions';
 import { LoadState, toastError, toastOk, useApiData } from '../../shared';
 import { isValid, type FieldErrors } from '../../validation';
 import { usePageTitle } from '../../useMasterQuery';
-import { ECOSYSTEM_CRUMBS } from '../constants';
+import { ECOSYSTEM_CRUMBS, ECOSYSTEM_TAB_PATH } from '../constants';
 import { ecosystemService } from '../services/ecosystemService';
 import type { ApiEcosystemSection, EcosystemField } from '../types/ecosystem.types';
 import {
@@ -38,6 +39,7 @@ export default function EcosystemSettingsEdit() {
         crumbs={[...ECOSYSTEM_CRUMBS, { l: 'Section settings' }]}
         title="Section Settings"
         sub="The heading and subtitle above the programme cards on the public website, the default link label, and the section's visibility."
+        back={<BackButton to={ECOSYSTEM_TAB_PATH} />}
       />
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
       {detail.data && !can('updateEcosystemProgramme') ? (
@@ -79,7 +81,7 @@ function SettingsForm({ section }: { section: ApiEcosystemSection }) {
       await ecosystemService.updateSection(sectionPayload(values, section.updatedAt));
       setDirty(false);
       toastOk('Section settings updated');
-      navigate('/cms/amrut-ecosystem');
+      navigate(ECOSYSTEM_TAB_PATH);
     } catch (err) {
       if (err instanceof ApiError && err.status === 422 && err.details.length) {
         const mapped = serverErrors(err.details);
@@ -148,7 +150,7 @@ function SettingsForm({ section }: { section: ApiEcosystemSection }) {
           </div>
         </div>
       </form>
-      <MasterFormActions formId={FORM_ID} submitLabel="Save settings" busy={busy} dirty={dirty} backTo="/cms/amrut-ecosystem" />
+      <MasterFormActions formId={FORM_ID} submitLabel="Save settings" busy={busy} dirty={dirty} backTo={ECOSYSTEM_TAB_PATH} />
     </>
   );
 }

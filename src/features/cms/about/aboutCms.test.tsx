@@ -1,12 +1,15 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../../../../tests/test-utils';
 import { ApiError } from '../../../services/api-client';
-import AboutDashboard from './pages/AboutDashboard';
+import AboutTab from './components/AboutTab';
+import { aboutEditPath, aboutViewPath } from './constants';
 import CardEditorPage from './pages/CardEditorPage';
+import CardView from './pages/CardView';
 import FactEditorPage from './pages/FactEditorPage';
+import FactView from './pages/FactView';
 import { aboutService, toItem } from './services/aboutService';
 import type * as AboutServiceModule from './services/aboutService';
 import type { ApiAbout, ApiAboutCard, ApiAboutFact, Bilingual } from './types/about.types';
@@ -76,19 +79,45 @@ const about = (): ApiAbout => ({
   ],
 });
 
+function Location() {
+  const l = useLocation();
+  return <output data-testid="location">{l.pathname + l.search}</output>;
+}
+
 const toasts = () => document.getElementById('toast-root')!;
 const renderAt = (route: string) =>
   renderWithProviders(
-    <Routes>
-      <Route path="/cms/about-amrut" element={<AboutDashboard />} />
-      <Route path="/cms/about-amrut/facts/create" element={<FactEditorPage />} />
-      <Route path="/cms/about-amrut/facts/:id/edit" element={<FactEditorPage />} />
-      <Route path="/cms/about-amrut/cards/create" element={<CardEditorPage />} />
-      <Route path="/cms/about-amrut/cards/:id/edit" element={<CardEditorPage />} />
-    </Routes>,
+    <>
+      <Routes>
+        <Route path="/cms/home-page" element={<AboutTab />} />
+        <Route path="/cms/about-amrut/facts/create" element={<FactEditorPage />} />
+        <Route path="/cms/about-amrut/facts/:id/edit" element={<FactEditorPage />} />
+        <Route path="/cms/about-amrut/facts/:id/view" element={<FactView />} />
+        <Route path="/cms/about-amrut/cards/create" element={<CardEditorPage />} />
+        <Route path="/cms/about-amrut/cards/:id/edit" element={<CardEditorPage />} />
+        <Route path="/cms/about-amrut/cards/:id/view" element={<CardView />} />
+      </Routes>
+      <Location />
+    </>,
     { route },
   );
+
+const TAB = '/cms/home-page?tab=about';
 const row = (text: string) => screen.getByText(text).closest('tr') as HTMLElement;
+const currentPath = () => screen.getByTestId('location').textContent;
+const crumbs = () => [...document.querySelectorAll('.crumb > a, .crumb > span')].map((c) => c.textContent);
+/* The card of one of the two tables, by its heading. */
+const FACTS = /Organisation information/;
+const CARDS = /Mission, Vision and Values cards/;
+const area = (heading: RegExp) => screen.getByRole('heading', { name: heading }).closest('.card') as HTMLElement;
+/* A table's column headings, without the sort arrows. */
+const headings = (heading: RegExp) =>
+  within(area(heading))
+    .getAllByRole('columnheader')
+    .map((th) => th.textContent!.replace(/[⇅▲▼]/g, ''));
+/* A table's titles (English, in the brand colour), top to bottom. */
+const titles = (heading: RegExp) => [...area(heading).querySelectorAll('tbody tr b.lnk')].map((b) => b.textContent);
+const searchBox = (heading: RegExp) => within(area(heading)).getByRole('textbox');
 
 beforeEach(() => {
   auth.permissions = new Set(ALL);
@@ -98,69 +127,117 @@ beforeEach(() => {
   vi.mocked(aboutService.get).mockResolvedValue(about());
 });
 
-describe('About AMRUT dashboard', () => {
-  it('shows the saved values in editable fields, and every row and card', async () => {
-    renderAt('/cms/about-amrut');
+describe('About AMRUT tab', () => {
+  it('shows the saved section settings and description in editable fields', async () => {
+    renderAt(TAB);
     expect(await screen.findByLabelText('Section heading (English) *')).toHaveValue('About AMRUT');
     expect(screen.getByLabelText('Section heading (Marathi) *')).toHaveValue('अमृत विषयी माहिती');
     expect(screen.getByLabelText('Description (English) *')).toHaveValue('AMRUT - the Academy of Maharashtra Research');
     expect(screen.getByRole('checkbox', { name: 'Show this section on the public website' })).toBeChecked();
-    expect(within(row('Headquarters')).getByText('Headquarters: Pune')).toBeInTheDocument();
-    /* Required cards: editable, but no hide or delete. */
-    expect(within(row('Our Mission')).getByText('Required')).toBeInTheDocument();
-    expect(within(row('Our Mission')).getByRole('button', { name: 'Edit Our Mission' })).toBeInTheDocument();
-    expect(within(row('Our Mission')).queryByRole('button', { name: /Delete|Hide/ })).toBeNull();
-    expect(within(row('Our Objectives')).getByRole('button', { name: 'Delete Our Objectives' })).toBeInTheDocument();
   });
 
-  it('saves the heading on its own, with the loaded version, and Cancel puts the saved values back', async () => {
-    vi.mocked(aboutService.updateSection).mockImplementation(
-      async (input) => ({ ...about().section, ...input, updatedAt: '2026-10-03T10:00:00.000Z' }) as never,
-    );
-    renderAt('/cms/about-amrut');
-    const heading = await screen.findByLabelText('Section heading (English) *');
-    await userEvent.clear(heading);
-    await userEvent.click(screen.getByRole('button', { name: 'Save settings' }));
-    expect(await screen.findByText('Section heading (English) is required')).toBeInTheDocument();
-    expect(aboutService.updateSection).not.toHaveBeenCalled();
+  it('lists the information rows and the cards as FAQ-style tables', async () => {
+    renderAt(TAB);
+    await screen.findByText('Headquarters');
 
-    await userEvent.type(heading, 'Test heading');
-    await userEvent.click(screen.getByRole('button', { name: 'Save settings' }));
-    await waitFor(() =>
-      expect(aboutService.updateSection).toHaveBeenCalledWith({
-        heading: pair('अमृत विषयी माहिती', 'Test heading'),
-        subtitle: pair('', ''),
-        showSection: true,
-        expectedUpdatedAt: T.updatedAt,
-      }),
-    );
-    await waitFor(() => expect(toasts()).toHaveTextContent('Section settings saved'));
+    expect(screen.getByRole('heading', { name: FACTS })).toHaveTextContent('3. Organisation information live from the backend');
+    expect(screen.getByRole('heading', { name: CARDS })).toHaveTextContent('4. Mission, Vision and Values cards live from the backend');
+    expect(headings(FACTS)).toEqual(['Sr. No.', 'Order', 'Label', 'Value', 'Status', 'Updated', 'Action']);
+    expect(headings(CARDS)).toEqual(['Sr. No.', 'Order', 'Title', 'Status', 'Updated', 'Action']);
+    expect(within(area(FACTS)).getByPlaceholderText('Search label or value...')).toBeInTheDocument();
+    expect(within(area(CARDS)).getByPlaceholderText('Search title or description...')).toBeInTheDocument();
 
-    /* The description saves only itself, against the version the settings save produced. */
-    const desc = screen.getByLabelText('Description (English) *');
-    await userEvent.type(desc, ' — edited');
-    expect(within(screen.getByRole('region', { name: 'Description preview' })).getByText(/— edited/)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Save description' }));
-    await waitFor(() =>
-      expect(aboutService.updateSection).toHaveBeenLastCalledWith({
-        description: pair('मराठी वर्णन', 'AMRUT - the Academy of Maharashtra Research — edited'),
-        expectedUpdatedAt: '2026-10-03T10:00:00.000Z',
-      }),
-    );
+    /* Title: English in the brand colour, Marathi underneath; the fact's value beside it. */
+    const hq = row('Headquarters');
+    expect(within(hq).getByText('Headquarters', { selector: 'b.lnk' })).toBeInTheDocument();
+    expect(within(hq).getByText('मुख्यालय')).toBeInTheDocument();
+    expect(within(hq).getByText('Headquarters: Pune')).toBeInTheDocument();
+    expect(within(hq).getByText('मुख्यालय: पुणे')).toBeInTheDocument();
+    expect(within(hq).getByText('Active')).toBeInTheDocument();
+    /* Sr. No. counts the rows; Order is the saved display order. */
+    expect(within(hq).getAllByRole('cell')[0]).toHaveTextContent('2');
+    expect(titles(FACTS)).toEqual(['Established', 'Headquarters']);
+    expect(titles(CARDS)).toEqual(['Our Mission', 'Our Vision', 'Our Values', 'Our Objectives']);
 
-    /* Cancel asks first, then puts back the saved text; nothing is sent. */
-    const calls = vi.mocked(aboutService.updateSection).mock.calls.length;
-    await userEvent.type(desc, ' again');
-    const descriptionForm = desc.closest('form') as HTMLElement;
-    await userEvent.click(within(descriptionForm).getByRole('button', { name: 'Cancel' }));
-    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Discard changes' }));
-    expect(desc).toHaveValue('AMRUT - the Academy of Maharashtra Research — edited');
-    expect(aboutService.updateSection).toHaveBeenCalledTimes(calls);
+    /* Each action of FAQ Management: view, edit, the status switch and delete. */
+    const objectives = row('Our Objectives');
+    expect(within(objectives).getByRole('button', { name: 'View Our Objectives' })).toBeInTheDocument();
+    expect(within(objectives).getByRole('button', { name: 'Edit Our Objectives' })).toBeInTheDocument();
+    expect(within(objectives).getByRole('switch', { name: 'Our Objectives: active' })).toBeInTheDocument();
+    expect(within(objectives).getByRole('button', { name: 'Delete Our Objectives' })).toBeInTheDocument();
+    /* Required cards: viewed, edited and reordered, but never switched off or deleted. */
+    const mission = row('Our Mission');
+    expect(within(mission).getByText('Required')).toBeInTheDocument();
+    expect(within(mission).getByRole('button', { name: 'View Our Mission' })).toBeInTheDocument();
+    expect(within(mission).getByRole('button', { name: 'Edit Our Mission' })).toBeInTheDocument();
+    expect(within(mission).queryByRole('switch')).toBeNull();
+    expect(within(mission).queryByRole('button', { name: /Delete/ })).toBeNull();
+
+    /* The MasterTable footer. */
+    expect(
+      within(area(FACTS))
+        .getByText(/^Showing/)
+        .closest('.info'),
+    ).toHaveTextContent('Showing 1-2 of 2 records');
+    expect(
+      within(area(CARDS))
+        .getByText(/^Showing/)
+        .closest('.info'),
+    ).toHaveTextContent('Showing 1-4 of 4 records');
+    expect(within(area(CARDS)).getByRole('combobox', { name: 'Rows per page' })).toHaveValue('15');
+  });
+
+  it('keeps both Add buttons in the tab head', async () => {
+    const { unmount } = renderAt(TAB);
+    await screen.findByText('Headquarters');
+    let head = document.querySelector('.cms-tab-head') as HTMLElement;
+    await userEvent.click(within(head).getByRole('button', { name: /Add New Information Row/ }));
+    expect(currentPath()).toBe('/cms/about-amrut/facts/create');
+    unmount();
+
+    renderAt(TAB);
+    await screen.findByText('Headquarters');
+    head = document.querySelector('.cms-tab-head') as HTMLElement;
+    await userEvent.click(within(head).getByRole('button', { name: /Add New About Card/ }));
+    expect(currentPath()).toBe('/cms/about-amrut/cards/create');
+  });
+
+  it('opens the View page from the eye button and from the row, and the Edit page from the pencil', async () => {
+    vi.mocked(aboutService.getItem).mockResolvedValue(toItem('facts', about().facts[1]!));
+    const { unmount } = renderAt(TAB);
+    await userEvent.click(await screen.findByRole('button', { name: 'View Headquarters' }));
+    expect(currentPath()).toBe(aboutViewPath('facts', 'f2'));
+    expect(currentPath()).toBe('/cms/about-amrut/facts/f2/view');
+    unmount();
+
+    const again = renderAt(TAB);
+    await userEvent.click(await screen.findByText('Our Objectives'));
+    expect(currentPath()).toBe('/cms/about-amrut/cards/c4/view');
+    again.unmount();
+
+    renderAt(TAB);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit Our Objectives' }));
+    expect(currentPath()).toBe(aboutEditPath('cards', 'c4'));
+    expect(currentPath()).toBe('/cms/about-amrut/cards/c4/edit');
+  });
+
+  it('switches an additional card off through the status toggle after asking, by id', async () => {
+    vi.mocked(aboutService.setItemStatus).mockResolvedValue();
+    renderAt(TAB);
+    await userEvent.click(await screen.findByRole('switch', { name: 'Our Objectives: active' }));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('Deactivate आमची उद्दिष्टे / Our Objectives?');
+    expect(aboutService.setItemStatus).not.toHaveBeenCalled();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Yes, deactivate' }));
+    await waitFor(() => expect(aboutService.setItemStatus).toHaveBeenCalledWith('cards', 'c4', false));
+    await waitFor(() => expect(toasts()).toHaveTextContent('About Card deactivated'));
+    expect(aboutService.get).toHaveBeenCalledTimes(2);
+    expect(currentPath()).toBe(TAB);
   });
 
   it('deletes an additional card after confirmation, by id — and Cancel deletes nothing', async () => {
     vi.mocked(aboutService.removeItem).mockResolvedValue();
-    renderAt('/cms/about-amrut');
+    renderAt(TAB);
     await userEvent.click(await screen.findByRole('button', { name: 'Delete Our Objectives' }));
     expect(screen.getByRole('dialog')).toHaveTextContent('Delete आमची उद्दिष्टे / Our Objectives?');
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
@@ -168,20 +245,187 @@ describe('About AMRUT dashboard', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Delete Our Objectives' }));
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }));
     await waitFor(() => expect(aboutService.removeItem).toHaveBeenCalledWith('cards', 'c4'));
+    expect(aboutService.removeItem).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(toasts()).toHaveTextContent('About Card deleted'));
+    expect(currentPath()).toBe(TAB);
+  });
+
+  it('searches each table on its own, in both languages', async () => {
+    renderAt(TAB);
+    await screen.findByText('Headquarters');
+
+    await userEvent.type(searchBox(FACTS), 'pune');
+    await waitFor(() => expect(titles(FACTS)).toEqual(['Headquarters']));
+    expect(within(area(FACTS)).getByText('filtered')).toBeInTheDocument();
+    expect(
+      within(area(FACTS))
+        .getByText(/^Showing/)
+        .closest('.info'),
+    ).toHaveTextContent('Showing 1-1 of 1 records');
+    /* The cards table is not searched. */
+    expect(titles(CARDS)).toHaveLength(4);
+    expect(within(area(CARDS)).queryByText('filtered')).toBeNull();
+
+    await userEvent.type(searchBox(CARDS), 'मूल्ये');
+    await waitFor(() => expect(titles(CARDS)).toEqual(['Our Values']));
+    await userEvent.clear(searchBox(CARDS));
+    await userEvent.type(searchBox(CARDS), 'Description 4');
+    await waitFor(() => expect(titles(CARDS)).toEqual(['Our Objectives']));
+
+    await userEvent.clear(searchBox(FACTS));
+    await userEvent.type(searchBox(FACTS), 'nothing like this');
+    expect(await within(area(FACTS)).findByText('No records found')).toBeInTheDocument();
+    expect(within(area(FACTS)).getByText('No information row matches the current search.')).toBeInTheDocument();
+    expect(aboutService.get).toHaveBeenCalledTimes(1);
+  });
+
+  it('sorts by the title, and by Order back to the website order', async () => {
+    renderAt(TAB);
+    await screen.findByText('Our Objectives');
+    await userEvent.click(within(area(CARDS)).getByRole('columnheader', { name: /Title/ }));
+    expect(titles(CARDS)).toEqual(['Our Mission', 'Our Objectives', 'Our Values', 'Our Vision']);
+    await userEvent.click(within(area(CARDS)).getByRole('columnheader', { name: /Title/ }));
+    expect(titles(CARDS)).toEqual(['Our Vision', 'Our Values', 'Our Objectives', 'Our Mission']);
+    await userEvent.click(within(area(CARDS)).getByRole('columnheader', { name: /Order/ }));
+    expect(titles(CARDS)).toEqual(['Our Mission', 'Our Vision', 'Our Values', 'Our Objectives']);
+    /* The facts table keeps its own sort. */
+    expect(titles(FACTS)).toEqual(['Established', 'Headquarters']);
   });
 
   it('reorders rows by sending the whole list of ids', async () => {
     vi.mocked(aboutService.reorder).mockResolvedValue();
-    renderAt('/cms/about-amrut');
-    await userEvent.click(await screen.findByRole('button', { name: 'Move Headquarters up' }));
+    renderAt(TAB);
+    expect(await screen.findByRole('button', { name: 'Move Established up' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Move Headquarters down' })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Move Headquarters up' }));
     await waitFor(() => expect(aboutService.reorder).toHaveBeenCalledWith('facts', ['f2', 'f1']));
+    await waitFor(() => expect(toasts()).toHaveTextContent('Display order updated'));
+
+    await userEvent.click(screen.getByRole('button', { name: 'Move Our Values down' }));
+    await waitFor(() => expect(aboutService.reorder).toHaveBeenLastCalledWith('cards', ['c1', 'c2', 'c4', 'c3']));
+    expect(currentPath()).toBe(TAB);
   });
 
-  it('is read-only for a view-only administrator', async () => {
+  it('allows re-ordering only while a table shows the website order: by Order ascending, nothing searched', async () => {
+    renderAt(TAB);
+    await screen.findByText('Our Objectives');
+    const up = () => screen.getByRole('button', { name: 'Move Our Objectives up' });
+    expect(up()).toBeEnabled();
+
+    await userEvent.click(within(area(CARDS)).getByRole('columnheader', { name: /Order/ }));
+    expect(titles(CARDS)).toEqual(['Our Objectives', 'Our Values', 'Our Vision', 'Our Mission']);
+    expect(up()).toBeDisabled();
+    expect(within(area(CARDS)).getByText('Sort by Order, ascending, with no search to reorder.')).toBeInTheDocument();
+    /* The other table is unaffected. */
+    expect(screen.getByRole('button', { name: 'Move Headquarters up' })).toBeEnabled();
+    await userEvent.click(within(area(CARDS)).getByRole('columnheader', { name: /Order/ }));
+    expect(up()).toBeEnabled();
+
+    await userEvent.click(within(area(CARDS)).getByRole('columnheader', { name: /Updated/ }));
+    expect(up()).toBeDisabled();
+    await userEvent.click(within(area(CARDS)).getByRole('columnheader', { name: /Order/ }));
+    expect(up()).toBeEnabled();
+
+    await userEvent.type(searchBox(CARDS), 'Objectives');
+    await waitFor(() => expect(titles(CARDS)).toEqual(['Our Objectives']));
+    expect(up()).toBeDisabled();
+    expect(aboutService.reorder).not.toHaveBeenCalled();
+  });
+
+  it('is read-only for a view-only administrator: View only, no Add, Edit, status switch, Delete or reorder', async () => {
     auth.permissions = new Set(['cms-about.view']);
-    renderAt('/cms/about-amrut');
+    renderAt(TAB);
     expect(await screen.findByLabelText('Section heading (English) *')).toBeDisabled();
-    expect(screen.queryByRole('button', { name: /Save|Add New|Edit |Delete / })).toBeNull();
+    expect(screen.getByRole('button', { name: 'View Headquarters' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View Our Mission' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Save|Add New|Edit |Delete |Move / })).toBeNull();
+    expect(screen.queryByRole('switch')).toBeNull();
+  });
+});
+
+describe('View Information Row / View About Card', () => {
+  it('shows every field of a row in both languages, with the breadcrumbs of its Home Page Management tab', async () => {
+    vi.mocked(aboutService.getItem).mockResolvedValue(toItem('facts', about().facts[1]!));
+    renderAt(aboutViewPath('facts', 'f2'));
+
+    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('HeadquartersOrder 2');
+    expect(aboutService.getItem).toHaveBeenCalledWith('facts', 'f2');
+    expect(crumbs()).toEqual(['Dashboard', 'CMS', 'Home Page Management', 'About AMRUT', 'View']);
+    const field = (label: string) => screen.getByText(label, { selector: 'td b' }).closest('tr') as HTMLElement;
+    expect(field('Label')).toHaveTextContent('मुख्यालयHeadquarters');
+    expect(field('Value')).toHaveTextContent('मुख्यालय: पुणेHeadquarters: Pune');
+    expect(field('Display order')).toHaveTextContent('2');
+    expect(within(field('Status')).getByText('Active')).toBeInTheDocument();
+    expect(field('On the website')).toHaveTextContent('Shown in the About AMRUT section');
+    expect(field('Created')).not.toHaveTextContent('—');
+    expect(field('Last updated')).not.toHaveTextContent('—');
+    expect(screen.queryByText('Required card')).toBeNull();
+
+    /* The tab crumb goes back to the tab. */
+    await userEvent.click(screen.getByText('About AMRUT', { selector: '.crumb > a' }));
+    expect(currentPath()).toBe(TAB);
+  });
+
+  it('edits, deactivates and deletes (after asking) a card by id, and goes Back to the tab', async () => {
+    const objectives = toItem('cards', about().cards[3]!);
+    vi.mocked(aboutService.getItem).mockResolvedValue(objectives);
+    vi.mocked(aboutService.setItemStatus).mockResolvedValue();
+    vi.mocked(aboutService.removeItem).mockResolvedValue();
+    const { unmount } = renderAt(aboutViewPath('cards', 'c4'));
+
+    expect(await screen.findByText('Card heading', { selector: 'td b' })).toBeInTheDocument();
+    const field = (label: string) => screen.getByText(label, { selector: 'td b' }).closest('tr') as HTMLElement;
+    expect(field('Card heading')).toHaveTextContent('आमची उद्दिष्टेOur Objectives');
+    expect(field('Card description')).toHaveTextContent('वर्णन 4Description 4');
+    expect(field('Required card')).toHaveTextContent('No');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Deactivate' }));
+    await waitFor(() => expect(aboutService.setItemStatus).toHaveBeenCalledWith('cards', 'c4', false));
+    await waitFor(() => expect(aboutService.getItem).toHaveBeenCalledTimes(2));
+
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('Delete आमची उद्दिष्टे / Our Objectives?');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(aboutService.removeItem).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }));
+    await waitFor(() => expect(aboutService.removeItem).toHaveBeenCalledWith('cards', 'c4'));
+    await waitFor(() => expect(currentPath()).toBe(TAB));
+    unmount();
+
+    const again = renderAt(aboutViewPath('cards', 'c4'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit' }));
+    expect(currentPath()).toBe('/cms/about-amrut/cards/c4/edit');
+    again.unmount();
+
+    renderAt(aboutViewPath('cards', 'c4'));
+    await screen.findByRole('button', { name: 'Edit' });
+    await userEvent.click(screen.getByRole('button', { name: /Back/ }));
+    expect(currentPath()).toBe(TAB);
+  });
+
+  it('offers only Edit on a required card, and no write buttons to a view-only administrator', async () => {
+    vi.mocked(aboutService.getItem).mockResolvedValue(toItem('cards', about().cards[0]!));
+    const { unmount } = renderAt(aboutViewPath('cards', 'c1'));
+    expect(await screen.findByRole('button', { name: 'Edit' })).toBeInTheDocument();
+    expect(screen.getByText('Required card', { selector: 'td b' }).closest('tr')).toHaveTextContent(/Yes/);
+    expect(screen.queryByRole('button', { name: /^(Delete|Deactivate|Activate)$/ })).toBeNull();
+    unmount();
+
+    auth.permissions = new Set(['cms-about.view']);
+    vi.mocked(aboutService.getItem).mockResolvedValue(toItem('facts', about().facts[0]!));
+    renderAt(aboutViewPath('facts', 'f1'));
+    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Established');
+    expect(screen.queryByRole('button', { name: /^(Edit|Delete|Deactivate|Activate)$/ })).toBeNull();
+    expect(screen.getByRole('button', { name: /Back/ })).toBeInTheDocument();
+  });
+
+  it('reports a record that cannot be loaded', async () => {
+    vi.mocked(aboutService.getItem).mockRejectedValue(new ApiError('Information row not found', 404, 'NOT_FOUND'));
+    renderAt(aboutViewPath('facts', 'gone'));
+    expect(await screen.findByText(/Could not load data from the server/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
   });
 });
 
@@ -208,6 +452,7 @@ describe('Row and card editors', () => {
       isActive: true,
     });
     expect(key).toBeTruthy();
+    await waitFor(() => expect(currentPath()).toBe(TAB));
   });
 
   it('edits a required card: only the changed description is sent, and it cannot be switched off', async () => {
@@ -217,6 +462,8 @@ describe('Row and card editors', () => {
     renderAt('/cms/about-amrut/cards/c1/edit');
     const desc = await screen.findByLabelText('Card description (English) *');
     expect(screen.getByRole('checkbox', { name: /Active/ })).toBeDisabled();
+    /* The display order is editable here too. */
+    expect(screen.getByLabelText('Display order')).toHaveValue(1);
     await userEvent.clear(desc);
     await userEvent.type(desc, 'Temporary mission');
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));

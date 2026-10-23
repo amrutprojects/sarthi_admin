@@ -1,9 +1,19 @@
-/* Breadcrumb trail shared by the AMRUT Schemes Management pages. */
-export const SCHEMES_CRUMBS = [
-  { l: 'Dashboard', link: '/dashboard' },
-  { l: 'CMS' },
-  { l: 'AMRUT Schemes Management', link: '/cms/amrut-schemes' },
-];
+import { homePageCrumbs, homePageTabPath } from '../homePage/homePageNav';
+
+/* Breadcrumb trail shared by the AMRUT Schemes Management pages: the section is a tab of Home Page Management. */
+export const SCHEMES_CRUMBS = homePageCrumbs('schemes');
+
+/* The section's tab of Home Page Management: where Back, Cancel and Save return to. */
+export const SCHEMES_TAB_PATH = homePageTabPath('schemes');
+
+/* A scheme's read-only View page, opened by the eye button and by a click on its row in the tab's table. */
+export const schemeViewPath = (id: string): string => `/cms/amrut-schemes/${encodeURIComponent(id)}/view`;
+
+/* A scheme's Edit page. */
+export const schemeEditPath = (id: string): string => `/cms/amrut-schemes/${encodeURIComponent(id)}/edit`;
+
+/* How a scheme is named in messages: Marathi and English titles, as the website shows them. */
+export const schemeLabel = (s: { title: { mr: string; en: string } }): string => `${s.title.mr} / ${s.title.en}`;
 
 /* Used when the section's own default label has not loaded yet; the seeded default. */
 export const FALLBACK_BUTTON_LABEL = { mr: 'अधिक जाणून घ्या', en: 'Learn more' };

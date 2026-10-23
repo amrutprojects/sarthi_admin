@@ -1,12 +1,13 @@
 import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
+import BackButton from '../../components/BackButton';
 import { useCan } from '../../../../modules/auth/components/Can';
 import { ApiError, newIdempotencyKey } from '../../../../services/api-client';
 import { toastOk } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import ImpactStatForm from '../components/ImpactStatForm';
-import { IMPACT_CRUMBS } from '../constants';
+import { IMPACT_CRUMBS, IMPACT_TAB_PATH } from '../constants';
 import { impactService } from '../services/impactService';
 import { emptyStatForm, statPayload } from '../validation/impact.validation';
 
@@ -28,12 +29,13 @@ export default function ImpactStatCreate() {
         crumbs={[...IMPACT_CRUMBS, { l: 'Add New Statistic' }]}
         title="Add New Statistic"
         sub="Adds a card to the AMRUT's Impact section of the public home page. The label is entered in Marathi and English — the site defaults to Marathi."
+        back={<BackButton to={IMPACT_TAB_PATH} />}
       />
       {can('createImpactStat') ? (
         <ImpactStatForm
           initial={emptyStatForm()}
           submitLabel="Save statistic"
-          backTo="/cms/impact"
+          backTo={IMPACT_TAB_PATH}
           isCreate
           onSave={async (values) => {
             try {
@@ -43,7 +45,7 @@ export default function ImpactStatCreate() {
               throw err;
             }
             toastOk('Statistic added');
-            navigate('/cms/impact');
+            navigate(IMPACT_TAB_PATH);
           }}
         />
       ) : (

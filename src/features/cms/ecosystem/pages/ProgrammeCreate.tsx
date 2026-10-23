@@ -1,12 +1,13 @@
 import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
+import BackButton from '../../components/BackButton';
 import { useCan } from '../../../../modules/auth/components/Can';
 import { ApiError, newIdempotencyKey } from '../../../../services/api-client';
 import { toastOk, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import ProgrammeForm from '../components/ProgrammeForm';
-import { ECOSYSTEM_CRUMBS } from '../constants';
+import { ECOSYSTEM_CRUMBS, ECOSYSTEM_TAB_PATH } from '../constants';
 import { ecosystemService } from '../services/ecosystemService';
 import { emptyProgrammeForm, programmePayload } from '../validation/ecosystem.validation';
 
@@ -29,12 +30,13 @@ export default function ProgrammeCreate() {
         crumbs={[...ECOSYSTEM_CRUMBS, { l: 'Add New Programme' }]}
         title="Add New Programme"
         sub="Adds a card to the अमृत प्रणाली section of the public website. Text is entered in Marathi and English — the site defaults to Marathi."
+        back={<BackButton to={ECOSYSTEM_TAB_PATH} />}
       />
       {can('createEcosystemProgramme') ? (
         <ProgrammeForm
           initial={emptyProgrammeForm()}
           submitLabel="Save programme"
-          backTo="/cms/amrut-ecosystem"
+          backTo={ECOSYSTEM_TAB_PATH}
           isCreate
           defaultLabel={section.data?.linkLabel ?? null}
           onSave={async (values) => {
@@ -45,7 +47,7 @@ export default function ProgrammeCreate() {
               throw err;
             }
             toastOk('Programme added');
-            navigate('/cms/amrut-ecosystem');
+            navigate(ECOSYSTEM_TAB_PATH);
           }}
         />
       ) : (

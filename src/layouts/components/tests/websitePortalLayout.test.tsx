@@ -26,13 +26,7 @@ const CMS_LABELS = [
   'FAQ Management',
   'Eligibility Page Management',
   'Apply Page Management',
-  'Home Hero Section',
-  'Home Programme Section',
-  'Board Members Management',
-  'The AMRUT Ecosystem',
-  'AMRUT Schemes Management',
-  'AMRUT Impact Management',
-  'About AMRUT Management',
+  'Home Page Management',
   'Programme Page Management',
   'State Master',
   'District Master',
@@ -44,7 +38,9 @@ const signInAs = (portal: Portal, codes: string[]) => {
   auth.permissions = new Set(codes);
   auth.hiddenMenus = new Set();
 };
-const sidebar = () => renderWithProviders(<Sidebar active="" collapsed={false} open={false} onToggle={() => {}} />);
+const sidebar = (active = '') => renderWithProviders(<Sidebar active={active} collapsed={false} open={false} onToggle={() => {}} />);
+const labels = (container: HTMLElement) => [...container.querySelectorAll('.sb-item .sb-label')].map((l) => l.textContent);
+const activeLabel = (container: HTMLElement) => container.querySelector('.sb-item.active .sb-label')?.textContent;
 
 describe('website portal layout', () => {
   beforeEach(() => signInAs('admin', []));
@@ -62,7 +58,54 @@ describe('website portal layout', () => {
   it('the sidebar shows only the CMS pages the role grants', () => {
     signInAs('website', ['cms-faqs.view', 'cms-states.view']);
     const { container } = sidebar();
-    expect([...container.querySelectorAll('.sb-item .sb-label')].map((l) => l.textContent)).toEqual(['FAQ Management', 'State Master']);
+    expect(labels(container)).toEqual(['FAQ Management', 'State Master']);
+  });
+
+  it('shows one Home Page Management entry for any one of the seven home page menus, in its place', () => {
+    for (const menu of ['cms-hero', 'cms-highlight', 'cms-board', 'cms-impact', 'cms-ecosystem', 'cms-schemes', 'cms-about']) {
+      signInAs('website', ['cms-apply.view', `${menu}.view`, 'cms-programme.view']);
+      const { container, unmount } = sidebar();
+      expect(labels(container)).toEqual(['Apply Page Management', 'Home Page Management', 'Programme Page Management']);
+      unmount();
+    }
+  });
+
+  it('drops Home Page Management when no home page menu opens, or Menu Visibility hides all seven', () => {
+    signInAs('website', ['cms-faqs.view']);
+    const { container, unmount } = sidebar();
+    expect(labels(container)).not.toContain('Home Page Management');
+    unmount();
+
+    const seven = ['cms-hero', 'cms-highlight', 'cms-board', 'cms-impact', 'cms-ecosystem', 'cms-schemes', 'cms-about'];
+    signInAs('website', ['cms-faqs.view', ...seven.map((m) => `${m}.view`)]);
+    auth.hiddenMenus = new Set(seven);
+    const hidden = sidebar();
+    expect(labels(hidden.container)).toEqual(['FAQ Management']);
+    hidden.unmount();
+
+    /* One menu left visible keeps the entry. */
+    auth.hiddenMenus = new Set(seven.slice(1));
+    expect(labels(sidebar().container)).toEqual(['FAQ Management', 'Home Page Management']);
+  });
+
+  it('marks Home Page Management active on its page and on every home page section’s own pages', () => {
+    signInAs('website', WEBSITE);
+    for (const active of [
+      'cms-home-page',
+      'cms-hero',
+      'cms-highlight',
+      'cms-board',
+      'cms-impact',
+      'cms-ecosystem',
+      'cms-schemes',
+      'cms-about',
+    ]) {
+      const { container, unmount } = sidebar(active);
+      expect(activeLabel(container)).toBe('Home Page Management');
+      unmount();
+    }
+    const { container } = sidebar('cms-programme');
+    expect(activeLabel(container)).toBe('Programme Page Management');
   });
 
   it('the full panel is unchanged for other roles', () => {
@@ -97,6 +140,7 @@ describe('<RequireAccess> for a Website Admin', () => {
         <Route path="/dashboard" element={<RequireAccess navKey="dashboard">Dashboard page</RequireAccess>} />
         <Route path="/users" element={<RequireAccess navKey="users">Users page</RequireAccess>} />
         <Route path="/cms/contact" element={<RequireAccess navKey="cms-contact">Contact page</RequireAccess>} />
+        <Route path="/cms/home-page" element={<RequireAccess navKey="cms-home-page">Home page sections</RequireAccess>} />
       </Routes>,
       { route },
     );
@@ -106,6 +150,24 @@ describe('<RequireAccess> for a Website Admin', () => {
     app('/dashboard');
     expect(await screen.findByText('Contact page')).toBeInTheDocument();
     expect(screen.queryByText('Dashboard page')).not.toBeInTheDocument();
+  });
+
+  it('starts on Home Page Management when a home page section is the first CMS screen the role opens', async () => {
+    signInAs('website', ['cms-board.view', 'cms-states.view']);
+    app('/dashboard');
+    expect(await screen.findByText('Home page sections')).toBeInTheDocument();
+  });
+
+  it('opens Home Page Management with any one home page menu, and shows the notice with none', () => {
+    signInAs('website', ['cms-impact.view']);
+    const { unmount } = app('/cms/home-page');
+    expect(screen.getByText('Home page sections')).toBeInTheDocument();
+    unmount();
+
+    signInAs('website', ['cms-faqs.view']);
+    app('/cms/home-page');
+    expect(screen.queryByText('Home page sections')).not.toBeInTheDocument();
+    expect(screen.getByText("You don't have access to this screen")).toBeInTheDocument();
   });
 
   it('shows the access notice for any other screen, pointing back to the CMS', () => {

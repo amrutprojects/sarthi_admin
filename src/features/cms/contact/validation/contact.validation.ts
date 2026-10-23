@@ -1,9 +1,27 @@
-import type { FieldErrors } from '../../validation';
-import type { ApiContactPage, Bilingual, ContactField, DistrictRef, OrgType, UpdateContactPageInput } from '../types/contact.types';
+import { validateWholeNumber, type FieldErrors } from '../../validation';
+import {
+  ORG_TYPES,
+  SECTION_ORG,
+  type ApiContactOrganization,
+  type ApiContactPage,
+  type ApiCoordinator,
+  type ApiDistrictOffice,
+  type Bilingual,
+  type ContactField,
+  type ContactOrganizationInput,
+  type ContactSection,
+  type CoordinatorField,
+  type CreateCoordinatorInput,
+  type CreateDistrictOfficeInput,
+  type DistrictRef,
+  type OfficeField,
+  type OrgType,
+  type UpdateContactPageInput,
+} from '../types/contact.types';
 
 /*
  * Contact page form rules, deliberately identical to the server rules in
- * backend/src/cms/contact/contact.validator.ts and to the CHECK constraints on the two tables.
+ * backend/src/cms/contact/contact.validator.ts and to the CHECK constraints on the tables.
  *
  * This is for the person filling in the form — it names the problem next to the field instead of
  * making them submit to find out. The backend validates every request again regardless.
@@ -27,47 +45,14 @@ export interface OrgFormValues {
   isActive: boolean;
 }
 
-/* `key` is a client-side id so React keeps each card's inputs stable while cards are added or removed. */
-export interface CoordinatorFormValues {
-  key: string;
-  name: string;
-  phone: string;
-  email: string;
-  districts: DistrictRef[];
-  isActive: boolean;
-}
-
-export interface OfficeFormValues {
-  key: string;
-  district: DistrictRef;
-  collectorName: string;
-  address: BilingualValue;
-  phone: string;
-  email: string;
-  officeHours: BilingualValue;
-  isActive: boolean;
-}
-
+/* The banner and both cards, flattened so inputs bind to plain strings. Each Edit page changes one part. */
 export interface ContactFormValues {
   pageTitle: BilingualValue;
   pageSubtitle: BilingualValue;
   isPublished: boolean;
   amrut: OrgFormValues;
   partner: OrgFormValues;
-  coordinators: CoordinatorFormValues[];
-  offices: OfficeFormValues[];
 }
-
-let keySeq = 0;
-export const newKey = (): string => `k${++keySeq}`;
-
-export const emptyCoordinator = (): CoordinatorFormValues => ({
-  key: newKey(), name: '', phone: '', email: '', districts: [], isActive: true,
-});
-
-export const emptyOffice = (district: DistrictRef): OfficeFormValues => ({
-  key: newKey(), district, collectorName: '', address: { mr: '', en: '' }, phone: '', email: '', officeHours: { mr: '', en: '' }, isActive: true,
-});
 
 const emptyPair = (): BilingualValue => ({ mr: '', en: '' });
 
@@ -97,24 +82,6 @@ export function toFormValues(page: ApiContactPage): ContactFormValues {
     isPublished: page.isPublished,
     amrut: card('AMRUT', 0),
     partner: card('IMPLEMENTATION_PARTNER', 1),
-    coordinators: page.coordinators.map((c) => ({
-      key: newKey(),
-      name: c.name,
-      phone: c.phone,
-      email: c.email ?? '',
-      districts: c.districts,
-      isActive: c.isActive,
-    })),
-    offices: page.districtOffices.map((o) => ({
-      key: newKey(),
-      district: o.district,
-      collectorName: o.collectorName ?? '',
-      address: pairOf(o.address),
-      phone: o.phone ?? '',
-      email: o.email ?? '',
-      officeHours: pairOf(o.officeHours),
-      isActive: o.isActive,
-    })),
   };
 }
 
@@ -157,23 +124,41 @@ export function toPayload(v: ContactFormValues): UpdateContactPageInput {
         isActive: v.partner.isActive,
       },
     ],
-    coordinators: v.coordinators.map((c, index) => ({
-      name: c.name.trim(),
-      phone: c.phone.trim(),
-      email: blankToNull(c.email),
-      districtIds: c.districts.map((d) => d.id),
-      displayOrder: index,
-      isActive: c.isActive,
-    })),
-    districtOffices: v.offices.map((o) => ({
-      districtId: o.district.id,
-      collectorName: blankToNull(o.collectorName),
-      address: pairToNull(o.address),
-      phone: blankToNull(o.phone),
-      email: blankToNull(o.email),
-      officeHours: pairToNull(o.officeHours),
-      isActive: o.isActive,
-    })),
+  };
+}
+
+/* A saved card sent back exactly as it is (the PUT is strict, so only the fields it accepts). */
+const savedCard = (o: ApiContactOrganization): ContactOrganizationInput => ({
+  orgType: o.orgType,
+  name: { mr: o.name.mr, en: o.name.en },
+  role: o.role ? { mr: o.role.mr, en: o.role.en } : null,
+  address: o.address ? { mr: o.address.mr, en: o.address.en } : null,
+  email: o.email,
+  phone: o.phone,
+  websiteUrl: o.websiteUrl,
+  helpdeskHours: o.helpdeskHours ? { mr: o.helpdeskHours.mr, en: o.helpdeskHours.en } : null,
+  displayOrder: o.displayOrder,
+  isActive: o.isActive,
+});
+
+/*
+ * The PUT body for one section's Edit page: the page as it was loaded, with only that section
+ * changed. A card the PUT leaves out is retired, so the other card is sent back unchanged — and a
+ * card that is not configured stays absent rather than being created empty. The coordinators and
+ * district offices are not sent at all, so the backend leaves them as they are.
+ */
+export function toSectionPayload(page: ApiContactPage, section: ContactSection, v: ContactFormValues): UpdateContactPageInput {
+  const edited = toPayload(v);
+  const card = (type: OrgType): ContactOrganizationInput | undefined => {
+    if (section !== 'page' && SECTION_ORG[section] === type) return edited.organizations.find((o) => o.orgType === type);
+    const saved = page.organizations.find((o) => o.orgType === type);
+    return saved ? savedCard(saved) : undefined;
+  };
+  return {
+    pageTitle: section === 'page' ? edited.pageTitle : { mr: page.pageTitle.mr, en: page.pageTitle.en },
+    pageSubtitle: section === 'page' ? edited.pageSubtitle : { mr: page.pageSubtitle.mr, en: page.pageSubtitle.en },
+    isPublished: section === 'page' ? edited.isPublished : page.isPublished,
+    organizations: ORG_TYPES.map(card).filter((o): o is ContactOrganizationInput => Boolean(o)),
   };
 }
 
@@ -235,30 +220,34 @@ function pairErrors(
   errors[`${prefix}.en` as ContactField] = required(value.en, `${label} (English)`, max);
 }
 
-export function validateContactForm(v: ContactFormValues): FieldErrors<ContactField> {
+/* Only the fields of the section being edited: the rest of the page is sent back as it was loaded. */
+export function validateContactSection(section: ContactSection, v: ContactFormValues): FieldErrors<ContactField> {
   const errors: FieldErrors<ContactField> = {};
 
-  pairErrors(errors, 'pageTitle', v.pageTitle, 'Page title', 150);
-  pairErrors(errors, 'pageSubtitle', v.pageSubtitle, 'Page subtitle', 300);
+  if (section === 'page') {
+    pairErrors(errors, 'pageTitle', v.pageTitle, 'Page title', 150);
+    pairErrors(errors, 'pageSubtitle', v.pageSubtitle, 'Page subtitle', 300);
+  }
 
-  pairErrors(errors, 'AMRUT.name', v.amrut.name, 'Organisation name', 150);
-  pairErrors(errors, 'AMRUT.address', v.amrut.address, 'Address', 500);
-  errors['AMRUT.email'] = validateEmail(v.amrut.email, 'Email');
-  errors['AMRUT.phone'] = validatePhone(v.amrut.phone, 'Phone');
-  errors['AMRUT.websiteUrl'] = validateUrl(v.amrut.websiteUrl, 'Website');
+  if (section === 'amrut') {
+    pairErrors(errors, 'AMRUT.name', v.amrut.name, 'Organisation name', 150);
+    pairErrors(errors, 'AMRUT.address', v.amrut.address, 'Address', 500);
+    errors['AMRUT.email'] = validateEmail(v.amrut.email, 'Email');
+    errors['AMRUT.phone'] = validatePhone(v.amrut.phone, 'Phone');
+    errors['AMRUT.websiteUrl'] = validateUrl(v.amrut.websiteUrl, 'Website');
+  }
 
-  pairErrors(errors, 'IMPLEMENTATION_PARTNER.name', v.partner.name, 'Organisation name', 150);
-  pairErrors(errors, 'IMPLEMENTATION_PARTNER.role', v.partner.role, 'Role', 200);
-  errors['IMPLEMENTATION_PARTNER.email'] = validateEmail(v.partner.email, 'Programme desk email');
-  pairErrors(errors, 'IMPLEMENTATION_PARTNER.helpdeskHours', v.partner.helpdeskHours, 'Helpdesk hours', 120);
+  if (section === 'partner') {
+    pairErrors(errors, 'IMPLEMENTATION_PARTNER.name', v.partner.name, 'Organisation name', 150);
+    pairErrors(errors, 'IMPLEMENTATION_PARTNER.role', v.partner.role, 'Role', 200);
+    errors['IMPLEMENTATION_PARTNER.email'] = validateEmail(v.partner.email, 'Programme desk email');
+    pairErrors(errors, 'IMPLEMENTATION_PARTNER.helpdeskHours', v.partner.helpdeskHours, 'Helpdesk hours', 120);
+  }
 
   return errors;
 }
 
 /* ---------------- coordinators & district offices ---------------- */
-
-/* Errors keyed "coord.<key>.<field>" / "office.<key>.<field>", so each lands on its own card. */
-export type SectionErrors = Record<string, string | undefined>;
 
 const optional = (fn: (v: string, label: string) => string | undefined) => (value: string, label: string) =>
   value.trim() ? fn(value, label) : undefined;
@@ -285,23 +274,112 @@ export const validateCoordinatorPhone = (value: string, label: string): string |
   return undefined;
 };
 
-export function validateSections(v: ContactFormValues): SectionErrors {
-  const errors: SectionErrors = {};
-  for (const c of v.coordinators) {
-    errors[`coord.${c.key}.name`] = required(c.name, 'Coordinator name', 120);
-    errors[`coord.${c.key}.phone`] = validateCoordinatorPhone(c.phone, 'Phone');
-    errors[`coord.${c.key}.email`] = optional(validateEmail)(c.email, 'Email');
-  }
-  for (const o of v.offices) {
-    errors[`office.${o.key}.collectorName`] = o.collectorName.trim().length > 150 ? 'Collector name must be at most 150 characters' : undefined;
-    const address = optionalPair(o.address, 'Office address', 500);
-    errors[`office.${o.key}.address.mr`] = address.mr;
-    errors[`office.${o.key}.address.en`] = address.en;
-    errors[`office.${o.key}.phone`] = optional(validatePhone)(o.phone, 'Official phone');
-    errors[`office.${o.key}.email`] = optional(validateEmail)(o.email, 'Official email');
-    const hours = optionalPair(o.officeHours, 'Office hours', 120);
-    errors[`office.${o.key}.officeHours.mr`] = hours.mr;
-    errors[`office.${o.key}.officeHours.en`] = hours.en;
-  }
-  return errors;
+export const COORDINATOR_NAME_MAX = 120;
+export const COLLECTOR_NAME_MAX = 150;
+export const OFFICE_ADDRESS_MAX = 500;
+export const OFFICE_HOURS_MAX = 120;
+
+export interface CoordinatorFormValues {
+  name: string;
+  phone: string;
+  email: string;
+  /* In the order the website lists them, lead district first. */
+  districts: DistrictRef[];
+  /* Typed as text so the box can be left empty: an empty order puts a new coordinator at the end. */
+  displayOrder: string;
+  isActive: boolean;
+}
+
+export const emptyCoordinatorForm = (): CoordinatorFormValues => ({
+  name: '',
+  phone: '',
+  email: '',
+  districts: [],
+  displayOrder: '',
+  isActive: true,
+});
+
+export const toCoordinatorFormValues = (c: ApiCoordinator): CoordinatorFormValues => ({
+  name: c.name,
+  phone: c.phone,
+  email: c.email ?? '',
+  districts: c.districts.map(({ id, name, code }) => ({ id, name, code })),
+  displayOrder: String(c.displayOrder),
+  isActive: c.isActive,
+});
+
+/* The values actually sent to the API: trimmed, a blank email as null, and no order at all when the box is empty. */
+export const normalizeCoordinatorForm = (v: CoordinatorFormValues): CreateCoordinatorInput => ({
+  name: v.name.trim(),
+  phone: v.phone.trim(),
+  email: blankToNull(v.email),
+  districtIds: v.districts.map((d) => d.id),
+  ...(v.displayOrder.trim() ? { displayOrder: Number(v.displayOrder.trim()) } : {}),
+  isActive: v.isActive,
+});
+
+export function validateCoordinatorForm(v: CoordinatorFormValues, { orderRequired = false } = {}): FieldErrors<CoordinatorField> {
+  return {
+    name: required(v.name, 'Coordinator name', COORDINATOR_NAME_MAX),
+    phone: validateCoordinatorPhone(v.phone, 'Phone'),
+    email: optional(validateEmail)(v.email, 'Email'),
+    displayOrder: validateWholeNumber(v.displayOrder, 'Display order', { min: 0, max: 999, required: orderRequired }),
+  };
+}
+
+export interface OfficeFormValues {
+  districtId: string;
+  collectorName: string;
+  address: BilingualValue;
+  phone: string;
+  email: string;
+  officeHours: BilingualValue;
+  isActive: boolean;
+}
+
+export const emptyOfficeForm = (): OfficeFormValues => ({
+  districtId: '',
+  collectorName: '',
+  address: emptyPair(),
+  phone: '',
+  email: '',
+  officeHours: emptyPair(),
+  isActive: true,
+});
+
+export const toOfficeFormValues = (o: ApiDistrictOffice): OfficeFormValues => ({
+  districtId: o.district.id,
+  collectorName: o.collectorName ?? '',
+  address: pairOf(o.address),
+  phone: o.phone ?? '',
+  email: o.email ?? '',
+  officeHours: pairOf(o.officeHours),
+  isActive: o.isActive,
+});
+
+/* Every Collectorate field is optional: a blank one is sent as null and the website shows "to be supplied". */
+export const normalizeOfficeForm = (v: OfficeFormValues): CreateDistrictOfficeInput => ({
+  districtId: v.districtId,
+  collectorName: blankToNull(v.collectorName),
+  address: pairToNull(v.address),
+  phone: blankToNull(v.phone),
+  email: blankToNull(v.email),
+  officeHours: pairToNull(v.officeHours),
+  isActive: v.isActive,
+});
+
+export function validateOfficeForm(v: OfficeFormValues): FieldErrors<OfficeField> {
+  const address = optionalPair(v.address, 'Office address', OFFICE_ADDRESS_MAX);
+  const hours = optionalPair(v.officeHours, 'Office hours', OFFICE_HOURS_MAX);
+  return {
+    districtId: v.districtId ? undefined : 'District is required',
+    collectorName:
+      v.collectorName.trim().length > COLLECTOR_NAME_MAX ? `Collector name must be at most ${COLLECTOR_NAME_MAX} characters` : undefined,
+    'address.mr': address.mr,
+    'address.en': address.en,
+    phone: optional(validatePhone)(v.phone, 'Official phone'),
+    email: optional(validateEmail)(v.email, 'Official email'),
+    'officeHours.mr': hours.mr,
+    'officeHours.en': hours.en,
+  };
 }

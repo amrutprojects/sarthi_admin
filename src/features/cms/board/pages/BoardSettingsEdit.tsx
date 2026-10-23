@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
+import BackButton from '../../components/BackButton';
 import { useCan } from '../../../../modules/auth/components/Can';
 import { ApiError } from '../../../../services/api-client';
 import BilingualField from '../../components/BilingualField';
@@ -12,7 +13,7 @@ import { usePageTitle } from '../../useMasterQuery';
 import { boardService } from '../services/boardService';
 import type { ApiBoardSection, BoardField } from '../types/board.types';
 import { sectionPayload, sectionToForm, serverErrors, validateSectionForm, type SectionFormValues } from '../validation/board.validation';
-import { BOARD_CRUMBS } from '../constants';
+import { BOARD_CRUMBS, BOARD_TAB_PATH } from '../constants';
 
 const FORM_ID = 'cms-board-settings-form';
 
@@ -31,6 +32,7 @@ export default function BoardSettingsEdit() {
         crumbs={[...BOARD_CRUMBS, { l: 'Section settings' }]}
         title="Section Settings"
         sub="The heading and subtitle above the member cards, and the notice shown below them, in Marathi and English."
+        back={<BackButton to={BOARD_TAB_PATH} />}
       />
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
       {detail.data && !can('updateBoardMember') ? (
@@ -72,7 +74,7 @@ function SettingsForm({ section }: { section: ApiBoardSection }) {
       await boardService.updateSection(sectionPayload(values, section.updatedAt));
       setDirty(false);
       toastOk('Section settings updated');
-      navigate('/cms/board-members');
+      navigate(BOARD_TAB_PATH);
     } catch (err) {
       if (err instanceof ApiError && err.status === 422 && err.details.length) {
         const mapped = serverErrors(err.details);
@@ -141,7 +143,7 @@ function SettingsForm({ section }: { section: ApiBoardSection }) {
           </div>
         </div>
       </form>
-      <MasterFormActions formId={FORM_ID} submitLabel="Save settings" busy={busy} dirty={dirty} backTo="/cms/board-members" />
+      <MasterFormActions formId={FORM_ID} submitLabel="Save settings" busy={busy} dirty={dirty} backTo={BOARD_TAB_PATH} />
     </>
   );
 }

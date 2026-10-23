@@ -24,7 +24,13 @@ export const toItem = (kind: AboutKind, r: ApiAboutFact | ApiAboutCard): AboutIt
         second: (r as ApiAboutCard).description,
         isRequired: (r as ApiAboutCard).isRequired,
       };
-const base = (r: ApiAboutFact | ApiAboutCard) => ({ id: r.id, displayOrder: r.displayOrder, isActive: r.isActive, updatedAt: r.updatedAt });
+const base = (r: ApiAboutFact | ApiAboutCard) => ({
+  id: r.id,
+  displayOrder: r.displayOrder,
+  isActive: r.isActive,
+  createdAt: r.createdAt,
+  updatedAt: r.updatedAt,
+});
 
 /* The request body for a row or card: the two texts under the names the API uses (label/value, heading/description). */
 export interface ItemInput {

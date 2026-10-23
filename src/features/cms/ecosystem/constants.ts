@@ -1,9 +1,20 @@
-/* Breadcrumb trail shared by The AMRUT Ecosystem pages. */
-export const ECOSYSTEM_CRUMBS = [
-  { l: 'Dashboard', link: '/dashboard' },
-  { l: 'CMS' },
-  { l: 'The AMRUT Ecosystem', link: '/cms/amrut-ecosystem' },
-];
+import { homePageCrumbs, homePageTabPath } from '../homePage/homePageNav';
+import type { ApiProgramme } from './types/ecosystem.types';
+
+/* Breadcrumb trail shared by The AMRUT Ecosystem pages: the section is a tab of Home Page Management. */
+export const ECOSYSTEM_CRUMBS = homePageCrumbs('ecosystem');
+
+/* The section's tab of Home Page Management: where Back, Cancel and Save return to. */
+export const ECOSYSTEM_TAB_PATH = homePageTabPath('ecosystem');
+
+/* A programme's read-only View page (route /cms/amrut-ecosystem/:id/view), opened by the eye button and by a click on its row. */
+export const ecosystemViewPath = (id: string): string => `/cms/amrut-ecosystem/${encodeURIComponent(id)}/view`;
+
+/* A programme's Edit page (route /cms/amrut-ecosystem/:id/edit). */
+export const ecosystemEditPath = (id: string): string => `/cms/amrut-ecosystem/${encodeURIComponent(id)}/edit`;
+
+/* How a confirmation names a card: both names, Marathi first, e.g. "अमृत कलश / AMRUT Kalash". */
+export const programmeLabel = (p: ApiProgramme): string => `${p.name.mr} / ${p.name.en}`;
 
 /*
  * The icons a programme card may use, with the name shown in the picker. The same identifiers the API

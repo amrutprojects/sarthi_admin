@@ -100,6 +100,20 @@ export function SectionTabPanel<T extends string>({
   );
 }
 
+/*
+ * The head of a tab that is a section of its own, with buttons of its own (Home Page Management, where each tab is
+ * a separate part of the public page): a line saying what the tab shows, and the section's actions — Publish,
+ * Edit, Add — which the page of a single section puts in its page header (.cms-sections .cms-tab-head).
+ */
+export function SectionTabHead({ children, actions }: { children: ReactNode; actions?: ReactNode }) {
+  return (
+    <div className="cms-tab-head">
+      <p className="cms-tab-head-sub">{children}</p>
+      {actions ? <div className="cms-tab-head-actions">{actions}</div> : null}
+    </div>
+  );
+}
+
 /* A short note at the top of a tab, about how its values are shown or where they are edited (.cms-sections .sec-note). */
 export function SectionNote({ children }: { children: ReactNode }) {
   return (

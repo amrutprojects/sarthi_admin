@@ -1,10 +1,11 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
+import BackButton from '../../components/BackButton';
 import { useCan } from '../../../../modules/auth/components/Can';
 import { LoadState, toastOk, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import ImpactStatForm from '../components/ImpactStatForm';
-import { IMPACT_CRUMBS } from '../constants';
+import { IMPACT_CRUMBS, IMPACT_TAB_PATH } from '../constants';
 import { impactService } from '../services/impactService';
 import { statChanges, statToForm } from '../validation/impact.validation';
 
@@ -27,6 +28,7 @@ export default function ImpactStatEdit() {
         crumbs={[...IMPACT_CRUMBS, { l: 'Edit' }]}
         title={s ? `Edit ${s.label.en}` : 'Edit Statistic'}
         sub="Changes appear on the public website once saved."
+        back={<BackButton to={IMPACT_TAB_PATH} />}
       />
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
       {s && !can('updateImpactStat') ? (
@@ -39,12 +41,12 @@ export default function ImpactStatEdit() {
           key={s.updatedAt}
           initial={statToForm(s)}
           submitLabel="Save changes"
-          backTo="/cms/impact"
+          backTo={IMPACT_TAB_PATH}
           isCreate={false}
           onSave={async (values) => {
             await impactService.update(s.id, statChanges(s, values));
             toastOk('Statistic updated');
-            navigate('/cms/impact');
+            navigate(IMPACT_TAB_PATH);
           }}
         />
       ) : null}

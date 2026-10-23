@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
+import BackButton from '../../components/BackButton';
 import { useCan } from '../../../../modules/auth/components/Can';
 import { ApiError, newIdempotencyKey } from '../../../../services/api-client';
 import BilingualField from '../../components/BilingualField';
@@ -10,7 +11,7 @@ import MasterFormActions from '../../components/MasterFormActions';
 import { LoadState, toastError, toastOk, useApiData } from '../../shared';
 import { isValid, type FieldErrors } from '../../validation';
 import { usePageTitle } from '../../useMasterQuery';
-import { ABOUT_CRUMBS, KINDS } from '../constants';
+import { ABOUT_CRUMBS, ABOUT_TAB_PATH, KINDS } from '../constants';
 import { aboutService } from '../services/aboutService';
 import type { AboutField, AboutItem, AboutKind } from '../types/about.types';
 import {
@@ -45,6 +46,7 @@ export default function ItemEditor({ kind }: { kind: AboutKind }) {
         crumbs={[...ABOUT_CRUMBS, { l: isCreate ? `Add New ${k.noun}` : 'Edit' }]}
         title={isCreate ? `Add New ${k.noun}` : detail.data ? `Edit ${detail.data.first.en}` : `Edit ${k.noun}`}
         sub="Text is entered in Marathi and English — the public site defaults to Marathi. Changes appear on the website once saved."
+        back={<BackButton to={ABOUT_TAB_PATH} />}
       />
       {!isCreate ? <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} /> : null}
       {!allowed ? (
@@ -100,7 +102,7 @@ function ItemForm({ kind, initial }: { kind: AboutKind; initial: AboutItem | nul
       }
       setDirty(false);
       toastOk(initial ? `${k.noun} updated` : `${k.noun} added`);
-      navigate('/cms/about-amrut');
+      navigate(ABOUT_TAB_PATH);
     } catch (err) {
       if (err instanceof ApiError && err.status === 422 && err.details.length) {
         const mapped = serverErrors(kind, err.details);
@@ -237,7 +239,7 @@ function ItemForm({ kind, initial }: { kind: AboutKind; initial: AboutItem | nul
         submitLabel={initial ? 'Save changes' : `Save ${k.nounLower}`}
         busy={busy}
         dirty={dirty}
-        backTo="/cms/about-amrut"
+        backTo={ABOUT_TAB_PATH}
       />
     </>
   );

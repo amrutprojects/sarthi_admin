@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
+import BackButton from '../../components/BackButton';
 import { useCan } from '../../../../modules/auth/components/Can';
 import { toastOk } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import MemberForm from '../components/MemberForm';
-import { BOARD_CRUMBS } from '../constants';
+import { BOARD_CRUMBS, BOARD_TAB_PATH } from '../constants';
 import { boardService } from '../services/boardService';
 import { emptyMemberForm, memberPayload } from '../validation/board.validation';
 
@@ -20,18 +21,19 @@ export default function BoardMemberCreate() {
         crumbs={[...BOARD_CRUMBS, { l: 'Add Member' }]}
         title="Add Member"
         sub="Adds a card to the मान्यवर व संचालक मंडळ section. Text is entered in Marathi and English — the public site defaults to Marathi."
+        back={<BackButton to={BOARD_TAB_PATH} />}
       />
       {can('createBoardMember') ? (
         <MemberForm
           initial={emptyMemberForm()}
           currentPhoto={null}
           submitLabel="Add member"
-          backTo="/cms/board-members"
+          backTo={BOARD_TAB_PATH}
           isCreate
           onSave={async (values, photo) => {
             await boardService.create(memberPayload(values), photo.kind === 'new' ? photo.file : null);
             toastOk('Member added');
-            navigate('/cms/board-members');
+            navigate(BOARD_TAB_PATH);
           }}
         />
       ) : (

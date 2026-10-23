@@ -1,6 +1,6 @@
 import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { ADMIN_ROUTES, type RouteName } from '../constants/navigation';
+import { ADMIN_ROUTES, HOME_PAGE_REDIRECTS, homePageTabPath, type RouteName } from '../constants/navigation';
 import AdminLayout from '../layouts/AdminLayout';
 import { useAuth } from '../modules/auth/auth-context';
 import { useHome } from '../modules/auth/components/Can';
@@ -59,7 +59,13 @@ const PAGES: Record<RouteName, LazyExoticComponent<ComponentType>> = {
   pmo: page(() => import('../modules/governance/pages/PmoPage')),
   qa: page(() => import('../modules/governance/pages/QaPage')),
   cmsContactView: page(() => import('../features/cms/contact/pages/ContactView')),
-  cmsContactEdit: page(() => import('../features/cms/contact/pages/ContactEdit')),
+  cmsContactSectionEdit: page(() => import('../features/cms/contact/pages/ContactSectionEdit')),
+  cmsContactCoordinatorCreate: page(() => import('../features/cms/contact/pages/CoordinatorCreate')),
+  cmsContactCoordinatorEdit: page(() => import('../features/cms/contact/pages/CoordinatorEdit')),
+  cmsContactCoordinatorView: page(() => import('../features/cms/contact/pages/CoordinatorView')),
+  cmsContactOfficeCreate: page(() => import('../features/cms/contact/pages/DistrictOfficeCreate')),
+  cmsContactOfficeEdit: page(() => import('../features/cms/contact/pages/DistrictOfficeEdit')),
+  cmsContactOfficeView: page(() => import('../features/cms/contact/pages/DistrictOfficeView')),
   cmsFooterView: page(() => import('../features/cms/footer/pages/FooterView')),
   cmsFooterEdit: page(() => import('../features/cms/footer/pages/FooterEdit')),
   cmsModulesView: page(() => import('../features/cms/modules/pages/ModulesView')),
@@ -78,29 +84,29 @@ const PAGES: Record<RouteName, LazyExoticComponent<ComponentType>> = {
   cmsApplyPageEdit: page(() => import('../features/cms/apply/pages/ApplyPageEdit')),
   cmsApplyEdit: page(() => import('../features/cms/apply/pages/ApplyEdit')),
   cmsApplyView: page(() => import('../features/cms/apply/pages/ApplyView')),
-  cmsHeroView: page(() => import('../features/cms/hero/pages/HeroView')),
+  cmsHomePage: page(() => import('../features/cms/homePage/pages/HomePageView')),
   cmsHeroEdit: page(() => import('../features/cms/hero/pages/HeroEdit')),
-  cmsHighlightView: page(() => import('../features/cms/highlight/pages/HighlightView')),
   cmsHighlightEdit: page(() => import('../features/cms/highlight/pages/HighlightEdit')),
-  cmsBoardList: page(() => import('../features/cms/board/pages/BoardMembersPage')),
   cmsBoardCreate: page(() => import('../features/cms/board/pages/BoardMemberCreate')),
   cmsBoardEdit: page(() => import('../features/cms/board/pages/BoardMemberEdit')),
   cmsBoardSettings: page(() => import('../features/cms/board/pages/BoardSettingsEdit')),
-  cmsEcosystemList: page(() => import('../features/cms/ecosystem/pages/EcosystemPage')),
+  cmsBoardView: page(() => import('../features/cms/board/pages/BoardMemberView')),
   cmsEcosystemCreate: page(() => import('../features/cms/ecosystem/pages/ProgrammeCreate')),
   cmsEcosystemEdit: page(() => import('../features/cms/ecosystem/pages/ProgrammeEdit')),
   cmsEcosystemSettings: page(() => import('../features/cms/ecosystem/pages/EcosystemSettingsEdit')),
-  cmsSchemesList: page(() => import('../features/cms/schemes/pages/SchemesPage')),
+  cmsEcosystemView: page(() => import('../features/cms/ecosystem/pages/ProgrammeView')),
   cmsSchemesCreate: page(() => import('../features/cms/schemes/pages/SchemeCreate')),
   cmsSchemesEdit: page(() => import('../features/cms/schemes/pages/SchemeEdit')),
   cmsSchemesSettings: page(() => import('../features/cms/schemes/pages/SchemesSettingsEdit')),
-  cmsImpactList: page(() => import('../features/cms/impact/pages/ImpactPage')),
+  cmsSchemesView: page(() => import('../features/cms/schemes/pages/SchemeView')),
   cmsImpactCreate: page(() => import('../features/cms/impact/pages/ImpactStatCreate')),
   cmsImpactEdit: page(() => import('../features/cms/impact/pages/ImpactStatEdit')),
   cmsImpactSettings: page(() => import('../features/cms/impact/pages/ImpactSettingsEdit')),
-  cmsAboutDashboard: page(() => import('../features/cms/about/pages/AboutDashboard')),
+  cmsImpactView: page(() => import('../features/cms/impact/pages/ImpactStatView')),
   cmsAboutFact: page(() => import('../features/cms/about/pages/FactEditorPage')),
   cmsAboutCard: page(() => import('../features/cms/about/pages/CardEditorPage')),
+  cmsAboutFactView: page(() => import('../features/cms/about/pages/FactView')),
+  cmsAboutCardView: page(() => import('../features/cms/about/pages/CardView')),
   cmsProgrammeView: page(() => import('../features/cms/programme/pages/ProgrammeView')),
   cmsProgrammeEdit: page(() => import('../features/cms/programme/pages/ProgrammeEdit')),
   cmsStateList: page(() => import('../features/cms/state/pages/StateList')),
@@ -241,9 +247,18 @@ export function AppRoutes() {
               />
             );
           })}
-          {/* Home Page Figures was merged into Home Hero Section: old links land there, and its own route applies the access rules. */}
-          <Route path="/cms/home" element={<Navigate to="/cms/hero" replace />} />
-          <Route path="/cms/home/edit" element={<Navigate to="/cms/hero/edit" replace />} />
+          {/*
+           * The seven home page menus share Home Page Management: each one's former landing page opens its tab, and
+           * the page applies the access rules (an unknown or forbidden tab falls back to the first one the user may open).
+           */}
+          {HOME_PAGE_REDIRECTS.map(([path, tab]) => (
+            <Route key={path} path={path} element={<Navigate to={homePageTabPath(tab)} replace />} />
+          ))}
+          {/* Home Page Figures was merged into Home Hero Section: its old links open the glance figures and their edit page. */}
+          <Route path="/cms/home" element={<Navigate to={homePageTabPath('glance')} replace />} />
+          <Route path="/cms/home/edit" element={<Navigate to="/cms/hero/edit?tab=glance" replace />} />
+          {/* The all-in-one Contact editor was split into one Edit page per section: old links open the first. */}
+          <Route path="/cms/contact/edit" element={<Navigate to="/cms/contact/page/edit" replace />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>

@@ -1,13 +1,13 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../../../../tests/test-utils';
 import { AppRoutes } from '../../../app/router';
 import { ApiError } from '../../../services/api-client';
+import { HeroGlanceTab, HeroSlidesTab } from './components/HeroTabs';
 import HeroEdit from './pages/HeroEdit';
 import HeroForm from './pages/HeroForm';
-import HeroView from './pages/HeroView';
 import { heroService } from './services/heroService';
 import type { ApiHeroSlide, ApiHomeHero, Bilingual } from './types/hero.types';
 import { toFormValues } from './validation/hero.validation';
@@ -75,16 +75,39 @@ const districts = () => screen.getByLabelText(/^Districts/);
 const NOT_CONFIGURED = 'The programme content has not been configured yet. Run the database seed to create it.';
 
 const renderForm = (initial = hero(), onSave = vi.fn()) =>
-  renderWithProviders(<HeroForm initial={toFormValues(initial)} glance={initial.glance} backTo="/cms/hero" onSave={onSave} />);
+  renderWithProviders(
+    <HeroForm initial={toFormValues(initial)} glance={initial.glance} backTo="/cms/home-page?tab=hero" onSave={onSave} />,
+  );
 
-/* The edit page, with the view route in place so the redirect after a save is observable. */
-const renderEdit = () =>
+/* Home Page Management, reduced to the tab it was opened on, so where the edit page returns to is observable. */
+function HomePageStub() {
+  const { search } = useLocation();
+  return <p>{`Home page ${search}`}</p>;
+}
+const HERO_TAB = 'Home page ?tab=hero';
+
+/* The edit page, with Home Page Management's route in place so the redirect after a save is observable. */
+const renderEdit = (route = '/cms/hero/edit') =>
   renderWithProviders(
     <Routes>
       <Route path="/cms/hero/edit" element={<HeroEdit />} />
-      <Route path="/cms/hero" element={<p>Hero view page</p>} />
+      <Route path="/cms/home-page" element={<HomePageStub />} />
     </Routes>,
-    { route: '/cms/hero/edit' },
+    { route },
+  );
+
+/* One of the section's two tabs, with the address shown so the Edit button's target is observable. */
+function Location() {
+  const l = useLocation();
+  return <output data-testid="location">{l.pathname + l.search}</output>;
+}
+const renderTab = (tab: 'slides' | 'glance') =>
+  renderWithProviders(
+    <>
+      {tab === 'slides' ? <HeroSlidesTab /> : <HeroGlanceTab />}
+      <Location />
+    </>,
+    { route: `/cms/home-page?tab=${tab === 'slides' ? 'hero' : 'glance'}` },
   );
 
 describe('Home Hero Section CMS', () => {
@@ -97,13 +120,14 @@ describe('Home Hero Section CMS', () => {
     toasts().innerHTML = '';
   });
 
-  describe('view page', () => {
+  /* The section's two tabs of Home Page Management: the slides, and the "Programme at a glance" card. */
+  describe('view tabs', () => {
     it('shows the saved texts, and Publish and Edit to an administrator who may update', async () => {
       vi.mocked(heroService.get).mockResolvedValue({ ...hero(), isPublished: false });
       vi.mocked(heroService.setPublished).mockResolvedValue(hero());
-      renderWithProviders(<HeroView />);
+      renderTab('slides');
 
-      expect(await screen.findByRole('heading', { name: 'Home Hero Section' })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: 'Buttons on every slide' })).toBeInTheDocument();
       expect(screen.getByText('अधिक जाणून घ्या')).toBeInTheDocument();
       expect(screen.getByText('Learn more')).toBeInTheDocument();
       expect(screen.getByText('Check Application Status')).toBeInTheDocument();
@@ -122,17 +146,21 @@ describe('Home Hero Section CMS', () => {
       expect(screen.getAllByText('Visible')).toHaveLength(2);
       expect(screen.getByText('Hidden')).toBeInTheDocument();
       expect(screen.getByText('This content is not published')).toBeInTheDocument();
+      /* The glance card has a tab of its own. */
+      expect(screen.queryByRole('heading', { name: 'Programme at a glance' })).not.toBeInTheDocument();
 
-      expect(screen.getByRole('button', { name: 'Edit content' })).toBeInTheDocument();
       await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
       await waitFor(() => expect(heroService.setPublished).toHaveBeenCalledWith(true));
       await waitFor(() => expect(toasts()).toHaveTextContent('Section published'));
+
+      await userEvent.click(screen.getByRole('button', { name: 'Edit content' }));
+      expect(screen.getByTestId('location')).toHaveTextContent(/^\/cms\/hero\/edit$/);
     });
 
     it('shows the texts without Publish or Edit to a view-only administrator', async () => {
       auth.permissions = new Set(['cms-hero.view']);
       vi.mocked(heroService.get).mockResolvedValue(hero());
-      renderWithProviders(<HeroView />);
+      renderTab('slides');
 
       expect(await screen.findByText('Heading 1')).toBeInTheDocument();
       expect(screen.getByText('Check Application Status')).toBeInTheDocument();
@@ -141,12 +169,12 @@ describe('Home Hero Section CMS', () => {
       expect(screen.queryByRole('button', { name: 'Unpublish' })).not.toBeInTheDocument();
     });
 
-    it('shows the "Programme at a glance" figures after the slides, and says which ones are worked out', async () => {
+    it('shows the "Programme at a glance" figures on their own tab, and says which ones are worked out', async () => {
       vi.mocked(heroService.get).mockResolvedValue(hero());
-      renderWithProviders(<HeroView />);
+      renderTab('glance');
 
-      const heading = await screen.findByRole('heading', { name: 'Programme at a glance' });
-      expect(screen.getByRole('heading', { name: 'Slide 3' }).compareDocumentPosition(heading)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+      expect(await screen.findByRole('heading', { name: 'Programme at a glance' })).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Slide 1' })).not.toBeInTheDocument();
       expect(screen.getByText('Three of these four are worked out, not entered')).toBeInTheDocument();
       expect(screen.getByText('480 (summed from the modules)')).toBeInTheDocument();
       expect(screen.getByText('4 × 120 hours')).toBeInTheDocument();
@@ -156,29 +184,46 @@ describe('Home Hero Section CMS', () => {
       expect(screen.queryByText(/hidden, so/)).not.toBeInTheDocument();
     });
 
+    it('has the same Publish and Edit on the glance tab, and its Edit returns there', async () => {
+      vi.mocked(heroService.get).mockResolvedValue(hero());
+      vi.mocked(heroService.setPublished).mockResolvedValue({ ...hero(), isPublished: false });
+      renderTab('glance');
+
+      await screen.findByRole('heading', { name: 'Programme at a glance' });
+      await userEvent.click(screen.getByRole('button', { name: 'Unpublish' }));
+      await waitFor(() => expect(heroService.setPublished).toHaveBeenCalledWith(false));
+      await waitFor(() => expect(toasts()).toHaveTextContent('Section unpublished'));
+
+      await userEvent.click(screen.getByRole('button', { name: 'Edit content' }));
+      expect(screen.getByTestId('location')).toHaveTextContent('/cms/hero/edit?tab=glance');
+    });
+
     it('says when hidden modules are left out of the figures', async () => {
       vi.mocked(heroService.get).mockResolvedValue({ ...hero(), glance: { ...hero().glance!, hiddenModules: 2 } });
-      const { unmount } = renderWithProviders(<HeroView />);
+      const { unmount } = renderTab('glance');
       expect(
         await screen.findByText('2 modules are hidden, so they are left out of these figures and out of the website.'),
       ).toBeInTheDocument();
       unmount();
 
       vi.mocked(heroService.get).mockResolvedValue({ ...hero(), glance: { ...hero().glance!, hiddenModules: 1 } });
-      renderWithProviders(<HeroView />);
+      renderTab('glance');
       expect(await screen.findByText('1 module is hidden, so it is left out of these figures and out of the website.')).toBeInTheDocument();
     });
 
     it('says the figures are not configured when the Modules page content is missing', async () => {
       vi.mocked(heroService.get).mockResolvedValue({ ...hero(), glance: null });
-      renderWithProviders(<HeroView />);
+      const { unmount } = renderTab('glance');
 
       expect(await screen.findByText(NOT_CONFIGURED)).toBeInTheDocument();
       expect(screen.getByRole('heading', { name: 'Programme at a glance' })).toBeInTheDocument();
       expect(screen.queryByText('Total hours')).not.toBeInTheDocument();
       expect(screen.queryByText('Three of these four are worked out, not entered')).not.toBeInTheDocument();
+      unmount();
+
       /* The slides are still there to read and edit. */
-      expect(screen.getByText('Heading 1')).toBeInTheDocument();
+      renderTab('slides');
+      expect(await screen.findByText('Heading 1')).toBeInTheDocument();
     });
   });
 
@@ -501,7 +546,7 @@ describe('Home Hero Section CMS', () => {
       });
     });
 
-    it('confirms the save only after the PUT resolves, then returns to the view page', async () => {
+    it('confirms the save only after the PUT resolves, then returns to the slides tab', async () => {
       vi.mocked(heroService.get).mockResolvedValue(hero());
       let resolve!: (value: ApiHomeHero) => void;
       vi.mocked(heroService.update).mockReturnValue(new Promise<ApiHomeHero>((r) => (resolve = r)));
@@ -512,11 +557,11 @@ describe('Home Hero Section CMS', () => {
       await waitFor(() => expect(heroService.update).toHaveBeenCalledTimes(1));
       expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled();
       expect(toasts()).not.toHaveTextContent('Home hero section updated');
-      expect(screen.queryByText('Hero view page')).not.toBeInTheDocument();
+      expect(screen.queryByText(HERO_TAB)).not.toBeInTheDocument();
 
       resolve(hero());
       await waitFor(() => expect(toasts()).toHaveTextContent('Home hero section updated'));
-      expect(await screen.findByText('Hero view page')).toBeInTheDocument();
+      expect(await screen.findByText(HERO_TAB)).toBeInTheDocument();
     });
 
     it('keeps the edits and shows the error when the save fails', async () => {
@@ -533,7 +578,7 @@ describe('Home Hero Section CMS', () => {
       expect(toasts()).not.toHaveTextContent('Home hero section updated');
       expect(screen.getByLabelText(/^Learn more button \(English\)/)).toHaveValue('Read more');
       expect(screen.getByRole('button', { name: 'Save changes' })).toBeEnabled();
-      expect(screen.queryByText('Hero view page')).not.toBeInTheDocument();
+      expect(screen.queryByText(HERO_TAB)).not.toBeInTheDocument();
     });
 
     it("shows the server's message when someone else saved first (409)", async () => {
@@ -577,35 +622,80 @@ describe('Home Hero Section CMS', () => {
       await waitFor(() => expect(heroService.update).toHaveBeenCalledTimes(1));
       const body = vi.mocked(heroService.update).mock.calls[0]![0];
       expect(Object.keys(body).sort()).toEqual(['checkStatusLabel', 'expectedUpdatedAt', 'isPublished', 'readMoreLabel', 'slides']);
-      expect(await screen.findByText('Hero view page')).toBeInTheDocument();
+      expect(await screen.findByText(HERO_TAB)).toBeInTheDocument();
+    });
+  });
+
+  /* The edit page belongs to two tabs of Home Page Management, and returns to the one it was opened from. */
+  describe('returning to Home Page Management', () => {
+    const crumbs = () => [...document.querySelectorAll('.crumb > a, .crumb > span')].map((c) => c.textContent);
+
+    it('names the slides tab in the breadcrumb, and Back returns to it', async () => {
+      vi.mocked(heroService.get).mockResolvedValue(hero());
+      renderEdit();
+
+      expect(await screen.findByRole('heading', { name: 'Edit Home Hero Section' })).toBeInTheDocument();
+      expect(crumbs()).toEqual(['Dashboard', 'CMS', 'Home Page Management', 'AMRUT Kalash – apply online', 'Edit']);
+      await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+      expect(await screen.findByText(HERO_TAB)).toBeInTheDocument();
+    });
+
+    it('opened from the glance tab, names it in the breadcrumb, and Cancel and Save return to it', async () => {
+      vi.mocked(heroService.get).mockResolvedValue(hero());
+      vi.mocked(heroService.update).mockResolvedValue(hero());
+      const { unmount } = renderEdit('/cms/hero/edit?tab=glance');
+
+      await screen.findByLabelText(/^Districts/);
+      expect(crumbs()).toEqual(['Dashboard', 'CMS', 'Home Page Management', 'Programme at a glance', 'Edit']);
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(await screen.findByText('Home page ?tab=glance')).toBeInTheDocument();
+      unmount();
+
+      renderEdit('/cms/hero/edit?tab=glance');
+      await userEvent.clear(await screen.findByLabelText(/^Districts/));
+      await userEvent.type(districts(), '37');
+      await save();
+      expect(await screen.findByText('Home page ?tab=glance')).toBeInTheDocument();
     });
   });
 
   /* Home Page Figures was merged into this section; its old addresses still work through the real routes. */
-  describe('old Home Page Figures links', () => {
-    it('/cms/home opens the Home Hero Section view, glance card included', async () => {
+  describe('old links', () => {
+    it('/cms/home opens the glance figures on Home Page Management', async () => {
       vi.mocked(heroService.get).mockResolvedValue(hero());
       renderWithProviders(<AppRoutes />, { route: '/cms/home' });
 
-      expect(await screen.findByRole('heading', { name: 'Home Hero Section' })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: 'Home Page Management' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Programme at a glance' })).toHaveAttribute('aria-selected', 'true');
       expect(await screen.findByText('36 (entered)')).toBeInTheDocument();
     });
 
-    it('/cms/home/edit opens the Home Hero Section edit page', async () => {
+    it('/cms/hero, the section’s former page, opens its slides tab', async () => {
+      vi.mocked(heroService.get).mockResolvedValue(hero());
+      renderWithProviders(<AppRoutes />, { route: '/cms/hero' });
+
+      expect(await screen.findByRole('tab', { name: 'AMRUT Kalash – apply online' })).toHaveAttribute('aria-selected', 'true');
+      expect(await screen.findByText('Heading 1')).toBeInTheDocument();
+    });
+
+    it('/cms/home/edit opens the Home Hero Section edit page, returning to the glance tab', async () => {
       vi.mocked(heroService.get).mockResolvedValue(hero());
       renderWithProviders(<AppRoutes />, { route: '/cms/home/edit' });
 
       expect(await screen.findByRole('heading', { name: 'Edit Home Hero Section' })).toBeInTheDocument();
       expect(await screen.findByLabelText(/^Districts/)).toHaveValue('36');
+      await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+      expect(await screen.findByRole('tab', { name: 'Programme at a glance' })).toHaveAttribute('aria-selected', 'true');
     });
 
-    it('still needs cms-hero.view: the redirect opens nothing the menu would not', async () => {
-      auth.permissions = new Set(['cms-highlight.view']);
+    it('still needs a home page menu: the redirect opens nothing the menus would not', async () => {
+      auth.permissions = new Set(['cms-faqs.view']);
       vi.mocked(heroService.get).mockResolvedValue(hero());
       renderWithProviders(<AppRoutes />, { route: '/cms/home' });
 
       expect(await screen.findByText("You don't have access to this screen")).toBeInTheDocument();
-      expect(screen.queryByRole('heading', { name: 'Home Hero Section' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Home Page Management' })).not.toBeInTheDocument();
+      expect(heroService.get).not.toHaveBeenCalled();
     });
   });
 });

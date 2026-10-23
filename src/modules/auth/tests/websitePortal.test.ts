@@ -1,16 +1,36 @@
 import { describe, expect, it } from 'vitest';
-import { NAV, isNavGroup } from '../../../constants/navigation';
+import { HOME_PAGE_TABS, NAV, SIDEBAR_NAV, isNavGroup } from '../../../constants/navigation';
 import { canOpenPath, homeItem, homePath } from '../home';
-import { WEBSITE_MENUS, canOpen } from '../permissions';
+import { MENU_GROUPS, SCREEN_ACCESS, WEBSITE_MENUS, canOpen } from '../permissions';
 
 const WEBSITE = new Set(WEBSITE_MENUS.flatMap((m) => [`${m}.view`, `${m}.update`]));
-const NAV_KEYS = NAV.filter((n) => !isNavGroup(n)).map((n) => (n as { k: string }).k);
+const keysOf = (entries: typeof NAV) => entries.filter((n) => !isNavGroup(n)).map((n) => (n as { k: string }).k);
+const NAV_KEYS = keysOf(NAV);
+const SIDEBAR_KEYS = keysOf(SIDEBAR_NAV);
+const HOME_PAGE_MENUS = ['cms-hero', 'cms-highlight', 'cms-board', 'cms-impact', 'cms-ecosystem', 'cms-schemes', 'cms-about'];
 
 describe('the website portal (Website Admin)', () => {
   it('opens exactly the CMS menu, in sidebar order', () => {
-    expect(NAV_KEYS.filter((k) => canOpen(WEBSITE, k, undefined, 'website'))).toEqual(NAV_KEYS.filter((k) => WEBSITE_MENUS.includes(k)));
+    /* Every menu of the role, Home Page Management's seven included (they keep their keys and permissions), and nothing else. */
+    expect(NAV_KEYS.filter((k) => canOpen(WEBSITE, k, undefined, 'website'))).toEqual(
+      NAV_KEYS.filter((k) => WEBSITE_MENUS.includes(k) || k in MENU_GROUPS),
+    );
     expect([...WEBSITE_MENUS].sort()).toEqual(NAV_KEYS.filter((k) => WEBSITE_MENUS.includes(k)).sort());
     expect(WEBSITE_MENUS).toEqual(expect.arrayContaining(['cms-board', 'cms-ecosystem', 'cms-schemes', 'cms-about']));
+    /* The sidebar: the CMS entries, the seven home page menus gathered under one Home Page Management entry. */
+    expect(SIDEBAR_KEYS.filter((k) => canOpen(WEBSITE, k, undefined, 'website'))).toEqual([
+      'cms-contact',
+      'cms-footer',
+      'cms-modules',
+      'cms-faqs',
+      'cms-eligibility',
+      'cms-apply',
+      'cms-home-page',
+      'cms-programme',
+      'cms-states',
+      'cms-districts',
+      'cms-talukas',
+    ]);
   });
 
   it('closes the screens open to every signed-in user, and every other menu whatever is granted', () => {
@@ -34,6 +54,34 @@ describe('the website portal (Website Admin)', () => {
   });
 });
 
+describe('Home Page Management', () => {
+  it('gathers the seven home page menus, the same ones as its tabs', () => {
+    expect(MENU_GROUPS['cms-home-page']).toEqual(HOME_PAGE_MENUS);
+    expect([...new Set(HOME_PAGE_TABS.map((t) => t.menu))]).toEqual(HOME_PAGE_MENUS);
+    /* No permission code of its own: its screen rule is any one of the seven view codes. */
+    expect(SCREEN_ACCESS['cms-home-page']).toEqual(HOME_PAGE_MENUS.map((m) => `${m}.view`));
+    expect(WEBSITE_MENUS).not.toContain('cms-home-page');
+  });
+
+  it('opens when any one of its menus opens, in either portal', () => {
+    for (const menu of HOME_PAGE_MENUS) {
+      expect(canOpen(new Set([`${menu}.view`]), 'cms-home-page')).toBe(true);
+      expect(canOpen(new Set([`${menu}.view`]), 'cms-home-page', undefined, 'website')).toBe(true);
+    }
+    expect(canOpen(new Set(['cms-faqs.view', 'cms-programme.view']), 'cms-home-page')).toBe(false);
+    expect(canOpen(new Set(), 'cms-home-page')).toBe(false);
+    /* An update code alone opens no menu, so no Home Page Management either. */
+    expect(canOpen(new Set(['cms-hero.update']), 'cms-home-page')).toBe(false);
+  });
+
+  it('closes when Menu Visibility hides every menu the user holds', () => {
+    const codes = new Set(['cms-board.view', 'cms-about.view']);
+    expect(canOpen(codes, 'cms-home-page', new Set(['cms-board']))).toBe(true);
+    expect(canOpen(codes, 'cms-home-page', new Set(['cms-board', 'cms-about']))).toBe(false);
+    expect(canOpen(codes, 'cms-home-page', new Set(['cms-board', 'cms-about']), 'website')).toBe(false);
+  });
+});
+
 describe('start screen', () => {
   it('is the Dashboard for programme roles', () => {
     expect(homePath({ permissions: new Set(['dashboard.view', 'cms-faqs.view']) })).toBe('/dashboard');
@@ -43,6 +91,21 @@ describe('start screen', () => {
     expect(homePath({ permissions: WEBSITE, portal: 'website' })).toBe('/cms/contact');
     expect(homeItem({ permissions: new Set(['cms-faqs.view']), portal: 'website' })).toMatchObject({ k: 'cms-faqs', r: '/cms/faqs' });
     expect(homePath({ permissions: WEBSITE, hiddenMenus: new Set(['cms-contact']), portal: 'website' })).toBe('/cms/footer');
+  });
+
+  it('is Home Page Management when a home page section is the first CMS screen', () => {
+    expect(homeItem({ permissions: new Set(['cms-board.view', 'cms-states.view']), portal: 'website' })).toMatchObject({
+      k: 'cms-home-page',
+      l: 'Home Page Management',
+      r: '/cms/home-page',
+    });
+    expect(homePath({ permissions: new Set(['cms-about.view']), portal: 'website' })).toBe('/cms/home-page');
+    /* A hidden section is skipped like any hidden menu. */
+    expect(
+      homePath({ permissions: new Set(['cms-about.view', 'cms-states.view']), hiddenMenus: new Set(['cms-about']), portal: 'website' }),
+    ).toBe('/cms/states');
+    /* Never the address of a single section's tab. */
+    expect(homePath({ permissions: new Set(['cms-hero.view']), portal: 'website' })).toBe('/cms/home-page');
   });
 
   it('is never a link out to the public site, and falls back to the Dashboard', () => {
@@ -56,6 +119,7 @@ describe('canOpenPath', () => {
   it('matches a path to its screen', () => {
     expect(canOpenPath('/cms/faqs/123/edit', wa)).toBe(true);
     expect(canOpenPath('/cms/contact?tab=1', wa)).toBe(true);
+    expect(canOpenPath('/cms/home-page?tab=board', wa)).toBe(true);
     expect(canOpenPath('/cms/board-members/123/edit', wa)).toBe(true);
     expect(canOpenPath('/cms/amrut-ecosystem/settings', wa)).toBe(true);
     expect(canOpenPath('/cms/amrut-schemes/create', wa)).toBe(true);
@@ -64,5 +128,15 @@ describe('canOpenPath', () => {
     expect(canOpenPath('/users', wa)).toBe(false);
     expect(canOpenPath('/no-such-page', wa)).toBe(false);
     expect(canOpenPath('/dashboard', { permissions: new Set(['dashboard.view']) })).toBe(true);
+  });
+
+  it('follows a home page section’s former page to its menu', () => {
+    expect(canOpenPath('/cms/board-members', wa)).toBe(true);
+    expect(canOpenPath('/cms/hero', wa)).toBe(true);
+    const boardOnly = { permissions: new Set(['cms-board.view']), portal: 'website' as const };
+    expect(canOpenPath('/cms/board-members', boardOnly)).toBe(true);
+    expect(canOpenPath('/cms/impact', boardOnly)).toBe(false);
+    expect(canOpenPath('/cms/impact/settings', boardOnly)).toBe(false);
+    expect(canOpenPath('/cms/home-page', boardOnly)).toBe(true);
   });
 });

@@ -65,6 +65,7 @@ export interface AboutItem {
   displayOrder: number;
   isActive: boolean;
   isRequired: boolean;
+  createdAt: string;
   updatedAt: string;
 }
 

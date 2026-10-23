@@ -1,12 +1,13 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
+import BackButton from '../../components/BackButton';
 import { useCan } from '../../../../modules/auth/components/Can';
 import { LoadState, toastOk, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import MemberForm from '../components/MemberForm';
 import { boardService, photoSrc } from '../services/boardService';
 import { memberChanges, memberToForm } from '../validation/board.validation';
-import { BOARD_CRUMBS, memberLabel } from '../constants';
+import { BOARD_CRUMBS, BOARD_TAB_PATH, memberLabel } from '../constants';
 
 /*
  * Edit Member — a dedicated page that loads the member's saved record by its id, so the form always
@@ -29,6 +30,7 @@ export default function BoardMemberEdit() {
         crumbs={[...BOARD_CRUMBS, { l: 'Edit' }]}
         title={member ? `Edit ${label}` : 'Edit Member'}
         sub="Leaving the photo untouched keeps the current one. Changes appear on the public website once saved."
+        back={<BackButton to={BOARD_TAB_PATH} />}
       />
 
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
@@ -45,14 +47,14 @@ export default function BoardMemberEdit() {
           initial={memberToForm(member)}
           currentPhoto={photoSrc(member.photoUrl)}
           submitLabel="Save changes"
-          backTo="/cms/board-members"
+          backTo={BOARD_TAB_PATH}
           isCreate={false}
           onSave={async (values, photo) => {
             const changes = memberChanges(member, values);
             if (photo.kind === 'remove') changes.removePhoto = true;
             await boardService.update(member.id, changes, photo.kind === 'new' ? photo.file : null);
             toastOk('Member updated');
-            navigate('/cms/board-members');
+            navigate(BOARD_TAB_PATH);
           }}
         />
       ) : null}

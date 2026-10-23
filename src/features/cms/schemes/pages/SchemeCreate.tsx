@@ -1,12 +1,13 @@
 import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
+import BackButton from '../../components/BackButton';
 import { useCan } from '../../../../modules/auth/components/Can';
 import { ApiError, newIdempotencyKey } from '../../../../services/api-client';
 import { toastOk, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import SchemeForm from '../components/SchemeForm';
-import { SCHEMES_CRUMBS } from '../constants';
+import { SCHEMES_CRUMBS, SCHEMES_TAB_PATH } from '../constants';
 import { schemesService } from '../services/schemesService';
 import { emptySchemeForm, schemePayload } from '../validation/schemes.validation';
 
@@ -29,12 +30,13 @@ export default function SchemeCreate() {
         crumbs={[...SCHEMES_CRUMBS, { l: 'Add New Scheme' }]}
         title="Add New Scheme"
         sub="Adds a card to the AMRUT Schemes section of the public home page. Text is entered in Marathi and English — the site defaults to Marathi."
+        back={<BackButton to={SCHEMES_TAB_PATH} />}
       />
       {can('createScheme') ? (
         <SchemeForm
           initial={emptySchemeForm()}
           submitLabel="Save scheme"
-          backTo="/cms/amrut-schemes"
+          backTo={SCHEMES_TAB_PATH}
           isCreate
           defaultLabel={section.data?.buttonLabel ?? null}
           onSave={async (values) => {
@@ -45,7 +47,7 @@ export default function SchemeCreate() {
               throw err;
             }
             toastOk('Scheme added');
-            navigate('/cms/amrut-schemes');
+            navigate(SCHEMES_TAB_PATH);
           }}
         />
       ) : (

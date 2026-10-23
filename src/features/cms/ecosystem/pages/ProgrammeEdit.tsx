@@ -1,10 +1,11 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
+import BackButton from '../../components/BackButton';
 import { useCan } from '../../../../modules/auth/components/Can';
 import { LoadState, toastOk, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import ProgrammeForm from '../components/ProgrammeForm';
-import { ECOSYSTEM_CRUMBS } from '../constants';
+import { ECOSYSTEM_CRUMBS, ECOSYSTEM_TAB_PATH } from '../constants';
 import { ecosystemService } from '../services/ecosystemService';
 import { programmeChanges, programmeToForm } from '../validation/ecosystem.validation';
 
@@ -28,6 +29,7 @@ export default function ProgrammeEdit() {
         crumbs={[...ECOSYSTEM_CRUMBS, { l: 'Edit' }]}
         title={p ? `Edit ${p.name.mr} / ${p.name.en}` : 'Edit Programme'}
         sub="Changes appear on the public website once saved."
+        back={<BackButton to={ECOSYSTEM_TAB_PATH} />}
       />
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
       {p && !can('updateEcosystemProgramme') ? (
@@ -40,13 +42,13 @@ export default function ProgrammeEdit() {
           key={p.updatedAt}
           initial={programmeToForm(p)}
           submitLabel="Save changes"
-          backTo="/cms/amrut-ecosystem"
+          backTo={ECOSYSTEM_TAB_PATH}
           isCreate={false}
           defaultLabel={section.data?.linkLabel ?? null}
           onSave={async (values) => {
             await ecosystemService.update(p.id, programmeChanges(p, values));
             toastOk('Programme updated');
-            navigate('/cms/amrut-ecosystem');
+            navigate(ECOSYSTEM_TAB_PATH);
           }}
         />
       ) : null}
