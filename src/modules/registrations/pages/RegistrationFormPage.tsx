@@ -10,7 +10,7 @@ import { Modal } from '../../../components/ui/Overlay';
 import SearchableSelect, { type SelectOption } from '../../../components/ui/SearchableSelect';
 import { ApiError, newIdempotencyKey } from '../../../services/api-client';
 import { MASTERS, useMasterOptions, type MasterKey } from '../../masters';
-import { BARCODES, DECLARATION, RELIGIONS, TRACKS } from '../constants';
+import { BARCODES, DECLARATION, RELIGIONS, TEMPLATES, TRACKS } from '../constants';
 import {
   ACCEPT,
   editFormSchema,
@@ -472,6 +472,22 @@ export default function RegistrationFormPage() {
                 <Callout tone="info" title="File upload guidelines. ">
                   Accepted formats: PDF, JPG, JPEG, PNG. Maximum file size: {MAX_FILE_MB} MB.
                 </Callout>
+                <section className="mt14 tw-flex tw-flex-col tw-gap-2" aria-labelledby="rf-downloads">
+                  <h4 id="rf-downloads" className={label}>
+                    Download Documents
+                  </h4>
+                  <ul className="tw-m-0 tw-flex tw-list-none tw-flex-wrap tw-gap-2 tw-p-0">
+                    {TEMPLATES.map((d) => (
+                      <li key={d.href}>
+                        <a className="btn sm" href={d.href} download title={`Fill in, sign and upload as ${d.uploadAs}`}>
+                          <Icon name="download" />
+                          {d.name}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                  <span className="tw-text-xs tw-text-ink-muted">Fill in and sign these forms, then upload them in the table below.</span>
+                </section>
                 <div className="tbl-wrap mt14">
                   <table className="tbl">
                     <thead>

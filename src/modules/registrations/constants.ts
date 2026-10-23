@@ -17,6 +17,15 @@ export const TRACKS: { code: string; name: string }[] = [
   { code: 'T12', name: 'Office Process Automation (OPA)' },
 ];
 
+/*
+ * Blank forms the candidate downloads, fills in, signs and uploads in step 3 (served from public/templates/).
+ * Taken from the AMRUT Drone Pilot scheme, whose form this one follows; replace the files to change them.
+ */
+export const TEMPLATES: { name: string; href: string; uploadAs: string }[] = [
+  { name: 'Certificate of Medical Fitness', href: '/templates/certificate-of-medical-fitness.pdf', uploadAs: 'Physical Fitness Certificate' },
+  { name: 'Self-Declaration Form', href: '/templates/self-declaration-form.pdf', uploadAs: 'Self-Declaration Form' },
+];
+
 /* Document types that carry a barcode (backend DOCUMENTS[].barcode). */
 export const BARCODES: Record<string, 'required' | 'optional'> = { INCOME_EWS: 'required', DOMICILE: 'required' };
 

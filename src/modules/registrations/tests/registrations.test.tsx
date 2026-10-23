@@ -5,7 +5,7 @@ import { Route, Routes } from 'react-router-dom';
 import { renderWithProviders } from '../../../../tests/test-utils';
 import RegistrationFormPage from '../pages/RegistrationFormPage';
 import RegistrationsPage from '../pages/RegistrationsPage';
-import { BARCODES } from '../constants';
+import { BARCODES, TEMPLATES } from '../constants';
 import { basicSchema, editFormSchema, fileIssue, verhoeffValid } from '../schemas/registrationSchema';
 import { registrationApi } from '../services/registrationApi';
 
@@ -175,6 +175,13 @@ describe('<RegistrationFormPage>', () => {
     await choose(u, /Education Qualification/, 'B.Com');
     await u.click(screen.getByRole('button', { name: 'Next' }));
 
+    /* Step 3 offers the two blank forms to download. */
+    expect(await screen.findByRole('link', { name: /Certificate of Medical Fitness/ })).toHaveAttribute(
+      'href',
+      '/templates/certificate-of-medical-fitness.pdf',
+    );
+    expect(screen.getByRole('link', { name: /Self-Declaration Form/ })).toHaveAttribute('href', '/templates/self-declaration-form.pdf');
+
     await u.click(await screen.findByRole('button', { name: 'Submit Application' }));
     expect(await screen.findByText('Photo is required')).toBeInTheDocument();
     expect(screen.getByText('The declaration must be accepted')).toBeInTheDocument();
@@ -327,6 +334,13 @@ describe('<RegistrationFormPage> edit mode', () => {
       expect(registrationApi.replaceDocuments).toHaveBeenCalledWith('s1', {}, expect.objectContaining({ PHOTO: expect.any(File) })),
     );
     expect(await screen.findByText('detail page')).toBeInTheDocument();
+  });
+});
+
+describe('download templates', () => {
+  it('ship with the app for every link in step 3', () => {
+    const shipped = Object.keys(import.meta.glob('/public/templates/*.pdf'));
+    for (const t of TEMPLATES) expect(shipped).toContain(`/public${t.href}`);
   });
 });
 
