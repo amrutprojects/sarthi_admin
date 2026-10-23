@@ -10,6 +10,7 @@ describe('the website portal (Website Admin)', () => {
   it('opens exactly the CMS menu, in sidebar order', () => {
     expect(NAV_KEYS.filter((k) => canOpen(WEBSITE, k, undefined, 'website'))).toEqual(NAV_KEYS.filter((k) => WEBSITE_MENUS.includes(k)));
     expect([...WEBSITE_MENUS].sort()).toEqual(NAV_KEYS.filter((k) => WEBSITE_MENUS.includes(k)).sort());
+    expect(WEBSITE_MENUS).toEqual(expect.arrayContaining(['cms-board', 'cms-ecosystem', 'cms-schemes', 'cms-about']));
   });
 
   it('closes the screens open to every signed-in user, and every other menu whatever is granted', () => {
@@ -55,6 +56,10 @@ describe('canOpenPath', () => {
   it('matches a path to its screen', () => {
     expect(canOpenPath('/cms/faqs/123/edit', wa)).toBe(true);
     expect(canOpenPath('/cms/contact?tab=1', wa)).toBe(true);
+    expect(canOpenPath('/cms/board-members/123/edit', wa)).toBe(true);
+    expect(canOpenPath('/cms/amrut-ecosystem/settings', wa)).toBe(true);
+    expect(canOpenPath('/cms/amrut-schemes/create', wa)).toBe(true);
+    expect(canOpenPath('/cms/about-amrut/facts/create', wa)).toBe(true);
     expect(canOpenPath('/dashboard', wa)).toBe(false);
     expect(canOpenPath('/users', wa)).toBe(false);
     expect(canOpenPath('/no-such-page', wa)).toBe(false);

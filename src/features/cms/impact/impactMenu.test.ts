@@ -4,12 +4,12 @@ import AS from '../../../legacy';
 import { canDo, canOpen } from '../../../modules/auth/permissions';
 
 describe('AMRUT Impact Management menu', () => {
-  it('sits in the CMS group of the sidebar, directly after Home Programme Section', () => {
+  it('sits in the CMS group of the sidebar, directly after AMRUT Schemes Management', () => {
     const at = NAV.findIndex((n) => !isNavGroup(n) && n.k === 'cms-impact');
     expect(at).toBeGreaterThan(-1);
     expect(NAV[at]).toEqual({ k: 'cms-impact', l: 'AMRUT Impact Management', i: 'chart', r: '/cms/impact' });
     const prev = NAV[at - 1];
-    expect(prev && !isNavGroup(prev) ? prev.k : '').toBe('cms-highlight');
+    expect(prev && !isNavGroup(prev) ? prev.k : '').toBe('cms-schemes');
     const group = NAV.slice(0, at)
       .reverse()
       .find((n) => isNavGroup(n));

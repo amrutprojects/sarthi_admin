@@ -75,10 +75,25 @@ export type RouteName =
   | 'cmsHeroEdit'
   | 'cmsHighlightView'
   | 'cmsHighlightEdit'
+  | 'cmsBoardList'
+  | 'cmsBoardCreate'
+  | 'cmsBoardEdit'
+  | 'cmsBoardSettings'
+  | 'cmsEcosystemList'
+  | 'cmsEcosystemCreate'
+  | 'cmsEcosystemEdit'
+  | 'cmsEcosystemSettings'
+  | 'cmsSchemesList'
+  | 'cmsSchemesCreate'
+  | 'cmsSchemesEdit'
+  | 'cmsSchemesSettings'
   | 'cmsImpactList'
   | 'cmsImpactCreate'
   | 'cmsImpactEdit'
   | 'cmsImpactSettings'
+  | 'cmsAboutDashboard'
+  | 'cmsAboutFact'
+  | 'cmsAboutCard'
   | 'cmsProgrammeView'
   | 'cmsProgrammeEdit'
   | 'cmsContactEdit'
@@ -227,7 +242,11 @@ export const NAV: NavEntry[] = [
   { k: 'cms-apply', l: 'Apply Page Management', i: 'clipboard', r: '/cms/apply' },
   { k: 'cms-hero', l: 'Home Hero Section', i: 'home', r: '/cms/hero' },
   { k: 'cms-highlight', l: 'Home Programme Section', i: 'doc', r: '/cms/highlight' },
+  { k: 'cms-board', l: 'Board Members Management', i: 'users', r: '/cms/board-members' },
+  { k: 'cms-ecosystem', l: 'The AMRUT Ecosystem', i: 'layers', r: '/cms/amrut-ecosystem' },
+  { k: 'cms-schemes', l: 'AMRUT Schemes Management', i: 'clipboard', r: '/cms/amrut-schemes' },
   { k: 'cms-impact', l: 'AMRUT Impact Management', i: 'chart', r: '/cms/impact' },
+  { k: 'cms-about', l: 'About AMRUT Management', i: 'building', r: '/cms/about-amrut' },
   { k: 'cms-programme', l: 'Programme Page Management', i: 'award', r: '/cms/programme' },
   { k: 'cms-states', l: 'State Master', i: 'globe', r: '/cms/states' },
   { k: 'cms-districts', l: 'District Master', i: 'map', r: '/cms/districts' },
@@ -353,10 +372,29 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/hero/edit', 'cmsHeroEdit', 'cms-hero'],
   ['/cms/highlight', 'cmsHighlightView', 'cms-highlight'],
   ['/cms/highlight/edit', 'cmsHighlightEdit', 'cms-highlight'],
+  /* Board members: static paths before the :id pattern, as for the masters below. */
+  ['/cms/board-members', 'cmsBoardList', 'cms-board'],
+  ['/cms/board-members/create', 'cmsBoardCreate', 'cms-board'],
+  ['/cms/board-members/settings', 'cmsBoardSettings', 'cms-board'],
+  ['/cms/board-members/:id/edit', 'cmsBoardEdit', 'cms-board'],
+  ['/cms/amrut-ecosystem', 'cmsEcosystemList', 'cms-ecosystem'],
+  ['/cms/amrut-ecosystem/create', 'cmsEcosystemCreate', 'cms-ecosystem'],
+  ['/cms/amrut-ecosystem/settings', 'cmsEcosystemSettings', 'cms-ecosystem'],
+  ['/cms/amrut-ecosystem/:id/edit', 'cmsEcosystemEdit', 'cms-ecosystem'],
+  ['/cms/amrut-schemes', 'cmsSchemesList', 'cms-schemes'],
+  ['/cms/amrut-schemes/create', 'cmsSchemesCreate', 'cms-schemes'],
+  ['/cms/amrut-schemes/settings', 'cmsSchemesSettings', 'cms-schemes'],
+  ['/cms/amrut-schemes/:id/edit', 'cmsSchemesEdit', 'cms-schemes'],
   ['/cms/impact', 'cmsImpactList', 'cms-impact'],
   ['/cms/impact/create', 'cmsImpactCreate', 'cms-impact'],
   ['/cms/impact/settings', 'cmsImpactSettings', 'cms-impact'],
   ['/cms/impact/:id/edit', 'cmsImpactEdit', 'cms-impact'],
+  /* About AMRUT: static `create` paths before the :id patterns. */
+  ['/cms/about-amrut', 'cmsAboutDashboard', 'cms-about'],
+  ['/cms/about-amrut/facts/create', 'cmsAboutFact', 'cms-about'],
+  ['/cms/about-amrut/facts/:id/edit', 'cmsAboutFact', 'cms-about'],
+  ['/cms/about-amrut/cards/create', 'cmsAboutCard', 'cms-about'],
+  ['/cms/about-amrut/cards/:id/edit', 'cmsAboutCard', 'cms-about'],
   ['/cms/programme', 'cmsProgrammeView', 'cms-programme'],
   ['/cms/programme/edit', 'cmsProgrammeEdit', 'cms-programme'],
   ['/cms/states', 'cmsStateList', 'cms-states'],
