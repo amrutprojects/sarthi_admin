@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ConfirmModal, fmtDateTime, toastError, toastOk } from '../../../components/feedback/apiFeedback';
 import { Badge, Callout, KvList, PageHead } from '../../../components/ui';
+import Icon from '../../../components/ui/Icon';
 import { Modal } from '../../../components/ui/Overlay';
 import { ApiError } from '../../../services/api-client';
 import { useAuth } from '../../auth';
@@ -233,6 +234,7 @@ function AadhaarHover({
 /* One registration (masked): details on the left (scrolls on its own), documents with preview and verification on the right. */
 export default function RegistrationDetailPage() {
   const { id = '' } = useParams();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const { permissions } = useAuth();
   const canVerify = permissions.has('registrations.update');
@@ -279,6 +281,13 @@ export default function RegistrationDetailPage() {
           { l: r?.registrationNumber ?? 'Student' },
         ]}
         title={r ? `${r.name} — ${r.registrationNumber ?? '—'}` : 'Student'}
+        actions={
+          /* Back always returns to the list (one level up), never browser history. */
+          <button type="button" className="btn" onClick={() => navigate('/student-registrations')}>
+            <Icon name="chevL" />
+            Back
+          </button>
+        }
       />
       {q.isError ? (
         <Callout tone="err" title="Could not load the registration. ">
