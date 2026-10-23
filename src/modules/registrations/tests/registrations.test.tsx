@@ -252,56 +252,64 @@ describe('<RegistrationFormPage>', () => {
 });
 
 describe('<RegistrationFormPage> edit mode', () => {
-  it('prefills the student, edits in three steps and saves details, then changed documents', async () => {
-    const u = userEvent.setup();
-    vi.mocked(registrationApi.get).mockResolvedValue({
-      id: 's1',
-      name: 'Asha Patil',
-      firstName: 'Asha',
-      lastName: 'Patil',
-      fatherName: 'Ramesh Patil',
-      motherName: 'Sunita Patil',
-      dateOfBirth: '2003-04-12',
-      religion: 'हिंदू',
-      casteId: 'c-1',
-      regionId: 'r-pun',
-      educationId: 'e-1',
-      trackCode: 'T03',
-      documents: [
-        { key: 'PHOTO', label: 'Photo', required: true, supplied: true, barcode: null },
-        { key: 'INCOME_EWS', label: 'Income Certificate / EWS', required: true, supplied: true, barcode: '271234567890123456' },
-      ],
-      files: [
-        {
-          id: 'f1',
-          docType: 'PHOTO',
-          originalName: 'photo.pdf',
-          mimeType: 'application/pdf',
-          sizeBytes: 10,
-          uploadedAt: '',
-          verifiedAt: '2026-10-21T00:00:00Z',
-          verifiedBy: 'R',
-        },
-        {
-          id: 'f2',
-          docType: 'INCOME_EWS',
-          originalName: 'ews.pdf',
-          mimeType: 'application/pdf',
-          sizeBytes: 10,
-          uploadedAt: '',
-          verifiedAt: null,
-          verifiedBy: null,
-        },
-      ],
-      unmasked: {
-        email: 'asha@example.invalid',
-        mobile: '+919876543210',
-        aadhaar: AADHAAR.replace(/(\d{4})(?=\d)/g, '$1 '),
-        currentAddress: 'Pune',
+  /* Photo and Income Certificate / EWS already have files; PAN Card has none. */
+  const student = {
+    id: 's1',
+    name: 'Asha Patil',
+    firstName: 'Asha',
+    lastName: 'Patil',
+    fatherName: 'Ramesh Patil',
+    motherName: 'Sunita Patil',
+    dateOfBirth: '2003-04-12',
+    religion: 'हिंदू',
+    casteId: 'c-1',
+    regionId: 'r-pun',
+    educationId: 'e-1',
+    trackCode: 'T03',
+    documents: [
+      { key: 'PHOTO', label: 'Photo', required: true, supplied: true, barcode: null },
+      { key: 'INCOME_EWS', label: 'Income Certificate / EWS', required: true, supplied: true, barcode: '271234567890123456' },
+    ],
+    files: [
+      {
+        id: 'f1',
+        docType: 'PHOTO',
+        originalName: 'photo.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 10,
+        uploadedAt: '',
+        verifiedAt: '2026-10-21T00:00:00Z',
+        verifiedBy: 'R',
       },
-    } as never);
+      {
+        id: 'f2',
+        docType: 'INCOME_EWS',
+        originalName: 'ews.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 10,
+        uploadedAt: '',
+        verifiedAt: null,
+        verifiedBy: null,
+      },
+    ],
+    unmasked: {
+      email: 'asha@example.invalid',
+      mobile: '+919876543210',
+      aadhaar: AADHAAR.replace(/(\d{4})(?=\d)/g, '$1 '),
+      currentAddress: 'Pune',
+    },
+  };
+  const pdf = (n: string) => new File(['%PDF-1.4'], n, { type: 'application/pdf' });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(registrationApi.get).mockResolvedValue(student as never);
     vi.mocked(registrationApi.update).mockResolvedValue({} as never);
     vi.mocked(registrationApi.replaceDocuments).mockResolvedValue({} as never);
+  });
+
+  /* Opens the edit form and goes through steps 1 and 2 to step 3 (documents). */
+  const openDocumentsStep = async (u: ReturnType<typeof userEvent.setup>, firstName?: string) => {
     renderWithProviders(
       <Routes>
         <Route path="/student-registrations/:id/edit" element={<RegistrationFormPage />} />
@@ -311,29 +319,171 @@ describe('<RegistrationFormPage> edit mode', () => {
     );
     expect(await screen.findByDisplayValue('Asha')).toBeInTheDocument();
     expect(screen.getByText('Step 1 of 3 – Basic Details')).toBeInTheDocument();
-    await u.clear(screen.getByLabelText(/First Name/));
-    await u.type(screen.getByLabelText(/First Name/), 'Kavita');
+    if (firstName) {
+      await u.clear(screen.getByLabelText(/First Name/));
+      await u.type(screen.getByLabelText(/First Name/), firstName);
+    }
     await u.click(screen.getByRole('button', { name: 'Next' }));
-    await u.click(await screen.findByRole('button', { name: 'Next' }));
+    expect(await screen.findByText('Step 2 of 3 – Main Form')).toHaveAttribute('aria-current', 'step');
+    await u.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByText('Step 3 of 3 – Upload Documents')).toHaveAttribute('aria-current', 'step');
+    expect(screen.getByRole('heading', { name: 'Upload Documents' })).toBeInTheDocument();
+  };
+
+  it('prefills the student, edits in three steps and, after confirming, deletes the old document and saves the new one', async () => {
+    const u = userEvent.setup();
+    await openDocumentsStep(u, 'Kavita');
     /* Step 3: current files shown, mandatory ones already satisfied, no declaration asked again. */
     expect(await screen.findByText('photo.pdf')).toBeInTheDocument();
+    expect(screen.getByText('ews.pdf')).toBeInTheDocument();
     /* The second Next opens the documents step; it must not save the edit on its own. */
-    expect(screen.getByText('Step 3 of 3 – Upload Documents')).toBeInTheDocument();
     expect(registrationApi.update).not.toHaveBeenCalled();
     expect(screen.getByText('Verified — a replacement must be verified again')).toBeInTheDocument();
+    expect(screen.getByText(/the old file is permanently deleted when you save the changes/)).toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
-    await u.upload(screen.getByLabelText('Photo file'), new File(['%PDF-1.4'], 'new-photo.pdf', { type: 'application/pdf' }));
+
+    await u.upload(screen.getByLabelText('Photo file'), pdf('new-photo.pdf'));
+    expect(screen.getByText('Will delete photo.pdf and replace it with new-photo.pdf on save.')).toBeInTheDocument();
+
+    /* Save asks first; Cancel sends nothing and stays on step 3. */
     await u.click(screen.getByRole('button', { name: 'Save changes' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByRole('heading', { name: 'Replace documents?' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('listitem')).toHaveTextContent('Photo: photo.pdf (replaced by new-photo.pdf)');
+    await u.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText('Step 3 of 3 – Upload Documents')).toHaveAttribute('aria-current', 'step');
+    expect(registrationApi.update).not.toHaveBeenCalled();
+    expect(registrationApi.replaceDocuments).not.toHaveBeenCalled();
+
+    await u.click(screen.getByRole('button', { name: 'Save changes' }));
+    await u.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete old and replace' }));
     await waitFor(() =>
       expect(registrationApi.update).toHaveBeenCalledWith(
         's1',
         expect.objectContaining({ first_name: 'Kavita', mobile_number: '9876543210', aadhaar_number: AADHAAR, region_id: 'r-pun' }),
       ),
     );
-    await waitFor(() =>
-      expect(registrationApi.replaceDocuments).toHaveBeenCalledWith('s1', {}, expect.objectContaining({ PHOTO: expect.any(File) })),
-    );
+    await waitFor(() => expect(registrationApi.replaceDocuments).toHaveBeenCalledTimes(1));
+    const [id, barcodes, files] = vi.mocked(registrationApi.replaceDocuments).mock.calls[0];
+    expect([id, barcodes, Object.keys(files)]).toEqual(['s1', {}, ['PHOTO']]);
+    expect(files.PHOTO.name).toBe('new-photo.pdf');
     expect(await screen.findByText('detail page')).toBeInTheDocument();
+  });
+
+  it('removes the replacement warning when the chosen file is cleared, and then saves without asking', async () => {
+    const u = userEvent.setup();
+    await openDocumentsStep(u);
+    await u.upload(screen.getByLabelText('Income Certificate / EWS file'), pdf('ews-2026.pdf'));
+    expect(screen.getByText('Will delete ews.pdf and replace it with ews-2026.pdf on save.')).toBeInTheDocument();
+    /* A chosen file is shown by name with View / Delete instead of the input; Delete clears it and brings the input back. */
+    await u.click(screen.getByRole('button', { name: 'Delete Income Certificate / EWS file' }));
+    expect(screen.queryByText(/Will delete ews\.pdf/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Income Certificate / EWS file')).toBeInTheDocument();
+
+    await u.click(screen.getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(registrationApi.update).toHaveBeenCalled());
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(registrationApi.replaceDocuments).not.toHaveBeenCalled();
+    expect(await screen.findByText('detail page')).toBeInTheDocument();
+  });
+
+  it('keeps a pending replacement across Previous / Next and undoes it with "Keep current file"', async () => {
+    const u = userEvent.setup();
+    await openDocumentsStep(u);
+    await u.upload(screen.getByLabelText('Photo file'), pdf('new-photo.pdf'));
+    await u.upload(screen.getByLabelText('Income Certificate / EWS file'), pdf('ews-2026.pdf'));
+
+    /* Back to step 2 and on again: the inputs are new and empty, the chosen files are still pending and still shown. */
+    await u.click(screen.getByRole('button', { name: 'Previous' }));
+    await u.click(await screen.findByRole('button', { name: 'Next' }));
+    expect(await screen.findByText('Will delete photo.pdf and replace it with new-photo.pdf on save.')).toBeInTheDocument();
+    expect(screen.getByText('Will delete ews.pdf and replace it with ews-2026.pdf on save.')).toBeInTheDocument();
+
+    await u.click(screen.getByRole('button', { name: 'Keep current file for Photo' }));
+    expect(screen.queryByText(/Will delete photo\.pdf/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Keep current file for Photo' })).not.toBeInTheDocument();
+
+    /* Only the Income Certificate replacement is left to confirm and send. */
+    await u.click(screen.getByRole('button', { name: 'Save changes' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByRole('listitem')).toHaveTextContent('Income Certificate / EWS: ews.pdf (replaced by ews-2026.pdf)');
+    await u.click(within(dialog).getByRole('button', { name: 'Delete old and replace' }));
+    await waitFor(() => expect(registrationApi.replaceDocuments).toHaveBeenCalledTimes(1));
+    const [, , files] = vi.mocked(registrationApi.replaceDocuments).mock.calls[0];
+    expect(Object.keys(files)).toEqual(['INCOME_EWS']);
+    expect(await screen.findByText('detail page')).toBeInTheDocument();
+  });
+
+  it('clears the file input when the replacement is undone', async () => {
+    const u = userEvent.setup();
+    await openDocumentsStep(u);
+    const input = screen.getByLabelText('Photo file') as HTMLInputElement;
+    await u.upload(input, pdf('new-photo.pdf'));
+    expect(input.files).toHaveLength(1);
+    await u.click(screen.getByRole('button', { name: 'Keep current file for Photo' }));
+    /* The chosen file was shown by name in place of the input; undoing brings back a new, empty input. */
+    expect((screen.getByLabelText('Photo file') as HTMLInputElement).value).toBe('');
+    expect(screen.queryByText(/Will delete/)).not.toBeInTheDocument();
+
+    await u.click(screen.getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(registrationApi.update).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(registrationApi.replaceDocuments).not.toHaveBeenCalled();
+  });
+
+  it('keeps the confirm dialog open while the confirmed save runs, and sends it once', async () => {
+    const u = userEvent.setup();
+    let finish!: () => void;
+    vi.mocked(registrationApi.replaceDocuments).mockImplementation(() => new Promise((resolve) => (finish = () => resolve({} as never))));
+    await openDocumentsStep(u);
+    await u.upload(screen.getByLabelText('Photo file'), pdf('new-photo.pdf'));
+    await u.click(screen.getByRole('button', { name: 'Save changes' }));
+    const dialog = await screen.findByRole('dialog');
+    await u.click(within(dialog).getByRole('button', { name: 'Delete old and replace' }));
+    await waitFor(() => expect(registrationApi.replaceDocuments).toHaveBeenCalledTimes(1));
+    expect(within(dialog).getByRole('button', { name: 'Delete old and replace' })).toBeDisabled();
+
+    /* The old file is already being deleted: Cancel and Escape do not pretend to call it back. */
+    await u.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await u.keyboard('{Escape}');
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    finish();
+    expect(await screen.findByText('detail page')).toBeInTheDocument();
+    expect(registrationApi.update).toHaveBeenCalledTimes(1);
+    expect(registrationApi.replaceDocuments).toHaveBeenCalledTimes(1);
+  });
+
+  it('uploads a document that had no file, and changes a barcode, without the replace confirmation', async () => {
+    const u = userEvent.setup();
+    await openDocumentsStep(u);
+    expect(screen.getByText('Not uploaded')).toBeInTheDocument();
+    await u.upload(screen.getByLabelText('PAN Card file'), pdf('pan.pdf'));
+    expect(screen.queryByText(/Will delete/)).not.toBeInTheDocument();
+    await u.clear(screen.getByLabelText(/Income Certificate \/ EWS Barcode/));
+    await u.type(screen.getByLabelText(/Income Certificate \/ EWS Barcode/), '272222222222222222');
+
+    await u.click(screen.getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(registrationApi.replaceDocuments).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(registrationApi.update).toHaveBeenCalledTimes(1);
+    const [, barcodes, files] = vi.mocked(registrationApi.replaceDocuments).mock.calls[0];
+    expect(barcodes).toEqual({ INCOME_EWS: '272222222222222222' });
+    expect(Object.keys(files)).toEqual(['PAN_CARD']);
+    expect(await screen.findByText('detail page')).toBeInTheDocument();
+  });
+
+  it('still blocks on validation errors before asking to replace', async () => {
+    const u = userEvent.setup();
+    await openDocumentsStep(u);
+    await u.upload(screen.getByLabelText('Photo file'), pdf('new-photo.pdf'));
+    await u.clear(screen.getByLabelText(/Income Certificate \/ EWS Barcode/));
+    await u.click(screen.getByRole('button', { name: 'Save changes' }));
+    expect(await screen.findByText('Income Certificate / EWS barcode is required')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(registrationApi.update).not.toHaveBeenCalled();
+    expect(registrationApi.replaceDocuments).not.toHaveBeenCalled();
   });
 });
 
