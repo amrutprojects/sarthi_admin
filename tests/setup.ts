@@ -18,6 +18,11 @@ if (!window.matchMedia) {
       dispatchEvent: () => false,
     }) as MediaQueryList;
 }
+/* Nor object URLs: chosen files are opened through them. */
+URL.createObjectURL ??= (() => 'blob:test') as typeof URL.createObjectURL;
+URL.revokeObjectURL ??= (() => undefined) as typeof URL.revokeObjectURL;
+/* Nor scrolling: AdminLayout scrolls to the top on every navigation. */
+window.scrollTo = (() => undefined) as typeof window.scrollTo;
 if (!globalThis.crypto?.randomUUID) {
   Object.defineProperty(globalThis, 'crypto', {
     value: { ...globalThis.crypto, randomUUID: () => '00000000-0000-4000-8000-000000000000' },

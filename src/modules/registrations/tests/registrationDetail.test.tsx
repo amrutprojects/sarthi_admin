@@ -94,6 +94,19 @@ describe('<RegistrationDetailPage>', () => {
     await waitFor(() => expect(registrationApi.verifyDocument).toHaveBeenCalledWith('r1', 'f-photo'));
   });
 
+  it('goes back to the Student Registration list with Back', async () => {
+    const u = userEvent.setup();
+    renderWithProviders(
+      <Routes>
+        <Route path="/student-registrations" element={<div>registration list</div>} />
+        <Route path="/student-registrations/:id" element={<RegistrationDetailPage />} />
+      </Routes>,
+      { route: '/student-registrations/r1' },
+    );
+    await u.click(await screen.findByRole('button', { name: 'Back' }));
+    expect(await screen.findByText('registration list')).toBeInTheDocument();
+  });
+
   it('shows full email, mobile and Aadhaar when the API returns them', async () => {
     vi.mocked(registrationApi.get).mockResolvedValue({
       ...detail,

@@ -5,7 +5,8 @@ import { Route, Routes } from 'react-router-dom';
 import { renderWithProviders } from '../../../../tests/test-utils';
 import RegistrationFormPage from '../pages/RegistrationFormPage';
 import RegistrationsPage from '../pages/RegistrationsPage';
-import { basicSchema, fileIssue, verhoeffValid } from '../schemas/registrationSchema';
+import { BARCODES, TEMPLATES } from '../constants';
+import { basicSchema, editFormSchema, fileIssue, verhoeffValid } from '../schemas/registrationSchema';
 import { registrationApi } from '../services/registrationApi';
 
 const permissions = new Set<string>();
@@ -44,6 +45,13 @@ const AADHAAR = (() => {
   for (let d = 0; d < 10; d++) if (verhoeffValid(base + d)) return base + d;
   return '';
 })();
+
+/* Opens a searchable dropdown by its field label, optionally types in its search box, and picks an option. */
+async function choose(u: ReturnType<typeof userEvent.setup>, label: RegExp, option: string, search?: string) {
+  await u.click(await screen.findByLabelText(label));
+  if (search) await u.type(screen.getByRole('combobox', { name: /^Search/ }), search);
+  await u.click(screen.getByRole('option', { name: option }));
+}
 
 describe('<RegistrationsPage>', () => {
   beforeEach(() => {
@@ -151,13 +159,28 @@ describe('<RegistrationFormPage>', () => {
     await u.type(screen.getByLabelText(/Current Address/), 'Pune');
     await u.type(screen.getByLabelText(/Aadhaar Number/), AADHAAR);
     await u.type(screen.getByLabelText(/Mobile Number/), '9876543210');
-    await u.selectOptions(screen.getByLabelText(/Caste/), 'c-1');
+    await choose(u, /Caste/, 'मराठी');
     await u.click(screen.getByRole('button', { name: 'Next' }));
 
-    await u.selectOptions(await screen.findByLabelText(/Course Centre/), 'r-pun');
-    await u.selectOptions(screen.getByLabelText(/Technology/), 'T03');
-    await u.selectOptions(screen.getByLabelText(/Education Qualification/), 'e-1');
+    await choose(u, /Course Centre/, 'Pune');
+    /* The search box filters the list as you type. */
+    await u.click(screen.getByLabelText(/Technology/));
+    await u.type(screen.getByRole('combobox', { name: /^Search Technology/ }), 'web');
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['Web Design & Development']);
+    await u.clear(screen.getByRole('combobox', { name: /^Search Technology/ }));
+    await u.type(screen.getByRole('combobox', { name: /^Search Technology/ }), 'zzz');
+    expect(screen.getByText('Nothing matches “zzz”.')).toBeInTheDocument();
+    await u.keyboard('{Escape}');
+    await choose(u, /Technology/, 'Web Design & Development', 'design');
+    await choose(u, /Education Qualification/, 'B.Com');
     await u.click(screen.getByRole('button', { name: 'Next' }));
+
+    /* Step 3 offers the two blank forms to download. */
+    expect(await screen.findByRole('link', { name: /Certificate of Medical Fitness/ })).toHaveAttribute(
+      'href',
+      '/templates/certificate-of-medical-fitness.pdf',
+    );
+    expect(screen.getByRole('link', { name: /Self-Declaration Form/ })).toHaveAttribute('href', '/templates/self-declaration-form.pdf');
 
     await u.click(await screen.findByRole('button', { name: 'Submit Application' }));
     expect(await screen.findByText('Photo is required')).toBeInTheDocument();
@@ -176,7 +199,40 @@ describe('<RegistrationFormPage>', () => {
       registration_number: '1021123045127456',
       status: 'REGISTRATION_PENDING',
     });
-    await u.type(screen.getByLabelText(/Income Certificate \/ EWS Barcode/), 'EWS-1');
+    /* Letters, symbols or the wrong length are refused; exactly 18 digits is accepted. */
+    const barcode = screen.getByLabelText(/Income Certificate \/ EWS Barcode/);
+    await u.type(barcode, 'EWS-1');
+    await u.click(screen.getByRole('button', { name: 'Submit Application' }));
+    expect(await screen.findByText('Barcode must be exactly 18 digits (numbers only, no spaces, letters or symbols)')).toBeInTheDocument();
+    expect(registrationApi.create).not.toHaveBeenCalled();
+    await u.clear(barcode);
+    await u.type(barcode, '27123456789012345');
+    await u.click(screen.getByRole('button', { name: 'Submit Application' }));
+    expect(await screen.findByText('Barcode must be exactly 18 digits (numbers only, no spaces, letters or symbols)')).toBeInTheDocument();
+    await u.clear(barcode);
+    await u.type(barcode, '271234567890123456');
+
+    /* Preview: date of birth as DD/MM/YYYY, and each uploaded document by name, openable. */
+    await u.click(screen.getByRole('button', { name: 'Preview Application' }));
+    const preview = await screen.findByRole('dialog');
+    expect(within(preview).getByText('12/04/2003')).toBeInTheDocument();
+    expect(within(preview).getByRole('link', { name: 'Photo' })).toHaveAttribute('target', '_blank');
+    expect(within(preview).getByRole('link', { name: 'Income Certificate / EWS' })).toBeInTheDocument();
+
+    /* Edit from the preview, go back and forward: the attached files are still shown, not empty file inputs. */
+    await u.click(within(preview).getByRole('button', { name: 'Edit' }));
+    await u.click(screen.getByRole('button', { name: 'Previous' }));
+    await u.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByText('photo.pdf')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View Photo file' })).toHaveAttribute('target', '_blank');
+    expect(screen.queryByLabelText('Photo file')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('PAN Card file')).toBeInTheDocument();
+    /* Delete brings the file input back. */
+    await u.upload(screen.getByLabelText('PAN Card file'), pdf('pan.pdf'));
+    await u.click(screen.getByRole('button', { name: 'Delete PAN Card file' }));
+    expect(screen.getByLabelText('PAN Card file')).toBeInTheDocument();
+    expect(screen.queryByText('pan.pdf')).not.toBeInTheDocument();
+
     await u.click(screen.getByRole('button', { name: 'Submit Application' }));
     await waitFor(() => expect(registrationApi.create).toHaveBeenCalled());
     const [data, files] = vi.mocked(registrationApi.create).mock.calls[0];
@@ -188,10 +244,11 @@ describe('<RegistrationFormPage>', () => {
       technology: 'T03',
       religion: 'हिंदू',
       declaration_accepted: true,
-      barcodes: { INCOME_EWS: 'EWS-1' },
+      barcodes: { INCOME_EWS: '271234567890123456' },
     });
     expect(Object.keys(files).sort()).toEqual(['INCOME_EWS', 'PHOTO']);
-  });
+    /* Walks the whole form (three steps, preview, edit and back), so it needs more than the default 5 s. */
+  }, 15_000);
 });
 
 describe('<RegistrationFormPage> edit mode', () => {
@@ -212,7 +269,7 @@ describe('<RegistrationFormPage> edit mode', () => {
       trackCode: 'T03',
       documents: [
         { key: 'PHOTO', label: 'Photo', required: true, supplied: true, barcode: null },
-        { key: 'INCOME_EWS', label: 'Income Certificate / EWS', required: true, supplied: true, barcode: 'EWS-1' },
+        { key: 'INCOME_EWS', label: 'Income Certificate / EWS', required: true, supplied: true, barcode: '271234567890123456' },
       ],
       files: [
         {
@@ -260,6 +317,9 @@ describe('<RegistrationFormPage> edit mode', () => {
     await u.click(await screen.findByRole('button', { name: 'Next' }));
     /* Step 3: current files shown, mandatory ones already satisfied, no declaration asked again. */
     expect(await screen.findByText('photo.pdf')).toBeInTheDocument();
+    /* The second Next opens the documents step; it must not save the edit on its own. */
+    expect(screen.getByText('Step 3 of 3 – Upload Documents')).toBeInTheDocument();
+    expect(registrationApi.update).not.toHaveBeenCalled();
     expect(screen.getByText('Verified — a replacement must be verified again')).toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     await u.upload(screen.getByLabelText('Photo file'), new File(['%PDF-1.4'], 'new-photo.pdf', { type: 'application/pdf' }));
@@ -277,6 +337,13 @@ describe('<RegistrationFormPage> edit mode', () => {
   });
 });
 
+describe('download templates', () => {
+  it('ship with the app for every link in step 3', () => {
+    const shipped = Object.keys(import.meta.glob('/public/templates/*.pdf'));
+    for (const t of TEMPLATES) expect(shipped).toContain(`/public${t.href}`);
+  });
+});
+
 describe('registration schema', () => {
   it('mirrors the backend rules', () => {
     const r = basicSchema.safeParse({ aadhaar_number: '234567890123', mobile_number: '5876543210', date_of_birth: '2099-01-01' });
@@ -289,5 +356,26 @@ describe('registration schema', () => {
       ]),
     );
     expect(fileIssue(new File(['x'], 'a.exe'))).toBe('Only PDF, JPG, JPEG or PNG files are accepted');
+  });
+
+  it('accepts only 18-digit certificate barcodes, and requires both Income / EWS and Domicile barcodes', () => {
+    const ok = (v: string) => editFormSchema.shape.barcodes.safeParse({ DOMICILE: v }).success;
+    expect(ok('281234567890123456')).toBe(true);
+    expect(ok('')).toBe(true); /* empty = not given; required-ness is checked with the uploaded files */
+    for (const bad of ['28123456789012345', '2812345678901234567', '2812 3456 7890 1234', 'DOM123456789012345', '28123456789012345-']) {
+      expect(ok(bad)).toBe(false);
+    }
+    expect(BARCODES).toEqual({ INCOME_EWS: 'required', DOMICILE: 'required' });
+  });
+
+  it('allows only letters, spaces and . \' - in the parent names, as in the first and last name', () => {
+    const issue = (field: 'father_name' | 'mother_name', value: string) => {
+      const r = basicSchema.safeParse({ [field]: value });
+      return r.success ? undefined : r.error.issues.find((i) => i.path[0] === field)?.message;
+    };
+    expect(issue('father_name', 'Ramesh 2')).toBe("Father name may contain only letters, spaces and . ' -");
+    expect(issue('mother_name', 'Sunita@Patil')).toBe("Mother name may contain only letters, spaces and . ' -");
+    expect(issue('father_name', 'रमेश पाटील')).toBeUndefined();
+    expect(issue('mother_name', "R. K. D'Souza-Patil")).toBeUndefined();
   });
 });

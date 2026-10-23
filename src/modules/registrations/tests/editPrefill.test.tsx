@@ -62,8 +62,10 @@ describe('edit form prefill', () => {
       </Routes>,
     );
     expect(await screen.findByDisplayValue('Priya')).toBeInTheDocument();
-    expect((screen.getByLabelText(/Caste/) as HTMLSelectElement).value).toBe('c');
+    expect(screen.getByLabelText(/Caste/)).toHaveTextContent('कानबी');
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
-    expect(await screen.findByLabelText(/Course Centre/)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/Course Centre/)).toHaveTextContent('Kolhapur');
+    expect(screen.getByLabelText(/Technology/)).toHaveTextContent('Social Media Marketing / Digital Marketing');
+    expect(screen.getByLabelText(/Education Qualification/)).toHaveTextContent('B.Com');
   });
 });

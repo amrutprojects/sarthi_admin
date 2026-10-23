@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import MobileNav from './components/MobileNav';
@@ -16,12 +16,18 @@ function activeKey(pathname: string): string {
 
 export default function AdminLayout() {
   const { pathname } = useLocation();
+  const navigationType = useNavigationType();
   const { sidebarCollapsed: collapsed, sidebarOpen: open, toggleSidebar: toggle, setSidebarOpen } = useUiStore();
 
   /* Close the off-canvas sidebar after navigating (phones and tablets). */
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname, setSidebarOpen]);
+
+  /* Open every new screen at the top; Back / Forward (POP) keep the browser's own scroll position. */
+  useEffect(() => {
+    if (navigationType !== 'POP') window.scrollTo(0, 0);
+  }, [pathname, navigationType]);
 
   const nk = activeKey(pathname);
   return (

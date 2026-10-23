@@ -1,14 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { useForm, type FieldPath } from 'react-hook-form';
+import { Controller, useForm, type FieldPath } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toastError, toastOk } from '../../../components/feedback/apiFeedback';
 import { Callout, KvList, PageHead } from '../../../components/ui';
+import Icon from '../../../components/ui/Icon';
 import { Modal } from '../../../components/ui/Overlay';
+import SearchableSelect, { type SelectOption } from '../../../components/ui/SearchableSelect';
 import { ApiError, newIdempotencyKey } from '../../../services/api-client';
 import { MASTERS, useMasterOptions, type MasterKey } from '../../masters';
-import { BARCODES, DECLARATION, RELIGIONS, TRACKS } from '../constants';
+import { BARCODES, DECLARATION, RELIGIONS, TEMPLATES, TRACKS } from '../constants';
 import {
   ACCEPT,
   editFormSchema,
@@ -24,6 +26,68 @@ const STEPS = ['Basic Details', 'Main Form', 'Upload Documents'] as const;
 const label = 'tw-text-xs tw-font-semibold tw-text-ink-2';
 const errorText = 'tw-text-xs tw-text-danger';
 const master = (key: MasterKey) => MASTERS.find((m) => m.key === key)!;
+
+/* YYYY-MM-DD (the form value) shown as DD/MM/YYYY. */
+const ddmmyyyy = (iso: string) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso || '—';
+};
+
+/* A file chosen in this form, opened in a new tab from a temporary object URL (released when the link goes away). */
+function FileLink({ file, children, className, label }: { file: File; children: ReactNode; className?: string; label?: string }) {
+  const [url, setUrl] = useState('');
+  useEffect(() => {
+    const u = URL.createObjectURL(file);
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [file]);
+  return (
+    <a
+      href={url || undefined}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={className}
+      aria-label={label}
+      title={label ?? `Open ${file.name}`}
+    >
+      {children}
+    </a>
+  );
+}
+
+/*
+ * A document already stored for the student (edit form), fetched with the session cookie and opened in a new tab.
+ * The tab is opened before the request so pop-up blockers allow it.
+ */
+function StoredFileLink({ studentId, file }: { studentId: string; file: { id: string; originalName: string; mimeType: string } }) {
+  const [busy, setBusy] = useState(false);
+  const open = async () => {
+    const tab = window.open('', '_blank');
+    setBusy(true);
+    try {
+      const blob = await registrationApi.fileBlob(studentId, file.id);
+      const url = URL.createObjectURL(new Blob([blob], { type: file.mimeType }));
+      if (tab) tab.location.href = url;
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e) {
+      tab?.close();
+      toastError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <button
+      type="button"
+      className="tw-cursor-pointer tw-border-0 tw-bg-transparent tw-p-0 tw-text-left tw-text-brand-700 tw-underline"
+      disabled={busy}
+      title={`Open ${file.originalName}`}
+      onClick={() => void open()}
+    >
+      {busy ? 'Opening…' : file.originalName}
+    </button>
+  );
+}
 
 function Field({ id, title, error, children, wide }: { id: string; title: string; error?: string; children: ReactNode; wide?: boolean }) {
   return (
@@ -74,6 +138,7 @@ export default function RegistrationFormPage() {
 
   const {
     register,
+    control,
     handleSubmit,
     trigger,
     getValues,
@@ -131,6 +196,27 @@ export default function RegistrationFormPage() {
   }, [existing.data, regions.data, castes.data, educations.data, reset]);
 
   const err = (k: string) => (errors as Record<string, { message?: string } | undefined>)[k]?.message;
+  /* A dropdown with a search box, for the master lists and the tracks. */
+  const pick = (name: 'caste_id' | 'region_id' | 'technology' | 'education_id', id: string, title: string, options: SelectOption[]) => (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <SearchableSelect
+          id={id}
+          label={title}
+          options={options}
+          value={field.value ?? ''}
+          onChange={field.onChange}
+          onBlur={field.onBlur}
+          buttonRef={field.ref}
+          invalid={!!err(name)}
+        />
+      )}
+    />
+  );
+  const asOptions = (rows: { id: string; name: string }[] | undefined): SelectOption[] =>
+    (rows ?? []).map((r) => ({ value: r.id, label: r.name }));
   const barcodeErr = (code: string) => (errors.barcodes as Record<string, { message?: string }> | undefined)?.[code]?.message;
 
   const submit = useMutation({
@@ -352,14 +438,7 @@ export default function RegistrationFormPage() {
                   </select>
                 </Field>
                 <Field id="rf-caste" title="Caste" error={err('caste_id')}>
-                  <select id="rf-caste" className="inp" {...register('caste_id')}>
-                    <option value="">Select</option>
-                    {castes.data?.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                  {pick('caste_id', 'rf-caste', 'Caste', asOptions(castes.data))}
                 </Field>
               </div>
             ) : null}
@@ -367,34 +446,18 @@ export default function RegistrationFormPage() {
             {step === 1 ? (
               <div className="tw-grid tw-grid-cols-1 tw-gap-4 sm:tw-grid-cols-2">
                 <Field id="rf-centre" title="Course Centre" error={err('region_id')}>
-                  <select id="rf-centre" className="inp" {...register('region_id')}>
-                    <option value="">Select</option>
-                    {regions.data?.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
+                  {pick('region_id', 'rf-centre', 'Course Centre', asOptions(regions.data))}
                 </Field>
                 <Field id="rf-track" title="Technology / 3rd module selection" error={err('technology')}>
-                  <select id="rf-track" className="inp" {...register('technology')}>
-                    <option value="">Select</option>
-                    {TRACKS.map((t) => (
-                      <option key={t.code} value={t.code}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
+                  {pick(
+                    'technology',
+                    'rf-track',
+                    'Technology / 3rd module selection',
+                    TRACKS.map((t) => ({ value: t.code, label: t.name })),
+                  )}
                 </Field>
                 <Field id="rf-edu" title="Education Qualification" error={err('education_id')}>
-                  <select id="rf-edu" className="inp" {...register('education_id')}>
-                    <option value="">Select</option>
-                    {educations.data?.map((e) => (
-                      <option key={e.id} value={e.id}>
-                        {e.name}
-                      </option>
-                    ))}
-                  </select>
+                  {pick('education_id', 'rf-edu', 'Education Qualification', asOptions(educations.data))}
                   {educations.data && !educations.data.length ? (
                     <span className="tw-text-xs tw-text-ink-muted">
                       No education qualifications yet: add them under Masters → Education.
@@ -409,6 +472,22 @@ export default function RegistrationFormPage() {
                 <Callout tone="info" title="File upload guidelines. ">
                   Accepted formats: PDF, JPG, JPEG, PNG. Maximum file size: {MAX_FILE_MB} MB.
                 </Callout>
+                <section className="mt14 tw-flex tw-flex-col tw-gap-2" aria-labelledby="rf-downloads">
+                  <h4 id="rf-downloads" className={label}>
+                    Download Documents
+                  </h4>
+                  <ul className="tw-m-0 tw-flex tw-list-none tw-flex-wrap tw-gap-2 tw-p-0">
+                    {TEMPLATES.map((d) => (
+                      <li key={d.href}>
+                        <a className="btn sm" href={d.href} download title={`Fill in, sign and upload as ${d.uploadAs}`}>
+                          <Icon name="download" />
+                          {d.name}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                  <span className="tw-text-xs tw-text-ink-muted">Fill in and sign these forms, then upload them in the table below.</span>
+                </section>
                 <div className="tbl-wrap mt14">
                   <table className="tbl">
                     <thead>
@@ -431,7 +510,15 @@ export default function RegistrationFormPage() {
                                 <label htmlFor={`rf-bc-${t.code}`} className={label}>
                                   {t.name} Barcode {BARCODES[t.code] === 'required' ? <span className="tw-text-danger">*</span> : null}
                                 </label>
-                                <input id={`rf-bc-${t.code}`} className="inp sm mono" {...register(`barcodes.${t.code}`)} />
+                                <input
+                                  id={`rf-bc-${t.code}`}
+                                  className="inp sm mono"
+                                  inputMode="numeric"
+                                  maxLength={18}
+                                  placeholder="18-digit barcode number"
+                                  autoComplete="off"
+                                  {...register(`barcodes.${t.code}`)}
+                                />
                                 {barcodeErr(t.code) ? (
                                   <span className={errorText} role="alert">
                                     {barcodeErr(t.code)}
@@ -448,7 +535,7 @@ export default function RegistrationFormPage() {
                                 if (!cur) return <span className="tw-text-ink-muted">Not uploaded</span>;
                                 return (
                                   <>
-                                    {cur.originalName}
+                                    <StoredFileLink studentId={editId!} file={cur} />
                                     <div className="tw-text-xs tw-text-ink-muted">
                                       {cur.verifiedAt ? 'Verified — a replacement must be verified again' : 'Not verified yet'}
                                     </div>
@@ -458,27 +545,67 @@ export default function RegistrationFormPage() {
                             </td>
                           ) : null}
                           <td>
-                            <input
-                              type="file"
-                              accept={ACCEPT}
-                              aria-label={`${t.name} file`}
-                              onChange={(e) => {
-                                const f = e.target.files?.[0];
-                                setFiles((s) => {
-                                  const n = { ...s };
-                                  if (f) n[t.code] = f;
-                                  else delete n[t.code];
-                                  return n;
-                                });
-                                setFileErrors((s) => {
-                                  const n = { ...s };
-                                  const issue = f ? fileIssue(f) : null;
-                                  if (issue) n[t.code] = issue;
-                                  else delete n[t.code];
-                                  return n;
-                                });
-                              }}
-                            />
+                            {files[t.code] ? (
+                              /*
+                               * A file input cannot be refilled when this step is shown again (after Previous or the
+                               * preview's Edit), so a chosen file is shown by name, openable, with Remove to pick another.
+                               */
+                              <div className="tw-flex tw-items-center tw-gap-2">
+                                <span
+                                  className="tw-min-w-0 tw-flex-1 tw-truncate tw-text-sm"
+                                  style={{ maxWidth: 240 }}
+                                  title={files[t.code].name}
+                                >
+                                  {files[t.code].name}
+                                </span>
+                                <FileLink file={files[t.code]} className="btn xs" label={`View ${t.name} file`}>
+                                  <Icon name="eye" />
+                                </FileLink>
+                                <button
+                                  type="button"
+                                  className="btn xs"
+                                  aria-label={`Delete ${t.name} file`}
+                                  title={`Delete ${t.name} file`}
+                                  style={{ color: 'var(--red)' }}
+                                  onClick={() => {
+                                    setFiles((s) => {
+                                      const n = { ...s };
+                                      delete n[t.code];
+                                      return n;
+                                    });
+                                    setFileErrors((s) => {
+                                      const n = { ...s };
+                                      delete n[t.code];
+                                      return n;
+                                    });
+                                  }}
+                                >
+                                  <Icon name="trash" />
+                                </button>
+                              </div>
+                            ) : (
+                              <input
+                                type="file"
+                                accept={ACCEPT}
+                                aria-label={`${t.name} file`}
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  setFiles((s) => {
+                                    const n = { ...s };
+                                    if (f) n[t.code] = f;
+                                    else delete n[t.code];
+                                    return n;
+                                  });
+                                  setFileErrors((s) => {
+                                    const n = { ...s };
+                                    const issue = f ? fileIssue(f) : null;
+                                    if (issue) n[t.code] = issue;
+                                    else delete n[t.code];
+                                    return n;
+                                  });
+                                }}
+                              />
+                            )}
                             {fileErrors[t.code] ? (
                               <div className={errorText} role="alert">
                                 {fileErrors[t.code]}
@@ -519,15 +646,28 @@ export default function RegistrationFormPage() {
             {step === 0 ? 'Cancel' : 'Previous'}
           </button>
           {step < lastStep ? (
-            <button type="button" className="btn primary" onClick={() => void next()}>
+            /*
+             * Next turns the page into the last step before the browser finishes handling this click. Without
+             * preventDefault (and separate keys, so React does not reuse this element as the Save button), that
+             * click then lands on "Save changes" and submits the edit form, skipping the documents step.
+             */
+            <button
+              key="next"
+              type="button"
+              className="btn primary"
+              onClick={(e) => {
+                e.preventDefault();
+                void next();
+              }}
+            >
               Next
             </button>
           ) : editing ? (
-            <button type="submit" className="btn primary" disabled={save.isPending}>
+            <button key="save" type="submit" className="btn primary" disabled={save.isPending}>
               {save.isPending ? 'Saving…' : 'Save changes'}
             </button>
           ) : (
-            <div className="tw-flex tw-gap-2">
+            <div key="submit" className="tw-flex tw-gap-2">
               <button type="button" className="btn" onClick={() => void openPreview()}>
                 Preview Application
               </button>
@@ -560,7 +700,7 @@ export default function RegistrationFormPage() {
               ['Name', `${getValues('first_name')} ${getValues('last_name')}`],
               ['Father / Mother', `${getValues('father_name')} / ${getValues('mother_name')}`],
               ['Email', getValues('email')],
-              ['Date of birth', getValues('date_of_birth')],
+              ['Date of birth', ddmmyyyy(getValues('date_of_birth'))],
               ['Address', getValues('current_address')],
               ['Aadhaar', `XXXX-XXXX-${getValues('aadhaar_number').replace(/\D/g, '').slice(-4)}`],
               ['Mobile', getValues('mobile_number')],
@@ -569,7 +709,23 @@ export default function RegistrationFormPage() {
               ['Course centre', name(regions.data, getValues('region_id'))],
               ['Technology', TRACKS.find((t) => t.code === getValues('technology'))?.name ?? '—'],
               ['Education', name(educations.data, getValues('education_id'))],
-              ['Documents', `${Object.keys(files).length} file(s): ${Object.keys(files).join(', ') || '—'}`],
+              [
+                `Documents (${Object.keys(files).length})`,
+                Object.keys(files).length ? (
+                  <span className="tw-flex tw-flex-col tw-gap-1">
+                    {(docTypes.data ?? [])
+                      .filter((t) => files[t.code])
+                      .map((t) => (
+                        <span key={t.code}>
+                          <FileLink file={files[t.code]}>{t.name}</FileLink>{' '}
+                          <span className="tw-text-xs tw-font-normal tw-text-ink-muted">({files[t.code].name})</span>
+                        </span>
+                      ))}
+                  </span>
+                ) : (
+                  '—'
+                ),
+              ],
             ]}
           />
         </Modal>
