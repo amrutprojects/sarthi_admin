@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Callout, PageHead } from '../../../../components/ui';
+import BackButton from '../../components/BackButton';
 import { useCan } from '../../../../modules/auth/components/Can';
 import { ApiError } from '../../../../services/api-client';
 import BilingualField from '../../components/BilingualField';
@@ -9,7 +10,7 @@ import MasterFormActions from '../../components/MasterFormActions';
 import { LoadState, toastError, toastOk, useApiData } from '../../shared';
 import { isValid, type FieldErrors } from '../../validation';
 import { usePageTitle } from '../../useMasterQuery';
-import { IMPACT_CRUMBS } from '../constants';
+import { IMPACT_CRUMBS, IMPACT_TAB_PATH } from '../constants';
 import { impactService } from '../services/impactService';
 import type { ApiImpactSection, ImpactField } from '../types/impact.types';
 import { sectionPayload, sectionToForm, serverErrors, validateSectionForm, type SectionFormValues } from '../validation/impact.validation';
@@ -32,6 +33,7 @@ export default function ImpactSettingsEdit() {
         crumbs={[...IMPACT_CRUMBS, { l: 'Section settings' }]}
         title="Section Settings"
         sub="The heading above the AMRUT's Impact cards on the public website, and the section's visibility."
+        back={<BackButton to={IMPACT_TAB_PATH} />}
       />
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
       {detail.data && !can('updateImpactStat') ? (
@@ -73,7 +75,7 @@ function SettingsForm({ section }: { section: ApiImpactSection }) {
       await impactService.updateSection(sectionPayload(values, section.updatedAt));
       setDirty(false);
       toastOk('Section settings updated');
-      navigate('/cms/impact');
+      navigate(IMPACT_TAB_PATH);
     } catch (err) {
       if (err instanceof ApiError && err.status === 422 && err.details.length) {
         const mapped = serverErrors(err.details);
@@ -115,7 +117,7 @@ function SettingsForm({ section }: { section: ApiImpactSection }) {
           </div>
         </div>
       </form>
-      <MasterFormActions formId={FORM_ID} submitLabel="Save settings" busy={busy} dirty={dirty} backTo="/cms/impact" />
+      <MasterFormActions formId={FORM_ID} submitLabel="Save settings" busy={busy} dirty={dirty} backTo={IMPACT_TAB_PATH} />
     </>
   );
 }

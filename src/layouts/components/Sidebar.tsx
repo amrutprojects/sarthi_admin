@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../components/ui/Icon';
-import { NAV, isNavGroup, type NavEntry } from '../../constants/navigation';
+import { SIDEBAR_NAV, isNavGroup, sidebarKey, type NavEntry } from '../../constants/navigation';
 import { useAuth } from '../../modules/auth/auth-context';
 import { useCanOpen } from '../../modules/auth/components/Can';
 import { goTo } from '../../hooks/useLegacyEvents';
@@ -20,11 +20,13 @@ export default function Sidebar({ active, collapsed, open, onToggle }: SidebarPr
   const { portal } = useAuth();
 
   /* Only screens the role may open; a group heading is dropped when nothing under it is visible. */
-  const visible = NAV.filter((n) => isNavGroup(n) || canOpen(n.k)).filter((n, i, arr): n is NavEntry => {
+  const visible = SIDEBAR_NAV.filter((n) => isNavGroup(n) || canOpen(n.k)).filter((n, i, arr): n is NavEntry => {
     if (!isNavGroup(n)) return true;
     const next = arr[i + 1];
     return !!next && !isNavGroup(next);
   });
+  /* The page's menu, or the entry whose page holds it as a tab: Home Page Management on every home page section's pages. */
+  const current = sidebarKey(active);
 
   return (
     <aside className={'sidebar' + (open ? ' open' : '')} id="sidebar">
@@ -48,7 +50,7 @@ export default function Sidebar({ active, collapsed, open, onToggle }: SidebarPr
             <button
               key={n.k}
               type="button"
-              className={'sb-item' + (active === n.k ? ' active' : '') + (n.warn ? ' warn' : '')}
+              className={'sb-item' + (current === n.k ? ' active' : '') + (n.warn ? ' warn' : '')}
               onClick={() => goTo(navigate, n.r)}
             >
               <span className="sb-ico">

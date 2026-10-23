@@ -53,6 +53,13 @@ export type RouteName =
   | 'tasks'
   | 'documents'
   | 'cmsContactView'
+  | 'cmsContactSectionEdit'
+  | 'cmsContactCoordinatorCreate'
+  | 'cmsContactCoordinatorEdit'
+  | 'cmsContactCoordinatorView'
+  | 'cmsContactOfficeCreate'
+  | 'cmsContactOfficeEdit'
+  | 'cmsContactOfficeView'
   | 'cmsFooterView'
   | 'cmsFooterEdit'
   | 'cmsModulesView'
@@ -71,17 +78,31 @@ export type RouteName =
   | 'cmsApplyPageEdit'
   | 'cmsApplyEdit'
   | 'cmsApplyView'
-  | 'cmsHeroView'
+  | 'cmsHomePage'
   | 'cmsHeroEdit'
-  | 'cmsHighlightView'
   | 'cmsHighlightEdit'
-  | 'cmsImpactList'
+  | 'cmsBoardCreate'
+  | 'cmsBoardEdit'
+  | 'cmsBoardSettings'
+  | 'cmsBoardView'
+  | 'cmsEcosystemCreate'
+  | 'cmsEcosystemEdit'
+  | 'cmsEcosystemSettings'
+  | 'cmsEcosystemView'
+  | 'cmsSchemesCreate'
+  | 'cmsSchemesEdit'
+  | 'cmsSchemesSettings'
+  | 'cmsSchemesView'
   | 'cmsImpactCreate'
   | 'cmsImpactEdit'
   | 'cmsImpactSettings'
+  | 'cmsImpactView'
+  | 'cmsAboutFact'
+  | 'cmsAboutCard'
+  | 'cmsAboutFactView'
+  | 'cmsAboutCardView'
   | 'cmsProgrammeView'
   | 'cmsProgrammeEdit'
-  | 'cmsContactEdit'
   | 'cmsStateList'
   | 'cmsStateCreate'
   | 'cmsStateEdit'
@@ -177,7 +198,49 @@ export type RouteName =
 /* [path pattern, route name, sidebar key] */
 export type AdminRoute = [path: string, name: RouteName, navKey: string];
 
-/* Sidebar definition, unchanged from the original portal (assets/js/app.js). */
+/*
+ * Home Page Management (/cms/home-page): one sidebar entry and one page, whose tabs are the sections of the
+ * public home page in the order it shows them. Each tab belongs to one of seven menus (Home Hero Section has
+ * two tabs), and those menus keep their own keys, so their permission codes, Menu Visibility rows and the
+ * Website Admin role are unchanged; a tab is shown only to a user who can open its menu. Each menu's Add,
+ * Edit and Settings pages keep their own paths, and their Back, Cancel and Save return to the menu's tab.
+ * The same grouping decides access in modules/auth/permissions.ts (MENU_GROUPS).
+ */
+export const HOME_PAGE_MENU = 'cms-home-page';
+export const HOME_PAGE_PATH = '/cms/home-page';
+export const HOME_PAGE_TABS = [
+  { k: 'hero', l: 'AMRUT Kalash – apply online', menu: 'cms-hero' },
+  { k: 'glance', l: 'Programme at a glance', menu: 'cms-hero' },
+  { k: 'diploma', l: 'Skill Development Diploma', menu: 'cms-highlight' },
+  { k: 'board', l: 'Leadership & Governing Board', menu: 'cms-board' },
+  { k: 'impact', l: "AMRUT's Impact", menu: 'cms-impact' },
+  { k: 'ecosystem', l: 'The AMRUT Ecosystem', menu: 'cms-ecosystem' },
+  { k: 'schemes', l: 'AMRUT Schemes', menu: 'cms-schemes' },
+  { k: 'about', l: 'About AMRUT', menu: 'cms-about' },
+] as const;
+export type HomePageTab = (typeof HOME_PAGE_TABS)[number]['k'];
+
+/* Home Page Management opened on one tab: where a section's Back, Cancel, Save and Delete return to. */
+export const homePageTabPath = (tab: HomePageTab): string => `${HOME_PAGE_PATH}?tab=${tab}`;
+
+/* Each home page menu's former landing page → its tab. The router redirects them, so old links and bookmarks keep working. */
+export const HOME_PAGE_REDIRECTS: readonly (readonly [path: string, tab: HomePageTab])[] = [
+  ['/cms/hero', 'hero'],
+  ['/cms/highlight', 'diploma'],
+  ['/cms/board-members', 'board'],
+  ['/cms/impact', 'impact'],
+  ['/cms/amrut-ecosystem', 'ecosystem'],
+  ['/cms/amrut-schemes', 'schemes'],
+  ['/cms/about-amrut', 'about'],
+];
+
+/* The sidebar entry a menu is reached from: Home Page Management for the menus that are its tabs, else the menu itself. */
+export const sidebarKey = (navKey: string): string => (HOME_PAGE_TABS.some((t) => t.menu === navKey) ? HOME_PAGE_MENU : navKey);
+
+/*
+ * Every menu, grouped as in the sidebar (assets/js/app.js). Roles & Permissions and Menu Visibility list their
+ * rows from it; the sidebar itself shows SIDEBAR_NAV.
+ */
 export const NAV: NavEntry[] = [
   { g: 'Command Centre' },
   { k: 'dashboard', l: 'Dashboard', i: 'dashboard', r: '/dashboard' },
@@ -225,9 +288,18 @@ export const NAV: NavEntry[] = [
   { k: 'cms-faqs', l: 'FAQ Management', i: 'help', r: '/cms/faqs' },
   { k: 'cms-eligibility', l: 'Eligibility Page Management', i: 'check', r: '/cms/eligibility' },
   { k: 'cms-apply', l: 'Apply Page Management', i: 'clipboard', r: '/cms/apply' },
-  { k: 'cms-hero', l: 'Home Hero Section', i: 'home', r: '/cms/hero' },
-  { k: 'cms-highlight', l: 'Home Programme Section', i: 'doc', r: '/cms/highlight' },
-  { k: 'cms-impact', l: 'AMRUT Impact Management', i: 'chart', r: '/cms/impact' },
+  { k: HOME_PAGE_MENU, l: 'Home Page Management', i: 'home', r: HOME_PAGE_PATH },
+  /*
+   * The seven menus behind Home Page Management's tabs, in home page order. Not sidebar entries of their own
+   * (SIDEBAR_NAV leaves them out), but still menus with permissions and Menu Visibility rows of their own.
+   */
+  { k: 'cms-hero', l: 'Home Hero Section', i: 'home', r: homePageTabPath('hero') },
+  { k: 'cms-highlight', l: 'Home Programme Section', i: 'doc', r: homePageTabPath('diploma') },
+  { k: 'cms-board', l: 'Board Members Management', i: 'users', r: homePageTabPath('board') },
+  { k: 'cms-impact', l: 'AMRUT Impact Management', i: 'chart', r: homePageTabPath('impact') },
+  { k: 'cms-ecosystem', l: 'The AMRUT Ecosystem', i: 'layers', r: homePageTabPath('ecosystem') },
+  { k: 'cms-schemes', l: 'AMRUT Schemes Management', i: 'clipboard', r: homePageTabPath('schemes') },
+  { k: 'cms-about', l: 'About AMRUT Management', i: 'building', r: homePageTabPath('about') },
   { k: 'cms-programme', l: 'Programme Page Management', i: 'award', r: '/cms/programme' },
   { k: 'cms-states', l: 'State Master', i: 'globe', r: '/cms/states' },
   { k: 'cms-districts', l: 'District Master', i: 'map', r: '/cms/districts' },
@@ -271,6 +343,9 @@ export const NAV: NavEntry[] = [
   { k: 'pubhome', l: 'AMRUT Public Site', i: 'globe', r: '/home' },
   { k: 'pubprog', l: 'AMRUT Kalash 2.0', i: 'award', r: '/programme' },
 ];
+
+/* The sidebar: every menu that is an entry of its own, i.e. NAV without the menus shown as tabs of another entry's page. */
+export const SIDEBAR_NAV: NavEntry[] = NAV.filter((n) => isNavGroup(n) || sidebarKey(n.k) === n.k);
 
 export const MOBILE_NAV: NavItem[] = [
   { k: 'dashboard', l: 'Home', i: 'home', r: '/dashboard' },
@@ -328,9 +403,21 @@ export const ADMIN_ROUTES: AdminRoute[] = [
    * CMS master data. The static `create` path is listed before the `:id` pattern so the first match in
    * activeKey() (AdminLayout) is the intended one; React Router itself ranks static segments higher.
    */
-  /* The Contact page is a singleton: a read-only settings view plus its edit form, no list. */
+  /*
+   * The Contact page: a tabbed view, one Edit page per singleton section (page information and the two
+   * cards), and Add / Edit / View pages for each coordinator and district office. Static paths before
+   * the :id patterns, and /:id/edit before /:id.
+   */
   ['/cms/contact', 'cmsContactView', 'cms-contact'],
-  ['/cms/contact/edit', 'cmsContactEdit', 'cms-contact'],
+  ['/cms/contact/page/edit', 'cmsContactSectionEdit', 'cms-contact'],
+  ['/cms/contact/amrut/edit', 'cmsContactSectionEdit', 'cms-contact'],
+  ['/cms/contact/partner/edit', 'cmsContactSectionEdit', 'cms-contact'],
+  ['/cms/contact/coordinators/create', 'cmsContactCoordinatorCreate', 'cms-contact'],
+  ['/cms/contact/coordinators/:id/edit', 'cmsContactCoordinatorEdit', 'cms-contact'],
+  ['/cms/contact/coordinators/:id', 'cmsContactCoordinatorView', 'cms-contact'],
+  ['/cms/contact/offices/create', 'cmsContactOfficeCreate', 'cms-contact'],
+  ['/cms/contact/offices/:id/edit', 'cmsContactOfficeEdit', 'cms-contact'],
+  ['/cms/contact/offices/:id', 'cmsContactOfficeView', 'cms-contact'],
   ['/cms/footer', 'cmsFooterView', 'cms-footer'],
   ['/cms/footer/edit', 'cmsFooterEdit', 'cms-footer'],
   ['/cms/modules', 'cmsModulesView', 'cms-modules'],
@@ -349,14 +436,41 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/apply/page/edit', 'cmsApplyPageEdit', 'cms-apply'],
   ['/cms/apply/:id/edit', 'cmsApplyEdit', 'cms-apply'],
   ['/cms/apply/:id', 'cmsApplyView', 'cms-apply'],
-  ['/cms/hero', 'cmsHeroView', 'cms-hero'],
+  /*
+   * Home Page Management: one tabbed page for the seven home page menus (HOME_PAGE_TABS above). Each menu's
+   * own pages stay under its key, so their permission checks still apply; its former landing page redirects
+   * to its tab (HOME_PAGE_REDIRECTS, router.tsx).
+   */
+  [HOME_PAGE_PATH, 'cmsHomePage', HOME_PAGE_MENU],
   ['/cms/hero/edit', 'cmsHeroEdit', 'cms-hero'],
-  ['/cms/highlight', 'cmsHighlightView', 'cms-highlight'],
   ['/cms/highlight/edit', 'cmsHighlightEdit', 'cms-highlight'],
-  ['/cms/impact', 'cmsImpactList', 'cms-impact'],
+  /*
+   * Board members, programmes, schemes and statistics: static paths (create, settings) before the :id patterns,
+   * as for the masters below. Each row has an Edit page and a read-only View page (/:id/view, the eye button).
+   */
+  ['/cms/board-members/create', 'cmsBoardCreate', 'cms-board'],
+  ['/cms/board-members/settings', 'cmsBoardSettings', 'cms-board'],
+  ['/cms/board-members/:id/edit', 'cmsBoardEdit', 'cms-board'],
+  ['/cms/board-members/:id/view', 'cmsBoardView', 'cms-board'],
+  ['/cms/amrut-ecosystem/create', 'cmsEcosystemCreate', 'cms-ecosystem'],
+  ['/cms/amrut-ecosystem/settings', 'cmsEcosystemSettings', 'cms-ecosystem'],
+  ['/cms/amrut-ecosystem/:id/edit', 'cmsEcosystemEdit', 'cms-ecosystem'],
+  ['/cms/amrut-ecosystem/:id/view', 'cmsEcosystemView', 'cms-ecosystem'],
+  ['/cms/amrut-schemes/create', 'cmsSchemesCreate', 'cms-schemes'],
+  ['/cms/amrut-schemes/settings', 'cmsSchemesSettings', 'cms-schemes'],
+  ['/cms/amrut-schemes/:id/edit', 'cmsSchemesEdit', 'cms-schemes'],
+  ['/cms/amrut-schemes/:id/view', 'cmsSchemesView', 'cms-schemes'],
   ['/cms/impact/create', 'cmsImpactCreate', 'cms-impact'],
   ['/cms/impact/settings', 'cmsImpactSettings', 'cms-impact'],
   ['/cms/impact/:id/edit', 'cmsImpactEdit', 'cms-impact'],
+  ['/cms/impact/:id/view', 'cmsImpactView', 'cms-impact'],
+  /* About AMRUT: static `create` paths before the :id patterns. */
+  ['/cms/about-amrut/facts/create', 'cmsAboutFact', 'cms-about'],
+  ['/cms/about-amrut/facts/:id/edit', 'cmsAboutFact', 'cms-about'],
+  ['/cms/about-amrut/facts/:id/view', 'cmsAboutFactView', 'cms-about'],
+  ['/cms/about-amrut/cards/create', 'cmsAboutCard', 'cms-about'],
+  ['/cms/about-amrut/cards/:id/edit', 'cmsAboutCard', 'cms-about'],
+  ['/cms/about-amrut/cards/:id/view', 'cmsAboutCardView', 'cms-about'],
   ['/cms/programme', 'cmsProgrammeView', 'cms-programme'],
   ['/cms/programme/edit', 'cmsProgrammeEdit', 'cms-programme'],
   ['/cms/states', 'cmsStateList', 'cms-states'],

@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../../../../../tests/test-utils';
 import ContactView from '../pages/ContactView';
 import { contactService } from '../services/contactService';
-import type { ApiContactOrganization, ApiContactPage, ApiCoordinator, ApiDistrictOffice } from '../types/contact.types';
+import { AMRUT, COORDINATORS, OFFICES, PARTNER, contactPage, listPage, resetToasts, toasts } from './fixtures';
 
 /* The screen's collaborators are replaced at their public boundaries: the auth guard and the API service. */
 const permissions = new Set<string>();
@@ -14,98 +14,21 @@ vi.mock('../../../../modules/auth/components/Can', () => ({
   useCan: () => (action: string) => permissions.has(action),
   Can: ({ action, children }: { action: string; children: unknown }) => (permissions.has(action) ? children : null),
 }));
-vi.mock('../services/contactService', () => ({ contactService: { get: vi.fn(), update: vi.fn(), setPublished: vi.fn() } }));
-
-const AT = '2026-10-22T10:00:00.000Z';
-
-const AMRUT: ApiContactOrganization = {
-  id: 'o1',
-  orgType: 'AMRUT',
-  name: { mr: 'अमृत', en: 'AMRUT' },
-  role: null,
-  address: { mr: 'पुणे कार्यालय', en: 'Pune office' },
-  email: 'info@example.org',
-  phone: '+91 97301 51450',
-  websiteUrl: null,
-  helpdeskHours: null,
-  displayOrder: 1,
-  isActive: true,
-};
-
-const PARTNER: ApiContactOrganization = {
-  id: 'o2',
-  orgType: 'IMPLEMENTATION_PARTNER',
-  name: { mr: 'भागीदार संस्था', en: 'Partner Organisation' },
-  role: { mr: 'कार्यक्रम अंमलबजावणी', en: 'Programme delivery' },
-  address: null,
-  email: 'desk@example.org',
-  phone: null,
-  websiteUrl: null,
-  helpdeskHours: { mr: 'सोम ते शनि', en: 'Mon to Sat' },
-  displayOrder: 2,
-  isActive: true,
-};
-
-const district = (id: string, name: string) => ({ id, name, code: id.toUpperCase() });
-
-/* Two coordinator cards: the districts are deliberately not alphabetical, so the order shown is the order sent. */
-const COORDINATORS: ApiCoordinator[] = [
-  {
-    id: 'c1',
-    name: 'Anita Patil',
-    phone: '+91 98220 11111',
-    email: 'anita@example.org',
-    districts: [district('d3', 'Satara'), district('d1', 'Pune'), district('d2', 'Kolhapur')],
-    displayOrder: 1,
-    isActive: true,
+vi.mock('../services/contactService', () => ({
+  contactService: {
+    get: vi.fn(),
+    update: vi.fn(),
+    setPublished: vi.fn(),
+    listCoordinators: vi.fn(),
+    setCoordinatorStatus: vi.fn(),
+    removeCoordinator: vi.fn(),
+    listDistrictOffices: vi.fn(),
+    setDistrictOfficeStatus: vi.fn(),
+    removeDistrictOffice: vi.fn(),
   },
-  {
-    id: 'c2',
-    name: 'Ravi Shinde',
-    phone: '+91 98220 22222',
-    email: null,
-    districts: [],
-    displayOrder: 2,
-    isActive: false,
-  },
-];
+}));
 
-/* One office filled in, one with every optional field blank. */
-const OFFICES: ApiDistrictOffice[] = [
-  {
-    id: 'f1',
-    district: district('d1', 'Pune'),
-    collectorName: 'Dr. S. Deshmukh',
-    address: { mr: 'जिल्हाधिकारी कार्यालय, पुणे', en: 'Collectorate, Pune' },
-    phone: '020 2612 3456',
-    email: 'collector.pune@example.org',
-    officeHours: { mr: 'सोम ते शुक्र', en: 'Mon to Fri' },
-    isActive: true,
-  },
-  {
-    id: 'f2',
-    district: district('d2', 'Kolhapur'),
-    collectorName: null,
-    address: null,
-    phone: null,
-    email: null,
-    officeHours: null,
-    isActive: false,
-  },
-];
-
-const contactPage =(over: Partial<ApiContactPage> = {}): ApiContactPage => ({
-  id: 'p1',
-  pageTitle: { mr: 'संपर्क', en: 'Contact us' },
-  pageSubtitle: { mr: 'आमच्याशी बोला', en: 'Talk to us' },
-  isPublished: true,
-  createdAt: AT,
-  updatedAt: AT,
-  organizations: [AMRUT, PARTNER],
-  coordinators: [],
-  districtOffices: [],
-  ...over,
-});
+const svc = vi.mocked(contactService);
 
 /* Shows where the screen has navigated to, so tab and link targets can be asserted. */
 function Location() {
@@ -124,21 +47,32 @@ const renderAt = (route = '/cms/contact') =>
 
 const tab = (name: string) => screen.getByRole('tab', { name });
 const panel = () => screen.getByRole('tabpanel');
+/* The open tab's panel, once the page has loaded. */
+const openPanel = () => screen.findByRole('tabpanel');
 /* The body rows of the tab's table, and the Field / Sr. No. / Content text of each. */
 const bodyRows = () => within(panel()).getAllByRole('row').slice(1);
 const cellText = (row: HTMLElement, col: number) => within(row).getAllByRole('cell')[col].textContent;
 const fields = () => bodyRows().map((r) => cellText(r, 1));
 const row = (label: string) => bodyRows().find((r) => cellText(r, 1) === label) as HTMLElement;
-const toasts = () => document.getElementById('toast-root') as HTMLElement;
+/* Column headings without the sort arrows. */
+const headings = () =>
+  within(panel())
+    .getAllByRole('columnheader')
+    .map((h) => (h.textContent ?? '').replace(/[▲▼⇅]/g, ''));
+const location = () => screen.getByTestId('location');
 
 describe('<ContactView> tabs', () => {
   beforeEach(() => {
     permissions.clear();
-    vi.mocked(contactService.get).mockReset().mockResolvedValue(contactPage());
-    vi.mocked(contactService.setPublished).mockReset().mockResolvedValue(contactPage());
-    /* The panel shell's toast container, which the publish toasts are appended to. */
-    if (!document.getElementById('toast-root')) document.body.insertAdjacentHTML('beforeend', '<div id="toast-root"></div>');
-    toasts().innerHTML = '';
+    svc.get.mockReset().mockResolvedValue(contactPage());
+    svc.setPublished.mockReset().mockResolvedValue(contactPage());
+    svc.listCoordinators.mockReset().mockResolvedValue(listPage(COORDINATORS));
+    svc.listDistrictOffices.mockReset().mockResolvedValue(listPage(OFFICES));
+    svc.setCoordinatorStatus.mockReset().mockResolvedValue({ ...COORDINATORS[0]!, isActive: false });
+    svc.removeCoordinator.mockReset().mockResolvedValue(undefined);
+    svc.setDistrictOfficeStatus.mockReset().mockResolvedValue({ ...OFFICES[1]!, isActive: true });
+    svc.removeDistrictOffice.mockReset().mockResolvedValue(undefined);
+    resetToasts();
   });
 
   it('opens on Page information, with one tab per section of the public page', async () => {
@@ -157,11 +91,7 @@ describe('<ContactView> tabs', () => {
     expect(panel()).toHaveAttribute('aria-labelledby', tab('Page information').id);
 
     /* The banner as a read-only table, both languages of each line. */
-    expect(
-      within(panel())
-        .getAllByRole('columnheader')
-        .map((h) => h.textContent),
-    ).toEqual(['Sr. No.', 'Field', 'Content']);
+    expect(headings()).toEqual(['Sr. No.', 'Field', 'Content']);
     expect(fields()).toEqual(['Page title', 'Page subtitle']);
     expect(screen.getByText('संपर्क')).toHaveAttribute('lang', 'mr');
     expect(screen.getByText('Contact us')).toBeInTheDocument();
@@ -169,9 +99,11 @@ describe('<ContactView> tabs', () => {
     expect(screen.getByText('Talk to us')).toBeInTheDocument();
     expect(screen.getByText(/Last updated/)).toBeInTheDocument();
 
-    /* No summary tiles above the tabs: the page opens straight on its sections. */
+    /* No summary tiles above the tabs: the page opens straight on its sections, and no list is loaded yet. */
     expect(document.querySelector('.kpi')).toBeNull();
-    expect(contactService.get).toHaveBeenCalledTimes(1);
+    expect(svc.get).toHaveBeenCalledTimes(1);
+    expect(svc.listCoordinators).not.toHaveBeenCalled();
+    expect(svc.listDistrictOffices).not.toHaveBeenCalled();
   });
 
   it('falls back to Page information for an unknown tab', async () => {
@@ -185,7 +117,7 @@ describe('<ContactView> tabs', () => {
     await userEvent.click(await screen.findByRole('tab', { name: 'AMRUT contact details' }));
 
     expect(tab('AMRUT contact details')).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByTestId('location')).toHaveTextContent('/cms/contact?tab=amrut');
+    expect(location()).toHaveTextContent('/cms/contact?tab=amrut');
     expect(screen.getByRole('heading', { name: /AMRUT contact details/ })).toBeInTheDocument();
 
     expect(fields()).toEqual(['Organisation name', 'Address', 'Email', 'Phone', 'Website']);
@@ -213,7 +145,7 @@ describe('<ContactView> tabs', () => {
   });
 
   it('flags an inactive card on its tab and table', async () => {
-    vi.mocked(contactService.get).mockResolvedValue(contactPage({ organizations: [AMRUT, { ...PARTNER, isActive: false }] }));
+    svc.get.mockResolvedValue(contactPage({ organizations: [AMRUT, { ...PARTNER, isActive: false }] }));
     renderAt('/cms/contact?tab=partner');
 
     await screen.findByRole('tab', { name: 'Implementation partner' });
@@ -224,7 +156,7 @@ describe('<ContactView> tabs', () => {
   });
 
   it('says so when a card is not configured', async () => {
-    vi.mocked(contactService.get).mockResolvedValue(contactPage({ organizations: [PARTNER] }));
+    svc.get.mockResolvedValue(contactPage({ organizations: [PARTNER] }));
     renderAt('/cms/contact?tab=amrut');
 
     await screen.findByRole('tab', { name: 'AMRUT contact details' });
@@ -233,7 +165,7 @@ describe('<ContactView> tabs', () => {
   });
 
   it('says so on both card tabs when neither card is configured', async () => {
-    vi.mocked(contactService.get).mockResolvedValue(contactPage({ organizations: [] }));
+    svc.get.mockResolvedValue(contactPage({ organizations: [] }));
     renderAt();
 
     await userEvent.click(await screen.findByRole('tab', { name: 'AMRUT contact details' }));
@@ -242,81 +174,258 @@ describe('<ContactView> tabs', () => {
     expect(within(panel()).getByText('This card is not configured.')).toBeInTheDocument();
   });
 
-  it('lists the coordinators on their tab in the order sent, each with its districts and status', async () => {
-    vi.mocked(contactService.get).mockResolvedValue(contactPage({ coordinators: COORDINATORS }));
+  it.each([
+    ['page', 'Page information', '/cms/contact/page/edit'],
+    ['amrut', 'AMRUT contact details', '/cms/contact/amrut/edit'],
+    ['partner', 'Implementation partner', '/cms/contact/partner/edit'],
+  ])('opens the %s section on its own Edit page from the Edit button on its tab', async (key, name, target) => {
+    permissions.add('updateContactPage');
+    renderAt(`/cms/contact?tab=${key}`);
+
+    expect(await screen.findByRole('tab', { name })).toHaveAttribute('aria-selected', 'true');
+    /* No single "Edit content" button for the whole page any more. */
+    expect(screen.queryByRole('button', { name: 'Edit content' })).not.toBeInTheDocument();
+    await userEvent.click(within(panel()).getByRole('button', { name: 'Edit' }));
+    expect(location()).toHaveTextContent(target);
+  });
+
+  it('offers an Edit button even for a card that is not configured yet, so it can be filled in', async () => {
+    permissions.add('updateContactPage');
+    svc.get.mockResolvedValue(contactPage({ organizations: [PARTNER] }));
+    renderAt('/cms/contact?tab=amrut');
+
+    await userEvent.click(await within(await openPanel()).findByRole('button', { name: 'Edit' }));
+    expect(location()).toHaveTextContent('/cms/contact/amrut/edit');
+  });
+
+  it('lists the coordinators on their tab, FAQ-style, in website order with their districts in the order saved', async () => {
     renderAt();
     await userEvent.click(await screen.findByRole('tab', { name: 'District / cluster coordinators' }));
 
     expect(tab('District / cluster coordinators')).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByTestId('location')).toHaveTextContent('/cms/contact?tab=coordinators');
-    expect(within(panel()).getByRole('heading', { name: /District \/ cluster coordinators/ })).toHaveTextContent('2 on the page');
-    expect(
-      within(panel())
-        .getAllByRole('columnheader')
-        .map((h) => h.textContent),
-    ).toEqual(['Sr. No.', 'Name', 'Phone', 'Email', 'Districts covered', 'Status']);
+    expect(location()).toHaveTextContent('/cms/contact?tab=coordinators');
+    expect(within(panel()).getByRole('heading', { name: /District \/ cluster coordinators/ })).toHaveTextContent('live from the backend');
+    expect(await within(await openPanel()).findByText('Anita Patil')).toBeInTheDocument();
+    expect(svc.listCoordinators).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 1, limit: 15, search: '', sortBy: 'displayOrder', sortOrder: 'asc' }),
+    );
+
+    expect(headings()).toEqual(['Sr. No.', 'Order', 'Name', 'Districts covered', 'Status', 'Updated', 'Action']);
     expect(bodyRows().map((r) => cellText(r, 0))).toEqual(['1', '2']);
-    expect(bodyRows().map((r) => cellText(r, 1))).toEqual(['Anita Patil', 'Ravi Shinde']);
+    expect(bodyRows().map((r) => cellText(r, 1))).toEqual(['1', '2']);
 
     const [anita, ravi] = bodyRows();
-    expect(cellText(anita, 2)).toBe('+91 98220 11111');
-    expect(cellText(anita, 3)).toBe('anita@example.org');
+    /* The name with the phone and email underneath, as the FAQ question has its Marathi underneath. */
+    expect(within(anita!).getByText('Anita Patil')).toHaveClass('lnk');
+    expect(within(anita!).getByText('+91 98220 11111 · anita@example.org')).toBeInTheDocument();
     /* The districts in the order the API sent them, not re-sorted. */
-    expect(cellText(anita, 4)).toBe('Satara, Pune, Kolhapur');
-    expect(within(anita).getByText('Active')).toBeInTheDocument();
-    /* No email and no districts read as dashes; a hidden card shows as Inactive. */
-    expect(cellText(ravi, 3)).toBe('—');
-    expect(cellText(ravi, 4)).toBe('—');
-    expect(within(ravi).getByText('Inactive')).toBeInTheDocument();
-    /* One save updates the whole page, so the time stays under this tab too. */
-    expect(screen.getByText(/Last updated/)).toBeInTheDocument();
+    expect(cellText(anita!, 3)).toBe('Satara, Pune, Kolhapur');
+    expect(within(anita!).getByText('Active')).toBeInTheDocument();
+    /* No email shows the phone alone, no districts reads as a dash, and a hidden card shows as Inactive. */
+    expect(within(ravi!).getByText('+91 98XXX 22222')).toBeInTheDocument();
+    expect(cellText(ravi!, 3)).toBe('—');
+    expect(within(ravi!).getByText('Inactive')).toBeInTheDocument();
+    /* The view-only user gets the View button only. */
+    expect(within(anita!).getByRole('button', { name: 'View' })).toBeInTheDocument();
+    expect(within(anita!).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+    expect(within(anita!).queryByRole('switch')).not.toBeInTheDocument();
+    expect(within(anita!).queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+
+    expect(within(panel()).getByText(/Showing/)).toHaveTextContent('Showing 1-2 of 2 records');
+    expect(within(panel()).getByRole('combobox', { name: 'Rows per page' })).toHaveValue('15');
+    /* Each row carries its own Updated time, so the page-wide one is not repeated here. */
+    expect(screen.queryByText(/Last updated/)).not.toBeInTheDocument();
   });
 
-  it('shows the district offices from the URL, with a dash for each blank field', async () => {
-    vi.mocked(contactService.get).mockResolvedValue(contactPage({ districtOffices: OFFICES }));
+  it.each([
+    ['View', '/cms/contact/coordinators/c1'],
+    ['Edit', '/cms/contact/coordinators/c1/edit'],
+  ])('opens a coordinator from its %s action', async (action, target) => {
+    permissions.add('updateContactPage');
+    renderAt('/cms/contact?tab=coordinators');
+    const anita = (await within(await openPanel()).findByText('Anita Patil')).closest('tr') as HTMLElement;
+
+    await userEvent.click(within(anita).getByRole('button', { name: action }));
+    expect(location()).toHaveTextContent(target);
+  });
+
+  it('opens a coordinator by clicking its row, for a user who may view it', async () => {
+    permissions.add('viewContactPage');
+    renderAt('/cms/contact?tab=coordinators');
+
+    await userEvent.click(await within(await openPanel()).findByText('+91 98XXX 22222'));
+    expect(location()).toHaveTextContent('/cms/contact/coordinators/c2');
+  });
+
+  it('switches a coordinator off after confirmation and reloads the list', async () => {
+    permissions.add('updateContactPage');
+    renderAt('/cms/contact?tab=coordinators');
+    await within(await openPanel()).findByText('Anita Patil');
+
+    await userEvent.click(screen.getByRole('switch', { name: 'Anita Patil: active' }));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('Deactivate "Anita Patil"? The card will no longer be shown on the public Contact page.');
+    expect(svc.setCoordinatorStatus).not.toHaveBeenCalled();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Yes, deactivate' }));
+
+    expect(svc.setCoordinatorStatus).toHaveBeenCalledWith('c1', false);
+    await waitFor(() => expect(toasts()).toHaveTextContent('Coordinator deactivated'));
+    await waitFor(() => expect(svc.listCoordinators).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('asks before deleting a coordinator, and deletes it only once confirmed', async () => {
+    permissions.add('updateContactPage');
+    renderAt('/cms/contact?tab=coordinators');
+    const anita = (await within(await openPanel()).findByText('Anita Patil')).closest('tr') as HTMLElement;
+
+    await userEvent.click(within(anita).getByRole('button', { name: 'Delete' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent(/Delete "Anita Patil"\? The card is removed from the public Contact page/);
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(svc.removeCoordinator).not.toHaveBeenCalled();
+
+    await userEvent.click(within(anita).getByRole('button', { name: 'Delete' }));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }));
+    expect(svc.removeCoordinator).toHaveBeenCalledWith('c1');
+    await waitFor(() => expect(toasts()).toHaveTextContent('Coordinator deleted'));
+    await waitFor(() => expect(svc.listCoordinators).toHaveBeenCalledTimes(2));
+  });
+
+  it('searches, sorts and pages the coordinators on the backend', async () => {
+    svc.listCoordinators.mockResolvedValue(listPage(COORDINATORS, { total: 20, totalPages: 2 }));
+    renderAt('/cms/contact?tab=coordinators');
+    await within(await openPanel()).findByText('Anita Patil');
+    expect(within(panel()).getByText(/Showing/)).toHaveTextContent('Showing 1-15 of 20 records');
+
+    await userEvent.click(within(panel()).getByRole('button', { name: '2' }));
+    await waitFor(() => expect(svc.listCoordinators).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 })));
+
+    await userEvent.click(within(panel()).getByRole('columnheader', { name: /Name/ }));
+    await waitFor(() =>
+      expect(svc.listCoordinators).toHaveBeenLastCalledWith(expect.objectContaining({ sortBy: 'name', sortOrder: 'asc', page: 1 })),
+    );
+
+    await userEvent.type(within(panel()).getByPlaceholderText('Search name, phone or district...'), 'Satara');
+    await waitFor(() =>
+      expect(svc.listCoordinators).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'Satara', page: 1, sortBy: 'name' })),
+    );
+    expect(await within(await openPanel()).findByText('filtered')).toBeInTheDocument();
+
+    await userEvent.selectOptions(within(panel()).getByRole('combobox', { name: 'Rows per page' }), '25');
+    await waitFor(() => expect(svc.listCoordinators).toHaveBeenLastCalledWith(expect.objectContaining({ limit: 25, page: 1 })));
+  });
+
+  it('shows the district offices from the URL, with the district code under the name and a dash for each blank field', async () => {
     renderAt('/cms/contact?tab=offices');
 
     expect(await screen.findByRole('tab', { name: 'District offices' })).toHaveAttribute('aria-selected', 'true');
-    expect(within(panel()).getByRole('heading', { name: /District offices/ })).toHaveTextContent('2 districts');
-    expect(
-      within(panel())
-        .getAllByRole('columnheader')
-        .map((h) => h.textContent),
-    ).toEqual(['Sr. No.', 'District', 'District Collector', 'Address', 'Phone', 'Email', 'Office hours', 'Status']);
+    expect(within(panel()).getByRole('heading', { name: /District offices/ })).toHaveTextContent('live from the backend');
+    expect(await within(await openPanel()).findByText('Dr. S. Deshmukh')).toBeInTheDocument();
+    expect(svc.listDistrictOffices).toHaveBeenCalledWith(expect.objectContaining({ page: 1, sortBy: 'district', sortOrder: 'asc' }));
+
+    expect(headings()).toEqual(['Sr. No.', 'District', 'District Collector', 'Phone / Email', 'Office hours', 'Status', 'Updated', 'Action']);
     expect(bodyRows().map((r) => cellText(r, 0))).toEqual(['1', '2']);
-    expect(bodyRows().map((r) => cellText(r, 1))).toEqual(['Pune', 'Kolhapur']);
 
     const [pune, kolhapur] = bodyRows();
-    expect(cellText(pune, 2)).toBe('Dr. S. Deshmukh');
-    /* Bilingual fields Marathi first, English underneath. */
-    expect(within(pune).getByText('जिल्हाधिकारी कार्यालय, पुणे')).toHaveAttribute('lang', 'mr');
-    expect(within(pune).getByText('Collectorate, Pune')).toBeInTheDocument();
-    expect(cellText(pune, 4)).toBe('020 2612 3456');
-    expect(cellText(pune, 5)).toBe('collector.pune@example.org');
-    expect(within(pune).getByText('सोम ते शुक्र')).toHaveAttribute('lang', 'mr');
-    expect(within(pune).getByText('Mon to Fri')).toBeInTheDocument();
-    expect(within(pune).getByText('Active')).toBeInTheDocument();
+    expect(within(pune!).getByText('Pune')).toHaveClass('lnk');
+    expect(within(pune!).getByText('D1')).toBeInTheDocument();
+    expect(cellText(pune!, 2)).toBe('Dr. S. Deshmukh');
+    expect(within(pune!).getByText('020 2612 3456')).toBeInTheDocument();
+    expect(within(pune!).getByText('collector.pune@example.org')).toBeInTheDocument();
+    /* Bilingual hours Marathi first, English underneath. */
+    expect(within(pune!).getByText('सोम ते शुक्र')).toHaveAttribute('lang', 'mr');
+    expect(within(pune!).getByText('Mon to Fri')).toBeInTheDocument();
+    expect(within(pune!).getByText('Active')).toBeInTheDocument();
 
     /* Every optional field left blank reads as a dash, never "null" or an empty cell. */
-    expect([2, 3, 4, 5, 6].map((c) => cellText(kolhapur, c))).toEqual(['—', '—', '—', '—', '—']);
-    expect(within(kolhapur).getByText('Inactive')).toBeInTheDocument();
+    expect([2, 3, 4].map((c) => cellText(kolhapur!, c))).toEqual(['—', '—', '—']);
+    expect(within(kolhapur!).getByText('Inactive')).toBeInTheDocument();
   });
 
-  it('gives the empty-state hints when no coordinators or district offices are added', async () => {
+  it('switches on and deletes a district office from its row, each after confirmation', async () => {
+    permissions.add('updateContactPage');
+    renderAt('/cms/contact?tab=offices');
+    const kolhapur = (await within(await openPanel()).findByText('Kolhapur')).closest('tr') as HTMLElement;
+
+    await userEvent.click(within(kolhapur).getByRole('switch', { name: 'Kolhapur: inactive' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent('Activate the Kolhapur district office?');
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Yes, activate' }));
+    expect(svc.setDistrictOfficeStatus).toHaveBeenCalledWith('f2', true);
+    await waitFor(() => expect(toasts()).toHaveTextContent('District office activated'));
+
+    await userEvent.click(within(kolhapur).getByRole('button', { name: 'Delete' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent('Delete the Kolhapur district office?');
+    expect(svc.removeDistrictOffice).not.toHaveBeenCalled();
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }));
+    expect(svc.removeDistrictOffice).toHaveBeenCalledWith('f2');
+    await waitFor(() => expect(toasts()).toHaveTextContent('District office deleted'));
+    await waitFor(() => expect(svc.listDistrictOffices).toHaveBeenCalledTimes(3));
+  });
+
+  it.each([
+    ['View', '/cms/contact/offices/f2'],
+    ['Edit', '/cms/contact/offices/f2/edit'],
+  ])('opens a district office from its %s action', async (action, target) => {
+    permissions.add('updateContactPage');
+    renderAt('/cms/contact?tab=offices');
+    const kolhapur = (await within(await openPanel()).findByText('Kolhapur')).closest('tr') as HTMLElement;
+
+    await userEvent.click(within(kolhapur).getByRole('button', { name: action }));
+    expect(location()).toHaveTextContent(target);
+  });
+
+  it('searches and sorts the district offices on the backend', async () => {
+    renderAt('/cms/contact?tab=offices');
+    await within(await openPanel()).findByText('Dr. S. Deshmukh');
+
+    await userEvent.click(within(panel()).getByRole('columnheader', { name: /District Collector/ }));
+    await waitFor(() =>
+      expect(svc.listDistrictOffices).toHaveBeenLastCalledWith(expect.objectContaining({ sortBy: 'collectorName', sortOrder: 'asc' })),
+    );
+    await userEvent.type(within(panel()).getByPlaceholderText('Search district, collector, phone or email...'), 'pune');
+    await waitFor(() => expect(svc.listDistrictOffices).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'pune', page: 1 })));
+  });
+
+  it('gives the empty-state messages when no coordinators or district offices are added', async () => {
+    svc.listCoordinators.mockResolvedValue(listPage([]));
+    svc.listDistrictOffices.mockResolvedValue(listPage([]));
     renderAt('/cms/contact?tab=coordinators');
 
-    expect(await screen.findByRole('tab', { name: 'District / cluster coordinators' })).toHaveAttribute('aria-selected', 'true');
-    expect(within(panel()).getByText('None added. The website shows its built-in coordinator list.')).toBeInTheDocument();
-    expect(within(panel()).getByRole('heading', { name: /District \/ cluster coordinators/ })).toHaveTextContent('0 on the page');
-    expect(within(panel()).queryByRole('table')).not.toBeInTheDocument();
+    expect(await within(await openPanel()).findByText(/No coordinators have been added yet, so the website shows its built-in list/)).toBeInTheDocument();
+    expect(within(panel()).getByText(/Showing/)).toHaveTextContent('Showing 0-0 of 0 records');
 
     await userEvent.click(tab('District offices'));
-    expect(screen.getByTestId('location')).toHaveTextContent('/cms/contact?tab=offices');
+    expect(location()).toHaveTextContent('/cms/contact?tab=offices');
     expect(
-      within(panel()).getByText('None added. Each district page shows “to be supplied from official records”.'),
+      await within(await openPanel()).findByText(/No district offices have been added yet, so each district page shows “to be supplied from official records”/),
     ).toBeInTheDocument();
-    expect(within(panel()).getByRole('heading', { name: /District offices/ })).toHaveTextContent('0 districts');
-    expect(within(panel()).queryByRole('table')).not.toBeInTheDocument();
+  });
+
+  it('offers no Add buttons on the list tabs to a view-only user', async () => {
+    renderAt('/cms/contact?tab=coordinators');
+    await within(await openPanel()).findByText('Anita Patil');
+    expect(screen.queryByRole('button', { name: 'Add coordinator' })).not.toBeInTheDocument();
+
+    await userEvent.click(tab('District offices'));
+    await within(await openPanel()).findByText('Dr. S. Deshmukh');
+    expect(screen.queryByRole('button', { name: 'Add district office' })).not.toBeInTheDocument();
+  });
+
+  it('opens Add coordinator from its tab', async () => {
+    permissions.add('updateContactPage');
+    renderAt('/cms/contact?tab=coordinators');
+
+    await userEvent.click(await within(await openPanel()).findByRole('button', { name: 'Add coordinator' }));
+    expect(location()).toHaveTextContent('/cms/contact/coordinators/create');
+  });
+
+  it('opens Add district office from its tab', async () => {
+    permissions.add('updateContactPage');
+    renderAt('/cms/contact?tab=offices');
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Add district office' }));
+    expect(location()).toHaveTextContent('/cms/contact/offices/create');
   });
 
   it('moves between tabs with the arrow, Home and End keys, as on the Modules page', async () => {
@@ -330,7 +439,7 @@ describe('<ContactView> tabs', () => {
     await userEvent.keyboard('{ArrowRight}');
     expect(tab('AMRUT contact details')).toHaveAttribute('aria-selected', 'true');
     expect(tab('AMRUT contact details')).toHaveFocus();
-    expect(screen.getByTestId('location')).toHaveTextContent('/cms/contact?tab=amrut');
+    expect(location()).toHaveTextContent('/cms/contact?tab=amrut');
 
     await userEvent.keyboard('{End}');
     expect(tab('District offices')).toHaveAttribute('aria-selected', 'true');
@@ -345,7 +454,7 @@ describe('<ContactView> tabs', () => {
 
   it('warns that an unpublished page is not live, and publishes it', async () => {
     permissions.add('updateContactPage');
-    vi.mocked(contactService.get).mockResolvedValue(contactPage({ isPublished: false }));
+    svc.get.mockResolvedValue(contactPage({ isPublished: false }));
     renderAt();
 
     await screen.findByRole('tab', { name: 'Page information' });
@@ -355,9 +464,9 @@ describe('<ContactView> tabs', () => {
     expect(screen.getByText('This content is not published')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    expect(contactService.setPublished).toHaveBeenCalledWith(true);
+    expect(svc.setPublished).toHaveBeenCalledWith(true);
     await waitFor(() => expect(toasts()).toHaveTextContent('Contact page published'));
-    await waitFor(() => expect(contactService.get).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(svc.get).toHaveBeenCalledTimes(2));
   });
 
   it('unpublishes a published page', async () => {
@@ -367,17 +476,9 @@ describe('<ContactView> tabs', () => {
     await screen.findByRole('tab', { name: 'Page information' });
     expect(screen.queryByText('This content is not published')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Unpublish' }));
-    expect(contactService.setPublished).toHaveBeenCalledWith(false);
+    expect(svc.setPublished).toHaveBeenCalledWith(false);
     await waitFor(() => expect(toasts()).toHaveTextContent('Contact page unpublished'));
-    await waitFor(() => expect(contactService.get).toHaveBeenCalledTimes(2));
-  });
-
-  it('opens the edit form from Edit content', async () => {
-    permissions.add('updateContactPage');
-    renderAt('/cms/contact?tab=partner');
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Edit content' }));
-    expect(screen.getByTestId('location')).toHaveTextContent('/cms/contact/edit');
+    await waitFor(() => expect(svc.get).toHaveBeenCalledTimes(2));
   });
 
   it('offers no Publish, Unpublish or Edit actions to a view-only user', async () => {
@@ -386,11 +487,13 @@ describe('<ContactView> tabs', () => {
     await screen.findByRole('tab', { name: 'Page information' });
     expect(screen.queryByRole('button', { name: 'Publish' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Unpublish' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Edit content' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+    await userEvent.click(tab('AMRUT contact details'));
+    expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
   });
 
   it('shows a load error with a retry, and no tabs until the page loads', async () => {
-    vi.mocked(contactService.get).mockRejectedValueOnce(new Error('down'));
+    svc.get.mockRejectedValueOnce(new Error('down'));
     renderAt();
 
     expect(await screen.findByText(/Could not load data from the server/)).toBeInTheDocument();
@@ -398,6 +501,6 @@ describe('<ContactView> tabs', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByRole('tab', { name: 'Page information' })).toBeInTheDocument();
-    expect(contactService.get).toHaveBeenCalledTimes(2);
+    expect(svc.get).toHaveBeenCalledTimes(2);
   });
 });

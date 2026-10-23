@@ -15,6 +15,8 @@ interface ItemsProps {
   opts?: ChartOpts;
 }
 
+
+
 export const LineChart = ({ series, labels, opts }: { series: ChartSeries[]; labels: string[]; opts?: ChartOpts }) => (
   <Html html={C().line(series, labels, opts)} />
 );

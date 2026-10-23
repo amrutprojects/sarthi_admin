@@ -60,7 +60,11 @@ const MENU_KEYS = [
   'cms-apply',
   'cms-hero',
   'cms-highlight',
+  'cms-board',
+  'cms-ecosystem',
+  'cms-schemes',
   'cms-impact',
+  'cms-about',
   'cms-programme',
   'cms-states',
   'cms-districts',
@@ -87,8 +91,19 @@ const MENU_KEYS = [
   'audit',
   'settings',
 ];
+/*
+ * Sidebar entries that gather other menus on one page: Home Page Management, whose tabs are the seven home page
+ * menus (constants/navigation.ts: HOME_PAGE_TABS). Such an entry has no permission codes or Menu Visibility row
+ * of its own; it opens when any of its menus opens (canOpen below), and each tab and each menu's own pages still
+ * check their own menu.
+ */
+export const MENU_GROUPS: Readonly<Record<string, readonly string[]>> = {
+  'cms-home-page': ['cms-hero', 'cms-highlight', 'cms-board', 'cms-impact', 'cms-ecosystem', 'cms-schemes', 'cms-about'],
+};
+
 export const SCREEN_ACCESS: Record<string, string[]> = {
   ...Object.fromEntries(MENU_KEYS.map((k) => [k, [`${k}.view`]])),
+  ...Object.fromEntries(Object.entries(MENU_GROUPS).map(([k, menus]) => [k, menus.map((m) => `${m}.view`)])),
   users: ['users.view', 'roles.view', 'permissions.view'],
   /* Reference-data masters (Region, Caste, Document type, Education): opens with any one view code. */
   masters: ['regions.view', 'castes.view', 'document-types.view', 'education.view'],
@@ -160,10 +175,26 @@ export const ACTION_ACCESS = {
   updateHero: ['cms-hero.update'],
   viewHighlight: ['cms-highlight.view'],
   updateHighlight: ['cms-highlight.update'],
+  viewBoardMembers: ['cms-board.view'],
+  createBoardMember: ['cms-board.create'],
+  updateBoardMember: ['cms-board.update'],
+  deleteBoardMember: ['cms-board.delete'],
+  viewEcosystem: ['cms-ecosystem.view'],
+  createEcosystemProgramme: ['cms-ecosystem.create'],
+  updateEcosystemProgramme: ['cms-ecosystem.update'],
+  deleteEcosystemProgramme: ['cms-ecosystem.delete'],
+  viewSchemes: ['cms-schemes.view'],
+  createScheme: ['cms-schemes.create'],
+  updateScheme: ['cms-schemes.update'],
+  deleteScheme: ['cms-schemes.delete'],
   viewImpact: ['cms-impact.view'],
   createImpactStat: ['cms-impact.create'],
   updateImpactStat: ['cms-impact.update'],
   deleteImpactStat: ['cms-impact.delete'],
+  viewAbout: ['cms-about.view'],
+  createAboutItem: ['cms-about.create'],
+  updateAbout: ['cms-about.update'],
+  deleteAboutItem: ['cms-about.delete'],
   viewProgrammePage: ['cms-programme.view'],
   updateProgrammePage: ['cms-programme.update'],
   viewStates: ['cms-states.view'],
@@ -266,7 +297,11 @@ export const WEBSITE_MENUS: readonly string[] = [
   'cms-apply',
   'cms-hero',
   'cms-highlight',
+  'cms-board',
+  'cms-ecosystem',
+  'cms-schemes',
   'cms-impact',
+  'cms-about',
   'cms-programme',
   'cms-states',
   'cms-districts',
@@ -281,8 +316,12 @@ export function hasAny(permissions: Set<string>, required: readonly string[] | u
 
 /*
  * A menu opens when the user holds its view permission and no Menu Visibility setting hides it. In the website
- * portal nothing outside the CMS menu opens, not even the screens open to every signed-in user.
+ * portal nothing outside the CMS menu opens, not even the screens open to every signed-in user. An entry that
+ * gathers several menus (MENU_GROUPS) opens when any one of them would, by the same rules.
  */
-export const canOpen = (permissions: Set<string>, navKey: string, hidden?: Set<string>, portal: Portal = 'admin'): boolean =>
-  (portal !== 'website' || WEBSITE_MENUS.includes(navKey)) && !hidden?.has(navKey) && hasAny(permissions, SCREEN_ACCESS[navKey]);
+export const canOpen = (permissions: Set<string>, navKey: string, hidden?: Set<string>, portal: Portal = 'admin'): boolean => {
+  const menus = MENU_GROUPS[navKey];
+  if (menus) return !hidden?.has(navKey) && menus.some((menu) => canOpen(permissions, menu, hidden, portal));
+  return (portal !== 'website' || WEBSITE_MENUS.includes(navKey)) && !hidden?.has(navKey) && hasAny(permissions, SCREEN_ACCESS[navKey]);
+};
 export const canDo = (permissions: Set<string>, action: Action): boolean => hasAny(permissions, ACTION_ACCESS[action]);
