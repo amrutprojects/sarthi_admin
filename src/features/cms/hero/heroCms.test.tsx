@@ -665,7 +665,8 @@ describe('Home Hero Section CMS', () => {
       vi.mocked(heroService.get).mockResolvedValue(hero());
       renderWithProviders(<AppRoutes />, { route: '/cms/home' });
 
-      expect(await screen.findByRole('heading', { name: 'Home Page Management' })).toBeInTheDocument();
+      /* The router loads the page lazily; under a full parallel run that can take longer than findBy's default second. */
+      expect(await screen.findByRole('heading', { name: 'Home Page Management' }, { timeout: 5000 })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: 'Programme at a glance' })).toHaveAttribute('aria-selected', 'true');
       expect(await screen.findByText('36 (entered)')).toBeInTheDocument();
     });

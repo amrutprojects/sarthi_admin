@@ -85,6 +85,14 @@ const PAGES: Record<RouteName, LazyExoticComponent<ComponentType>> = {
   cmsApplyEdit: page(() => import('../features/cms/apply/pages/ApplyEdit')),
   cmsApplyView: page(() => import('../features/cms/apply/pages/ApplyView')),
   cmsHomePage: page(() => import('../features/cms/homePage/pages/HomePageView')),
+  cmsTopBarCreate: page(() => import('../features/cms/topbar/pages/TopBarLinkCreate')),
+  cmsTopBarEdit: page(() => import('../features/cms/topbar/pages/TopBarLinkEdit')),
+  cmsTopBarSettings: page(() => import('../features/cms/topbar/pages/TopBarSettingsEdit')),
+  cmsTopBarView: page(() => import('../features/cms/topbar/pages/TopBarLinkView')),
+  cmsAnnouncementsCreate: page(() => import('../features/cms/announcements/pages/AnnouncementCreate')),
+  cmsAnnouncementsEdit: page(() => import('../features/cms/announcements/pages/AnnouncementEdit')),
+  cmsAnnouncementsSettings: page(() => import('../features/cms/announcements/pages/AnnouncementsSettingsEdit')),
+  cmsAnnouncementsView: page(() => import('../features/cms/announcements/pages/AnnouncementView')),
   cmsHeroEdit: page(() => import('../features/cms/hero/pages/HeroEdit')),
   cmsHighlightEdit: page(() => import('../features/cms/highlight/pages/HighlightEdit')),
   cmsBoardCreate: page(() => import('../features/cms/board/pages/BoardMemberCreate')),
@@ -248,7 +256,7 @@ export function AppRoutes() {
             );
           })}
           {/*
-           * The seven home page menus share Home Page Management: each one's former landing page opens its tab, and
+           * The nine home page menus share Home Page Management: each one's former landing page opens its tab, and
            * the page applies the access rules (an unknown or forbidden tab falls back to the first one the user may open).
            */}
           {HOME_PAGE_REDIRECTS.map(([path, tab]) => (

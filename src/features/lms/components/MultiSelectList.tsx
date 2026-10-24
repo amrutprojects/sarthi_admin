@@ -6,7 +6,8 @@ import { useMemo, useState, type ReactNode } from 'react';
  *
  * - A search box narrows the list (label, code line and group); "Select all" / "Select none" act on the
  *   rows on screen, so "search Nashik → Select all" enables exactly the Nashik centres.
- * - Options can be grouped (e.g. centres under their district).
+ * - Options can be grouped (e.g. centres under their district), and can carry a short note after the
+ *   label (e.g. which coordinator a district is currently with); a note never stops an option being ticked.
  * - Loading, error (with Retry) and empty states, so an empty list never reads as "nothing exists" while it
  *   is still on its way or failed.
  * - Values already saved on the record that are no longer offered (deactivated or deleted at the source)
@@ -24,6 +25,8 @@ export interface MultiSelectOption {
   group?: string | null;
   /* True for an inactive record: selectable only to untick it. */
   inactive?: boolean;
+  /* Short note shown after the label, e.g. "with Asha Patil". Informational only. */
+  note?: string | null;
 }
 
 interface MultiSelectListProps {
@@ -123,6 +126,7 @@ export default function MultiSelectList({
                 {o.label}
                 {o.inactive ? INACTIVE : ''}
                 {o.sub ? <span className="muted mono fs12"> · {o.sub}</span> : null}
+                {o.note ? <span className="muted fs12"> · {o.note}</span> : null}
               </span>
             </label>
           );

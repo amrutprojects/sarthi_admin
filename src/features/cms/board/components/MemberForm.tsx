@@ -17,8 +17,8 @@ const FORM_ID = 'cms-board-member-form';
  *
  * - The photo is previewed locally and uploaded only when the form is saved, in the same request as
  *   the text, so a save either keeps everything or changes everything.
- * - "Name not yet available" keeps the website's "name to be filled" placeholder for an office whose
- *   holder is still to be supplied from official records, rather than inventing a name.
+ * - "Name not yet available" leaves the name off the website card for an office whose holder is still to
+ *   be supplied from official records, rather than inventing a name.
  * - Entered values survive a failed save; field messages the server returned are shown on the fields.
  */
 export default function MemberForm({
@@ -137,14 +137,14 @@ export default function MemberForm({
                 {...fieldAria('board-name', nameError)}
                 value={values.namePending ? '' : values.name}
                 disabled={values.namePending}
-                placeholder={values.namePending ? 'The website shows “— name to be filled —”' : undefined}
+                placeholder={values.namePending ? 'The website card shows no name' : undefined}
                 onChange={(e) => set('name', e.target.value)}
                 onBlur={() => touch('name')}
               />
             </MasterField>
             <label className="f ac gp8 fs13 mb10">
               <input type="checkbox" checked={values.namePending} onChange={(e) => set('namePending', e.target.checked)} />
-              Name not yet available — show the &ldquo;name to be filled&rdquo; placeholder on the website
+              Name not yet available — the website card shows the office without a name
             </label>
 
             <BilingualField

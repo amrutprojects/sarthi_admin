@@ -20,17 +20,30 @@ vi.mock('../../../modules/auth/auth-context', () => ({ useAuth: () => auth }));
 
 const WEBSITE = WEBSITE_MENUS.flatMap((m) => [`${m}.view`, `${m}.update`]);
 const CMS_LABELS = [
-  'Contact Page Management',
-  'Footer Management',
-  'Modules Page Management',
-  'FAQ Management',
-  'Eligibility Page Management',
-  'Apply Page Management',
   'Home Page Management',
   'Programme Page Management',
+  'Modules Page Management',
+  'Eligibility Page Management',
+  'Apply Page Management',
+  'FAQ Management',
+  'Contact Page Management',
+  'Footer Management',
   'State Master',
   'District Master',
   'Taluka Master',
+];
+
+/* The menus behind Home Page Management's tabs, the top bar first and then the announcements ticker. */
+const HOME_PAGE_MENUS = [
+  'cms-topbar',
+  'cms-announcements',
+  'cms-hero',
+  'cms-highlight',
+  'cms-board',
+  'cms-impact',
+  'cms-ecosystem',
+  'cms-schemes',
+  'cms-about',
 ];
 
 const signInAs = (portal: Portal, codes: string[]) => {
@@ -61,45 +74,35 @@ describe('website portal layout', () => {
     expect(labels(container)).toEqual(['FAQ Management', 'State Master']);
   });
 
-  it('shows one Home Page Management entry for any one of the seven home page menus, in its place', () => {
-    for (const menu of ['cms-hero', 'cms-highlight', 'cms-board', 'cms-impact', 'cms-ecosystem', 'cms-schemes', 'cms-about']) {
+  it('shows one Home Page Management entry for any one of the nine home page menus, in its place', () => {
+    for (const menu of HOME_PAGE_MENUS) {
       signInAs('website', ['cms-apply.view', `${menu}.view`, 'cms-programme.view']);
       const { container, unmount } = sidebar();
-      expect(labels(container)).toEqual(['Apply Page Management', 'Home Page Management', 'Programme Page Management']);
+      expect(labels(container)).toEqual(['Home Page Management', 'Programme Page Management', 'Apply Page Management']);
       unmount();
     }
   });
 
-  it('drops Home Page Management when no home page menu opens, or Menu Visibility hides all seven', () => {
+  it('drops Home Page Management when no home page menu opens, or Menu Visibility hides all nine', () => {
     signInAs('website', ['cms-faqs.view']);
     const { container, unmount } = sidebar();
     expect(labels(container)).not.toContain('Home Page Management');
     unmount();
 
-    const seven = ['cms-hero', 'cms-highlight', 'cms-board', 'cms-impact', 'cms-ecosystem', 'cms-schemes', 'cms-about'];
-    signInAs('website', ['cms-faqs.view', ...seven.map((m) => `${m}.view`)]);
-    auth.hiddenMenus = new Set(seven);
+    signInAs('website', ['cms-faqs.view', ...HOME_PAGE_MENUS.map((m) => `${m}.view`)]);
+    auth.hiddenMenus = new Set(HOME_PAGE_MENUS);
     const hidden = sidebar();
     expect(labels(hidden.container)).toEqual(['FAQ Management']);
     hidden.unmount();
 
     /* One menu left visible keeps the entry. */
-    auth.hiddenMenus = new Set(seven.slice(1));
-    expect(labels(sidebar().container)).toEqual(['FAQ Management', 'Home Page Management']);
+    auth.hiddenMenus = new Set(HOME_PAGE_MENUS.slice(1));
+    expect(labels(sidebar().container)).toEqual(['Home Page Management', 'FAQ Management']);
   });
 
   it('marks Home Page Management active on its page and on every home page section’s own pages', () => {
     signInAs('website', WEBSITE);
-    for (const active of [
-      'cms-home-page',
-      'cms-hero',
-      'cms-highlight',
-      'cms-board',
-      'cms-impact',
-      'cms-ecosystem',
-      'cms-schemes',
-      'cms-about',
-    ]) {
+    for (const active of ['cms-home-page', ...HOME_PAGE_MENUS]) {
       const { container, unmount } = sidebar(active);
       expect(activeLabel(container)).toBe('Home Page Management');
       unmount();
@@ -148,7 +151,7 @@ describe('<RequireAccess> for a Website Admin', () => {
   it('sends every Dashboard link to the first CMS page', async () => {
     signInAs('website', WEBSITE);
     app('/dashboard');
-    expect(await screen.findByText('Contact page')).toBeInTheDocument();
+    expect(await screen.findByText('Home page sections')).toBeInTheDocument();
     expect(screen.queryByText('Dashboard page')).not.toBeInTheDocument();
   });
 
@@ -175,7 +178,7 @@ describe('<RequireAccess> for a Website Admin', () => {
     app('/users');
     expect(screen.queryByText('Users page')).not.toBeInTheDocument();
     expect(screen.getByText("You don't have access to this screen")).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Go to Contact Page Management' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Go to Home Page Management' })).toBeInTheDocument();
   });
 
   it('keeps the Dashboard notice for a programme role that cannot open the screen', () => {

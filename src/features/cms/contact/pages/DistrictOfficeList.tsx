@@ -106,8 +106,7 @@ export default function DistrictOfficeList() {
   return (
     <>
       <SectionNote>
-        Shown on each district&rsquo;s page, one entry per district. A blank field reads &ldquo;to be supplied from official records&rdquo; on
-        the website.
+        Shown on each district&rsquo;s page, one entry per district. A blank field is left out of the website.
       </SectionNote>
       <div className="card">
         <div className="card-h">
@@ -137,7 +136,7 @@ export default function DistrictOfficeList() {
           emptyMsg={
             filtered
               ? 'No district office matches the current search.'
-              : 'No district offices have been added yet, so each district page shows “to be supplied from official records”. Use Add district office to create the first one.'
+              : 'No district offices have been added yet, so each district page shows no Collectorate details. Use Add district office to create the first one.'
           }
           rowLink={can('viewContactPage') ? (r) => `/cms/contact/offices/${r.id}` : undefined}
         />
@@ -173,7 +172,7 @@ export default function DistrictOfficeList() {
           danger
           busy={busy}
           confirmLabel="Delete"
-          message={`Delete the ${deleting.district.name} district office? The district's page shows “to be supplied from official records” again. It is soft-deleted, kept for audit history.`}
+          message={`Delete the ${deleting.district.name} district office? The district's page then shows no Collectorate details. It is soft-deleted, kept for audit history.`}
           onClose={() => setDeleting(null)}
           onConfirm={() =>
             run(

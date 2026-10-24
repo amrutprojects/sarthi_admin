@@ -412,7 +412,7 @@ describe('Add New Programme', () => {
     await userEvent.type(screen.getByLabelText('Destination'), 'javascript:alert(1)');
     await userEvent.click(screen.getByRole('button', { name: 'Save programme' }));
     expect(
-      await screen.findByText('Destination must be a page on this site starting with /, or an address starting with https://'),
+      await screen.findByText('Destination must be a page on this site starting with /, or a web address starting with https:// or www.'),
     ).toBeInTheDocument();
     expect(ecosystemService.create).not.toHaveBeenCalled();
   });

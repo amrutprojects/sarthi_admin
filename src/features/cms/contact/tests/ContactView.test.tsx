@@ -398,7 +398,7 @@ describe('<ContactView> tabs', () => {
     await userEvent.click(tab('District offices'));
     expect(location()).toHaveTextContent('/cms/contact?tab=offices');
     expect(
-      await within(await openPanel()).findByText(/No district offices have been added yet, so each district page shows “to be supplied from official records”/),
+      await within(await openPanel()).findByText(/No district offices have been added yet, so each district page shows no Collectorate details/),
     ).toBeInTheDocument();
   });
 

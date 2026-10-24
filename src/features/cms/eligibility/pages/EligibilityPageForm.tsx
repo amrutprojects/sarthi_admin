@@ -43,8 +43,8 @@ const HINTS: Record<SettingsKey, string> = {
   pageSubtitle: 'The line under the heading.',
   criteriaHeading: 'The title of the eligibility criteria card.',
   documentsHeading: 'The title of the required documents card.',
-  noteTitle: 'The title of the note under the two cards.',
-  noteBody: 'The text of the note under the two cards.',
+  noteTitle: 'The title of the note under the two cards, if it is shown.',
+  noteBody: 'The text of the note under the two cards, if it is shown.',
 };
 
 /*
@@ -131,6 +131,17 @@ export default function EligibilityPageForm({ initial, onSave, backTo }: Eligibi
           {field('pageSubtitle')}
           {field('criteriaHeading')}
           {field('documentsHeading')}
+          <label className="f ac gp8 fs13 mb10">
+            <input
+              type="checkbox"
+              checked={values.showNote}
+              onChange={(e) => {
+                setValues((v) => ({ ...v, showNote: e.target.checked }));
+                setDirty(true);
+              }}
+            />
+            Show the note on the website
+          </label>
           {field('noteTitle')}
           {field('noteBody', true)}
         </form>

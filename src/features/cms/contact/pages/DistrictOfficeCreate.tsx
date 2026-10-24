@@ -18,7 +18,7 @@ export default function DistrictOfficeCreate() {
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'CMS' }, { l: 'Contact Page', link: listPath }, { l: 'Add district office' }]}
         title="Add District Office"
-        sub="Adds the Collectorate details shown on one district's page. Any field left blank reads “to be supplied from official records” on the website."
+        sub="Adds the Collectorate details shown on one district's page. A field left blank is not shown on the website."
         back={<BackButton to={listPath} />}
       />
       <DistrictOfficeForm

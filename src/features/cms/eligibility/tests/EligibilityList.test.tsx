@@ -27,6 +27,7 @@ const settings: ApiEligibilitySettings = {
   documentsHeading: { mr: 'आवश्यक कागदपत्रे', en: 'Required documents' },
   noteTitle: { mr: 'टीप', en: 'Note' },
   noteBody: { mr: 'सर्व कागदपत्रे मूळ असावीत.', en: 'All documents must be originals.' },
+  showNote: true,
   createdAt: AT,
   updatedAt: AT,
 };
@@ -107,7 +108,16 @@ describe('<EligibilityList> tabs', () => {
       .getAllByRole('row')
       .slice(1)
       .map((r) => within(r).getAllByRole('cell')[1].textContent);
-    expect(fields).toEqual(['Page title', 'Page subtitle', 'Criteria heading', 'Documents heading', 'Note title', 'Note text']);
+    expect(fields).toEqual([
+      'Page title',
+      'Page subtitle',
+      'Criteria heading',
+      'Documents heading',
+      'Note title',
+      'Note text',
+      'Note on the website',
+    ]);
+    expect(within(table).getByText('Shown')).toBeInTheDocument();
     expect(screen.getByText('पात्रता')).toHaveAttribute('lang', 'mr');
     expect(screen.getByText('All documents must be originals.')).toBeInTheDocument();
     expect(screen.getByText(/Last updated/)).toBeInTheDocument();

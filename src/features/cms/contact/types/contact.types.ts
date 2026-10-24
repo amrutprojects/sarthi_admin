@@ -108,6 +108,8 @@ export interface CreateCoordinatorInput {
   /* Left out on create, the coordinator goes last. */
   displayOrder?: number;
   isActive?: boolean;
+  /* Sent only after the administrator confirmed taking districts from the coordinator that covers them now. */
+  moveDistricts?: boolean;
 }
 
 /* Any subset of the create fields; status has its own endpoint. */

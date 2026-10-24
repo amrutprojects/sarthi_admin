@@ -8,7 +8,7 @@ export interface Bilingual {
 
 export interface ApiBoardMember {
   id: string;
-  /** null while the officeholder's name is still to be supplied; the website prints its placeholder. */
+  /** null while the officeholder's name is still to be supplied; the website shows no name. */
   name: string | null;
   /** The badge above the name, e.g. "राज्य शासन" / "State Government". */
   category: Bilingual;

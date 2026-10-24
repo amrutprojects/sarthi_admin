@@ -357,7 +357,7 @@ export const toOfficeFormValues = (o: ApiDistrictOffice): OfficeFormValues => ({
   isActive: o.isActive,
 });
 
-/* Every Collectorate field is optional: a blank one is sent as null and the website shows "to be supplied". */
+/* Every Collectorate field is optional: a blank one is sent as null and the website leaves it out. */
 export const normalizeOfficeForm = (v: OfficeFormValues): CreateDistrictOfficeInput => ({
   districtId: v.districtId,
   collectorName: blankToNull(v.collectorName),

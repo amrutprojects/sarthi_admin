@@ -118,7 +118,7 @@ export default function BoardMemberView() {
             <FieldTable
               rows={[
                 ['Photo', <Photo member={member} />],
-                ['Name', member.name ?? <i className="muted">Not yet available — the website prints its placeholder</i>],
+                ['Name', member.name ?? <i className="muted">Not yet available — the website shows no name</i>],
                 ['Category (badge)', <Text value={member.category} />],
                 ['Designation', <Text value={member.designation} />],
                 ['Description', <Text value={member.description} />],

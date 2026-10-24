@@ -15,12 +15,14 @@ import {
 import { WEBSITE_MENUS, type Portal } from '../../../../modules/auth/permissions';
 import { aboutService, toItem } from '../../about/services/aboutService';
 import type * as AboutServiceModule from '../../about/services/aboutService';
+import { announcementsService } from '../../announcements/services/announcementsService';
 import { boardService } from '../../board/services/boardService';
 import { ecosystemService } from '../../ecosystem/services/ecosystemService';
 import { heroService } from '../../hero/services/heroService';
 import { highlightService } from '../../highlight/services/highlightService';
 import { impactService } from '../../impact/services/impactService';
 import { schemesService } from '../../schemes/services/schemesService';
+import { topBarService } from '../../topbar/services/topBarService';
 /* Loaded up front, so the router's lazy import of the page resolves at once. */
 import HomePageView from '../pages/HomePageView';
 
@@ -50,6 +52,20 @@ const listService = vi.hoisted(() => () => ({
   getSection: vi.fn(),
   updateSection: vi.fn(),
 }));
+/* The Top Bar's API has the same shape, but its singleton is called settings. */
+const topBarApi = vi.hoisted(() => () => ({
+  list: vi.fn(),
+  get: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  setStatus: vi.fn(),
+  remove: vi.fn(),
+  reorder: vi.fn(),
+  getSettings: vi.fn(),
+  updateSettings: vi.fn(),
+}));
+vi.mock('../../topbar/services/topBarService', () => ({ topBarService: topBarApi() }));
+vi.mock('../../announcements/services/announcementsService', () => ({ announcementsService: listService() }));
 vi.mock('../../hero/services/heroService', () => ({ heroService: { get: vi.fn(), update: vi.fn(), setPublished: vi.fn() } }));
 vi.mock('../../highlight/services/highlightService', () => ({
   highlightService: { get: vi.fn(), update: vi.fn(), setPublished: vi.fn() },
@@ -83,6 +99,25 @@ const BLANK = pair('', '');
 const T = { createdAt: '2026-10-01T10:00:00.000Z', updatedAt: '2026-10-02T10:00:00.000Z' };
 
 /* One record per section, each with a line of text that only its own tab shows. */
+const topBarLink = {
+  id: 'tb1',
+  label: pair('प्रमाणपत्र पडताळणी', 'Verify Certificate'),
+  link: '/verify',
+  displayOrder: 1,
+  isActive: true,
+  ...T,
+};
+const topBarSettings = { id: 'ts', governmentName: pair('महाराष्ट्र शासन', 'Government of Maharashtra'), showLanguageToggle: true, ...T };
+const announcement = {
+  id: 'an1',
+  title: pair('सूचना शीर्षक', 'Announcement title'),
+  detail: null,
+  link: null,
+  displayOrder: 1,
+  isActive: true,
+  ...T,
+};
+const announcementsSection = { id: 'as', label: pair('सूचना', 'Announcements'), showSection: true, ...T };
 const hero = () => ({
   id: 'h1',
   readMoreLabel: pair('अधिक जाणून घ्या', 'Learn more'),
@@ -189,8 +224,20 @@ const about = () => ({
   cards: [],
 });
 
-const HOME_PAGE_MENUS = ['cms-hero', 'cms-highlight', 'cms-board', 'cms-impact', 'cms-ecosystem', 'cms-schemes', 'cms-about'];
+const HOME_PAGE_MENUS = [
+  'cms-topbar',
+  'cms-announcements',
+  'cms-hero',
+  'cms-highlight',
+  'cms-board',
+  'cms-impact',
+  'cms-ecosystem',
+  'cms-schemes',
+  'cms-about',
+];
 const LABELS = [
+  'Top Bar',
+  'Announcements',
   'AMRUT Kalash – apply online',
   'Programme at a glance',
   'Skill Development Diploma',
@@ -202,6 +249,8 @@ const LABELS = [
 ];
 /* The text each tab shows once its section has loaded. */
 const CONTENT: Record<string, string> = {
+  'Top Bar': 'Verify Certificate',
+  Announcements: 'Announcement title',
   'AMRUT Kalash – apply online': 'Hero slide heading',
   'Programme at a glance': '36 (entered)',
   'Skill Development Diploma': 'Diploma band heading',
@@ -242,6 +291,10 @@ beforeEach(() => {
   signInAs(WEBSITE, { portal: 'website' });
   Element.prototype.scrollIntoView = vi.fn();
   if (!document.getElementById('toast-root')) document.body.insertAdjacentHTML('beforeend', '<div id="toast-root"></div>');
+  vi.mocked(topBarService.list).mockResolvedValue([topBarLink]);
+  vi.mocked(topBarService.getSettings).mockResolvedValue(topBarSettings);
+  vi.mocked(announcementsService.list).mockResolvedValue([announcement]);
+  vi.mocked(announcementsService.getSection).mockResolvedValue(announcementsSection);
   vi.mocked(heroService.get).mockResolvedValue(hero());
   vi.mocked(highlightService.get).mockResolvedValue(highlight());
   vi.mocked(boardService.list).mockResolvedValue([member]);
@@ -269,13 +322,13 @@ describe('Home Page Management', () => {
     const strip = screen.getByRole('tablist', { name: 'Home page sections' });
     expect(strip).toHaveClass('tabs', 'tabs-fit');
     expect(strip.closest('.cms-sections')).not.toBeNull();
-    expect(await openTab()).toBe('AMRUT Kalash – apply online');
-    expect(screen.getByRole('tab', { name: 'AMRUT Kalash – apply online' })).toHaveAttribute(
-      'aria-controls',
-      screen.getByRole('tabpanel').id,
-    );
-    expect(await screen.findByText('Hero slide heading')).toBeInTheDocument();
+    /* The top bar comes first: it is the strip at the very top of every page of the website. */
+    expect(await openTab()).toBe('Top Bar');
+    expect(screen.getByRole('tab', { name: 'Top Bar' })).toHaveAttribute('aria-controls', screen.getByRole('tabpanel').id);
+    expect(await screen.findByText('Verify Certificate')).toBeInTheDocument();
     /* Only the open tab loads its section. */
+    expect(announcementsService.list).not.toHaveBeenCalled();
+    expect(heroService.get).not.toHaveBeenCalled();
     expect(boardService.list).not.toHaveBeenCalled();
     expect(aboutService.get).not.toHaveBeenCalled();
   });
@@ -327,14 +380,18 @@ describe('Home Page Management', () => {
   it('hides the tabs of the menus that Menu Visibility hides', async () => {
     signInAs(
       HOME_PAGE_MENUS.map((m) => `${m}.view`),
-      { hidden: ['cms-hero', 'cms-schemes'] },
+      { hidden: ['cms-topbar', 'cms-announcements', 'cms-hero', 'cms-schemes'] },
     );
     renderApp('/cms/home-page');
 
     expect(await openTab()).toBe('Skill Development Diploma');
     expect(tabLabels()).toEqual(
-      LABELS.filter((l) => !['AMRUT Kalash – apply online', 'Programme at a glance', 'AMRUT Schemes'].includes(l)),
+      LABELS.filter(
+        (l) => !['Top Bar', 'Announcements', 'AMRUT Kalash – apply online', 'Programme at a glance', 'AMRUT Schemes'].includes(l),
+      ),
     );
+    expect(topBarService.list).not.toHaveBeenCalled();
+    expect(announcementsService.list).not.toHaveBeenCalled();
   });
 
   it('applies the same rules in the website portal', async () => {
@@ -355,6 +412,8 @@ describe('Home Page Management', () => {
 
   it('opens each section’s former page as its tab', async () => {
     const moved: [string, string][] = [
+      ['/cms/top-bar', 'Top Bar'],
+      ['/cms/announcements', 'Announcements'],
       ['/cms/hero', 'AMRUT Kalash – apply online'],
       ['/cms/highlight', 'Skill Development Diploma'],
       ['/cms/board-members', 'Leadership & Governing Board'],
@@ -375,6 +434,10 @@ describe('Home Page Management', () => {
 describe('a home page section’s own pages', () => {
   /* [page, its last crumb, the button that leaves it, the tab it returns to] */
   const pages: [string, string, string, string][] = [
+    ['/cms/top-bar/create', 'Add link', 'Back', 'Top Bar'],
+    ['/cms/top-bar/settings', 'Top bar settings', 'Cancel', 'Top Bar'],
+    ['/cms/announcements/create', 'Add announcement', 'Back', 'Announcements'],
+    ['/cms/announcements/settings', 'Ticker settings', 'Cancel', 'Announcements'],
     ['/cms/highlight/edit', 'Edit', 'Back', 'Skill Development Diploma'],
     ['/cms/board-members/settings', 'Section settings', 'Back', 'Leadership & Governing Board'],
     ['/cms/board-members/create', 'Add Member', 'Cancel', 'Leadership & Governing Board'],
@@ -425,6 +488,8 @@ describe('a home page table’s View pages', () => {
   };
 
   beforeEach(() => {
+    vi.mocked(topBarService.get).mockResolvedValue(topBarLink);
+    vi.mocked(announcementsService.get).mockResolvedValue(announcement);
     vi.mocked(boardService.get).mockResolvedValue(member);
     vi.mocked(impactService.get).mockResolvedValue(stat);
     vi.mocked(ecosystemService.get).mockResolvedValue(programme);
@@ -435,6 +500,8 @@ describe('a home page table’s View pages', () => {
 
   /* [tab, the row's name on its eye button, the View page it opens, that page's route name] */
   const rows: [HomePageTab, string, string, string][] = [
+    ['top-bar', 'Verify Certificate', '/cms/top-bar/tb1/view', 'cmsTopBarView'],
+    ['announcements', 'Announcement title', '/cms/announcements/an1/view', 'cmsAnnouncementsView'],
     ['board', 'Board Member One', `/cms/board-members/${member.id}/view`, 'cmsBoardView'],
     ['impact', 'Impact districts', '/cms/impact/i1/view', 'cmsImpactView'],
     ['ecosystem', 'Ecosystem programme', '/cms/amrut-ecosystem/e1/view', 'cmsEcosystemView'],

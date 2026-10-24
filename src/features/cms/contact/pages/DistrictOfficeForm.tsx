@@ -51,8 +51,8 @@ function mapServerErrors(err: ApiError): FieldErrors<OfficeField> {
 
 /*
  * The district office create and edit form, on its own page (no modal): the Collectorate details shown
- * on one district's page. Every field but the district is optional — the website prints "to be supplied
- * from official records" for whatever is left blank.
+ * on one district's page. Every field but the district is optional — the website leaves out
+ * whatever is left blank.
  *
  * Same behaviour as the other CMS master forms: validates on submit and re-validates a field once it
  * has been touched, blocks a double submit, keeps the entered values when a save fails, and shows the

@@ -79,6 +79,14 @@ export type RouteName =
   | 'cmsApplyEdit'
   | 'cmsApplyView'
   | 'cmsHomePage'
+  | 'cmsTopBarCreate'
+  | 'cmsTopBarEdit'
+  | 'cmsTopBarSettings'
+  | 'cmsTopBarView'
+  | 'cmsAnnouncementsCreate'
+  | 'cmsAnnouncementsEdit'
+  | 'cmsAnnouncementsSettings'
+  | 'cmsAnnouncementsView'
   | 'cmsHeroEdit'
   | 'cmsHighlightEdit'
   | 'cmsBoardCreate'
@@ -200,15 +208,18 @@ export type AdminRoute = [path: string, name: RouteName, navKey: string];
 
 /*
  * Home Page Management (/cms/home-page): one sidebar entry and one page, whose tabs are the sections of the
- * public home page in the order it shows them. Each tab belongs to one of seven menus (Home Hero Section has
- * two tabs), and those menus keep their own keys, so their permission codes, Menu Visibility rows and the
- * Website Admin role are unchanged; a tab is shown only to a user who can open its menu. Each menu's Add,
- * Edit and Settings pages keep their own paths, and their Back, Cancel and Save return to the menu's tab.
+ * public home page in the order it shows them, starting with the Top Bar (the strip at the very top of every
+ * page) and the announcements ticker. Each tab belongs to one of nine menus (Home Hero Section has two tabs), and
+ * those menus keep their own keys, so their permission codes, Menu Visibility rows and the Website Admin role are
+ * unchanged; a tab is shown only to a user who can open its menu. Each menu's Add, Edit and Settings pages keep
+ * their own paths, and their Back, Cancel and Save return to the menu's tab.
  * The same grouping decides access in modules/auth/permissions.ts (MENU_GROUPS).
  */
 export const HOME_PAGE_MENU = 'cms-home-page';
 export const HOME_PAGE_PATH = '/cms/home-page';
 export const HOME_PAGE_TABS = [
+  { k: 'top-bar', l: 'Top Bar', menu: 'cms-topbar' },
+  { k: 'announcements', l: 'Announcements', menu: 'cms-announcements' },
   { k: 'hero', l: 'AMRUT Kalash – apply online', menu: 'cms-hero' },
   { k: 'glance', l: 'Programme at a glance', menu: 'cms-hero' },
   { k: 'diploma', l: 'Skill Development Diploma', menu: 'cms-highlight' },
@@ -223,8 +234,14 @@ export type HomePageTab = (typeof HOME_PAGE_TABS)[number]['k'];
 /* Home Page Management opened on one tab: where a section's Back, Cancel, Save and Delete return to. */
 export const homePageTabPath = (tab: HomePageTab): string => `${HOME_PAGE_PATH}?tab=${tab}`;
 
-/* Each home page menu's former landing page → its tab. The router redirects them, so old links and bookmarks keep working. */
+/*
+ * Each home page menu's former landing page → its tab. The router redirects them, so old links and bookmarks keep
+ * working. Top Bar and Announcements never had a page of their own; their paths open the tab like the others, beside
+ * their own pages.
+ */
 export const HOME_PAGE_REDIRECTS: readonly (readonly [path: string, tab: HomePageTab])[] = [
+  ['/cms/top-bar', 'top-bar'],
+  ['/cms/announcements', 'announcements'],
   ['/cms/hero', 'hero'],
   ['/cms/highlight', 'diploma'],
   ['/cms/board-members', 'board'],
@@ -281,18 +298,18 @@ export const NAV: NavEntry[] = [
   { k: 'qa', l: 'Quality Assurance', i: 'check', r: '/qa' },
   { k: 'tasks', l: 'Tasks & Alerts', i: 'alert', r: '/tasks', count: () => api.openTaskCount(), warn: true },
   { k: 'documents', l: 'Documents', i: 'folder', r: '/documents' },
+  /*
+   * The website's pages in the order of its own menu (Home, About, Programme, Modules, Eligibility, Apply, FAQ,
+   * Contact; About is a tab of Home Page Management), then the footer every page shares, then the geography masters.
+   */
   { g: 'CMS' },
-  { k: 'cms-contact', l: 'Contact Page Management', i: 'mail', r: '/cms/contact' },
-  { k: 'cms-footer', l: 'Footer Management', i: 'doc', r: '/cms/footer' },
-  { k: 'cms-modules', l: 'Modules Page Management', i: 'book', r: '/cms/modules' },
-  { k: 'cms-faqs', l: 'FAQ Management', i: 'help', r: '/cms/faqs' },
-  { k: 'cms-eligibility', l: 'Eligibility Page Management', i: 'check', r: '/cms/eligibility' },
-  { k: 'cms-apply', l: 'Apply Page Management', i: 'clipboard', r: '/cms/apply' },
   { k: HOME_PAGE_MENU, l: 'Home Page Management', i: 'home', r: HOME_PAGE_PATH },
   /*
-   * The seven menus behind Home Page Management's tabs, in home page order. Not sidebar entries of their own
+   * The nine menus behind Home Page Management's tabs, in home page order. Not sidebar entries of their own
    * (SIDEBAR_NAV leaves them out), but still menus with permissions and Menu Visibility rows of their own.
    */
+  { k: 'cms-topbar', l: 'Top Bar', i: 'globe', r: homePageTabPath('top-bar') },
+  { k: 'cms-announcements', l: 'Announcements', i: 'megaphone', r: homePageTabPath('announcements') },
   { k: 'cms-hero', l: 'Home Hero Section', i: 'home', r: homePageTabPath('hero') },
   { k: 'cms-highlight', l: 'Home Programme Section', i: 'doc', r: homePageTabPath('diploma') },
   { k: 'cms-board', l: 'Board Members Management', i: 'users', r: homePageTabPath('board') },
@@ -301,6 +318,12 @@ export const NAV: NavEntry[] = [
   { k: 'cms-schemes', l: 'AMRUT Schemes Management', i: 'clipboard', r: homePageTabPath('schemes') },
   { k: 'cms-about', l: 'About AMRUT Management', i: 'building', r: homePageTabPath('about') },
   { k: 'cms-programme', l: 'Programme Page Management', i: 'award', r: '/cms/programme' },
+  { k: 'cms-modules', l: 'Modules Page Management', i: 'book', r: '/cms/modules' },
+  { k: 'cms-eligibility', l: 'Eligibility Page Management', i: 'check', r: '/cms/eligibility' },
+  { k: 'cms-apply', l: 'Apply Page Management', i: 'clipboard', r: '/cms/apply' },
+  { k: 'cms-faqs', l: 'FAQ Management', i: 'help', r: '/cms/faqs' },
+  { k: 'cms-contact', l: 'Contact Page Management', i: 'mail', r: '/cms/contact' },
+  { k: 'cms-footer', l: 'Footer Management', i: 'doc', r: '/cms/footer' },
   { k: 'cms-states', l: 'State Master', i: 'globe', r: '/cms/states' },
   { k: 'cms-districts', l: 'District Master', i: 'map', r: '/cms/districts' },
   { k: 'cms-talukas', l: 'Taluka Master', i: 'pin', r: '/cms/talukas' },
@@ -437,11 +460,21 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/apply/:id/edit', 'cmsApplyEdit', 'cms-apply'],
   ['/cms/apply/:id', 'cmsApplyView', 'cms-apply'],
   /*
-   * Home Page Management: one tabbed page for the seven home page menus (HOME_PAGE_TABS above). Each menu's
+   * Home Page Management: one tabbed page for the nine home page menus (HOME_PAGE_TABS above). Each menu's
    * own pages stay under its key, so their permission checks still apply; its former landing page redirects
    * to its tab (HOME_PAGE_REDIRECTS, router.tsx).
    */
   [HOME_PAGE_PATH, 'cmsHomePage', HOME_PAGE_MENU],
+  /* Top Bar (the strip at the very top of the site): static paths (create, settings) before the :id patterns. */
+  ['/cms/top-bar/create', 'cmsTopBarCreate', 'cms-topbar'],
+  ['/cms/top-bar/settings', 'cmsTopBarSettings', 'cms-topbar'],
+  ['/cms/top-bar/:id/edit', 'cmsTopBarEdit', 'cms-topbar'],
+  ['/cms/top-bar/:id/view', 'cmsTopBarView', 'cms-topbar'],
+  /* Announcements (the ticker at the top of the site): static paths (create, settings) before the :id patterns. */
+  ['/cms/announcements/create', 'cmsAnnouncementsCreate', 'cms-announcements'],
+  ['/cms/announcements/settings', 'cmsAnnouncementsSettings', 'cms-announcements'],
+  ['/cms/announcements/:id/edit', 'cmsAnnouncementsEdit', 'cms-announcements'],
+  ['/cms/announcements/:id/view', 'cmsAnnouncementsView', 'cms-announcements'],
   ['/cms/hero/edit', 'cmsHeroEdit', 'cms-hero'],
   ['/cms/highlight/edit', 'cmsHighlightEdit', 'cms-highlight'],
   /*

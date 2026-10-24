@@ -6,9 +6,12 @@
 
 const SITE_PATH = /^\/[A-Za-z0-9._~/?=&%#-]*$/;
 
-/* A page of this site ("/programme") or a full http(s) address; the same rule as the server. */
+/* "www.example.gov.in" is accepted as typed; the server stores it as "https://www.example.gov.in". */
+export const normalizeDestination = (v: string): string => (/^www\./i.test(v) ? `https://${v}` : v);
+
+/* A page of this site ("/programme") or a full http(s) / www. address; the same rule as the server. */
 export function destinationProblem(raw: string): string | undefined {
-  const v = raw.trim();
+  const v = normalizeDestination(raw.trim());
   if (!v) return undefined;
   if (v.length > 500) return 'Destination must be at most 500 characters';
   if (v.startsWith('/')) {
@@ -16,7 +19,8 @@ export function destinationProblem(raw: string): string | undefined {
       ? undefined
       : 'A page on this site must start with a single / and use only letters, digits and - _ . ~ / ? = & % #';
   }
-  if (!/^https?:\/\//.test(v)) return 'Destination must be a page on this site starting with /, or an address starting with https://';
+  if (!/^https?:\/\//.test(v))
+    return 'Destination must be a page on this site starting with /, or a web address starting with https:// or www.';
   if (/[\s<>"]/.test(v)) return 'The address contains characters that are not allowed';
   let url: URL;
   try {

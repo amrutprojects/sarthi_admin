@@ -53,8 +53,9 @@ function mapServerErrors(err: ApiError): FieldErrors<CoordinatorField> {
  * server's field messages — including a district another coordinator took meanwhile (409) — against
  * the matching input.
  *
- * A district can be covered by one coordinator only, so the picker offers the districts no other
- * coordinator has taken (the backend enforces the same rule).
+ * A district can be covered by one coordinator only (the backend enforces the same rule). The picker lists
+ * every district of the District Master. One another coordinator covers can still be ticked: it is marked
+ * with that coordinator's name, and saving asks for confirmation and then moves it here (moveDistricts).
  */
 export default function CoordinatorForm({
   initial,
@@ -95,14 +96,23 @@ export default function CoordinatorForm({
 
   const all = useMemo(() => districts.data ?? [], [districts.data]);
   const byId = useMemo(() => new Map(all.map((d) => [d.id, d])), [all]);
-  /* Districts covered by another coordinator, which this one cannot take. */
+  /* Districts covered by another coordinator (district id -> that coordinator's name); this one cannot take them. */
   const takenElsewhere = useMemo(
-    () => new Set((coordinators.data ?? []).filter((c) => c.id !== coordinatorId).flatMap((c) => c.districts.map((d) => d.id))),
+    () =>
+      new Map(
+        (coordinators.data ?? [])
+          .filter((c) => c.id !== coordinatorId)
+          .flatMap((c) => c.districts.map((d): [string, string] => [d.id, c.name])),
+      ),
     [coordinators.data, coordinatorId],
   );
-  const options = all
-    .filter((d) => !takenElsewhere.has(d.id))
-    .map((d) => ({ id: d.id, label: d.name, sub: d.code, group: d.state }));
+  /* Every district of the District Master is listed; one another coordinator covers says who has it now. */
+  const options = all.map((d) => {
+    const holder = takenElsewhere.get(d.id);
+    return { id: d.id, label: d.name, sub: d.code, group: d.state, note: holder ? `now with ${holder}` : null };
+  });
+  /* The ticked districts that would be taken from another coordinator by this save. */
+  const moving = values.districts.filter((d) => takenElsewhere.has(d.id));
 
   /*
    * The website lists a coordinator's districts in the saved order (lead district first), so ticking
@@ -123,7 +133,7 @@ export default function CoordinatorForm({
     setSubmitted(true);
     if (busy) return;
     if (!isValid(local)) return;
-    if (confirmMessage) {
+    if (confirmMessage || moving.length) {
       setConfirming(true);
       return;
     }
@@ -135,7 +145,7 @@ export default function CoordinatorForm({
     setBusy(true);
     setServerErrors({});
     try {
-      await onSave(normalizeCoordinatorForm(values));
+      await onSave({ ...normalizeCoordinatorForm(values), ...(moving.length ? { moveDistricts: true } : {}) });
       setDirty(false);
     } catch (err) {
       /* A 422, or the 409 / 400 of the district rules, carries per-field messages; show them on the fields and skip the toast. */
@@ -214,7 +224,7 @@ export default function CoordinatorForm({
                 if (coordinators.error) void coordinators.reload();
               }}
               emptyMsg="No districts available. Add them in the District Master first."
-              hint="Listed on the website in the order ticked, lead district first. Districts already covered by another coordinator are not offered."
+              hint="Listed on the website in the order ticked, lead district first. A district marked “now with …” can be ticked too: saving moves it from that coordinator to this one, after you confirm."
               fieldError={show('districtIds')}
             />
           </div>
@@ -267,10 +277,24 @@ export default function CoordinatorForm({
           title="Save changes"
           busy={busy}
           confirmLabel="Yes, save"
-          message={confirmMessage ?? ''}
+          message={
+            moving.length
+              ? `${moving.length === 1 ? 'This district is' : `These ${moving.length} districts are`} covered by another coordinator. Saving takes ${moving.length === 1 ? 'it' : 'them'} from that coordinator and gives ${moving.length === 1 ? 'it' : 'them'} to this one.`
+              : (confirmMessage ?? '')
+          }
           onClose={() => setConfirming(false)}
           onConfirm={() => void save()}
-        />
+        >
+          {moving.length ? (
+            <ul className="fs13" style={{ margin: '8px 0 0', paddingLeft: 18, maxHeight: 180, overflowY: 'auto' }}>
+              {moving.map((d) => (
+                <li key={d.id}>
+                  {d.name} — now with {takenElsewhere.get(d.id)}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </ConfirmModal>
       ) : null}
     </div>
   );

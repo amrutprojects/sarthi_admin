@@ -52,6 +52,7 @@ export default function CoordinatorEdit() {
               email: values.email,
               districtIds: values.districtIds,
               displayOrder: values.displayOrder,
+              ...(values.moveDistricts ? { moveDistricts: true } : {}),
             });
             toastOk('Coordinator updated');
             navigate(`/cms/contact/coordinators/${coordinator.id}`);

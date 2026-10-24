@@ -90,7 +90,7 @@ export function validateEligibilityItemForm(
 
 /* ---------------- page text (singleton) ---------------- */
 
-export type EligibilitySettingsFormValues = Record<SettingsKey, Bilingual>;
+export type EligibilitySettingsFormValues = Record<SettingsKey, Bilingual> & { showNote: boolean };
 
 /* Column lengths of eligibility_page_settings. */
 export const SETTINGS_MAX: Record<SettingsKey, number> = {
@@ -109,6 +109,7 @@ export const toEligibilitySettingsFormValues = (s: ApiEligibilitySettings): Elig
   documentsHeading: { ...s.documentsHeading },
   noteTitle: { ...s.noteTitle },
   noteBody: { ...s.noteBody },
+  showNote: s.showNote,
 });
 
 /* The values actually sent to the API: every text trimmed. */
@@ -121,6 +122,7 @@ export const normalizeEligibilitySettingsForm = (v: EligibilitySettingsFormValue
     documentsHeading: trim(v.documentsHeading),
     noteTitle: trim(v.noteTitle),
     noteBody: trim(v.noteBody),
+    showNote: v.showNote,
   };
 };
 

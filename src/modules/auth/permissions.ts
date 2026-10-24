@@ -58,6 +58,8 @@ const MENU_KEYS = [
   'cms-faqs',
   'cms-eligibility',
   'cms-apply',
+  'cms-topbar',
+  'cms-announcements',
   'cms-hero',
   'cms-highlight',
   'cms-board',
@@ -92,13 +94,23 @@ const MENU_KEYS = [
   'settings',
 ];
 /*
- * Sidebar entries that gather other menus on one page: Home Page Management, whose tabs are the seven home page
+ * Sidebar entries that gather other menus on one page: Home Page Management, whose tabs are the nine home page
  * menus (constants/navigation.ts: HOME_PAGE_TABS). Such an entry has no permission codes or Menu Visibility row
  * of its own; it opens when any of its menus opens (canOpen below), and each tab and each menu's own pages still
  * check their own menu.
  */
 export const MENU_GROUPS: Readonly<Record<string, readonly string[]>> = {
-  'cms-home-page': ['cms-hero', 'cms-highlight', 'cms-board', 'cms-impact', 'cms-ecosystem', 'cms-schemes', 'cms-about'],
+  'cms-home-page': [
+    'cms-topbar',
+    'cms-announcements',
+    'cms-hero',
+    'cms-highlight',
+    'cms-board',
+    'cms-impact',
+    'cms-ecosystem',
+    'cms-schemes',
+    'cms-about',
+  ],
 };
 
 export const SCREEN_ACCESS: Record<string, string[]> = {
@@ -171,6 +183,14 @@ export const ACTION_ACCESS = {
   createApplyItem: ['cms-apply.create'],
   updateApplyPage: ['cms-apply.update'],
   deleteApplyItem: ['cms-apply.delete'],
+  viewTopBar: ['cms-topbar.view'],
+  createTopBarLink: ['cms-topbar.create'],
+  updateTopBar: ['cms-topbar.update'],
+  deleteTopBarLink: ['cms-topbar.delete'],
+  viewAnnouncements: ['cms-announcements.view'],
+  createAnnouncement: ['cms-announcements.create'],
+  updateAnnouncement: ['cms-announcements.update'],
+  deleteAnnouncement: ['cms-announcements.delete'],
   viewHero: ['cms-hero.view'],
   updateHero: ['cms-hero.update'],
   viewHighlight: ['cms-highlight.view'],
@@ -289,20 +309,22 @@ export type Action = keyof typeof ACTION_ACCESS;
  */
 export const WEBSITE_ADMIN_ROLE = 'WEBSITE_ADMIN';
 export const WEBSITE_MENUS: readonly string[] = [
-  'cms-contact',
-  'cms-footer',
-  'cms-modules',
-  'cms-faqs',
-  'cms-eligibility',
-  'cms-apply',
+  'cms-topbar',
+  'cms-announcements',
   'cms-hero',
   'cms-highlight',
   'cms-board',
+  'cms-impact',
   'cms-ecosystem',
   'cms-schemes',
-  'cms-impact',
   'cms-about',
   'cms-programme',
+  'cms-modules',
+  'cms-eligibility',
+  'cms-apply',
+  'cms-faqs',
+  'cms-contact',
+  'cms-footer',
   'cms-states',
   'cms-districts',
   'cms-talukas',

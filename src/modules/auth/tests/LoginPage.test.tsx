@@ -62,11 +62,11 @@ describe('<LoginPage> landing after sign-in', () => {
   });
 
   it('takes a Website Admin to the CMS, not the Dashboard', async () => {
-    expect(await signIn(websiteAdmin)).toBe('/cms/contact');
+    expect(await signIn(websiteAdmin)).toBe('/cms/home-page');
   });
 
   it('ignores a requested page a Website Admin cannot open', async () => {
-    expect(await signIn(websiteAdmin, '/dashboard')).toBe('/cms/contact');
+    expect(await signIn(websiteAdmin, '/dashboard')).toBe('/cms/home-page');
   });
 
   it('returns a Website Admin to the CMS page that asked for the sign-in', async () => {

@@ -3,6 +3,7 @@ import { EmptyState, PageHead } from '../../../../components/ui';
 import { HOME_PAGE_TABS, type HomePageTab } from '../../../../constants/navigation';
 import { useCanOpen } from '../../../../modules/auth/components/Can';
 import AboutTab from '../../about/components/AboutTab';
+import AnnouncementsTab from '../../announcements/components/AnnouncementsTab';
 import BoardMembersTab from '../../board/components/BoardMembersTab';
 import { SectionTabBar, SectionTabPanel } from '../../components/SectionTabs';
 import EcosystemTab from '../../ecosystem/components/EcosystemTab';
@@ -10,6 +11,7 @@ import { HeroGlanceTab, HeroSlidesTab } from '../../hero/components/HeroTabs';
 import HighlightTab from '../../highlight/components/HighlightTab';
 import ImpactTab from '../../impact/components/ImpactTab';
 import SchemesTab from '../../schemes/components/SchemesTab';
+import TopBarTab from '../../topbar/components/TopBarTab';
 import { usePageTitle } from '../../useMasterQuery';
 import { useSectionTab } from '../../useSectionTab';
 import { HOME_PAGE_TITLE } from '../homePageNav';
@@ -19,6 +21,8 @@ import { HOME_PAGE_TITLE } from '../homePageNav';
  * Settings, reorder, delete) and its own data, loaded when the tab opens.
  */
 const TAB_CONTENT: Record<HomePageTab, ComponentType> = {
+  'top-bar': TopBarTab,
+  announcements: AnnouncementsTab,
   hero: HeroSlidesTab,
   glance: HeroGlanceTab,
   diploma: HighlightTab,
@@ -32,7 +36,7 @@ const TAB_CONTENT: Record<HomePageTab, ComponentType> = {
 /*
  * Home Page Management — every section of the public home page on one page, one tab per section in the order
  * the home page shows them, with the same tab strip as Programme Page Management and the tab kept in the URL
- * (?tab=). The sections remain seven menus with permissions of their own: a tab is shown only to a user who
+ * (?tab=). The sections remain nine menus with permissions of their own: a tab is shown only to a user who
  * may open its menu (its view permission, Menu Visibility and the website portal, as in the sidebar), the
  * first such tab opens by default, and a link to a missing or forbidden tab opens that one instead.
  */

@@ -77,7 +77,12 @@ function PageTextTab() {
           </div>
         ) : null}
         {pageText ? (
-          <FieldTable rows={SETTINGS_KEYS.map((k): [string, ReactNode] => [SETTINGS_LABEL[k], <Bi value={pageText[k]} />])} />
+          <FieldTable
+            rows={[
+              ...SETTINGS_KEYS.map((k): [string, ReactNode] => [SETTINGS_LABEL[k], <Bi value={pageText[k]} />]),
+              ['Note on the website', pageText.showNote ? 'Shown' : 'Hidden (the text is kept)'] as [string, ReactNode],
+            ]}
+          />
         ) : null}
       </div>
       {pageText ? <div className="fs13 t2 mt10">Last updated {fmtDateTime(pageText.updatedAt)}.</div> : null}

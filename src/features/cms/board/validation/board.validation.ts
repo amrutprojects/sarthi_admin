@@ -22,7 +22,7 @@ export const PHOTO_ACCEPT = '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/we
 
 export interface MemberFormValues {
   name: string;
-  /** Ticked while the officeholder's name is still to be supplied: the website prints its placeholder. */
+  /** Ticked while the officeholder's name is still to be supplied: the website shows no name. */
   namePending: boolean;
   category: Bilingual;
   designation: Bilingual;

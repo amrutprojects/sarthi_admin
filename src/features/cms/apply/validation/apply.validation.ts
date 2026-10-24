@@ -142,9 +142,16 @@ export function validateApplySettingsForm(v: ApplySettingsFormValues): FieldErro
   const errors: FieldErrors<ApplySettingsField> = {};
   for (const key of SETTINGS_KEYS) {
     const max = SETTINGS_MAX[key];
-    errors[`${key}.mr`] = validateText(v[key].mr, `${SETTINGS_LABEL[key]} (Marathi)`, { max, required: true });
-    errors[`${key}.en`] = validateText(v[key].en, `${SETTINGS_LABEL[key]} (English)`, { max, required: true });
+    /* The button hint is the one optional pair: both blank shows nothing under the Apply button. */
+    const required = key !== 'ctaHint';
+    errors[`${key}.mr`] = validateText(v[key].mr, `${SETTINGS_LABEL[key]} (Marathi)`, { max, required });
+    errors[`${key}.en`] = validateText(v[key].en, `${SETTINGS_LABEL[key]} (English)`, { max, required });
   }
+  /* A half-filled hint is a broken line: ask for the other half. */
+  const hintMr = v.ctaHint.mr.trim();
+  const hintEn = v.ctaHint.en.trim();
+  if (hintEn && !hintMr) errors['ctaHint.mr'] ??= `${SETTINGS_LABEL.ctaHint} (Marathi) is required when the English text is given`;
+  if (hintMr && !hintEn) errors['ctaHint.en'] ??= `${SETTINGS_LABEL.ctaHint} (English) is required when the Marathi text is given`;
   errors.ctaUrl = validateCtaUrl(v.ctaUrl);
   return errors;
 }

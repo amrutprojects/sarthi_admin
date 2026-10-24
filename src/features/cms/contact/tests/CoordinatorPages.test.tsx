@@ -102,13 +102,16 @@ describe('coordinator pages', () => {
       expect(svc.createCoordinator).not.toHaveBeenCalled();
     });
 
-    it('offers only the districts no other coordinator covers, and sends them in the order ticked', async () => {
+    it('lists every district of the master, marks the one another coordinator covers, and sends the ticked ones in order', async () => {
       svc.createCoordinator.mockResolvedValue({ ...ANITA, id: 'c9' });
       renderAt('/cms/contact/coordinators/create');
       await screen.findByRole('checkbox', { name: /^Pune/ });
 
-      expect(offered()).toEqual(['Pune', 'Kolhapur', 'Nashik']);
-      expect(screen.queryByRole('checkbox', { name: /^Satara/ })).not.toBeInTheDocument();
+      expect(offered()).toEqual(['Pune', 'Kolhapur', 'Satara', 'Nashik']);
+      /* Satara is listed with who holds it now, and can still be ticked. */
+      expect(districtBox('Satara')).toBeEnabled();
+      expect(districtBox('Satara').closest('label')).toHaveTextContent('now with Ravi Shinde');
+      expect(districtBox('Pune').closest('label')).not.toHaveTextContent('now with');
 
       await userEvent.type(screen.getByLabelText(/^Name/), ' Meera ');
       await userEvent.type(screen.getByLabelText(/^Phone/), '98XXX 41201');
@@ -127,6 +130,36 @@ describe('coordinator pages', () => {
       );
       await waitFor(() => expect(toasts()).toHaveTextContent('Coordinator created'));
       expect(location()).toHaveTextContent('/cms/contact/coordinators/c9');
+    });
+
+    it('asks before taking a district from the coordinator that covers it, then sends moveDistricts', async () => {
+      svc.createCoordinator.mockResolvedValue({ ...ANITA, id: 'c9' });
+      renderAt('/cms/contact/coordinators/create');
+      await screen.findByRole('checkbox', { name: /^Pune/ });
+
+      await userEvent.type(screen.getByLabelText(/^Name/), 'Meera');
+      await userEvent.type(screen.getByLabelText(/^Phone/), '98XXX 41201');
+      await userEvent.click(districtBox('Pune'));
+      await userEvent.click(districtBox('Satara'));
+      await userEvent.click(screen.getByRole('button', { name: 'Create coordinator' }));
+
+      /* Only the district that is taken from someone is listed, and nothing is sent yet. */
+      const dialog = screen.getByRole('dialog');
+      expect(dialog).toHaveTextContent('Satara — now with Ravi Shinde');
+      expect(dialog).not.toHaveTextContent('Pune');
+      expect(svc.createCoordinator).not.toHaveBeenCalled();
+
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Yes, save' }));
+      await waitFor(() =>
+        expect(svc.createCoordinator).toHaveBeenCalledWith({
+          name: 'Meera',
+          phone: '98XXX 41201',
+          email: null,
+          districtIds: ['d1', 'd3'],
+          isActive: true,
+          moveDistricts: true,
+        }),
+      );
     });
 
     it('shows the 409 for a district another coordinator took meanwhile on the districts field', async () => {
@@ -199,13 +232,37 @@ describe('coordinator pages', () => {
       expect(location()).toHaveTextContent('/cms/contact/coordinators/c1');
     });
 
-    it('does not offer a district another coordinator covers', async () => {
+    it('lists every district of the master, names the coordinator that has each taken one, and moves a ticked one after confirmation', async () => {
       svc.getCoordinator.mockResolvedValue({ ...RAVI, districts: [] });
       svc.allCoordinators.mockResolvedValue([ANITA, { ...RAVI, districts: [] }]);
+      svc.updateCoordinator.mockResolvedValue({ ...RAVI, districts: [] });
       renderAt('/cms/contact/coordinators/c2/edit');
 
       await screen.findByRole('checkbox', { name: /^Nashik/ });
-      expect(offered()).toEqual(['Nashik']);
+      expect(offered()).toEqual(['Pune', 'Kolhapur', 'Satara', 'Nashik']);
+      for (const name of ['Pune', 'Kolhapur', 'Satara']) {
+        expect(districtBox(name)).toBeEnabled();
+        expect(districtBox(name).closest('label')).toHaveTextContent('now with Anita Patil');
+      }
+      expect(districtBox('Nashik').closest('label')).not.toHaveTextContent('now with');
+      expect(screen.queryByText(/No districts available/)).not.toBeInTheDocument();
+
+      await userEvent.click(districtBox('Pune'));
+      await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+      const dialog = screen.getByRole('dialog');
+      expect(dialog).toHaveTextContent('Pune — now with Anita Patil');
+      expect(svc.updateCoordinator).not.toHaveBeenCalled();
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Yes, save' }));
+      await waitFor(() =>
+        expect(svc.updateCoordinator).toHaveBeenCalledWith('c2', {
+          name: 'Ravi Shinde',
+          phone: '+91 98XXX 22222',
+          email: null,
+          districtIds: ['d1'],
+          displayOrder: 2,
+          moveDistricts: true,
+        }),
+      );
     });
 
     it('requires the display order, and shows the 400 for an unknown district on the districts field', async () => {

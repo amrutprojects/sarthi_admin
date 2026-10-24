@@ -7,26 +7,38 @@ const WEBSITE = new Set(WEBSITE_MENUS.flatMap((m) => [`${m}.view`, `${m}.update`
 const keysOf = (entries: typeof NAV) => entries.filter((n) => !isNavGroup(n)).map((n) => (n as { k: string }).k);
 const NAV_KEYS = keysOf(NAV);
 const SIDEBAR_KEYS = keysOf(SIDEBAR_NAV);
-const HOME_PAGE_MENUS = ['cms-hero', 'cms-highlight', 'cms-board', 'cms-impact', 'cms-ecosystem', 'cms-schemes', 'cms-about'];
+const HOME_PAGE_MENUS = [
+  'cms-topbar',
+  'cms-announcements',
+  'cms-hero',
+  'cms-highlight',
+  'cms-board',
+  'cms-impact',
+  'cms-ecosystem',
+  'cms-schemes',
+  'cms-about',
+];
 
 describe('the website portal (Website Admin)', () => {
   it('opens exactly the CMS menu, in sidebar order', () => {
-    /* Every menu of the role, Home Page Management's seven included (they keep their keys and permissions), and nothing else. */
+    /* Every menu of the role, Home Page Management's nine included (they keep their keys and permissions), and nothing else. */
     expect(NAV_KEYS.filter((k) => canOpen(WEBSITE, k, undefined, 'website'))).toEqual(
       NAV_KEYS.filter((k) => WEBSITE_MENUS.includes(k) || k in MENU_GROUPS),
     );
     expect([...WEBSITE_MENUS].sort()).toEqual(NAV_KEYS.filter((k) => WEBSITE_MENUS.includes(k)).sort());
-    expect(WEBSITE_MENUS).toEqual(expect.arrayContaining(['cms-board', 'cms-ecosystem', 'cms-schemes', 'cms-about']));
-    /* The sidebar: the CMS entries, the seven home page menus gathered under one Home Page Management entry. */
+    expect(WEBSITE_MENUS).toEqual(expect.arrayContaining(['cms-topbar', 'cms-announcements', 'cms-board', 'cms-ecosystem', 'cms-schemes', 'cms-about']));
+    /* The top bar is the strip above the whole page and the announcements ticker comes next, so they lead the home page menus. */
+    expect(WEBSITE_MENUS.filter((m) => HOME_PAGE_MENUS.includes(m))).toEqual(HOME_PAGE_MENUS);
+    /* The sidebar: the CMS entries, the nine home page menus gathered under one Home Page Management entry. */
     expect(SIDEBAR_KEYS.filter((k) => canOpen(WEBSITE, k, undefined, 'website'))).toEqual([
-      'cms-contact',
-      'cms-footer',
-      'cms-modules',
-      'cms-faqs',
-      'cms-eligibility',
-      'cms-apply',
       'cms-home-page',
       'cms-programme',
+      'cms-modules',
+      'cms-eligibility',
+      'cms-apply',
+      'cms-faqs',
+      'cms-contact',
+      'cms-footer',
       'cms-states',
       'cms-districts',
       'cms-talukas',
@@ -55,10 +67,10 @@ describe('the website portal (Website Admin)', () => {
 });
 
 describe('Home Page Management', () => {
-  it('gathers the seven home page menus, the same ones as its tabs', () => {
+  it('gathers the nine home page menus, the same ones as its tabs', () => {
     expect(MENU_GROUPS['cms-home-page']).toEqual(HOME_PAGE_MENUS);
     expect([...new Set(HOME_PAGE_TABS.map((t) => t.menu))]).toEqual(HOME_PAGE_MENUS);
-    /* No permission code of its own: its screen rule is any one of the seven view codes. */
+    /* No permission code of its own: its screen rule is any one of the nine view codes. */
     expect(SCREEN_ACCESS['cms-home-page']).toEqual(HOME_PAGE_MENUS.map((m) => `${m}.view`));
     expect(WEBSITE_MENUS).not.toContain('cms-home-page');
   });
@@ -88,9 +100,13 @@ describe('start screen', () => {
   });
 
   it('is the first CMS page a Website Admin may open', () => {
-    expect(homePath({ permissions: WEBSITE, portal: 'website' })).toBe('/cms/contact');
+    expect(homePath({ permissions: WEBSITE, portal: 'website' })).toBe('/cms/home-page');
     expect(homeItem({ permissions: new Set(['cms-faqs.view']), portal: 'website' })).toMatchObject({ k: 'cms-faqs', r: '/cms/faqs' });
-    expect(homePath({ permissions: WEBSITE, hiddenMenus: new Set(['cms-contact']), portal: 'website' })).toBe('/cms/footer');
+    /* With all nine home page menus hidden, the next CMS page in website order. */
+    expect(homePath({ permissions: WEBSITE, hiddenMenus: new Set(HOME_PAGE_MENUS), portal: 'website' })).toBe('/cms/programme');
+    /* The announcements ticker alone opens Home Page Management too, and so does the top bar. */
+    expect(homePath({ permissions: new Set(['cms-announcements.view']), portal: 'website' })).toBe('/cms/home-page');
+    expect(homePath({ permissions: new Set(['cms-topbar.view']), portal: 'website' })).toBe('/cms/home-page');
   });
 
   it('is Home Page Management when a home page section is the first CMS screen', () => {
@@ -123,6 +139,10 @@ describe('canOpenPath', () => {
     expect(canOpenPath('/cms/board-members/123/edit', wa)).toBe(true);
     expect(canOpenPath('/cms/amrut-ecosystem/settings', wa)).toBe(true);
     expect(canOpenPath('/cms/amrut-schemes/create', wa)).toBe(true);
+    expect(canOpenPath('/cms/top-bar/create', wa)).toBe(true);
+    expect(canOpenPath('/cms/top-bar/123/view', wa)).toBe(true);
+    expect(canOpenPath('/cms/announcements/create', wa)).toBe(true);
+    expect(canOpenPath('/cms/announcements/123/view', wa)).toBe(true);
     expect(canOpenPath('/cms/about-amrut/facts/create', wa)).toBe(true);
     expect(canOpenPath('/dashboard', wa)).toBe(false);
     expect(canOpenPath('/users', wa)).toBe(false);
@@ -138,5 +158,10 @@ describe('canOpenPath', () => {
     expect(canOpenPath('/cms/impact', boardOnly)).toBe(false);
     expect(canOpenPath('/cms/impact/settings', boardOnly)).toBe(false);
     expect(canOpenPath('/cms/home-page', boardOnly)).toBe(true);
+    expect(canOpenPath('/cms/announcements', wa)).toBe(true);
+    expect(canOpenPath('/cms/announcements', boardOnly)).toBe(false);
+    expect(canOpenPath('/cms/top-bar', wa)).toBe(true);
+    expect(canOpenPath('/cms/top-bar', boardOnly)).toBe(false);
+    expect(canOpenPath('/cms/top-bar/settings', boardOnly)).toBe(false);
   });
 });

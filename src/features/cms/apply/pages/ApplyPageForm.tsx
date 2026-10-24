@@ -54,7 +54,7 @@ const HINTS: Record<SettingsKey, string> = {
   documentsHeading: "The title of the documents card. Its list is the Eligibility page's required documents.",
   ctaText: 'The text of the Apply box, above the Apply button. Line breaks are kept.',
   ctaLabel: 'The text on the Apply button.',
-  ctaHint: 'The small line under the Apply button.',
+  ctaHint: 'Optional: the small line under the Apply button. Leave both languages blank to show nothing.',
 };
 
 /*
@@ -133,6 +133,7 @@ export default function ApplyPageForm({ initial, onSave, backTo }: ApplyPageForm
       id={`apply-page-${key}`}
       label={SETTINGS_LABEL[key]}
       multiline={multiline}
+      required={key !== 'ctaHint'}
       value={values[key]}
       maxLength={SETTINGS_MAX[key]}
       onChange={(next) => set(key, next)}

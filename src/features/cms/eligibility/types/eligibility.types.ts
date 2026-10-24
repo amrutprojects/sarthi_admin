@@ -77,6 +77,8 @@ export interface ApiEligibilitySettings {
   documentsHeading: Bilingual;
   noteTitle: Bilingual;
   noteBody: Bilingual;
+  /* False: the website leaves the note box out (its text is kept here). */
+  showNote: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -84,8 +86,8 @@ export interface ApiEligibilitySettings {
 export const SETTINGS_KEYS = ['pageTitle', 'pageSubtitle', 'criteriaHeading', 'documentsHeading', 'noteTitle', 'noteBody'] as const;
 export type SettingsKey = (typeof SETTINGS_KEYS)[number];
 
-/* Every pair is required, so the update always sends all six. */
-export type UpdateEligibilitySettingsInput = Record<SettingsKey, Bilingual>;
+/* Every pair is required, so the update always sends all six, with the switch for the note. */
+export type UpdateEligibilitySettingsInput = Record<SettingsKey, Bilingual> & { showNote: boolean };
 
 export const SETTINGS_LABEL: Record<SettingsKey, string> = {
   pageTitle: 'Page title',

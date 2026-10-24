@@ -494,7 +494,7 @@ describe('Add New Scheme', () => {
     await userEvent.type(date, '2026-02-30');
     await userEvent.click(screen.getByRole('button', { name: 'Save scheme' }));
     expect(
-      await screen.findByText('Destination must be a page on this site starting with /, or an address starting with https://'),
+      await screen.findByText('Destination must be a page on this site starting with /, or a web address starting with https:// or www.'),
     ).toBeInTheDocument();
     expect(screen.getByText('Badge (English) is required when the Marathi text is filled in')).toBeInTheDocument();
     expect(screen.getByText('Last date is not a real calendar date')).toBeInTheDocument();

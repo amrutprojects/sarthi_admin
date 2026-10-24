@@ -126,7 +126,7 @@ export default function DistrictOfficeView() {
           danger
           busy={busy}
           confirmLabel="Delete"
-          message={`Delete the ${office.district.name} district office? The district's page shows “to be supplied from official records” again. It is soft-deleted, kept for audit history.`}
+          message={`Delete the ${office.district.name} district office? The district's page then shows no Collectorate details. It is soft-deleted, kept for audit history.`}
           onClose={() => setDeleting(false)}
           onConfirm={() =>
             run(
