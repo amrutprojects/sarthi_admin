@@ -1,9 +1,13 @@
 import { useEffect } from 'react';
-import { PageHead, Card, FilterBar, LinkButton, KvList, Callout, DemoNote } from '../../../components/ui';
+import { PageHead, Card, FilterBar, LinkButton, KvList, Callout, DemoNote, DemoChip, EmptyState } from '../../../components/ui';
 import { DistrictMap, MarkerMap, HBar } from '../../../components/charts';
 import { useLegacyTick } from '../../../utils/legacyBus';
 import usePersistentState from '../../../hooks/usePersistentState';
 import * as S from '../../../services/mock/networkService';
+import { asOfLabel, centreIndex, topCentres, useStudentSummary } from '../../students';
+
+/* Metrics whose tile counts come from the live student register; the rest are demo data. */
+const LIVE_METRICS = ['applications', 'eligible', 'enrolled'];
 
 const DEFAULT_MAP = { metric: 'enrolled', colorMode: 'status', statusFilter: 'ALL', mode: 'ALL', view: 'districts' };
 const VIEWS = [
@@ -21,6 +25,12 @@ export default function MapPage() {
 
   const rows = S.districts().map(S.districtRow);
   const unit = S.onlineUnit();
+  /* Live per-district counts for the tiles and the Top 5 (district code = students.centreCode). */
+  const summary = useStudentSummary();
+  const live = centreIndex(summary.data);
+  const asOf = asOfLabel(summary.data?.asOf);
+  const top = summary.data ? topCentres(summary.data, 5) : null;
+  const liveMetric = LIVE_METRICS.includes(s.metric);
   let map;
   if (s.view === 'centres') {
     const markers = S.centres()
@@ -79,7 +89,9 @@ export default function MapPage() {
       />
     );
   } else {
-    map = <DistrictMap metric={s.metric} colorMode={s.colorMode} statusFilter={s.statusFilter} filterMode={s.mode} height={560} />;
+    map = (
+      <DistrictMap metric={s.metric} colorMode={s.colorMode} statusFilter={s.statusFilter} filterMode={s.mode} height={560} live={live} />
+    );
   }
 
   return (
@@ -117,7 +129,7 @@ export default function MapPage() {
               k: 'colorMode',
               l: 'Shading',
               options: [
-                { v: 'status', l: 'By district status (RAG)' },
+                { v: 'status', l: 'By district status (RAG, demo)' },
                 { v: 'metric', l: 'By metric intensity' },
               ],
             },
@@ -127,16 +139,17 @@ export default function MapPage() {
               options: [
                 { v: 'enrolled', l: 'Enrolled' },
                 { v: 'applications', l: 'Applications' },
-                { v: 'active', l: 'Training active' },
-                { v: 'completed', l: 'Completed' },
-                { v: 'certified', l: 'Certified' },
-                { v: 'attendance', l: 'Attendance %' },
-                { v: 'achievement', l: 'Achievement %' },
+                { v: 'eligible', l: 'Eligible' },
+                { v: 'active', l: 'Training active (demo)' },
+                { v: 'completed', l: 'Completed (demo)' },
+                { v: 'certified', l: 'Certified (demo)' },
+                { v: 'attendance', l: 'Attendance % (demo)' },
+                { v: 'achievement', l: 'Achievement % (demo)' },
               ],
             },
             {
               k: 'statusFilter',
-              l: 'Status filter',
+              l: 'Status filter (demo)',
               options: [
                 { v: 'ALL', l: 'All statuses' },
                 { v: 'GREEN', l: 'On track' },
@@ -160,25 +173,58 @@ export default function MapPage() {
         />
       ) : null}
       <div className="card">
+        {s.view === 'districts' ? (
+          <div className="card-h">
+            <h3>
+              {liveMetric ? 'Live student counts per district' : 'District metric'} {liveMetric ? null : <DemoChip />}{' '}
+              <span className="sub">
+                {liveMetric
+                  ? (summary.isError ? 'live figures could not be loaded' : asOf || 'loading live figures…') +
+                    (s.colorMode === 'status' ? ' · status colours are demo data' : '')
+                  : 'this metric is demo data'}
+              </span>
+            </h3>
+          </div>
+        ) : (
+          <div className="card-h">
+            <h3>
+              {s.view === 'centres' ? 'Training centres' : 'Live training'} <DemoChip />
+            </h3>
+          </div>
+        )}
         <div className="card-b">{map}</div>
       </div>
       <div className="grid g3 mt14">
-        <Card title="Top 5 districts">
-          <HBar
-            items={rows
-              .slice()
-              .sort((a, b) => b.k.enrolled - a.k.enrolled)
-              .slice(0, 5)
-              .map((x) => ({
-                l: x.d.name,
-                v: x.k.enrolled,
-                display: x.k.enrolled + '/' + x.d.target,
-                link: '#/districts/' + x.d.code,
-                c: '#1E7A46',
-              }))}
-          />
+        <Card
+          title="Top 5 districts"
+          sub={
+            (top?.metric === 'eligible' ? 'No students enrolled yet: by eligible students' : 'By enrolled students') +
+            (asOf ? ' · ' + asOf : '')
+          }
+        >
+          {summary.isPending ? (
+            <div className="skel" style={{ height: 150 }} aria-label="Loading live figures" />
+          ) : summary.isError ? (
+            <div className="muted fs12">
+              Could not load the live student figures.{' '}
+              <button type="button" className="btn xs" onClick={() => void summary.refetch()}>
+                Retry
+              </button>
+            </div>
+          ) : top?.items.length ? (
+            <HBar items={top.items.map((x) => ({ ...x, c: '#1E7A46' }))} />
+          ) : (
+            <EmptyState title="No eligible students yet" msg="Districts are ranked here once students are in the register." />
+          )}
         </Card>
-        <Card title="Lowest 5 districts">
+        <Card
+          title={
+            <>
+              Lowest 5 districts <DemoChip />
+            </>
+          }
+          sub="By achievement against target"
+        >
           <HBar
             items={rows
               .filter((x) => x.d.target > 0)
@@ -212,7 +258,10 @@ export default function MapPage() {
           </div>
         </Card>
       </div>
-      <DemoNote />
+      <DemoNote>
+        Figures marked “Demo data” or “(demo)” are illustrative (indicative values, subject to AMRUT / COEP approval). Applications,
+        Eligible and Enrolled tile counts and the Top 5 come from the live student register.
+      </DemoNote>
     </div>
   );
 }

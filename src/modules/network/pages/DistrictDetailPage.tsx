@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useEffect, useState, type ReactNode } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   PageHead,
   Card,
@@ -8,43 +8,39 @@ import {
   LinkButton,
   EmptyState,
   DemoNote,
+  DemoChip,
+  Callout,
   Badge,
   GenBadge,
-  StatusBadge,
   ModeTag,
-  AttendanceCell,
   AlertCard,
   dateFmt,
+  fmt,
   useGo,
 } from '../../../components/ui';
 import { Funnel, Donut } from '../../../components/charts';
-import DataTable, { type Column } from '../../../components/tables/DataTable';
 import Icon from '../../../components/ui/Icon';
 import Avatar from '../../../components/ui/Avatar';
 import { useLegacyTick } from '../../../utils/legacyBus';
 import * as S from '../../../services/mock/networkService';
-import type { Candidate } from '../../../types/domain';
+import type { District } from '../../../types/domain';
 import { Can } from '../../auth';
+import { studentColumns } from '../../candidates';
+import { ServerTable, asOfLabel, pctOf, studentListLink, useStudentList, useStudentSummary } from '../../students';
 
-const candColumns: Column<Candidate>[] = [
-  { k: 'id', l: 'Candidate ID', render: (x) => <span className="lnk mono">{x.id}</span> },
-  { k: 'name', l: 'Name' },
-  { k: 'taluka', l: 'Taluka' },
-  { k: 'mode', l: 'Mode', render: (x) => <ModeTag mode={x.mode} /> },
-  { k: 'batchId', l: 'Batch', render: (x) => (x.batchId ? <span className="mono">{x.batchId}</span> : '—') },
-  { k: 'status', l: 'Status', render: (x) => <StatusBadge status={x.status} /> },
-  {
-    k: 'attendance',
-    l: 'Attendance',
-    align: 'right',
-    exportVal: (x) => x.attendance + '%',
-    render: (x) => <AttendanceCell value={x.attendance} />,
-  },
-];
+const STUDENT_PAGE = 10;
+/* The district table drops the District column (it is this district for every row). */
+const districtStudentColumns = studentColumns.filter((c) => c.k !== 'district');
+
+/* Card title with the Demo data chip (figures with no live source yet). */
+const demo = (title: ReactNode) => (
+  <>
+    {title} <DemoChip />
+  </>
+);
 
 export default function DistrictDetailPage() {
   useLegacyTick();
-  const go = useGo();
   const { id = '' } = useParams();
   useEffect(() => {
     document.title = 'District — AMRUT × SUMAGO Admin';
@@ -62,6 +58,21 @@ export default function DistrictDetailPage() {
       </div>
     );
   }
+  /* Keyed by code so paging resets when moving to another district. */
+  return <DistrictView key={d.code} d={d} />;
+}
+
+function DistrictView({ d }: { d: District }) {
+  const go = useGo();
+  const navigate = useNavigate();
+  /* Live student figures for this district (district code = students.centreCode). */
+  const summary = useStudentSummary(d.code);
+  const t = summary.data?.totals;
+  const asOf = asOfLabel(summary.data?.asOf);
+  const liveValue = (n: number | undefined): number | string => (summary.isPending ? '…' : summary.isError ? '—' : (n ?? 0));
+  const [studentPage, setStudentPage] = useState(1);
+  const list = useStudentList({ centre: d.code, page: studentPage, limit: STUDENT_PAGE });
+
   const rows = S.byDistrict(d.code);
   const k = S.kpis(rows, d.target);
   const st = S.districtStatus(d);
@@ -70,7 +81,8 @@ export default function DistrictDetailPage() {
   const coord = S.coordinator(d.coordinatorId);
   const tal = S.talukaRollup(d.code);
   const issues = S.tasksFor(d.code);
-  const q = '#/candidates?district=' + d.code;
+  const q = studentListLink({ centre: d.code });
+  const bucketLink = (bucket: string) => studentListLink({ bucket, centre: d.code });
 
   return (
     <div className="page">
@@ -80,13 +92,14 @@ export default function DistrictDetailPage() {
         badge={
           <>
             <Badge tone={st.tone}>{st.l}</Badge>
+            <DemoChip />
             <span className="tag">{d.region}</span>
           </>
         }
         sub={
           <>
             District code <b>{d.code}</b> · {d.talukas.length} talukas · {centres.length} approved centre{centres.length === 1 ? '' : 's'} ·
-            target {d.target} students
+            demo target {d.target} students · Applications, Eligible and Enrolled are live{asOf ? ' ' + asOf : ''}
           </>
         }
         actions={
@@ -106,42 +119,76 @@ export default function DistrictDetailPage() {
           </>
         }
       />
+      {summary.isError ? (
+        <div className="mb14">
+          <Callout tone="err" title="Could not load the live student figures. ">
+            Applications, Eligible and Enrolled show “—” until the server answers.{' '}
+            <button type="button" className="btn xs" onClick={() => void summary.refetch()}>
+              Retry
+            </button>
+          </Callout>
+        </div>
+      ) : null}
       <div className="grid g8 mb14">
-        <Kpi label="Target" value={k.target} />
-        <Kpi label="Applications" value={k.applications} tone="b" link={q} />
-        <Kpi label="Eligible" value={k.eligible} tone="b" link={q + '&bucket=eligible'} />
+        <Kpi label="Target" value={k.target} badge={<DemoChip />} />
+        <Kpi
+          label="Applications"
+          value={liveValue(t?.applications)}
+          tone="b"
+          sub={t ? fmt(t.pending) + ' pending verification' : 'Students in the register'}
+          link={bucketLink('applications')}
+          title={asOf}
+        />
+        <Kpi
+          label="Eligible"
+          value={liveValue(t?.eligible)}
+          tone="b"
+          sub={t ? pctOf(t.eligible, t.applications) + '% of applications' : 'Approved and active'}
+          link={bucketLink('eligible')}
+          title={asOf}
+        />
         <Kpi
           label="Enrolled"
-          value={k.enrolled}
+          value={liveValue(t?.enrolled)}
           tone="g"
-          pct={k.achievementPct}
-          progTone="g"
-          sub={k.achievementPct + '% of target'}
-          link={q + '&bucket=enrolled'}
+          sub={t ? fmt(t.awaitingBatch) + ' awaiting batch' : 'Assigned to a batch'}
+          link={bucketLink('enrolled')}
+          title={asOf}
         />
-        <Kpi label="Training active" value={k.trainingActive} tone="s" link={q + '&bucket=active'} />
-        <Kpi label="Completed" value={k.completed} tone="g" link={q + '&bucket=completed'} />
-        <Kpi label="Attendance" value={k.attendance + '%'} tone={k.attendance >= 75 ? 'g' : 'a'} link={'#/attendance?district=' + d.code} />
-        <Kpi label="Certified" value={k.certified} tone="v" link={'#/certification?district=' + d.code} />
+        <Kpi label="Training active" value={k.trainingActive} tone="s" link="#/lifecycle" badge={<DemoChip />} />
+        <Kpi label="Completed" value={k.completed} tone="g" link="#/lifecycle" badge={<DemoChip />} />
+        <Kpi
+          label="Attendance"
+          value={k.attendance + '%'}
+          tone={k.attendance >= 75 ? 'g' : 'a'}
+          link={'#/attendance?district=' + d.code}
+          badge={<DemoChip />}
+        />
+        <Kpi label="Certified" value={k.certified} tone="v" link={'#/certification?district=' + d.code} badge={<DemoChip />} />
       </div>
 
       <div className="grid g-2-1 mb14">
-        <Card title="Progress charts">
+        <Card title="Progress charts" sub={'Applications, Eligible, Enrolled live' + (asOf ? ' ' + asOf : '')}>
           <div className="grid g2">
             <div>
-              <b className="fs12">Enrollment funnel</b>
+              <b className="fs12">
+                Enrollment funnel <span className="muted fs11">(Completed, Certified:</span> <DemoChip />
+                <span className="muted fs11">)</span>
+              </b>
               <Funnel
                 stages={[
-                  { l: 'Applications', v: k.applications, c: '#B3A08D' },
-                  { l: 'Eligible', v: k.eligible, c: '#E2A166' },
-                  { l: 'Enrolled', v: k.enrolled, c: '#C8651C' },
+                  { l: 'Applications', v: t?.applications ?? 0, c: '#B3A08D', link: bucketLink('applications') },
+                  { l: 'Eligible', v: t?.eligible ?? 0, c: '#E2A166', link: bucketLink('eligible') },
+                  { l: 'Enrolled', v: t?.enrolled ?? 0, c: '#C8651C', link: bucketLink('enrolled') },
                   { l: 'Completed', v: k.completed, c: '#1E7A46' },
                   { l: 'Certified', v: k.certified, c: '#E88C2C' },
                 ]}
               />
             </div>
             <div>
-              <b className="fs12">Mode split</b>
+              <b className="fs12">
+                Mode split <DemoChip />
+              </b>
               <Donut
                 items={[
                   { l: 'Offline', v: k.offline, c: '#8A4116' },
@@ -153,7 +200,7 @@ export default function DistrictDetailPage() {
           </div>
         </Card>
         <Card
-          title="District coordinator"
+          title={demo('District coordinator')}
           footer={
             <LinkButton to="#/pmo" className="btn sm">
               PMO team
@@ -186,7 +233,7 @@ export default function DistrictDetailPage() {
       </div>
 
       <div className="grid g2 mb14">
-        <Card title={'Training centres in ' + d.name} flush>
+        <Card title={demo('Training centres in ' + d.name)} flush>
           {centres.length ? (
             <div className="list">
               {centres.map((c) => (
@@ -215,7 +262,7 @@ export default function DistrictDetailPage() {
             </EmptyState>
           )}
         </Card>
-        <Card title="Taluka rollup" sub="Drill down one more level" flush>
+        <Card title={demo('Taluka rollup')} sub="No taluka in the student register yet · drill down one more level" flush>
           <div className="list">
             {tal.map((t) => (
               <div
@@ -237,7 +284,7 @@ export default function DistrictDetailPage() {
       </div>
 
       <div className="grid g2 mb14">
-        <Card title="Batches" flush>
+        <Card title={demo('Batches')} flush>
           {batches.length ? (
             <div className="list">
               {batches.map((b) => (
@@ -258,7 +305,7 @@ export default function DistrictDetailPage() {
           )}
         </Card>
         <Card
-          title="Top issues"
+          title={demo('Top issues')}
           flush
           footer={
             <Can action="createTask">
@@ -287,23 +334,46 @@ export default function DistrictDetailPage() {
 
       <div className="card">
         <div className="card-h">
-          <h3>Candidates in {d.name}</h3>
+          <h3>
+            Candidates in {d.name}{' '}
+            <span className="sub">
+              {list.data?.meta ? fmt(list.data.meta.total) + ' in the student register' : 'Student register'}
+              {asOf ? ' · counts ' + asOf : ''}
+            </span>
+          </h3>
           <LinkButton to={q} className="btn sm">
-            Open in candidate master
+            View all
           </LinkButton>
         </div>
-        <DataTable
-          key={d.code}
-          rows={rows}
-          columns={candColumns}
-          pageSize={10}
-          exportName={'District_' + d.code + '_Candidates'}
-          search={['id', 'name']}
-          searchLabel="candidates"
-          rowLink={(x) => '#/candidates/' + x.id}
-        />
+        {list.isError ? (
+          <div className="card-b">
+            <Callout tone="err" title="Could not load the students. ">
+              <button type="button" className="btn xs" onClick={() => void list.refetch()}>
+                Retry
+              </button>
+            </Callout>
+          </div>
+        ) : (
+          <ServerTable
+            rows={list.data?.items ?? []}
+            columns={districtStudentColumns}
+            meta={list.data?.meta}
+            page={studentPage}
+            onPage={setStudentPage}
+            onRowClick={(s) => navigate('/candidates/' + s.id)}
+            loading={list.isFetching}
+            empty={
+              list.isPending
+                ? 'Loading students…'
+                : 'No students from this district in the register yet. Imported students appear once their import batch is finalised.'
+            }
+          />
+        )}
       </div>
-      <DemoNote />
+      <DemoNote>
+        Figures marked “Demo data” are illustrative (indicative values, subject to AMRUT / COEP approval). Applications, Eligible, Enrolled
+        and the student table come from the live student register.
+      </DemoNote>
     </div>
   );
 }

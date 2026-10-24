@@ -42,9 +42,9 @@ function useMountedMap(html: string) {
   return ref;
 }
 
-/* 36-district schematic map with hover tooltips. */
-export function DistrictMap({ metric = 'enrolled', colorMode = 'status', height = 440, statusFilter, filterMode }: MapRenderOpts) {
-  const html = AS.map.render({ metric, colorMode, height, statusFilter, filterMode });
+/* 36-district schematic map with hover tooltips; `live` (counts per district code) feeds the applications/eligible/enrolled tiles. */
+export function DistrictMap({ metric = 'enrolled', colorMode = 'status', height = 440, statusFilter, filterMode, live }: MapRenderOpts) {
+  const html = AS.map.render({ metric, colorMode, height, statusFilter, filterMode, live });
   const ref = useMountedMap(html);
   return <div ref={ref} dangerouslySetInnerHTML={{ __html: html }} />;
 }

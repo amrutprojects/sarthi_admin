@@ -148,7 +148,8 @@
   function funnel(stages, opts) {
     opts = opts || {};
     var W = 640, rowH = 46, H = stages.length * rowH + 10;
-    var max = stages[0] ? stages[0].v : 1;
+    /* Widest stage = largest value (not always the first: live counts can be 0 while later demo stages are not). */
+    var max = Math.max.apply(null, stages.map(function (s) { return s.v; }).concat([1]));
     var body = stages.map(function (s, i) {
       var w = Math.max(40, (s.v / max) * (W - 210));
       var y = i * rowH + 6, col = s.c || PALETTE[i % PALETTE.length];

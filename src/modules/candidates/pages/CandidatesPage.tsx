@@ -1,195 +1,249 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import {
-  PageHead,
-  Kpi,
-  FilterBar,
-  LinkButton,
-  DemoNote,
-  Badge,
-  StatusBadge,
-  ModeTag,
-  ProgRow,
-  AttendanceCell,
-  Dash,
-  districtOptions,
-  modeOptions,
-  fmt,
-  dateFmt,
-} from '../../../components/ui';
-import DataTable, { type Column } from '../../../components/tables/DataTable';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Badge, Callout, FilterBar, LinkButton, PageHead, fmt } from '../../../components/ui';
+import { SOURCES, studentColumns as columns } from '../components/studentColumns';
 import Icon from '../../../components/ui/Icon';
-import { useLegacyTick } from '../../../utils/legacyBus';
-import * as S from '../../../services/mock/candidateService';
-import type { CandidateFilter } from '../../../services/mock/candidateService';
-import usePersistentState from '../../../hooks/usePersistentState';
-import { NewCandidateModal } from './CandidateDialogs';
-import type { Candidate } from '../../../types/domain';
-import { Can } from '../../auth';
+import {
+  NO_TRACK,
+  ServerTable,
+  useStudentList,
+  useStudentSummary,
+  type StudentBucket,
+  type StudentSource,
+  type StudentSummary,
+} from '../../students';
 
-const QUERY_KEYS = ['district', 'mode', 'centre', 'batch', 'status', 'bucket', 'taluka'];
+const PAGE_SIZE = 25;
 
-export const candidateColumns = (): Column<Candidate>[] => [
-  { k: 'id', l: 'Candidate ID', render: (r) => <span className="lnk mono">{r.id}</span> },
-  { k: 'name', l: 'Name', render: (r) => <b>{r.name}</b> },
-  { k: 'districtId', l: 'District', sortVal: (r) => S.districtName(r.districtId), render: (r) => S.districtName(r.districtId) },
-  { k: 'taluka', l: 'Taluka' },
-  { k: 'mode', l: 'Mode', render: (r) => <ModeTag mode={r.mode} /> },
-  { k: 'centreId', l: 'Centre', sortVal: (r) => S.centre(r.centreId)?.name ?? '', render: (r) => S.centre(r.centreId)?.name ?? <Dash /> },
-  { k: 'batchId', l: 'Batch', render: (r) => (r.batchId ? <span className="mono">{r.batchId}</span> : <Dash />) },
-  { k: 'status', l: 'Status', exportVal: (r) => S.statusDef(r.status).l, render: (r) => <StatusBadge status={r.status} /> },
-  {
-    k: 'eligibility',
-    l: 'Eligibility',
-    sortVal: (r) => (r.status === 'NOT_ELIGIBLE' ? 0 : 1),
-    exportVal: (r) => (r.status === 'NOT_ELIGIBLE' ? 'Not eligible' : 'Eligible'),
-    render: (r) => (r.status === 'NOT_ELIGIBLE' ? <Badge tone="red">Not eligible</Badge> : <Badge tone="green">Eligible</Badge>),
-  },
-  {
-    k: 'attendance',
-    l: 'Attendance',
-    align: 'right',
-    render: (r) => <AttendanceCell value={r.attendance} />,
-    exportVal: (r) => r.attendance + '%',
-  },
-  {
-    k: 'progress',
-    l: 'Progress',
-    align: 'right',
-    render: (r) => (r.progress ? <ProgRow pct={r.progress} /> : <Dash />),
-    exportVal: (r) => r.progress + '%',
-  },
-  {
-    k: 'score',
-    l: 'Assessment',
-    align: 'right',
-    render: (r) => (r.score == null ? <Dash /> : <b style={{ color: r.score >= 50 ? 'var(--green)' : 'var(--red)' }}>{r.score}</b>),
-  },
-  { k: 'certificateNo', l: 'Certificate', render: (r) => (r.certificateNo ? <span className="mono">{r.certificateNo}</span> : <Dash />) },
-  { k: 'lastActivity', l: 'Last activity', exportVal: (r) => dateFmt(r.lastActivity), render: (r) => dateFmt(r.lastActivity) },
-  {
-    k: 'risks',
-    l: 'Risk',
-    sortVal: (r) => r.risks.length,
-    exportVal: (r) => r.risks.map((x) => x.l).join('; '),
-    render: (r) => (r.risks.length ? <Badge tone={r.risks[0].tone}>{r.risks.length} risk</Badge> : <Dash />),
-  },
+const BUCKETS: { k: StudentBucket; l: string; count: (t: StudentSummary['totals']) => number }[] = [
+  { k: 'applications', l: 'Applications', count: (t) => t.applications },
+  { k: 'pending', l: 'Pending verification', count: (t) => t.pending },
+  { k: 'eligible', l: 'Eligible', count: (t) => t.eligible },
+  { k: 'enrolled', l: 'Enrolled', count: (t) => t.enrolled },
+  { k: 'awaiting', l: 'Awaiting batch', count: (t) => t.awaitingBatch },
 ];
 
-/* Filter state persists across navigation (AS.state.cand); URL query params override it. */
-function useCandFilter() {
-  const { search } = useLocation();
-  const [f, setF] = usePersistentState<CandidateFilter>('cand', S.DEFAULT_CAND_FILTER);
-  useEffect(() => {
-    const q = new URLSearchParams(search);
-    const fromUrl: Record<string, string> = {};
-    QUERY_KEYS.forEach((k) => {
-      const v = q.get(k);
-      if (v) fromUrl[k] = v;
-    });
-    if (Object.keys(fromUrl).length) setF((s) => ({ ...s, ...fromUrl }));
-  }, [search, setF]);
-  return [f, setF] as const;
+/* Filters live in the URL (shareable, and the dashboard links straight to them): bucket, centre, track, source, caste, education, q, page. */
+type Filter = { centre: string; track: string; source: string; caste: string; education: string };
+const FILTER_KEYS: (keyof Filter)[] = ['centre', 'track', 'source', 'caste', 'education'];
+const EMPTY: Filter = { centre: '', track: '', source: '', caste: '', education: '' };
+const isUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+
+function useListParams() {
+  const [params, setParams] = useSearchParams();
+  const raw = (k: string) => params.get(k) ?? '';
+  const bucket = BUCKETS.find((b) => b.k === params.get('bucket'))?.k ?? 'applications';
+  /* `district` is the older name of the district filter; values the API would reject are ignored. */
+  const centre = (raw('centre') || raw('district')).toUpperCase();
+  const track = raw('track');
+  const f: Filter = {
+    centre: /^[A-Z0-9]{2,10}$/.test(centre) ? centre : '',
+    track: /^T\d{2}$/.test(track) || track === NO_TRACK ? track : '',
+    source: raw('source') in SOURCES ? raw('source') : '',
+    caste: isUuid(raw('caste')) ? raw('caste') : '',
+    education: isUuid(raw('education')) ? raw('education') : '',
+  };
+  const page = Math.max(1, Number(params.get('page')) || 1);
+  /* Any change except paging goes back to page 1. */
+  const update = (patch: Record<string, string>) =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        Object.entries(patch).forEach(([k, v]) => (v ? next.set(k, v) : next.delete(k)));
+        next.delete('district');
+        if (!('page' in patch)) next.delete('page');
+        return next;
+      },
+      { replace: true },
+    );
+  return { bucket, f, search: raw('q'), page, update };
 }
 
+/*
+ * Candidate master: the real student register (GET /students), server-paged, with bucket chips counted by
+ * GET /students/summary. Contact details stay masked; a row opens the student's masked detail.
+ */
 export default function CandidatesPage() {
-  useLegacyTick();
-  const [f, setF] = useCandFilter();
-  const [adding, setAdding] = useState(false);
+  const navigate = useNavigate();
+  const { bucket, f, search, page, update } = useListParams();
+  const [searchInput, setSearchInput] = useState(search);
   useEffect(() => {
     document.title = 'Candidates — AMRUT × SUMAGO Admin';
   }, []);
+  /* Keep the box in step with the URL (back/forward), and commit typing after a pause. */
+  useEffect(() => setSearchInput(search), [search]);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (searchInput.trim() !== search) update({ q: searchInput.trim() });
+    }, 300);
+    return () => clearTimeout(t);
+    // update is recreated each render; only the typed text matters here
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput, search]);
 
-  const rows = S.filterCandidates(f);
-  const k = S.candidateKpis(rows, f);
-  const kpis = [
-    { label: 'Applications', value: k.applications, tone: 'b', link: '#/candidates?bucket=applications' },
-    { label: 'Eligible', value: k.eligible, tone: 'b', link: '#/candidates?bucket=eligible' },
-    { label: 'Enrolled', value: k.enrolled, tone: 'g', link: '#/candidates?bucket=enrolled' },
-    { label: 'Training active', value: k.trainingActive, tone: 's', link: '#/candidates?bucket=active' },
-    { label: 'Completed', value: k.completed, tone: 'g', link: '#/candidates?bucket=completed' },
-    { label: 'Certified', value: k.certified, tone: 'v', link: '#/candidates?bucket=certified' },
+  /* Options come from the all-district summary; chip counts follow the district filter. */
+  const all = useStudentSummary();
+  const scoped = useStudentSummary(f.centre || undefined);
+  const totals = scoped.data?.totals;
+  const list = useStudentList({
+    page,
+    limit: PAGE_SIZE,
+    bucket,
+    search: search || undefined,
+    centre: f.centre || undefined,
+    track: f.track || undefined,
+    source: (f.source || undefined) as StudentSource | undefined,
+    casteId: f.caste || undefined,
+    educationId: f.education || undefined,
+  });
+
+  const opt = (v: string, l: string) => ({ v, l });
+  const s = all.data;
+  const keepSelected = (options: { v: string; l: string }[], v: string) =>
+    v && !options.some((o) => o.v === v) ? [...options, opt(v, 'Selected value')] : options;
+  const fields = [
+    {
+      k: 'centre' as const,
+      l: 'District',
+      options: keepSelected([opt('', 'All districts'), ...(s?.byCentre ?? []).map((c) => opt(c.code, c.name))], f.centre),
+    },
+    {
+      k: 'track' as const,
+      l: 'Track',
+      options: keepSelected(
+        [
+          opt('', 'All tracks'),
+          ...(s?.byTrack ?? []).map((t) => (t.code ? opt(t.code, `${t.code} · ${t.name}`) : opt(NO_TRACK, 'To be confirmed'))),
+        ],
+        f.track,
+      ),
+    },
+    {
+      k: 'source' as const,
+      l: 'Source',
+      options: [opt('', 'All sources'), opt('IMPORT', 'Imported'), opt('PUBLIC_REGISTRATION', 'Registration')],
+    },
+    {
+      k: 'caste' as const,
+      l: 'Caste',
+      options: keepSelected([opt('', 'All'), ...(s?.byCaste ?? []).flatMap((c) => (c.id ? [opt(c.id, c.name)] : []))], f.caste),
+    },
+    {
+      k: 'education' as const,
+      l: 'Education',
+      options: keepSelected([opt('', 'All'), ...(s?.byEducation ?? []).flatMap((e) => (e.id ? [opt(e.id, e.name)] : []))], f.education),
+    },
   ];
+
+  const filtered = !!search || FILTER_KEYS.some((k) => f[k]);
+  const registerEmpty = all.data?.totals.applications === 0;
+  const total = list.data?.meta?.total;
 
   return (
     <div className="page">
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'Candidates' }]}
         title="Candidate Master"
-        badge={<span className="tag">{fmt(rows.length)} records</span>}
-        sub="Complete candidate database with full lifecycle traceability from application to certification."
+        badge={
+          <>
+            <Badge tone="green">Live</Badge>
+            {total != null ? <span className="tag">{fmt(total)} records</span> : null}
+          </>
+        }
+        sub={
+          <>
+            Students in the register, imported and registered. Contact details are masked.
+            {scoped.data
+              ? ' Counts as of ' + new Date(scoped.data.asOf).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) + '.'
+              : ''}
+          </>
+        }
         actions={
           <>
             <LinkButton to="#/lifecycle">Lifecycle funnel</LinkButton>
-            <LinkButton to="#/at-risk">At-risk students</LinkButton>
-            <Can action="createCandidate">
-              <button type="button" className="btn primary" onClick={() => setAdding(true)}>
-                <Icon name="plus" />
-                Add candidate
-              </button>
-            </Can>
+            <LinkButton to="#/student-import" icon="folder">
+              Student import
+            </LinkButton>
           </>
         }
       />
-      <div className="grid g6 mb14">
-        {kpis.map((x) => (
-          <Kpi key={x.label} {...x} />
+
+      {registerEmpty ? (
+        <div className="mb14">
+          <Callout tone="info" title="No students in the register yet. ">
+            Imported students are added only when their import batch is finalised in Student Import (a second user with approval rights
+            confirms the batch code).{' '}
+            <LinkButton to="#/student-import" className="btn xs">
+              Open Student Import
+            </LinkButton>
+          </Callout>
+        </div>
+      ) : null}
+
+      <div className="pills mb14" role="group" aria-label="Student buckets">
+        {BUCKETS.map((b) => (
+          <button
+            type="button"
+            key={b.k}
+            className={'chip' + (bucket === b.k ? ' on' : '')}
+            aria-pressed={bucket === b.k}
+            onClick={() => update({ bucket: b.k === 'applications' ? '' : b.k })}
+          >
+            {b.l} <b>{totals ? fmt(b.count(totals)) : scoped.isError ? '—' : '…'}</b>
+          </button>
         ))}
       </div>
 
-      <div className="pills mb14">
-        {Object.keys(S.BUCKETS)
-          .filter((b) => b !== 'ALL')
-          .map((b) => (
-            <button
-              type="button"
-              key={b}
-              className={'chip' + (f.bucket === b ? ' on' : '')}
-              onClick={() => setF((s) => ({ ...s, bucket: s.bucket === b ? 'ALL' : b }))}
-            >
-              {S.BUCKETS[b].l}
-            </button>
-          ))}
-      </div>
-
       <FilterBar
-        fields={[
-          { k: 'district', l: 'District', options: districtOptions() },
-          { k: 'taluka', l: 'Taluka', options: S.talukaOptions(f.district) },
-          { k: 'mode', l: 'Training mode', options: modeOptions() },
-          { k: 'centre', l: 'Training centre', options: S.centreOptions() },
-          { k: 'batch', l: 'Batch', options: S.batchOptions() },
-          { k: 'status', l: 'Status', options: S.statusOptions() },
-          {
-            k: 'gender',
-            l: 'Gender',
-            options: [
-              { v: 'ALL', l: 'All' },
-              { v: 'Male', l: 'Male' },
-              { v: 'Female', l: 'Female' },
-            ],
-          },
-        ]}
+        id="candFilters"
+        fields={fields}
         value={f}
-        onChange={(key, v) => setF((s) => ({ ...s, [key]: v, ...(key === 'district' ? { taluka: 'ALL' } : {}) }))}
-        onReset={() => setF(S.DEFAULT_CAND_FILTER)}
+        onChange={(key, v) => update({ [key]: v })}
+        onReset={() => {
+          setSearchInput('');
+          update({ ...EMPTY, q: '' });
+        }}
+        extra={
+          <input
+            className="inp"
+            placeholder="Name, code, source ID, email, mobile last 4"
+            aria-label="Search students"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            style={{ width: 260 }}
+          />
+        }
       />
 
+      {list.isError ? (
+        <div className="mb14">
+          <Callout tone="err" title="Could not load the student list. ">
+            <button type="button" className="btn xs" onClick={() => void list.refetch()}>
+              <Icon name="refresh" />
+              Retry
+            </button>
+          </Callout>
+        </div>
+      ) : null}
+
       <div className="card">
-        <DataTable
-          key={JSON.stringify(f)}
-          rows={rows}
-          columns={candidateColumns()}
-          pageSize={12}
-          exportName="Candidate_Master"
-          search={['id', 'name', 'phone', 'taluka']}
-          searchLabel="name, ID or mobile"
-          rowLink={(r) => '#/candidates/' + r.id}
-          emptyMsg="No candidates match the selected filters."
+        <ServerTable
+          rows={list.data?.items ?? []}
+          columns={columns}
+          meta={list.data?.meta}
+          page={page}
+          onPage={(p) => update({ page: String(p) })}
+          onRowClick={(r) => navigate('/candidates/' + r.id)}
+          loading={list.isFetching}
+          empty={
+            registerEmpty && !filtered
+              ? 'No students in the register yet.'
+              : list.isError
+                ? 'The list could not be loaded.'
+                : 'No students match the selected bucket and filters.'
+          }
         />
       </div>
-      <DemoNote />
-      {adding && <NewCandidateModal onClose={() => setAdding(false)} />}
     </div>
   );
 }

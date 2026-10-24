@@ -52,6 +52,8 @@ export interface StudentDocument {
   mimeType: 'application/pdf' | 'image/jpeg' | 'image/png';
   sizeBytes: number;
   uploadedAt: string;
+  /* Set once a reviewer has verified the file (absent on servers that do not report it). */
+  verifiedAt?: string | null;
 }
 const EXT: Record<StudentDocument['mimeType'], string> = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png' };
 const fileNameOf = (d: StudentDocument) => `${d.docType}.${EXT[d.mimeType]}`;
@@ -132,6 +134,16 @@ export interface StudentView {
   registrationNumber: string | null;
   /* Full values for reviewers (registrations.update); the backend audits each list. */
   unmasked?: { email: string | null; mobile: string | null; aadhaar: string | null };
+  /* Eligible with a live batch assignment, and that batch (list rows; the detail may carry them too). */
+  enrolled?: boolean;
+  batch?: StudentBatchRef | null;
+}
+/* A row of GET /students. caste / education are shown when the server includes them. */
+export interface StudentListItem extends StudentView {
+  enrolled: boolean;
+  batch: StudentBatchRef | null;
+  caste?: string | null;
+  educationQualification?: string | null;
 }
 export interface StudentDetail extends StudentView {
   firstName: string;
@@ -148,6 +160,58 @@ export interface StudentDetail extends StudentView {
   declarationAccepted: boolean | null;
   documents: { key: string; label: string; required: boolean; supplied: boolean; barcode: string | null }[];
 }
+/*
+ * Register buckets (GET /students?bucket=, GET /students/summary):
+ * applications = every non-deleted student (any status, active or not); pending = REGISTRATION_PENDING;
+ * eligible = RECEIVED, active; enrolled = eligible with a live batch assignment; awaiting = eligible without one.
+ */
+export type StudentBucket = 'applications' | 'pending' | 'eligible' | 'enrolled' | 'awaiting';
+export type StudentSource = 'IMPORT' | 'PUBLIC_REGISTRATION';
+/* Track filter value for students whose track is to be confirmed (trackCode null). */
+export const NO_TRACK = 'none';
+
+export interface StudentBatchRef {
+  id: string;
+  code: string;
+  name: string;
+}
+export interface BucketCounts {
+  applications: number;
+  eligible: number;
+  enrolled: number;
+}
+/* GET /students/summary: PII-free counts, computed by the server. */
+export interface StudentSummary {
+  asOf: string;
+  totals: BucketCounts & { pending: number; awaitingBatch: number; inactive: number };
+  bySource: { source: StudentSource; count: number }[];
+  /* Every active district of the regions master, zeros included, ordered by name. */
+  byCentre: (BucketCounts & { code: string; name: string })[];
+  /* T01..T12, then code null = track to be confirmed. */
+  byTrack: (BucketCounts & { code: string | null; name: string })[];
+  /* Applications per master value, highest first (id null = not recorded). */
+  byCaste: { id: string | null; name: string; count: number }[];
+  byEducation: { id: string | null; name: string; count: number }[];
+  /* Last 12 months up to now ('YYYY-MM'); applications by approval (or creation) date, enrolled by assignment date. */
+  byMonth: { month: string; applications: number; enrolled: number }[];
+}
+export interface StudentListQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  /* District (region) code, e.g. PUN. */
+  centre?: string;
+  /* T01..T12, or NO_TRACK. */
+  track?: string;
+  /* Import batch id. */
+  batch?: string;
+  source?: StudentSource;
+  bucket?: StudentBucket;
+  casteId?: string;
+  educationId?: string;
+  regionId?: string;
+}
+
 export interface ImportReference {
   columns: { field: string; label: string; required: boolean }[];
   tracks: { code: string; name: string; aliases: string[] }[];
@@ -200,15 +264,9 @@ export const importApi = {
 };
 
 export const studentApi = {
-  list: (q: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    centre?: string;
-    track?: string;
-    batch?: string;
-    source?: 'IMPORT' | 'PUBLIC_REGISTRATION';
-  }) => paged<StudentView>('/students', q),
+  list: (q: StudentListQuery) => paged<StudentListItem>('/students', { ...q }),
+  /* Register counts for the dashboard and the candidate list; `centre` limits them to one district. */
+  summary: async (centre?: string) => (await request<StudentSummary>('/students/summary', { query: { centre } })).data,
   get: async (id: string) => (await request<StudentDetail>(`/students/${id}`)).data,
   documents: async (id: string) => (await request<StudentDocument[]>(`/students/${id}/documents`)).data,
   downloadDocument: (studentId: string, doc: StudentDocument) =>

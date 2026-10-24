@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import {
   PageHead,
   Card,
@@ -9,11 +9,12 @@ import {
   LinkButton,
   EmptyState,
   DemoNote,
+  DemoChip,
+  Callout,
   LivePill,
   districtOptions,
   modeOptions,
   fmt,
-  dateFmt,
   useGo,
 } from '../../../components/ui';
 import { LineChart, Donut, Funnel, HBar, Ring, DistrictMap } from '../../../components/charts';
@@ -23,10 +24,23 @@ import * as S from '../../../services/mock/dashboardService';
 import type { DashFilter } from '../../../services/mock/dashboardService';
 import usePersistentState from '../../../hooks/usePersistentState';
 import type { Kpis, HealthScore, LiveSession } from '../../../types/domain';
+import {
+  asOfLabel,
+  centreIndex,
+  monthLabel,
+  pctOf,
+  sourceItems,
+  studentListLink,
+  topCentres,
+  trackItems,
+  useStudentSummary,
+  type StudentSummary,
+} from '../../students';
 
 const METRICS = [
   { v: 'enrolled', l: 'Enrolled' },
   { v: 'applications', l: 'Applications' },
+  { v: 'eligible', l: 'Eligible' },
   { v: 'active', l: 'Training active' },
   { v: 'completed', l: 'Completed' },
   { v: 'certified', l: 'Certified' },
@@ -50,53 +64,100 @@ export default function DashboardPage() {
   const health = S.healthScore();
   const live = S.runningSessions();
 
+  /* Live student figures from the register; the district filter limits them to one district (?centre=). */
+  const centre = f.district && f.district !== 'ALL' ? f.district : undefined;
+  const summary = useStudentSummary(centre);
+  /* The map always shows every district, so it reads the all-district summary (the same query when no district is picked). */
+  const mapLive = centreIndex(useStudentSummary().data);
+  const liveMetric = ['applications', 'eligible', 'enrolled'].includes(f.metric);
+  const sm = summary.data;
+  const t = sm?.totals;
+  const asOf = asOfLabel(sm?.asOf);
+  const liveValue = (n: number | undefined): number | string => (summary.isPending ? '…' : summary.isError ? '—' : (n ?? 0));
+  const awaitingLink = studentListLink({ bucket: 'awaiting', centre });
+  /* Card body for a live figure: skeleton while loading, a short message on failure. */
+  const liveBody = (render: (s: StudentSummary) => ReactNode, height = 200) =>
+    summary.isPending ? (
+      <div className="skel" style={{ height }} aria-label="Loading live figures" />
+    ) : summary.isError ? (
+      <div className="muted fs12">Could not load the live student figures.</div>
+    ) : (
+      render(summary.data)
+    );
+
   const kpis = [
-    { label: 'Total Target', value: k.target, tone: '', sub: 'Configurable programme target', link: '#/settings' },
-    { label: 'Applications', value: k.applications, tone: 'b', sub: 'Registrations received', link: '#/candidates' },
+    {
+      label: 'Total Target',
+      value: k.target,
+      tone: '',
+      sub: 'Configurable programme target',
+      link: '#/settings',
+      badge: <DemoChip />,
+    },
+    {
+      label: 'Applications',
+      value: liveValue(t?.applications),
+      tone: 'b',
+      sub: t ? fmt(t.pending) + ' pending verification' : 'Students in the register',
+      link: studentListLink({ bucket: 'applications', centre }),
+      title: asOf,
+    },
     {
       label: 'Eligible',
-      value: k.eligible,
+      value: liveValue(t?.eligible),
       tone: 'b',
-      sub: Math.round((k.eligible / k.applications) * 100) + '% of applications',
-      link: '#/candidates?bucket=eligible',
+      sub: t ? pctOf(t.eligible, t.applications) + '% of applications' : 'Approved and active',
+      link: studentListLink({ bucket: 'eligible', centre }),
+      title: asOf,
     },
     {
       label: 'Enrolled',
-      value: k.enrolled,
+      value: liveValue(t?.enrolled),
       tone: 'g',
-      sub: k.achievementPct + '% of target',
-      pct: k.achievementPct,
-      progTone: 'g',
-      link: '#/candidates?bucket=enrolled',
+      sub: t ? <AwaitingLink count={t.awaitingBatch} link={awaitingLink} /> : 'Assigned to a batch',
+      link: studentListLink({ bucket: 'enrolled', centre }),
+      title: asOf,
     },
     {
       label: 'Training Active',
       value: k.trainingActive,
       tone: 's',
       sub: k.offlineActive + ' offline · ' + k.onlineActive + ' online',
-      link: '#/candidates?bucket=active',
+      link: '#/lifecycle',
+      badge: <DemoChip />,
     },
     {
       label: 'Completed',
       value: k.completed,
       tone: 'g',
       sub: k.completionPct + '% completion rate',
-      link: '#/candidates?bucket=completed',
+      link: '#/lifecycle',
+      badge: <DemoChip />,
     },
-    { label: 'Assessed', value: k.assessed, tone: 'v', sub: k.passRate + '% pass rate', link: '#/assessments' },
-    { label: 'Certified', value: k.certified, tone: 'g', sub: k.certificationPct + '% of enrolled', link: '#/certification' },
+    { label: 'Assessed', value: k.assessed, tone: 'v', sub: k.passRate + '% pass rate', link: '#/assessments', badge: <DemoChip /> },
+    {
+      label: 'Certified',
+      value: k.certified,
+      tone: 'g',
+      sub: k.certificationPct + '% of enrolled',
+      link: '#/certification',
+      badge: <DemoChip />,
+    },
   ];
 
-  const m = S.monthly();
+  const top = sm ? topCentres(sm) : null;
+  const tracks = sm ? trackItems(sm, centre) : [];
+  const sources = sm ? sourceItems(sm, centre) : [];
+  const sourceTotal = sources.reduce((a, x) => a + x.v, 0);
 
   return (
     <div className="page">
       <PageHead
         title="Project Command Centre"
-        badge={<span className="demo-pill">DEMO DATA</span>}
         sub={
           <>
-            Scope: <b>{S.scopeLabel(f)}</b> · As on {dateFmt(S.asOf())} · All KPIs are calculated from the underlying candidate records.
+            Scope: <b>{S.scopeLabel(f)}</b> · Student figures are live{asOf ? ' ' + asOf : ''} · Figures marked <b>Demo data</b> are
+            illustrative.
           </>
         }
         actions={
@@ -126,18 +187,51 @@ export default function DashboardPage() {
         onReset={() => setF(S.DEFAULT_DASH_FILTER)}
       />
 
+      {summary.isError ? (
+        <div className="mb14">
+          <Callout tone="err" title="Could not load the live student figures. ">
+            Applications, Eligible and Enrolled show “—” until the server answers.{' '}
+            <button type="button" className="btn xs" onClick={() => void summary.refetch()}>
+              Retry
+            </button>
+          </Callout>
+        </div>
+      ) : t && t.applications === 0 ? (
+        <div className="mb14">
+          <Callout tone="info" title={centre ? 'No students in the register for this district yet. ' : 'No students in the register yet. '}>
+            Imported students are added to the register only when their import batch is finalised in Student Import (a second user with
+            approval rights confirms the batch code). Until then the live tiles show 0.{' '}
+            <LinkButton to="#/student-import" className="btn xs">
+              Open Student Import
+            </LinkButton>
+          </Callout>
+        </div>
+      ) : null}
+
       <div className="grid g8 mb14">
         {kpis.map((x) => (
           <Kpi key={x.label} {...x} />
         ))}
       </div>
+      {asOf ? <div className="fs11 muted mb14">Applications, Eligible and Enrolled are live student figures {asOf}.</div> : null}
 
       <div className="grid g-3-2 mb14">
-        <Card title="Programme progress against target" sub="System-generated indicator">
+        <Card
+          title={
+            <>
+              Programme progress against target <DemoChip />
+            </>
+          }
+          sub="System-generated indicator"
+        >
           <ProgressBlock k={k} health={health} />
         </Card>
         <Card
-          title="Critical attention"
+          title={
+            <>
+              Critical attention <DemoChip />
+            </>
+          }
           flush
           footer={
             <>
@@ -157,7 +251,11 @@ export default function DashboardPage() {
       <div className="card mb14">
         <div className="card-h">
           <h3>
-            District performance map <span className="sub">{S.districts().length} districts · click any district to drill down</span>
+            District performance map {liveMetric ? null : <DemoChip />}{' '}
+            <span className="sub">
+              {S.districts().length} districts · click any district to drill down ·{' '}
+              {liveMetric ? 'tile counts are live' + (asOf ? ' ' + asOf : '') + '; status colours are demo' : 'this metric is demo data'}
+            </span>
           </h3>
           <div className="f gp6">
             <LinkButton to="#/districts" className="btn sm">
@@ -172,32 +270,76 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="card-b">
-          <DistrictMap metric={f.metric} colorMode="status" height={440} />
+          <DistrictMap metric={f.metric} colorMode="status" height={440} live={mapLive} />
         </div>
       </div>
 
       <div className="grid g-2-1 mb14">
-        <Card title="Enrollment & completion trend" sub="Monthly, current financial year">
-          <LineChart
-            series={[
-              { l: 'Applications', v: m.map((x) => x.applications), c: '#B3A08D' },
-              { l: 'Enrolled', v: m.map((x) => x.enrolled), c: '#C8651C' },
-              { l: 'Completed', v: m.map((x) => x.completed), c: '#1E7A46' },
-              { l: 'Certified', v: m.map((x) => x.certified), c: '#E88C2C' },
-            ]}
-            labels={S.months()}
-            opts={{ height: 250 }}
-          />
+        <Card title="Applications & enrolments by month" sub={'Last 12 months' + (asOf ? ' · ' + asOf : '')}>
+          {liveBody((s) =>
+            s.byMonth.some((x) => x.applications || x.enrolled) ? (
+              <LineChart
+                series={[
+                  { l: 'Applications', v: s.byMonth.map((x) => x.applications), c: '#B3A08D' },
+                  { l: 'Enrolled', v: s.byMonth.map((x) => x.enrolled), c: '#C8651C' },
+                ]}
+                labels={s.byMonth.map((x) => monthLabel(x.month))}
+                opts={{ height: 250 }}
+              />
+            ) : (
+              <EmptyState title="No applications in the last 12 months" msg="The trend appears once students are in the register." />
+            ),
+          )}
         </Card>
-        <Card title="Training mode split" sub="Two independent modes">
+        <Card
+          title={
+            <>
+              Training mode split <DemoChip />
+            </>
+          }
+          sub="Two independent modes"
+        >
           <ModeSplit k={k} />
         </Card>
       </div>
 
       <div className="grid g-2-1 mb14">
         <Card
+          title="Students by track"
+          sub={'Applications per track' + (asOf ? ' · ' + asOf : '')}
+          action={
+            <LinkButton to={studentListLink({ centre })} className="btn sm ghost">
+              Student list
+            </LinkButton>
+          }
+        >
+          {liveBody(() =>
+            tracks.length ? (
+              <HBar items={tracks} opts={{ color: '#C8651C' }} />
+            ) : (
+              <EmptyState title="No students yet" msg="Tracks appear here once students are in the register." />
+            ),
+          )}
+        </Card>
+        <Card title="Source split" sub="Imported vs registered">
+          {liveBody(() =>
+            sourceTotal ? (
+              <Donut items={sources} opts={{ centerValue: fmt(sourceTotal), centerLabel: 'Students', click: true, size: 176 }} />
+            ) : (
+              <EmptyState title="No students yet" msg="Imported and registered students are counted here." />
+            ),
+          )}
+        </Card>
+      </div>
+
+      <div className="grid g-2-1 mb14">
+        <Card
           title="Candidate funnel"
-          sub="Click a stage to open the filtered list"
+          sub={
+            <>
+              Applications, Eligible, Enrolled are live{asOf ? ' ' + asOf : ''} · later stages <DemoChip />
+            </>
+          }
           action={
             <LinkButton to="#/lifecycle" className="btn sm ghost">
               Full lifecycle
@@ -206,18 +348,22 @@ export default function DashboardPage() {
         >
           <Funnel
             stages={[
-              { l: 'Applications', v: k.applications, c: '#B3A08D', link: '#/candidates' },
-              { l: 'Eligible', v: k.eligible, c: '#E2A166', link: '#/candidates?bucket=eligible' },
-              { l: 'Enrolled', v: k.enrolled, c: '#C8651C', link: '#/candidates?bucket=enrolled' },
-              { l: 'Training active', v: k.trainingActive, c: '#7A3A16', link: '#/candidates?bucket=active' },
-              { l: 'Completed', v: k.completed, c: '#1E7A46', link: '#/candidates?bucket=completed' },
+              { l: 'Applications', v: t?.applications ?? 0, c: '#B3A08D', link: studentListLink({ bucket: 'applications', centre }) },
+              { l: 'Eligible', v: t?.eligible ?? 0, c: '#E2A166', link: studentListLink({ bucket: 'eligible', centre }) },
+              { l: 'Enrolled', v: t?.enrolled ?? 0, c: '#C8651C', link: studentListLink({ bucket: 'enrolled', centre }) },
+              { l: 'Training active', v: k.trainingActive, c: '#7A3A16', link: '#/lifecycle' },
+              { l: 'Completed', v: k.completed, c: '#1E7A46', link: '#/lifecycle' },
               { l: 'Assessed', v: k.assessed, c: '#6B3FA0', link: '#/assessments' },
               { l: 'Certified', v: k.certified, c: '#E88C2C', link: '#/certification' },
             ]}
           />
         </Card>
         <Card
-          title="Attendance trend (28 days)"
+          title={
+            <>
+              Attendance trend (28 days) <DemoChip />
+            </>
+          }
           sub="Zero = no scheduled sessions (Sunday)"
           action={
             <LinkButton to="#/attendance" className="btn sm ghost">
@@ -235,7 +381,11 @@ export default function DashboardPage() {
 
       <div className="grid g2">
         <Card
-          title="Live training right now"
+          title={
+            <>
+              Live training right now <DemoChip />
+            </>
+          }
           sub={live.length + ' sessions in progress'}
           flush
           footer={
@@ -248,18 +398,46 @@ export default function DashboardPage() {
         </Card>
         <Card
           title="Top districts by enrollment"
-          sub="Enrolled vs district target"
+          sub={
+            (top?.metric === 'eligible' ? 'No students enrolled yet: eligible students per district' : 'Enrolled students per district') +
+            (asOf ? ' · ' + asOf : '')
+          }
           action={
             <LinkButton to="#/districts" className="btn sm ghost">
               All districts
             </LinkButton>
           }
         >
-          <HBar items={S.topDistricts()} opts={{ color: '#C8651C' }} />
+          {liveBody(() =>
+            top?.items.length ? (
+              <HBar items={top.items} opts={{ color: '#C8651C' }} />
+            ) : (
+              <EmptyState title="No eligible students yet" msg="Districts are ranked here once students are in the register." />
+            ),
+          )}
         </Card>
       </div>
-      <DemoNote />
+      <DemoNote>
+        Figures marked “Demo data” are illustrative (indicative values, subject to AMRUT / COEP approval). Student counts come from the live
+        register.
+      </DemoNote>
     </div>
+  );
+}
+
+/* "N awaiting batch" under the Enrolled tile; opens the awaiting-batch list without triggering the tile's own link. */
+function AwaitingLink({ count, link }: { count: number; link: string }) {
+  const go = useGo();
+  return (
+    <a
+      className="lnk"
+      onClick={(e) => {
+        e.stopPropagation();
+        go(link);
+      }}
+    >
+      {fmt(count)} awaiting batch
+    </a>
   );
 }
 

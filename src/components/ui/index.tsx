@@ -102,12 +102,17 @@ export interface KpiProps {
   pct?: number;
   progTone?: string;
   title?: string;
+  /* Shown after the label, e.g. <DemoChip />. */
+  badge?: ReactNode;
 }
-export function Kpi({ label, value, tone, sub, link, pct, progTone, title }: KpiProps) {
+export function Kpi({ label, value, tone, sub, link, pct, progTone, title, badge }: KpiProps) {
   const go = useGo();
   return (
     <div className={'kpi ' + (tone || '')} title={title} onClick={link ? () => go(link) : undefined}>
-      <div className="kpi-t">{label}</div>
+      <div className="kpi-t">
+        {label}
+        {badge ? <> {badge}</> : null}
+      </div>
       <div className="kpi-v">{typeof value === 'number' ? fmt(value) : value}</div>
       {sub ? <div className="kpi-d">{sub}</div> : null}
       {pct != null ? (
@@ -248,6 +253,15 @@ export function DemoNote({
   children?: ReactNode;
 }) {
   return <div className="disclaim mt10">{children}</div>;
+}
+
+/* Marks one figure or card as illustrative while the rest of the screen shows live data. */
+export function DemoChip() {
+  return (
+    <span className="demo-pill" title="Illustrative figure: no live data source exists for it yet">
+      Demo data
+    </span>
+  );
 }
 
 export function KvList({ pairs }: { pairs: [string, ReactNode][] }) {

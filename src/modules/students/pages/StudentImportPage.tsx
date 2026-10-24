@@ -10,6 +10,8 @@ import { toastError, toastOk } from '../../../components/feedback/apiFeedback';
 import DocumentList from '../components/DocumentList';
 import FileDrop from '../components/FileDrop';
 import { BATCH_STATUS_LABEL, ServerTable, StatusBadge, fmtDate } from '../components/importUi';
+import { useStudentSummary } from '../hooks/useStudents';
+import { asOfLabel, pctOf, studentListLink } from '../services/studentFigures';
 
 type Tab = 'batches' | 'students' | 'guide';
 
@@ -262,6 +264,64 @@ function BatchesTab({ reference }: { reference: ImportReference | null }) {
   );
 }
 
+/* Live register counts (GET /students/summary): each tile opens the student list (/candidates) for its bucket. */
+function RegisterKpis() {
+  const summary = useStudentSummary();
+  const t = summary.data?.totals;
+  const asOf = asOfLabel(summary.data?.asOf);
+  const value = (n: number | undefined) => (summary.isPending ? '…' : summary.isError ? '—' : (n ?? 0).toLocaleString('en-IN'));
+  return (
+    <>
+      <div className="grid g4 mb6">
+        <Kpi
+          label="Students in register"
+          value={value(t?.applications)}
+          tone="b"
+          sub={t ? t.pending.toLocaleString('en-IN') + ' pending verification' : 'Import + registration'}
+          link={studentListLink({ bucket: 'applications' })}
+          title={asOf}
+        />
+        <Kpi
+          label="Eligible"
+          value={value(t?.eligible)}
+          tone="b"
+          sub={t ? pctOf(t.eligible, t.applications) + '% of the register' : 'Approved and active'}
+          link={studentListLink({ bucket: 'eligible' })}
+          title={asOf}
+        />
+        <Kpi
+          label="Enrolled"
+          value={value(t?.enrolled)}
+          tone="g"
+          sub="Assigned to a batch"
+          link={studentListLink({ bucket: 'enrolled' })}
+          title={asOf}
+        />
+        <Kpi
+          label="Awaiting batch"
+          value={value(t?.awaitingBatch)}
+          tone="a"
+          sub="Eligible, not yet in a batch"
+          link={studentListLink({ bucket: 'awaiting' })}
+          title={asOf}
+        />
+      </div>
+      <div className="fs11 muted mb14">
+        {summary.isError ? (
+          <>
+            Could not load the register counts.{' '}
+            <button type="button" className="btn xs" onClick={() => void summary.refetch()}>
+              Retry
+            </button>
+          </>
+        ) : asOf ? (
+          'Live register counts ' + asOf + '.'
+        ) : null}
+      </div>
+    </>
+  );
+}
+
 function StudentsTab({ reference }: { reference: ImportReference | null }) {
   /* Reviewers open the full student page (full details, documents with Preview / Verify); others get the masked panel. */
   const navigate = useNavigate();
@@ -302,10 +362,7 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
 
   return (
     <>
-      <div className="grid g4 mb14">
-        <Kpi label="Students in register" value={(meta?.total ?? 0).toLocaleString('en-IN')} tone="b" />
-        <Kpi label="Sources" value="Import + Registration" tone="g" sub="One students table" />
-      </div>
+      <RegisterKpis />
       <div className="card">
         <div className="card-h">
           <h3>

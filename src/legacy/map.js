@@ -12,11 +12,18 @@
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
-  function metricValue(d, metric) {
+  /* Live register counts (opts.live = { CODE: {applications, eligible, enrolled} }) replace the demo
+     values for these metrics; every other metric still comes from the demo dataset (AS.db). */
+  var LIVE_METRICS = { applications: 1, eligible: 1, enrolled: 1 };
+  function isLive(live, metric) { return !!live && !!LIVE_METRICS[metric]; }
+
+  function metricValue(d, metric, live) {
+    if (isLive(live, metric)) return (live[d.code] && live[d.code][metric]) || 0;
     var k = AS.db.kpis(AS.db.byDistrict(d.code), d.target);
     switch (metric) {
       case 'target': return k.target;
       case 'applications': return k.applications;
+      case 'eligible': return k.eligible;
       case 'enrolled': return k.enrolled;
       case 'active': return k.trainingActive;
       case 'completed': return k.completed;
@@ -27,10 +34,10 @@
     }
   }
 
-  function colorFor(d, mode, metric) {
+  function colorFor(d, mode, metric, live) {
     if (mode === 'status') return AS.db.DISTRICT_STATUS[d.status].color;
-    var v = metricValue(d, metric);
-    var all = AS.db.districts.map(function (x) { return metricValue(x, metric); });
+    var v = metricValue(d, metric, live);
+    var all = AS.db.districts.map(function (x) { return metricValue(x, metric, live); });
     var max = Math.max.apply(null, all.concat([1]));
     var t = v / max;
     if (v === 0) return '#DCC9B4';
@@ -39,12 +46,15 @@
 
   /**
    * options: { metric, colorMode:'status'|'metric', filterMode:'ALL'|'OFFLINE'|'ONLINE',
-   *            statusFilter:'ALL'|RAG, onClick:'#/districts/', height }
+   *            statusFilter:'ALL'|RAG, onClick:'#/districts/', height, live }
+   * live (optional): live register counts per district code; applications/eligible/enrolled tiles then show
+   * the live count (no "/ target") and the tooltip lists the live counts.
    */
   function render(opts) {
     opts = opts || {};
     var metric = opts.metric || 'enrolled';
     var colorMode = opts.colorMode || 'status';
+    var live = opts.live || null;
     var ds = AS.db.districts;
     var maxCol = Math.max.apply(null, ds.map(function (d) { return d.col; }));
     var maxRow = Math.max.apply(null, ds.map(function (d) { return d.row; }));
@@ -52,16 +62,19 @@
 
     var tiles = ds.map(function (d) {
       var x = GAP + d.col * (CW + GAP), y = GAP + d.row * (CH + GAP);
-      var col = colorFor(d, colorMode, metric);
-      var v = metricValue(d, metric);
+      var col = colorFor(d, colorMode, metric, live);
+      var v = metricValue(d, metric, live);
+      var lc = live ? live[d.code] || { applications: 0, eligible: 0, enrolled: 0 } : null;
+      var liveAttr = lc ? ' data-live="' + [lc.applications, lc.eligible, lc.enrolled].join(',') + '"' : '';
+      var valText = isLive(live, metric) ? String(v) : v + (metric === 'attendance' || metric === 'achievement' ? '%' : '') + ' / ' + d.target;
       var dim = false;
       if (opts.statusFilter && opts.statusFilter !== 'ALL') dim = AS.db.DISTRICT_STATUS[d.status].rag !== opts.statusFilter;
       if (opts.filterMode === 'OFFLINE' && !d.hasCentre) dim = true;
       var short = d.name.length > 13 ? d.name.replace('Chhatrapati ', 'Chh. ').slice(0, 12) + '.' : d.name;
-      return '<g class="mh-tile' + (dim ? ' dim' : '') + '" data-district="' + d.code + '" data-go="#/districts/' + d.code + '">' +
+      return '<g class="mh-tile' + (dim ? ' dim' : '') + '" data-district="' + d.code + '" data-go="#/districts/' + d.code + '"' + liveAttr + '>' +
         '<rect class="mh-rect" x="' + x + '" y="' + y + '" width="' + CW + '" height="' + CH + '" rx="8" fill="' + col + '"/>' +
         '<text class="mh-lbl" x="' + (x + CW / 2) + '" y="' + (y + 22) + '">' + esc(short) + '</text>' +
-        '<text class="mh-val" x="' + (x + CW / 2) + '" y="' + (y + 36) + '">' + v + (metric === 'attendance' || metric === 'achievement' ? '%' : '') + ' / ' + d.target + '</text>' +
+        '<text class="mh-val" x="' + (x + CW / 2) + '" y="' + (y + 36) + '">' + esc(valText) + '</text>' +
         '<text class="mh-val" x="' + (x + CW / 2) + '" y="' + (y + 47) + '" style="font-size:5.8px;opacity:.8">' + esc(AS.db.DISTRICT_STATUS[d.status].l) + '</text>' +
         '</g>';
     }).join('');
@@ -93,10 +106,18 @@
       if (!d) return;
       var k = AS.db.kpis(AS.db.byDistrict(d.code), d.target);
       var st = AS.db.DISTRICT_STATUS[d.status];
+      var lv = g.getAttribute('data-live');
+      var lc = lv ? lv.split(',') : null;
       tip.className = 'map-tip';
       tip.innerHTML = '<b>' + esc(d.name) + '</b>' +
-        '<div class="r"><span>Target</span><b>' + k.target + '</b></div>' +
-        '<div class="r"><span>Enrolled</span><b>' + k.enrolled + '</b></div>' +
+        (lc
+          ? '<div class="r"><span>Applications</span><b>' + esc(lc[0]) + '</b></div>' +
+            '<div class="r"><span>Eligible</span><b>' + esc(lc[1]) + '</b></div>' +
+            '<div class="r"><span>Enrolled</span><b>' + esc(lc[2]) + '</b></div>' +
+            '<div class="r" style="margin-top:4px"><span class="muted">Demo data below</span></div>' +
+            '<div class="r"><span>Target</span><b>' + k.target + '</b></div>'
+          : '<div class="r"><span>Target</span><b>' + k.target + '</b></div>' +
+            '<div class="r"><span>Enrolled</span><b>' + k.enrolled + '</b></div>') +
         '<div class="r"><span>Training active</span><b>' + k.trainingActive + '</b></div>' +
         '<div class="r"><span>Completed</span><b>' + k.completed + '</b></div>' +
         '<div class="r"><span>Certified</span><b>' + k.certified + '</b></div>' +

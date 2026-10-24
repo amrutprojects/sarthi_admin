@@ -158,6 +158,8 @@ export interface MapRenderOpts {
   height?: number;
   statusFilter?: string;
   filterMode?: string;
+  /* Live register counts per district code; the applications / eligible / enrolled metrics then use them. */
+  live?: Record<string, { applications: number; eligible: number; enrolled: number }>;
 }
 export interface LegacyMap {
   provider: string;
