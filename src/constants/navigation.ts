@@ -131,6 +131,10 @@ export type RouteName =
   | 'cmsCollegeCreate'
   | 'cmsCollegeEdit'
   | 'cmsCollegeView'
+  | 'cmsCentreList'
+  | 'cmsCentreCreate'
+  | 'cmsCentreEdit'
+  | 'cmsCentreView'
   | 'cmsDocumentList'
   | 'cmsDocumentCreate'
   | 'cmsDocumentEdit'
@@ -330,6 +334,7 @@ export const NAV: NavEntry[] = [
   { g: 'Masters' },
   { k: 'cms-departments', l: 'Department Master', i: 'layers', r: '/cms/departments' },
   { k: 'cms-colleges', l: 'College Master', i: 'building', r: '/cms/colleges' },
+  { k: 'cms-centres', l: 'Center Master', i: 'building', r: '/cms/centres' },
   { k: 'cms-documents', l: 'Document Master', i: 'doc', r: '/cms/documents' },
   { k: 'cms-batches', l: 'Batch Master', i: 'calendar', r: '/cms/batches' },
   { k: 'cms-batch-assignments', l: 'Assign Batch', i: 'users', r: '/cms/batch-assignments' },
@@ -526,6 +531,10 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/colleges/create', 'cmsCollegeCreate', 'cms-colleges'],
   ['/cms/colleges/:id/edit', 'cmsCollegeEdit', 'cms-colleges'],
   ['/cms/colleges/:id', 'cmsCollegeView', 'cms-colleges'],
+  ['/cms/centres', 'cmsCentreList', 'cms-centres'],
+  ['/cms/centres/create', 'cmsCentreCreate', 'cms-centres'],
+  ['/cms/centres/:id/edit', 'cmsCentreEdit', 'cms-centres'],
+  ['/cms/centres/:id', 'cmsCentreView', 'cms-centres'],
   ['/cms/documents', 'cmsDocumentList', 'cms-documents'],
   ['/cms/documents/create', 'cmsDocumentCreate', 'cms-documents'],
   ['/cms/documents/:id/edit', 'cmsDocumentEdit', 'cms-documents'],

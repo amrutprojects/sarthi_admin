@@ -162,7 +162,7 @@ describe('<RegistrationFormPage>', () => {
     await choose(u, /Caste/, 'मराठी');
     await u.click(screen.getByRole('button', { name: 'Next' }));
 
-    await choose(u, /Course Centre/, 'Pune');
+    await choose(u, /Course District/, 'Pune');
     /* The search box filters the list as you type. */
     await u.click(screen.getByLabelText(/Technology/));
     await u.type(screen.getByRole('combobox', { name: /^Search Technology/ }), 'web');

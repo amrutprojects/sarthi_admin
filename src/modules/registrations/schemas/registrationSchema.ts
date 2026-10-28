@@ -81,7 +81,7 @@ export const basicSchema = z.object({
 });
 
 export const mainSchema = z.object({
-  region_id: pick('Course centre'),
+  region_id: pick('Course district'),
   technology: pick('Technology'),
   education_id: pick('Education qualification'),
 });
@@ -110,10 +110,23 @@ export const editFormSchema = basicSchema.merge(mainSchema).extend({
 });
 export const STEP_FIELDS = [Object.keys(basicSchema.shape), Object.keys(mainSchema.shape)] as const;
 
-/* File rules (backend registration-upload.middleware.ts / file-type.ts). */
+/*
+ * File rules (backend registration-upload.middleware.ts / file-type.ts): PDF / JPG / JPEG / PNG up to 5 MB, except the
+ * video types (Applicant Video with Aadhaar): an MP4 up to 50 MB.
+ */
 export const MAX_FILE_MB = 5;
 export const ACCEPT = '.pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png';
-export function fileIssue(f: File): string | null {
+export const VIDEO_DOCUMENT_TYPES: readonly string[] = ['APPLICANT_VIDEO'];
+export const VIDEO_MAX_FILE_MB = 50;
+export const VIDEO_ACCEPT = '.mp4,video/mp4';
+export const isVideoDocumentType = (code?: string) => !!code && VIDEO_DOCUMENT_TYPES.includes(code.toUpperCase());
+export const acceptFor = (code?: string) => (isVideoDocumentType(code) ? VIDEO_ACCEPT : ACCEPT);
+export function fileIssue(f: File, code?: string): string | null {
+  if (isVideoDocumentType(code)) {
+    if (!/\.mp4$/i.test(f.name)) return 'Only MP4 videos are accepted';
+    if (f.size > VIDEO_MAX_FILE_MB * 1024 * 1024) return `File is larger than ${VIDEO_MAX_FILE_MB} MB`;
+    return null;
+  }
   if (!/\.(pdf|jpe?g|png)$/i.test(f.name)) return 'Only PDF, JPG, JPEG or PNG files are accepted';
   if (f.size > MAX_FILE_MB * 1024 * 1024) return `File is larger than ${MAX_FILE_MB} MB`;
   return null;

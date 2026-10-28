@@ -155,7 +155,7 @@ export default function RegistrationsPage() {
                     <th scope="col">Registration no.</th>
                     <th scope="col">Source</th>
                     <th scope="col">Name</th>
-                    <th scope="col">Course centre</th>
+                    <th scope="col">Course district</th>
                     <th scope="col">Technology</th>
                     <th scope="col">Mobile</th>
                     <th scope="col">Aadhaar</th>

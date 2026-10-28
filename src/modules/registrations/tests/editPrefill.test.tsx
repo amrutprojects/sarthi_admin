@@ -64,7 +64,7 @@ describe('edit form prefill', () => {
     expect(await screen.findByDisplayValue('Priya')).toBeInTheDocument();
     expect(screen.getByLabelText(/Caste/)).toHaveTextContent('कानबी');
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
-    expect(await screen.findByLabelText(/Course Centre/)).toHaveTextContent('Kolhapur');
+    expect(await screen.findByLabelText(/Course District/)).toHaveTextContent('Kolhapur');
     expect(screen.getByLabelText(/Technology/)).toHaveTextContent('Social Media Marketing / Digital Marketing');
     expect(screen.getByLabelText(/Education Qualification/)).toHaveTextContent('B.Com');
   });

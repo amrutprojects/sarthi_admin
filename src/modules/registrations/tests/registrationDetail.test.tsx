@@ -156,4 +156,61 @@ describe('<RegistrationDetailPage>', () => {
     expect(await screen.findByAltText('aadhaar_card.png')).toBeInTheDocument();
     expect(registrationApi.fileBlob).toHaveBeenCalledWith('r1', 'f-aadhaar');
   });
+
+  it('shows the EDP profile card, and hides it when every profile value is null', async () => {
+    const empty = {
+      gender: null, maritalStatus: null, permanentAddress: null, landmark: null, districtName: null, talukaName: null,
+      pinCode: null, alternateMobile: null, alternateEmail: null, disabilityStatus: null, disabilityType: null,
+      disabilityCertificateNumber: null, centreName: null, centreCode: null,
+      qualificationName: null, qualificationStream: null, qualificationBoard: null,
+      qualificationCompletedOn: null, gradingType: null, cgpaScale: null, score: null, qualificationClass: null,
+    };
+    vi.mocked(registrationApi.get).mockResolvedValue({ ...detail, profile: empty });
+    const first = render();
+    expect(await screen.findByText('Basic details')).toBeInTheDocument();
+    expect(screen.queryByText('Additional details (EDP)')).not.toBeInTheDocument();
+    first.unmount();
+
+    vi.mocked(registrationApi.get).mockResolvedValue({
+      ...detail,
+      profile: {
+        ...empty, gender: 'Female', disabilityStatus: false, centreName: 'Pune Centre', centreCode: 'PUN-01',
+        gradingType: 'CGPA', cgpaScale: 10, score: 8.5,
+      },
+    });
+    render();
+    expect(await screen.findByText('Additional details (EDP)')).toBeInTheDocument();
+    expect(screen.getByText('Female')).toBeInTheDocument();
+    expect(screen.getByText('Pune Centre (PUN-01)')).toBeInTheDocument();
+    expect(screen.getByText('8.5 / 10')).toBeInTheDocument();
+    expect(screen.getByText('Disability').nextSibling?.textContent).toBe('No');
+    /* Null values are left out rather than shown as dashes. */
+    expect(screen.queryByText('Landmark')).not.toBeInTheDocument();
+  });
+
+  it('shows the full EDP values from unmasked instead of the masked profile copies', async () => {
+    vi.mocked(registrationApi.get).mockResolvedValue({
+      ...detail,
+      profile: {
+        gender: 'Male', maritalStatus: null, permanentAddress: 'On file', landmark: null, districtName: null, talukaName: null,
+        pinCode: null, alternateMobile: '+91XXXXXX1111', alternateEmail: 'b***@example.invalid', disabilityStatus: true,
+        disabilityType: 'Low vision', disabilityCertificateNumber: '••••7788', centreName: null,
+        centreCode: null, qualificationName: null, qualificationStream: null,
+        qualificationBoard: null, qualificationCompletedOn: null, gradingType: 'PERCENTAGE', cgpaScale: null, score: 72.5,
+        qualificationClass: null,
+      },
+      unmasked: {
+        email: null, mobile: null, permanentAddress: '12 MG Road, Pune', alternateMobile: '+919811111111',
+        alternateEmail: 'b@example.invalid', disabilityCertificateNumber: 'DC-11447788',
+      },
+    });
+    render();
+    expect(await screen.findByText('12 MG Road, Pune')).toBeInTheDocument();
+    expect(screen.getByText('+919811111111')).toBeInTheDocument();
+    expect(screen.getByText('b@example.invalid')).toBeInTheDocument();
+    expect(screen.getByText('DC-11447788')).toBeInTheDocument();
+    expect(screen.getByText('72.5%')).toBeInTheDocument();
+    expect(screen.queryByText('On file')).not.toBeInTheDocument();
+    expect(screen.queryByText('••••7788')).not.toBeInTheDocument();
+  });
 });

@@ -34,6 +34,38 @@ export interface RegistrationFile {
   verifiedBy: string | null;
 }
 
+/*
+ * Additional details captured by the EDP registration portal (GET /student-registrations/:id `profile`). Every value
+ * is null when the record has none, e.g. imported or admin-entered students. Masked like the other personal data:
+ * permanentAddress is 'On file', alternateMobile / alternateEmail are masked like mobile / email, and
+ * disabilityCertificateNumber is '••••' + its last 4; the full values come in `unmasked` for reviewers.
+ */
+export interface RegistrationProfile {
+  gender: string | null;
+  maritalStatus: string | null;
+  permanentAddress: string | null;
+  landmark: string | null;
+  districtName: string | null;
+  talukaName: string | null;
+  pinCode: string | null;
+  alternateMobile: string | null;
+  alternateEmail: string | null;
+  disabilityStatus: boolean | null;
+  disabilityType: string | null;
+  disabilityCertificateNumber: string | null;
+  /* "Name change applicable": a boolean is expected; the portal's 'Yes' / 'No' is tolerated too. */
+  centreName: string | null;
+  centreCode: string | null;
+  qualificationName: string | null;
+  qualificationStream: string | null;
+  qualificationBoard: string | null;
+  qualificationCompletedOn: string | null;
+  gradingType: string | null;
+  cgpaScale: number | null;
+  score: number | null;
+  qualificationClass: string | null;
+}
+
 export interface RegistrationDetail extends Omit<Registration, 'unmasked'> {
   regionId: string | null;
   casteId: string | null;
@@ -50,8 +82,20 @@ export interface RegistrationDetail extends Omit<Registration, 'unmasked'> {
   declarationAccepted: boolean | null;
   documents: { key: string; label: string; required: boolean; supplied: boolean; barcode: string | null }[];
   files: RegistrationFile[];
+  /* EDP portal details; optional so a response without it (older backend) still renders. */
+  profile?: RegistrationProfile | null;
   /* Full values, returned only to reviewers (registrations.update); each view is audited by the backend. */
-  unmasked?: { email: string | null; mobile: string | null; aadhaar?: string | null; currentAddress?: string };
+  unmasked?: {
+    email: string | null;
+    mobile: string | null;
+    aadhaar?: string | null;
+    currentAddress?: string;
+    /* Full EDP profile values (the `profile` copies are masked). */
+    permanentAddress?: string | null;
+    alternateMobile?: string | null;
+    alternateEmail?: string | null;
+    disabilityCertificateNumber?: string | null;
+  };
 }
 
 export interface RegistrationListParams {

@@ -19,6 +19,7 @@ export const masterOptions = {
 
   departments: () => get('/cms/departments/options'),
   colleges: () => get('/cms/colleges/options'),
+  centres: () => get('/cms/centres/options'),
   centreTypes: () => get('/cms/centre-types/options'),
   trainingCentres: () => get('/cms/training-centres/options'),
   batches: () => get('/cms/batches/options'),

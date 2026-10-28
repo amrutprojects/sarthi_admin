@@ -8,7 +8,7 @@ import Icon from '../../../components/ui/Icon';
 import { Modal } from '../../../components/ui/Overlay';
 import { ApiError } from '../../../services/api-client';
 import { useAuth } from '../../auth';
-import { registrationApi, type RegistrationFile } from '../services/registrationApi';
+import { registrationApi, type RegistrationDetail, type RegistrationFile, type RegistrationProfile } from '../services/registrationApi';
 
 const kb = (n: number) => `${Math.max(1, Math.round(n / 1024))} KB`;
 const AADHAAR_DOC = 'AADHAAR_CARD';
@@ -40,6 +40,11 @@ function useFileUrl(registrationId: string, file: RegistrationFile | undefined) 
 }
 
 function FileView({ url, file, height }: { url: string; file: RegistrationFile; height: string }) {
+  /* A video (Applicant Video with Aadhaar, MP4) plays in place. */
+  if (file.mimeType.startsWith('video/'))
+    return (
+      <video src={url} controls aria-label={file.originalName} style={{ width: '100%', maxHeight: height, display: 'block', margin: '0 auto' }} />
+    );
   return file.mimeType === 'application/pdf' ? (
     <iframe src={url} title={file.originalName} style={{ width: '100%', height, border: 0 }} />
   ) : (
@@ -231,6 +236,45 @@ function AadhaarHover({
   );
 }
 
+const yesNo = (v: boolean | string | null) => (v === null ? null : typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v);
+const withCode = (name: string | null, code: string | null) => (name ? (code ? `${name} (${code})` : name) : code);
+const GRADING_LABELS: Record<string, string> = { PERCENTAGE: 'Percentage', CGPA: 'CGPA' };
+
+/* Label / value rows of the EDP profile; rows without a value are left out. Full values from `unmasked` win, as for email / mobile. */
+function profilePairs(p: RegistrationProfile, full?: RegistrationDetail['unmasked']): [string, string][] {
+  const score =
+    p.score === null
+      ? null
+      : p.gradingType === 'CGPA' && p.cgpaScale !== null
+        ? `${p.score} / ${p.cgpaScale}`
+        : p.gradingType === 'PERCENTAGE'
+          ? `${p.score}%`
+          : String(p.score);
+  const rows: [string, string | null][] = [
+    ['Gender', p.gender],
+    ['Marital status', p.maritalStatus],
+    ['Permanent address', full?.permanentAddress ?? p.permanentAddress],
+    ['Landmark', p.landmark],
+    ['District', p.districtName],
+    ['Taluka', p.talukaName],
+    ['PIN code', p.pinCode],
+    ['Alternate mobile', full?.alternateMobile ?? p.alternateMobile],
+    ['Alternate email', full?.alternateEmail ?? p.alternateEmail],
+    ['Disability', yesNo(p.disabilityStatus)],
+    ['Disability type', p.disabilityType],
+    ['Disability certificate no.', full?.disabilityCertificateNumber ?? p.disabilityCertificateNumber],
+    ['Center', withCode(p.centreName, p.centreCode)],
+    ['Qualification', p.qualificationName],
+    ['Subject / stream / branch', p.qualificationStream],
+    ['Board / university', p.qualificationBoard],
+    ['Qualification completed on', p.qualificationCompletedOn],
+    ['Grading', p.gradingType ? (GRADING_LABELS[p.gradingType] ?? p.gradingType) : null],
+    ['Score', score],
+    ['Class', p.qualificationClass],
+  ];
+  return rows.filter((row): row is [string, string] => row[1] !== null && row[1] !== '');
+}
+
 /* One registration (masked): details on the left (scrolls on its own), documents with preview and verification on the right. */
 export default function RegistrationDetailPage() {
   const { id = '' } = useParams();
@@ -271,6 +315,8 @@ export default function RegistrationDetailPage() {
   const aadhaarCard = r?.files.find((f) => f.docType === AADHAAR_DOC);
   const uploaded = r?.files.length ?? 0;
   const verifiedCount = r?.files.filter((f) => f.verifiedAt).length ?? 0;
+  /* Empty for imported / admin-entered students (every profile value null): the card is then not shown. */
+  const edpPairs = r?.profile ? profilePairs(r.profile, r.unmasked) : [];
 
   return (
     <div className="page">
@@ -343,7 +389,7 @@ export default function RegistrationDetailPage() {
               <div className="card-b">
                 <KvList
                   pairs={[
-                    ['Course centre', r.centreName ?? r.centreCode ?? '—'],
+                    ['Course district', r.centreName ?? r.centreCode ?? '—'],
                     ['Technology', r.trackName ?? r.trackSourceValue],
                     ['Education qualification', r.educationQualification],
                     ['Declaration accepted', r.declarationAccepted ? 'Yes' : 'No'],
@@ -353,6 +399,16 @@ export default function RegistrationDetailPage() {
                 />
               </div>
             </div>
+            {edpPairs.length ? (
+              <div className="card">
+                <div className="card-h">
+                  <h3>Additional details (EDP)</h3>
+                </div>
+                <div className="card-b">
+                  <KvList pairs={edpPairs} />
+                </div>
+              </div>
+            ) : null}
           </div>
 
           {/* Scrolls on its own, like the details: the header stays visible while the table scrolls. */}

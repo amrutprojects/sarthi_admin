@@ -12,12 +12,13 @@ import { ApiError, newIdempotencyKey } from '../../../services/api-client';
 import { MASTERS, useMasterOptions, type MasterKey } from '../../masters';
 import { BARCODES, DECLARATION, RELIGIONS, TEMPLATES, TRACKS } from '../constants';
 import {
-  ACCEPT,
+  acceptFor,
   editFormSchema,
   fileIssue,
   registrationFormSchema,
   STEP_FIELDS,
   MAX_FILE_MB,
+  VIDEO_MAX_FILE_MB,
   type RegistrationFormValues,
 } from '../schemas/registrationSchema';
 import { registrationApi, type RegistrationData } from '../services/registrationApi';
@@ -267,7 +268,7 @@ export default function RegistrationFormPage() {
       /* When editing, a file already on record counts; a new file replaces it. */
       const existingFile = existing.data?.files.some((x) => x.docType === t.code);
       if (f) {
-        const issue = fileIssue(f);
+        const issue = fileIssue(f, t.code);
         if (issue) fe[t.code] = issue;
       } else if (t.isMandatory && !existingFile) fe[t.code] = `${t.name} is required`;
       if ((f || existingFile) && BARCODES[t.code] === 'required' && !getValues(`barcodes.${t.code}`)?.trim()) {
@@ -329,7 +330,7 @@ export default function RegistrationFormPage() {
     });
     setFileErrors((s) => {
       const n = { ...s };
-      const issue = f ? fileIssue(f) : null;
+      const issue = f ? fileIssue(f, code) : null;
       if (issue) n[code] = issue;
       else delete n[code];
       return n;
@@ -479,8 +480,8 @@ export default function RegistrationFormPage() {
 
             {step === 1 ? (
               <div className="tw-grid tw-grid-cols-1 tw-gap-4 sm:tw-grid-cols-2">
-                <Field id="rf-centre" title="Course Centre" error={err('region_id')}>
-                  {pick('region_id', 'rf-centre', 'Course Centre', asOptions(regions.data))}
+                <Field id="rf-centre" title="Course District" error={err('region_id')}>
+                  {pick('region_id', 'rf-centre', 'Course District', asOptions(regions.data))}
                 </Field>
                 <Field id="rf-track" title="Technology / 3rd module selection" error={err('technology')}>
                   {pick(
@@ -504,7 +505,8 @@ export default function RegistrationFormPage() {
             {step === 2 ? (
               <>
                 <Callout tone="info" title="File upload guidelines. ">
-                  Accepted formats: PDF, JPG, JPEG, PNG. Maximum file size: {MAX_FILE_MB} MB.
+                  Accepted formats: PDF, JPG, JPEG, PNG. Maximum file size: {MAX_FILE_MB} MB (Applicant Video with Aadhaar: MP4, up to{' '}
+                  {VIDEO_MAX_FILE_MB} MB).
                 </Callout>
                 <section className="mt14 tw-flex tw-flex-col tw-gap-2" aria-labelledby="rf-downloads">
                   <h4 id="rf-downloads" className={label}>
@@ -617,7 +619,7 @@ export default function RegistrationFormPage() {
                             ) : (
                               <input
                                 type="file"
-                                accept={ACCEPT}
+                                accept={acceptFor(t.code)}
                                 aria-label={`${t.name} file`}
                                 ref={(el) => {
                                   fileInputs.current[t.code] = el;
@@ -751,7 +753,7 @@ export default function RegistrationFormPage() {
               ['Mobile', getValues('mobile_number')],
               ['Religion', getValues('religion')],
               ['Caste', name(castes.data, getValues('caste_id'))],
-              ['Course centre', name(regions.data, getValues('region_id'))],
+              ['Course district', name(regions.data, getValues('region_id'))],
               ['Technology', TRACKS.find((t) => t.code === getValues('technology'))?.name ?? '—'],
               ['Education', name(educations.data, getValues('education_id'))],
               [
