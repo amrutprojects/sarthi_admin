@@ -8,6 +8,12 @@ import { ApiError } from '../../../services/api-client';
 import { publicUrl } from '../../../utils/publicSite';
 
 /*
+ * The programme figures on the sign-in screen's left panel. Fixed values, not the demo dataset's: the
+ * dataset's own target, hours and centre count drive the rest of the mock data and are left as they are.
+ */
+const LOGIN_FIGURES = { target: 2000, trainingHours: 500, approvedCentres: 20 };
+
+/*
  * Sign-in screen (design ported from assets/js/pages/public.js). Authenticates against the backend:
  * POST /api/v1/auth/login with email + password; errors from the API are shown inline.
  */
@@ -32,7 +38,6 @@ export default function LoginPage() {
 
   const mr = lang === 'mr';
   const T = (m: string, en: string): string => (mr ? m : en);
-  const cfg = api.config();
   const from = (location.state as { from?: string } | null)?.from;
 
   function setLang(l: 'mr' | 'en') {
@@ -84,12 +89,8 @@ export default function LoginPage() {
     <div className="auth">
       <div className="auth-l">
         <div className="f ac gp10">
-          <div className="emblem" style={{ background: 'rgba(255,255,255,.14)', borderColor: 'rgba(255,255,255,.3)', color: '#fff' }}>
-            <span>अ</span>
-            <i>PLACEHOLDER</i>
-          </div>
           <div>
-            <b style={{ fontSize: 19, display: 'block', fontFamily: 'var(--serif)', letterSpacing: '.5px' }}>AMRUT × SUMAGO</b>
+            <b style={{ fontSize: 19, display: 'block', fontFamily: 'var(--serif)', letterSpacing: '.5px', color: '#DD792E' }}>AMRUT KALASH</b>
             <span style={{ fontSize: 12, color: '#E3CBB4' }}>
               {T('कौशल्य विकास कार्यक्रम व्यवस्थापन पोर्टल', 'Skill Development Programme Management Portal')}
             </span>
@@ -116,7 +117,7 @@ export default function LoginPage() {
         </div>
         <div className="auth-stat">
           <div>
-            <b>{U.fmt(cfg.target)}</b>
+            <b>{U.fmt(LOGIN_FIGURES.target)}</b>
             <span>{T('कार्यक्रम लक्ष्य', 'Programme target')}</span>
           </div>
           <div>
@@ -124,11 +125,11 @@ export default function LoginPage() {
             <span>{T('जिल्हे', 'Districts monitored')}</span>
           </div>
           <div>
-            <b>{CT.kalash.totalHours}</b>
+            <b>{LOGIN_FIGURES.trainingHours}</b>
             <span>{T('प्रशिक्षण तास', 'Training hours')}</span>
           </div>
           <div>
-            <b>{api.centres().length}</b>
+            <b>{LOGIN_FIGURES.approvedCentres}</b>
             <span>{T('मंजूर केंद्रे', 'Approved centres')}</span>
           </div>
         </div>

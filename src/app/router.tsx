@@ -89,6 +89,7 @@ const PAGES: Record<RouteName, LazyExoticComponent<ComponentType>> = {
   cmsTopBarEdit: page(() => import('../features/cms/topbar/pages/TopBarLinkEdit')),
   cmsTopBarSettings: page(() => import('../features/cms/topbar/pages/TopBarSettingsEdit')),
   cmsTopBarView: page(() => import('../features/cms/topbar/pages/TopBarLinkView')),
+  cmsBrandBarEdit: page(() => import('../features/cms/brandbar/pages/BrandBarEdit')),
   cmsAnnouncementsCreate: page(() => import('../features/cms/announcements/pages/AnnouncementCreate')),
   cmsAnnouncementsEdit: page(() => import('../features/cms/announcements/pages/AnnouncementEdit')),
   cmsAnnouncementsSettings: page(() => import('../features/cms/announcements/pages/AnnouncementsSettingsEdit')),
@@ -260,7 +261,7 @@ export function AppRoutes() {
             );
           })}
           {/*
-           * The nine home page menus share Home Page Management: each one's former landing page opens its tab, and
+           * The ten home page menus share Home Page Management: each one's former landing page opens its tab, and
            * the page applies the access rules (an unknown or forbidden tab falls back to the first one the user may open).
            */}
           {HOME_PAGE_REDIRECTS.map(([path, tab]) => (

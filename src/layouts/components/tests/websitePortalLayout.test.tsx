@@ -33,9 +33,10 @@ const CMS_LABELS = [
   'Taluka Master',
 ];
 
-/* The menus behind Home Page Management's tabs, the top bar first and then the announcements ticker. */
+/* The menus behind Home Page Management's tabs, the top bar first, then the brand bar and the announcements ticker. */
 const HOME_PAGE_MENUS = [
   'cms-topbar',
+  'cms-brandbar',
   'cms-announcements',
   'cms-hero',
   'cms-highlight',
@@ -74,7 +75,7 @@ describe('website portal layout', () => {
     expect(labels(container)).toEqual(['FAQ Management', 'State Master']);
   });
 
-  it('shows one Home Page Management entry for any one of the nine home page menus, in its place', () => {
+  it('shows one Home Page Management entry for any one of the ten home page menus, in its place', () => {
     for (const menu of HOME_PAGE_MENUS) {
       signInAs('website', ['cms-apply.view', `${menu}.view`, 'cms-programme.view']);
       const { container, unmount } = sidebar();
@@ -83,7 +84,7 @@ describe('website portal layout', () => {
     }
   });
 
-  it('drops Home Page Management when no home page menu opens, or Menu Visibility hides all nine', () => {
+  it('drops Home Page Management when no home page menu opens, or Menu Visibility hides all ten', () => {
     signInAs('website', ['cms-faqs.view']);
     const { container, unmount } = sidebar();
     expect(labels(container)).not.toContain('Home Page Management');

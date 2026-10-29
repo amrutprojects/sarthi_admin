@@ -5,6 +5,7 @@ import { useCanOpen } from '../../../../modules/auth/components/Can';
 import AboutTab from '../../about/components/AboutTab';
 import AnnouncementsTab from '../../announcements/components/AnnouncementsTab';
 import BoardMembersTab from '../../board/components/BoardMembersTab';
+import BrandBarTab from '../../brandbar/components/BrandBarTab';
 import { SectionTabBar, SectionTabPanel } from '../../components/SectionTabs';
 import EcosystemTab from '../../ecosystem/components/EcosystemTab';
 import { HeroGlanceTab, HeroSlidesTab } from '../../hero/components/HeroTabs';
@@ -22,6 +23,7 @@ import { HOME_PAGE_TITLE } from '../homePageNav';
  */
 const TAB_CONTENT: Record<HomePageTab, ComponentType> = {
   'top-bar': TopBarTab,
+  'brand-bar': BrandBarTab,
   announcements: AnnouncementsTab,
   hero: HeroSlidesTab,
   glance: HeroGlanceTab,
@@ -36,7 +38,7 @@ const TAB_CONTENT: Record<HomePageTab, ComponentType> = {
 /*
  * Home Page Management — every section of the public home page on one page, one tab per section in the order
  * the home page shows them, with the same tab strip as Programme Page Management and the tab kept in the URL
- * (?tab=). The sections remain nine menus with permissions of their own: a tab is shown only to a user who
+ * (?tab=). The sections remain ten menus with permissions of their own: a tab is shown only to a user who
  * may open its menu (its view permission, Menu Visibility and the website portal, as in the sidebar), the
  * first such tab opens by default, and a link to a missing or forbidden tab opens that one instead.
  */

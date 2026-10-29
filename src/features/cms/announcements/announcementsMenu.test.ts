@@ -5,15 +5,20 @@ import { MENU_GROUPS, WEBSITE_MENUS, canDo, canOpen } from '../../../modules/aut
 import { announcementEditPath, announcementViewPath } from './constants';
 
 describe('Announcements menu', () => {
-  it('is the second tab of Home Page Management, under the top bar, and no sidebar entry of its own', () => {
+  it('is the third tab of Home Page Management, under the top bar and the brand bar, and no sidebar entry of its own', () => {
     const at = NAV.findIndex((n) => !isNavGroup(n) && n.k === 'cms-announcements');
     expect(at).toBeGreaterThan(-1);
     expect(NAV[at]).toEqual({ k: 'cms-announcements', l: 'Announcements', i: 'megaphone', r: '/cms/home-page?tab=announcements' });
-    /* Directly under the top bar (the strip above the whole page), which is directly under Home Page Management. */
+    /*
+     * Directly under the brand bar and the top bar (the strip above the whole page), which is directly under Home
+     * Page Management.
+     */
     const prev = NAV[at - 1];
-    expect(prev && !isNavGroup(prev) ? prev.k : '').toBe('cms-topbar');
+    expect(prev && !isNavGroup(prev) ? prev.k : '').toBe('cms-brandbar');
     const before = NAV[at - 2];
-    expect(before && !isNavGroup(before) ? before.k : '').toBe('cms-home-page');
+    expect(before && !isNavGroup(before) ? before.k : '').toBe('cms-topbar');
+    const first = NAV[at - 3];
+    expect(first && !isNavGroup(first) ? first.k : '').toBe('cms-home-page');
     const group = NAV.slice(0, at)
       .reverse()
       .find((n) => isNavGroup(n));
@@ -21,12 +26,12 @@ describe('Announcements menu', () => {
 
     expect(SIDEBAR_NAV.some((n) => !isNavGroup(n) && n.k === 'cms-announcements')).toBe(false);
     expect(sidebarKey('cms-announcements')).toBe('cms-home-page');
-    expect(HOME_PAGE_TABS[1]).toEqual({ k: 'announcements', l: 'Announcements', menu: 'cms-announcements' });
-    expect(MENU_GROUPS['cms-home-page']![1]).toBe('cms-announcements');
+    expect(HOME_PAGE_TABS[2]).toEqual({ k: 'announcements', l: 'Announcements', menu: 'cms-announcements' });
+    expect(MENU_GROUPS['cms-home-page']![2]).toBe('cms-announcements');
   });
 
-  it('is a menu of the Website Admin role, second of the home page menus', () => {
-    expect(WEBSITE_MENUS[1]).toBe('cms-announcements');
+  it('is a menu of the Website Admin role, third of the home page menus', () => {
+    expect(WEBSITE_MENUS[2]).toBe('cms-announcements');
     expect(canOpen(new Set(['cms-announcements.view']), 'cms-announcements', undefined, 'website')).toBe(true);
     expect(canOpen(new Set(['cms-announcements.view']), 'cms-home-page', undefined, 'website')).toBe(true);
   });

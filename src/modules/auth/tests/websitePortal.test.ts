@@ -9,6 +9,7 @@ const NAV_KEYS = keysOf(NAV);
 const SIDEBAR_KEYS = keysOf(SIDEBAR_NAV);
 const HOME_PAGE_MENUS = [
   'cms-topbar',
+  'cms-brandbar',
   'cms-announcements',
   'cms-hero',
   'cms-highlight',
@@ -21,15 +22,15 @@ const HOME_PAGE_MENUS = [
 
 describe('the website portal (Website Admin)', () => {
   it('opens exactly the CMS menu, in sidebar order', () => {
-    /* Every menu of the role, Home Page Management's nine included (they keep their keys and permissions), and nothing else. */
+    /* Every menu of the role, Home Page Management's ten included (they keep their keys and permissions), and nothing else. */
     expect(NAV_KEYS.filter((k) => canOpen(WEBSITE, k, undefined, 'website'))).toEqual(
       NAV_KEYS.filter((k) => WEBSITE_MENUS.includes(k) || k in MENU_GROUPS),
     );
     expect([...WEBSITE_MENUS].sort()).toEqual(NAV_KEYS.filter((k) => WEBSITE_MENUS.includes(k)).sort());
     expect(WEBSITE_MENUS).toEqual(expect.arrayContaining(['cms-topbar', 'cms-announcements', 'cms-board', 'cms-ecosystem', 'cms-schemes', 'cms-about']));
-    /* The top bar is the strip above the whole page and the announcements ticker comes next, so they lead the home page menus. */
+    /* The top bar is the strip above the whole page, the brand bar sits under it and the announcements ticker comes next, so they lead the home page menus. */
     expect(WEBSITE_MENUS.filter((m) => HOME_PAGE_MENUS.includes(m))).toEqual(HOME_PAGE_MENUS);
-    /* The sidebar: the CMS entries, the nine home page menus gathered under one Home Page Management entry. */
+    /* The sidebar: the CMS entries, the ten home page menus gathered under one Home Page Management entry. */
     expect(SIDEBAR_KEYS.filter((k) => canOpen(WEBSITE, k, undefined, 'website'))).toEqual([
       'cms-home-page',
       'cms-programme',
@@ -67,10 +68,10 @@ describe('the website portal (Website Admin)', () => {
 });
 
 describe('Home Page Management', () => {
-  it('gathers the nine home page menus, the same ones as its tabs', () => {
+  it('gathers the ten home page menus, the same ones as its tabs', () => {
     expect(MENU_GROUPS['cms-home-page']).toEqual(HOME_PAGE_MENUS);
     expect([...new Set(HOME_PAGE_TABS.map((t) => t.menu))]).toEqual(HOME_PAGE_MENUS);
-    /* No permission code of its own: its screen rule is any one of the nine view codes. */
+    /* No permission code of its own: its screen rule is any one of the ten view codes. */
     expect(SCREEN_ACCESS['cms-home-page']).toEqual(HOME_PAGE_MENUS.map((m) => `${m}.view`));
     expect(WEBSITE_MENUS).not.toContain('cms-home-page');
   });
@@ -102,7 +103,7 @@ describe('start screen', () => {
   it('is the first CMS page a Website Admin may open', () => {
     expect(homePath({ permissions: WEBSITE, portal: 'website' })).toBe('/cms/home-page');
     expect(homeItem({ permissions: new Set(['cms-faqs.view']), portal: 'website' })).toMatchObject({ k: 'cms-faqs', r: '/cms/faqs' });
-    /* With all nine home page menus hidden, the next CMS page in website order. */
+    /* With all ten home page menus hidden, the next CMS page in website order. */
     expect(homePath({ permissions: WEBSITE, hiddenMenus: new Set(HOME_PAGE_MENUS), portal: 'website' })).toBe('/cms/programme');
     /* The announcements ticker alone opens Home Page Management too, and so does the top bar. */
     expect(homePath({ permissions: new Set(['cms-announcements.view']), portal: 'website' })).toBe('/cms/home-page');

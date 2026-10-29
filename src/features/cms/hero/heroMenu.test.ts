@@ -8,14 +8,16 @@ describe('Home Hero Section menu', () => {
     expect(at).toBeGreaterThan(-1);
     /*
      * Still listed in NAV, so Roles & Permissions and Menu Visibility keep its row, under Home Page Management, the
-     * top bar and the announcements ticker above the hero.
+     * top bar, the brand bar and the announcements ticker above the hero.
      */
     expect(NAV[at]).toEqual({ k: 'cms-hero', l: 'Home Hero Section', i: 'home', r: '/cms/home-page?tab=hero' });
     const prev = NAV[at - 1];
     expect(prev && !isNavGroup(prev) ? prev.k : '').toBe('cms-announcements');
-    const before = NAV[at - 2];
+    const brand = NAV[at - 2];
+    expect(brand && !isNavGroup(brand) ? brand.k : '').toBe('cms-brandbar');
+    const before = NAV[at - 3];
     expect(before && !isNavGroup(before) ? before.k : '').toBe('cms-topbar');
-    const first = NAV[at - 3];
+    const first = NAV[at - 4];
     expect(first && !isNavGroup(first) ? first.k : '').toBe('cms-home-page');
     const group = NAV.slice(0, at)
       .reverse()

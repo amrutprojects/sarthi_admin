@@ -59,6 +59,7 @@ const MENU_KEYS = [
   'cms-eligibility',
   'cms-apply',
   'cms-topbar',
+  'cms-brandbar',
   'cms-announcements',
   'cms-hero',
   'cms-highlight',
@@ -95,7 +96,7 @@ const MENU_KEYS = [
   'settings',
 ];
 /*
- * Sidebar entries that gather other menus on one page: Home Page Management, whose tabs are the nine home page
+ * Sidebar entries that gather other menus on one page: Home Page Management, whose tabs are the ten home page
  * menus (constants/navigation.ts: HOME_PAGE_TABS). Such an entry has no permission codes or Menu Visibility row
  * of its own; it opens when any of its menus opens (canOpen below), and each tab and each menu's own pages still
  * check their own menu.
@@ -103,6 +104,7 @@ const MENU_KEYS = [
 export const MENU_GROUPS: Readonly<Record<string, readonly string[]>> = {
   'cms-home-page': [
     'cms-topbar',
+    'cms-brandbar',
     'cms-announcements',
     'cms-hero',
     'cms-highlight',
@@ -188,6 +190,8 @@ export const ACTION_ACCESS = {
   createTopBarLink: ['cms-topbar.create'],
   updateTopBar: ['cms-topbar.update'],
   deleteTopBarLink: ['cms-topbar.delete'],
+  viewBrandBar: ['cms-brandbar.view'],
+  updateBrandBar: ['cms-brandbar.update'],
   viewAnnouncements: ['cms-announcements.view'],
   createAnnouncement: ['cms-announcements.create'],
   updateAnnouncement: ['cms-announcements.update'],
@@ -315,6 +319,7 @@ export type Action = keyof typeof ACTION_ACCESS;
 export const WEBSITE_ADMIN_ROLE = 'WEBSITE_ADMIN';
 export const WEBSITE_MENUS: readonly string[] = [
   'cms-topbar',
+  'cms-brandbar',
   'cms-announcements',
   'cms-hero',
   'cms-highlight',

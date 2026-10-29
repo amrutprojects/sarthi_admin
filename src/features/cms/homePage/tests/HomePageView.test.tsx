@@ -17,6 +17,7 @@ import { aboutService, toItem } from '../../about/services/aboutService';
 import type * as AboutServiceModule from '../../about/services/aboutService';
 import { announcementsService } from '../../announcements/services/announcementsService';
 import { boardService } from '../../board/services/boardService';
+import { brandBarService } from '../../brandbar/services/brandBarService';
 import { ecosystemService } from '../../ecosystem/services/ecosystemService';
 import { heroService } from '../../hero/services/heroService';
 import { highlightService } from '../../highlight/services/highlightService';
@@ -65,6 +66,7 @@ const topBarApi = vi.hoisted(() => () => ({
   updateSettings: vi.fn(),
 }));
 vi.mock('../../topbar/services/topBarService', () => ({ topBarService: topBarApi() }));
+vi.mock('../../brandbar/services/brandBarService', () => ({ brandBarService: { get: vi.fn(), update: vi.fn() } }));
 vi.mock('../../announcements/services/announcementsService', () => ({ announcementsService: listService() }));
 vi.mock('../../hero/services/heroService', () => ({ heroService: { get: vi.fn(), update: vi.fn(), setPublished: vi.fn() } }));
 vi.mock('../../highlight/services/highlightService', () => ({
@@ -108,6 +110,14 @@ const topBarLink = {
   ...T,
 };
 const topBarSettings = { id: 'ts', governmentName: pair('महाराष्ट्र शासन', 'Government of Maharashtra'), showLanguageToggle: true, ...T };
+const brandBar = {
+  id: 'bb',
+  title: 'AMRUT KALASH',
+  fullName: pair('अमृत - महाराष्ट्र संशोधन, उन्नती व प्रशिक्षण प्रबोधिनी', 'Academy of Maharashtra Research, Upliftment and Training'),
+  partnerLabel: pair('अंमलबजावणी भागीदार', 'Implementation Partner'),
+  partnerName: 'SUMAGO INFOTECH PVT LTD',
+  ...T,
+};
 const announcement = {
   id: 'an1',
   title: pair('सूचना शीर्षक', 'Announcement title'),
@@ -226,6 +236,7 @@ const about = () => ({
 
 const HOME_PAGE_MENUS = [
   'cms-topbar',
+  'cms-brandbar',
   'cms-announcements',
   'cms-hero',
   'cms-highlight',
@@ -237,6 +248,7 @@ const HOME_PAGE_MENUS = [
 ];
 const LABELS = [
   'Top Bar',
+  'Brand Bar',
   'Announcements',
   'AMRUT Kalash – apply online',
   'Programme at a glance',
@@ -250,6 +262,7 @@ const LABELS = [
 /* The text each tab shows once its section has loaded. */
 const CONTENT: Record<string, string> = {
   'Top Bar': 'Verify Certificate',
+  'Brand Bar': 'Brand bar preview',
   Announcements: 'Announcement title',
   'AMRUT Kalash – apply online': 'Hero slide heading',
   'Programme at a glance': '36 (entered)',
@@ -293,6 +306,7 @@ beforeEach(() => {
   if (!document.getElementById('toast-root')) document.body.insertAdjacentHTML('beforeend', '<div id="toast-root"></div>');
   vi.mocked(topBarService.list).mockResolvedValue([topBarLink]);
   vi.mocked(topBarService.getSettings).mockResolvedValue(topBarSettings);
+  vi.mocked(brandBarService.get).mockResolvedValue(brandBar);
   vi.mocked(announcementsService.list).mockResolvedValue([announcement]);
   vi.mocked(announcementsService.getSection).mockResolvedValue(announcementsSection);
   vi.mocked(heroService.get).mockResolvedValue(hero());
@@ -327,6 +341,7 @@ describe('Home Page Management', () => {
     expect(screen.getByRole('tab', { name: 'Top Bar' })).toHaveAttribute('aria-controls', screen.getByRole('tabpanel').id);
     expect(await screen.findByText('Verify Certificate')).toBeInTheDocument();
     /* Only the open tab loads its section. */
+    expect(brandBarService.get).not.toHaveBeenCalled();
     expect(announcementsService.list).not.toHaveBeenCalled();
     expect(heroService.get).not.toHaveBeenCalled();
     expect(boardService.list).not.toHaveBeenCalled();
@@ -347,7 +362,8 @@ describe('Home Page Management', () => {
     /* The section actions a Website Admin's update rights allow, in the tab's own head. */
     await userEvent.click(screen.getByRole('tab', { name: 'Skill Development Diploma' }));
     expect(await within(screen.getByRole('tabpanel')).findByRole('button', { name: 'Edit content' })).toBeInTheDocument();
-  });
+    /* Opens every one of the eleven tabs in turn, so it needs more than the default 5 s on a busy run. */
+  }, 15_000);
 
   it('opens the tab named in ?tab=', async () => {
     renderApp('/cms/home-page?tab=impact');
@@ -380,17 +396,19 @@ describe('Home Page Management', () => {
   it('hides the tabs of the menus that Menu Visibility hides', async () => {
     signInAs(
       HOME_PAGE_MENUS.map((m) => `${m}.view`),
-      { hidden: ['cms-topbar', 'cms-announcements', 'cms-hero', 'cms-schemes'] },
+      { hidden: ['cms-topbar', 'cms-brandbar', 'cms-announcements', 'cms-hero', 'cms-schemes'] },
     );
     renderApp('/cms/home-page');
 
     expect(await openTab()).toBe('Skill Development Diploma');
     expect(tabLabels()).toEqual(
       LABELS.filter(
-        (l) => !['Top Bar', 'Announcements', 'AMRUT Kalash – apply online', 'Programme at a glance', 'AMRUT Schemes'].includes(l),
+        (l) =>
+          !['Top Bar', 'Brand Bar', 'Announcements', 'AMRUT Kalash – apply online', 'Programme at a glance', 'AMRUT Schemes'].includes(l),
       ),
     );
     expect(topBarService.list).not.toHaveBeenCalled();
+    expect(brandBarService.get).not.toHaveBeenCalled();
     expect(announcementsService.list).not.toHaveBeenCalled();
   });
 
@@ -413,6 +431,7 @@ describe('Home Page Management', () => {
   it('opens each section’s former page as its tab', async () => {
     const moved: [string, string][] = [
       ['/cms/top-bar', 'Top Bar'],
+      ['/cms/brand-bar', 'Brand Bar'],
       ['/cms/announcements', 'Announcements'],
       ['/cms/hero', 'AMRUT Kalash – apply online'],
       ['/cms/highlight', 'Skill Development Diploma'],
@@ -436,6 +455,7 @@ describe('a home page section’s own pages', () => {
   const pages: [string, string, string, string][] = [
     ['/cms/top-bar/create', 'Add link', 'Back', 'Top Bar'],
     ['/cms/top-bar/settings', 'Top bar settings', 'Cancel', 'Top Bar'],
+    ['/cms/brand-bar/edit', 'Edit', 'Cancel', 'Brand Bar'],
     ['/cms/announcements/create', 'Add announcement', 'Back', 'Announcements'],
     ['/cms/announcements/settings', 'Ticker settings', 'Cancel', 'Announcements'],
     ['/cms/highlight/edit', 'Edit', 'Back', 'Skill Development Diploma'],

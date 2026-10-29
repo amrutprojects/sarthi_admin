@@ -83,6 +83,7 @@ export type RouteName =
   | 'cmsTopBarEdit'
   | 'cmsTopBarSettings'
   | 'cmsTopBarView'
+  | 'cmsBrandBarEdit'
   | 'cmsAnnouncementsCreate'
   | 'cmsAnnouncementsEdit'
   | 'cmsAnnouncementsSettings'
@@ -213,7 +214,7 @@ export type AdminRoute = [path: string, name: RouteName, navKey: string];
 /*
  * Home Page Management (/cms/home-page): one sidebar entry and one page, whose tabs are the sections of the
  * public home page in the order it shows them, starting with the Top Bar (the strip at the very top of every
- * page) and the announcements ticker. Each tab belongs to one of nine menus (Home Hero Section has two tabs), and
+ * page), the Brand Bar under it and the announcements ticker. Each tab belongs to one of ten menus (Home Hero Section has two tabs), and
  * those menus keep their own keys, so their permission codes, Menu Visibility rows and the Website Admin role are
  * unchanged; a tab is shown only to a user who can open its menu. Each menu's Add, Edit and Settings pages keep
  * their own paths, and their Back, Cancel and Save return to the menu's tab.
@@ -223,6 +224,7 @@ export const HOME_PAGE_MENU = 'cms-home-page';
 export const HOME_PAGE_PATH = '/cms/home-page';
 export const HOME_PAGE_TABS = [
   { k: 'top-bar', l: 'Top Bar', menu: 'cms-topbar' },
+  { k: 'brand-bar', l: 'Brand Bar', menu: 'cms-brandbar' },
   { k: 'announcements', l: 'Announcements', menu: 'cms-announcements' },
   { k: 'hero', l: 'AMRUT Kalash – apply online', menu: 'cms-hero' },
   { k: 'glance', l: 'Programme at a glance', menu: 'cms-hero' },
@@ -240,11 +242,12 @@ export const homePageTabPath = (tab: HomePageTab): string => `${HOME_PAGE_PATH}?
 
 /*
  * Each home page menu's former landing page → its tab. The router redirects them, so old links and bookmarks keep
- * working. Top Bar and Announcements never had a page of their own; their paths open the tab like the others, beside
+ * working. Top Bar, Brand Bar and Announcements never had a page of their own; their paths open the tab like the others, beside
  * their own pages.
  */
 export const HOME_PAGE_REDIRECTS: readonly (readonly [path: string, tab: HomePageTab])[] = [
   ['/cms/top-bar', 'top-bar'],
+  ['/cms/brand-bar', 'brand-bar'],
   ['/cms/announcements', 'announcements'],
   ['/cms/hero', 'hero'],
   ['/cms/highlight', 'diploma'],
@@ -309,10 +312,11 @@ export const NAV: NavEntry[] = [
   { g: 'CMS' },
   { k: HOME_PAGE_MENU, l: 'Home Page Management', i: 'home', r: HOME_PAGE_PATH },
   /*
-   * The nine menus behind Home Page Management's tabs, in home page order. Not sidebar entries of their own
+   * The ten menus behind Home Page Management's tabs, in home page order. Not sidebar entries of their own
    * (SIDEBAR_NAV leaves them out), but still menus with permissions and Menu Visibility rows of their own.
    */
   { k: 'cms-topbar', l: 'Top Bar', i: 'globe', r: homePageTabPath('top-bar') },
+  { k: 'cms-brandbar', l: 'Brand Bar', i: 'award', r: homePageTabPath('brand-bar') },
   { k: 'cms-announcements', l: 'Announcements', i: 'megaphone', r: homePageTabPath('announcements') },
   { k: 'cms-hero', l: 'Home Hero Section', i: 'home', r: homePageTabPath('hero') },
   { k: 'cms-highlight', l: 'Home Programme Section', i: 'doc', r: homePageTabPath('diploma') },
@@ -465,7 +469,7 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/apply/:id/edit', 'cmsApplyEdit', 'cms-apply'],
   ['/cms/apply/:id', 'cmsApplyView', 'cms-apply'],
   /*
-   * Home Page Management: one tabbed page for the nine home page menus (HOME_PAGE_TABS above). Each menu's
+   * Home Page Management: one tabbed page for the ten home page menus (HOME_PAGE_TABS above). Each menu's
    * own pages stay under its key, so their permission checks still apply; its former landing page redirects
    * to its tab (HOME_PAGE_REDIRECTS, router.tsx).
    */
@@ -475,6 +479,8 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/top-bar/settings', 'cmsTopBarSettings', 'cms-topbar'],
   ['/cms/top-bar/:id/edit', 'cmsTopBarEdit', 'cms-topbar'],
   ['/cms/top-bar/:id/view', 'cmsTopBarView', 'cms-topbar'],
+  /* Brand Bar (the white bar under the top bar: the AMRUT Kalash name and the implementation partner): one record, one Edit page. */
+  ['/cms/brand-bar/edit', 'cmsBrandBarEdit', 'cms-brandbar'],
   /* Announcements (the ticker at the top of the site): static paths (create, settings) before the :id patterns. */
   ['/cms/announcements/create', 'cmsAnnouncementsCreate', 'cms-announcements'],
   ['/cms/announcements/settings', 'cmsAnnouncementsSettings', 'cms-announcements'],
