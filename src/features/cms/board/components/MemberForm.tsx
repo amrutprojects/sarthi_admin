@@ -11,6 +11,7 @@ import { serverErrors, validateMemberForm, type MemberFormValues } from '../vali
 import PhotoField, { type PhotoChoice } from './PhotoField';
 
 const FORM_ID = 'cms-board-member-form';
+const NO_NAME = { mr: '', en: '' };
 
 /*
  * The Add / Edit member form, on its own page like every other CMS form.
@@ -93,7 +94,9 @@ export default function MemberForm({
     }
   }
 
-  const nameError = values.namePending ? undefined : show('name');
+  /* A server message on the name as a whole ("body.name") is shown on its Marathi half. */
+  const nameErrorMr = values.namePending ? undefined : (show('name.mr') ?? show('name'));
+  const nameErrorEn = values.namePending ? undefined : show('name.en');
 
   return (
     <>
@@ -122,26 +125,20 @@ export default function MemberForm({
             <h3>Member details</h3>
           </div>
           <div className="card-b">
-            <MasterField
+            <BilingualField
               id="board-name"
               label="Name"
+              maxLength={120}
               required={!values.namePending}
-              error={nameError}
-              hint="Printed as written — Marathi or English, e.g. Rajendra Sumago."
-            >
-              <input
-                className="inp"
-                type="text"
-                autoComplete="off"
-                maxLength={120}
-                {...fieldAria('board-name', nameError)}
-                value={values.namePending ? '' : values.name}
-                disabled={values.namePending}
-                placeholder={values.namePending ? 'The website card shows no name' : undefined}
-                onChange={(e) => set('name', e.target.value)}
-                onBlur={() => touch('name')}
-              />
-            </MasterField>
+              disabled={values.namePending}
+              placeholder={values.namePending ? 'The website card shows no name' : undefined}
+              value={values.namePending ? NO_NAME : values.name}
+              onChange={(v) => set('name', v)}
+              onBlur={(half) => touch(`name.${half}`)}
+              errorMr={nameErrorMr}
+              errorEn={nameErrorEn}
+              hint="Printed as written, e.g. राजेंद्र सुमागो / Rajendra Sumago."
+            />
             <label className="f ac gp8 fs13 mb10">
               <input type="checkbox" checked={values.namePending} onChange={(e) => set('namePending', e.target.checked)} />
               Name not yet available — the website card shows the office without a name

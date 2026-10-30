@@ -160,7 +160,7 @@ const highlight = () => ({
 });
 const member = {
   id: '00000000-0000-4000-8000-000000000001',
-  name: 'Board Member One',
+  name: pair('मंडळ सदस्य', 'Board Member One'),
   category: pair('गट', 'Group'),
   designation: pair('पद', 'Chair'),
   description: BLANK,

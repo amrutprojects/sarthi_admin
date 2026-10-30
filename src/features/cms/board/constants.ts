@@ -12,5 +12,5 @@ export const boardMemberViewPath = (id: string): string => `/cms/board-members/$
 /* A member's Edit page. */
 export const boardMemberEditPath = (id: string): string => `/cms/board-members/${encodeURIComponent(id)}/edit`;
 
-/* How a member is named in messages: by name, or by office while the name is still to be supplied. */
-export const memberLabel = (m: { name: string | null; designation: { en: string } }) => m.name ?? m.designation.en;
+/* How a member is named in messages: by English name, or by office while the name is still to be supplied. */
+export const memberLabel = (m: { name: { en: string } | null; designation: { en: string } }) => m.name?.en ?? m.designation.en;

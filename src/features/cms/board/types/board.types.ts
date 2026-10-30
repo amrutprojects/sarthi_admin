@@ -9,7 +9,7 @@ export interface Bilingual {
 export interface ApiBoardMember {
   id: string;
   /** null while the officeholder's name is still to be supplied; the website shows no name. */
-  name: string | null;
+  name: Bilingual | null;
   /** The badge above the name, e.g. "राज्य शासन" / "State Government". */
   category: Bilingual;
   designation: Bilingual;
@@ -36,7 +36,7 @@ export interface ApiBoardSection {
 
 /** The create body; on update every key is optional and only the keys sent are changed. */
 export interface BoardMemberInput {
-  name?: string | null;
+  name?: Bilingual | null;
   category?: Bilingual;
   designation?: Bilingual;
   description?: Bilingual;

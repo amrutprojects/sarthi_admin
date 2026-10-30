@@ -59,10 +59,19 @@ function Thumb({ member }: { member: ApiBoardMember }) {
 /* Search, sorting and paging in the browser: the API returns every member at once (clientList.ts). */
 const LIST: ClientListOptions<ApiBoardMember> = {
   searchText: (m) =>
-    [m.name ?? '', m.designation.en, m.designation.mr, m.category.en, m.category.mr, m.description.en, m.description.mr].join(' '),
+    [
+      m.name?.en ?? '',
+      m.name?.mr ?? '',
+      m.designation.en,
+      m.designation.mr,
+      m.category.en,
+      m.category.mr,
+      m.description.en,
+      m.description.mr,
+    ].join(' '),
   sortValue: {
     displayOrder: (m) => m.displayOrder,
-    name: (m) => m.name,
+    name: (m) => m.name?.en,
     category: (m) => m.category.en,
     /* Active first on ascending. */
     isActive: (m) => (m.isActive ? 0 : 1),
@@ -169,7 +178,16 @@ export default function BoardMembersTab() {
       render: (m) => (
         /* Designations run long, and panel cells do not wrap unless told to. */
         <div style={{ whiteSpace: 'normal', minWidth: 180, maxWidth: 340 }}>
-          {m.name ? <b className="lnk">{m.name}</b> : <i className="muted">— name to be filled —</i>}
+          {m.name ? (
+            <>
+              <b className="lnk">{m.name.en}</b>
+              <div className="fs12" lang="mr">
+                {m.name.mr}
+              </div>
+            </>
+          ) : (
+            <i className="muted">— name to be filled —</i>
+          )}
           <div className="muted fs12">{m.designation.en}</div>
           <div className="muted fs12" lang="mr">
             {m.designation.mr}

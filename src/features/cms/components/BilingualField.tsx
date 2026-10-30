@@ -14,6 +14,9 @@ interface BilingualFieldProps {
   /* Address-length content reads better in a textarea. */
   multiline?: boolean;
   required?: boolean;
+  /* Both inputs at once, e.g. while a "not yet available" box is ticked. */
+  disabled?: boolean;
+  placeholder?: string;
 }
 
 /*
@@ -25,7 +28,7 @@ interface BilingualFieldProps {
  * halves are validated as required.
  */
 export default function BilingualField({
-  id, label, value, onChange, onBlur, errorMr, errorEn, hint, maxLength, multiline, required = true,
+  id, label, value, onChange, onBlur, errorMr, errorEn, hint, maxLength, multiline, required = true, disabled, placeholder,
 }: BilingualFieldProps) {
   const control = (half: 'mr' | 'en', fieldId: string, error?: string) => {
     const common = {
@@ -33,6 +36,8 @@ export default function BilingualField({
       ...fieldAria(fieldId, error),
       value: value[half],
       maxLength,
+      disabled,
+      placeholder,
       onChange: (e: { target: { value: string } }) => onChange({ ...value, [half]: e.target.value }),
       onBlur: () => onBlur?.(half),
       /* Marathi is typed with an Indic keyboard; the browser's own spellcheck only gets in the way. */

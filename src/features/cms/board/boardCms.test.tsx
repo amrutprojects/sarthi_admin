@@ -39,7 +39,7 @@ const ALL = ['cms-board.view', 'cms-board.create', 'cms-board.update', 'cms-boar
 
 const member = (n: number, extra: Partial<ApiBoardMember> = {}): ApiBoardMember => ({
   id: `00000000-0000-4000-8000-00000000000${n}`,
-  name: `Member ${n}`,
+  name: pair(`सदस्य ${n}`, `Member ${n}`),
   category: pair(`गट ${n}`, `Group ${n}`),
   designation: pair(`पद ${n}`, `Designation ${n}`),
   description: pair(`वर्णन ${n}`, `Description ${n}`),
@@ -123,6 +123,7 @@ describe('Board Members list', () => {
     expect(headings()).toEqual(['Sr. No.', 'Order', 'Name', 'Photo', 'Category', 'Status', 'Updated', 'Action']);
     const first = row('Member 1');
     expect(within(first).getByRole('img', { name: 'Photo of Member 1' })).toHaveAttribute('src', '/api/v1/cms/board-members/photos/a.png');
+    expect(within(first).getByText('सदस्य 1')).toBeInTheDocument();
     expect(within(first).getByText('Designation 1')).toBeInTheDocument();
     expect(within(first).getByText('पद 1')).toBeInTheDocument();
     expect(within(first).getByText('गट 1')).toBeInTheDocument();
@@ -233,8 +234,8 @@ describe('Board Members list', () => {
 
   it('searches names, designations and categories in both languages', async () => {
     vi.mocked(boardService.list).mockResolvedValue([
-      member(1, { name: 'Anil Patil' }),
-      member(2, { name: 'Sunita Rao', designation: pair('अध्यक्ष', 'Chairperson') }),
+      member(1, { name: pair('अनिल पाटील', 'Anil Patil') }),
+      member(2, { name: pair('सुनीता राव', 'Sunita Rao'), designation: pair('अध्यक्ष', 'Chairperson') }),
       member(3, { name: null, category: pair('राज्य शासन', 'State Government') }),
     ]);
     renderAt(TAB);
@@ -244,6 +245,10 @@ describe('Board Members list', () => {
     await waitFor(() => expect(names()).toEqual(['Sunita Rao']));
     expect(screen.getByText('filtered')).toBeInTheDocument();
     expect(screen.getByText(/^Showing/).closest('.info')).toHaveTextContent('Showing 1-1 of 1 records');
+
+    await userEvent.clear(screen.getByPlaceholderText('Search name, designation or category...'));
+    await search('अनिल');
+    await waitFor(() => expect(names()).toEqual(['Anil Patil']));
 
     await userEvent.clear(screen.getByPlaceholderText('Search name, designation or category...'));
     await search('राज्य');
@@ -257,7 +262,11 @@ describe('Board Members list', () => {
   });
 
   it('sorts by name, keeping unnamed members last, and pages 15 at a time', async () => {
-    vi.mocked(boardService.list).mockResolvedValue([member(1, { name: 'Zubin' }), member(2, { name: null }), member(3, { name: 'Anil' })]);
+    vi.mocked(boardService.list).mockResolvedValue([
+      member(1, { name: pair('झुबिन', 'Zubin') }),
+      member(2, { name: null }),
+      member(3, { name: pair('अनिल', 'Anil') }),
+    ]);
     const { unmount } = renderAt(TAB);
     await screen.findByText('Zubin');
     expect(names()).toEqual(['Zubin', '— name to be filled —', 'Anil']);
@@ -358,7 +367,7 @@ describe('View Member', () => {
       'src',
       '/api/v1/cms/board-members/photos/v.png',
     );
-    expect(field('Name')).toHaveTextContent('Member 7');
+    expect(field('Name')).toHaveTextContent('सदस्य 7Member 7');
     expect(field('Category (badge)')).toHaveTextContent('गट 7Group 7');
     expect(field('Designation')).toHaveTextContent('पद 7Designation 7');
     expect(field('Description')).toHaveTextContent('वर्णन 7Description 7');
@@ -435,16 +444,23 @@ describe('View Member', () => {
 });
 
 describe('Add Member', () => {
-  it('names each missing field, and requires a name unless it is marked as not yet available', async () => {
+  it('names each missing field, and requires a name in both languages unless it is marked as not yet available', async () => {
     renderAt('/cms/board-members/create');
     await userEvent.click(screen.getByRole('button', { name: 'Add member' }));
-    expect(await screen.findByText('Name is required — or tick "Name not yet available"')).toBeInTheDocument();
+    expect(await screen.findByText('Name (Marathi) is required — or tick "Name not yet available"')).toBeInTheDocument();
+    expect(screen.getByText('Name (English) is required — or tick "Name not yet available"')).toBeInTheDocument();
     expect(screen.getByText('Category (Marathi) is required')).toBeInTheDocument();
     expect(screen.getByText('Designation (English) is required')).toBeInTheDocument();
     expect(boardService.create).not.toHaveBeenCalled();
 
+    await userEvent.type(screen.getByLabelText('Name (English) *'), 'Only English');
+    expect(screen.queryByText('Name (English) is required — or tick "Name not yet available"')).toBeNull();
+    expect(screen.getByText('Name (Marathi) is required — or tick "Name not yet available"')).toBeInTheDocument();
+
     await userEvent.click(screen.getByRole('checkbox', { name: /Name not yet available/ }));
-    expect(screen.queryByText('Name is required — or tick "Name not yet available"')).toBeNull();
+    expect(screen.queryByText(/^Name \((Marathi|English)\) is required/)).toBeNull();
+    expect(screen.getByLabelText('Name (Marathi)')).toBeDisabled();
+    expect(screen.getByLabelText('Name (English)')).toBeDisabled();
   });
 
   it('refuses an unsupported or renamed file before uploading anything', async () => {
@@ -467,7 +483,8 @@ describe('Add Member', () => {
     expect(await screen.findByText(/uploaded when you save/)).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Photo preview' }).querySelector('img')).toHaveAttribute('src', 'blob:preview');
 
-    await userEvent.type(screen.getByLabelText('Name *'), 'CMS Test Member');
+    await userEvent.type(screen.getByLabelText('Name (Marathi) *'), 'चाचणी सदस्य');
+    await userEvent.type(screen.getByLabelText('Name (English) *'), 'CMS Test Member');
     await userEvent.type(screen.getByLabelText('Category (Marathi) *'), 'चाचणी');
     await userEvent.type(screen.getByLabelText('Category (English) *'), 'Test');
     await userEvent.type(screen.getByLabelText('Designation (Marathi) *'), 'चाचणी पद');
@@ -480,7 +497,7 @@ describe('Add Member', () => {
     const [input, file] = vi.mocked(boardService.create).mock.calls[0]!;
     expect(file).toBe(photo);
     expect(input).toEqual({
-      name: 'CMS Test Member',
+      name: pair('चाचणी सदस्य', 'CMS Test Member'),
       category: pair('चाचणी', 'Test'),
       designation: pair('चाचणी पद', 'Test designation'),
       description: pair('मराठी वर्णन', 'English description'),
@@ -513,7 +530,7 @@ describe('Add Member', () => {
 
   it('asks before discarding typed changes on Cancel', async () => {
     renderAt('/cms/board-members/create');
-    await userEvent.type(screen.getByLabelText('Name *'), 'X');
+    await userEvent.type(screen.getByLabelText('Name (English) *'), 'X');
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.getByRole('dialog')).toHaveTextContent('This form has unsaved changes.');
     expect(boardService.create).not.toHaveBeenCalled();
@@ -529,7 +546,8 @@ describe('Edit Member', () => {
 
     const designation = await screen.findByLabelText('Designation (English) *');
     expect(designation).toHaveValue('Designation 4');
-    expect(screen.getByLabelText('Name *')).toHaveValue('Member 4');
+    expect(screen.getByLabelText('Name (Marathi) *')).toHaveValue('सदस्य 4');
+    expect(screen.getByLabelText('Name (English) *')).toHaveValue('Member 4');
     expect(screen.getByRole('img', { name: 'Photo preview' }).querySelector('img')).toHaveAttribute(
       'src',
       '/api/v1/cms/board-members/photos/b.png',
@@ -545,6 +563,42 @@ describe('Edit Member', () => {
       { designation: pair('पद 4', 'New designation'), expectedUpdatedAt: saved.updatedAt },
       null,
     ]);
+  });
+
+  it('sends the name as a pair when only its Marathi spelling changes', async () => {
+    const saved = member(4);
+    vi.mocked(boardService.get).mockResolvedValue(saved);
+    vi.mocked(boardService.update).mockResolvedValue(saved);
+    renderAt(`/cms/board-members/${saved.id}/edit`);
+
+    const marathi = await screen.findByLabelText('Name (Marathi) *');
+    await userEvent.clear(marathi);
+    await userEvent.type(marathi, 'नवीन नाव');
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    await waitFor(() =>
+      expect(boardService.update).toHaveBeenCalledWith(
+        saved.id,
+        { name: pair('नवीन नाव', 'Member 4'), expectedUpdatedAt: saved.updatedAt },
+        null,
+      ),
+    );
+  });
+
+  it('clears the name in both languages when it is marked as not yet available', async () => {
+    const saved = member(4);
+    vi.mocked(boardService.get).mockResolvedValue(saved);
+    vi.mocked(boardService.update).mockResolvedValue(saved);
+    renderAt(`/cms/board-members/${saved.id}/edit`);
+
+    await userEvent.click(await screen.findByRole('checkbox', { name: /Name not yet available/ }));
+    expect(screen.getByLabelText('Name (Marathi)')).toHaveValue('');
+    expect(screen.getByLabelText('Name (English)')).toHaveValue('');
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    await waitFor(() =>
+      expect(boardService.update).toHaveBeenCalledWith(saved.id, { name: null, expectedUpdatedAt: saved.updatedAt }, null),
+    );
   });
 
   it('removes the photo only when asked', async () => {
@@ -564,7 +618,7 @@ describe('Edit Member', () => {
     vi.mocked(boardService.get).mockResolvedValue(saved);
     vi.mocked(boardService.update).mockRejectedValue(new ApiError('This member was changed after you opened it.', 409, 'CONFLICT'));
     renderAt(`/cms/board-members/${saved.id}/edit`);
-    await userEvent.type(await screen.findByLabelText('Name *'), ' Jr');
+    await userEvent.type(await screen.findByLabelText('Name (English) *'), ' Jr');
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
     await waitFor(() => expect(toasts()).toHaveTextContent('This member was changed after you opened it.'));
   });

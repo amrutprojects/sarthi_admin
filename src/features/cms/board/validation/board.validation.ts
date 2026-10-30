@@ -21,7 +21,7 @@ export const PHOTO_MAX_MB = 5;
 export const PHOTO_ACCEPT = '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp';
 
 export interface MemberFormValues {
-  name: string;
+  name: Bilingual;
   /** Ticked while the officeholder's name is still to be supplied: the website shows no name. */
   namePending: boolean;
   category: Bilingual;
@@ -44,7 +44,7 @@ export interface SectionFormValues {
 const blank = (): Bilingual => ({ mr: '', en: '' });
 
 export const emptyMemberForm = (): MemberFormValues => ({
-  name: '',
+  name: blank(),
   namePending: false,
   category: blank(),
   designation: blank(),
@@ -55,7 +55,7 @@ export const emptyMemberForm = (): MemberFormValues => ({
 });
 
 export const memberToForm = (m: ApiBoardMember): MemberFormValues => ({
-  name: m.name ?? '',
+  name: m.name ? { ...m.name } : blank(),
   namePending: m.name === null,
   category: { ...m.category },
   designation: { ...m.designation },
@@ -86,12 +86,13 @@ const pairOf = (p: Bilingual, multiline = false): Bilingual => {
   return { mr: f(p.mr), en: f(p.en) };
 };
 const samePair = (a: Bilingual, b: Bilingual) => a.mr === b.mr && a.en === b.en;
+const sameName = (a: Bilingual | null, b: Bilingual | null) => (a && b ? samePair(a, b) : a === b);
 
 /* Every field of the form, as the API takes it. */
 export function memberPayload(v: MemberFormValues): BoardMemberInput {
   const order = v.displayOrder.trim();
   return {
-    name: v.namePending ? null : line(v.name),
+    name: v.namePending ? null : pairOf(v.name),
     category: pairOf(v.category),
     designation: pairOf(v.designation),
     description: pairOf(v.description, true),
@@ -109,7 +110,7 @@ export function memberPayload(v: MemberFormValues): BoardMemberInput {
 export function memberChanges(initial: ApiBoardMember, v: MemberFormValues): BoardMemberInput {
   const next = memberPayload(v);
   const out: BoardMemberInput = { expectedUpdatedAt: initial.updatedAt };
-  if (next.name !== initial.name) out.name = next.name;
+  if (!sameName(next.name ?? null, initial.name)) out.name = next.name;
   if (!samePair(next.category!, initial.category)) out.category = next.category;
   if (!samePair(next.designation!, initial.designation)) out.designation = next.designation;
   if (!samePair(next.description!, initial.description)) out.description = next.description;
@@ -130,7 +131,8 @@ export function sectionPayload(v: SectionFormValues, expectedUpdatedAt: string):
   };
 }
 
-const NAME_RE = /^[\p{L}\p{M}][\p{L}\p{M}\p{N} .,'’()/&-]*$/u;
+/* Zero-width joiners are allowed: Marathi keyboards use them for forms such as the eyelash र. */
+const NAME_RE = /^[\p{L}\p{M}](?:[\p{L}\p{M}\p{N} .,'’()/&-]|\u200C|\u200D)*$/u;
 
 const tooLong = (value: string, label: string, max: number) =>
   value.length > max ? `${label} must be at most ${max} characters` : undefined;
@@ -159,15 +161,22 @@ function optionalPair(errors: FieldErrors<BoardField>, key: string, p: Bilingual
 
 export function validateMemberForm(v: MemberFormValues): FieldErrors<BoardField> {
   const errors: FieldErrors<BoardField> = {};
+  /* Both halves, like the other pairs — unless the name is not yet available, which clears both. */
   if (!v.namePending) {
-    const name = line(v.name);
-    errors.name = !name
-      ? 'Name is required — or tick "Name not yet available"'
-      : name.length > 120
-        ? 'Name must be at most 120 characters'
-        : NAME_RE.test(name)
-          ? undefined
-          : "Name may use letters, digits, spaces and . , ' ( ) - / & only, starting with a letter";
+    for (const [half, lang] of [
+      ['mr', 'Marathi'],
+      ['en', 'English'],
+    ] as const) {
+      const name = line(v.name[half]);
+      const label = `Name (${lang})`;
+      errors[`name.${half}`] = !name
+        ? `${label} is required — or tick "Name not yet available"`
+        : name.length > 120
+          ? `${label} must be at most 120 characters`
+          : NAME_RE.test(name)
+            ? undefined
+            : `${label} may use letters, digits, spaces and . , ' ( ) - / & only, starting with a letter`;
+    }
   }
   requiredPair(errors, 'category', v.category, 'Category', 60);
   requiredPair(errors, 'designation', v.designation, 'Designation', 250);
