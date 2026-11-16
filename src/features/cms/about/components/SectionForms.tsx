@@ -119,10 +119,13 @@ function Actions({
   );
 }
 
+/*
+ * The heading and subtitle. Whether the website shows the section is not here: it is the tab's one "Show on
+ * website" switch above (HomePageView), so the PATCH leaves showSection alone.
+ */
 interface SettingsValues {
   heading: Bilingual;
   subtitle: Bilingual;
-  showSection: boolean;
 }
 
 export function SectionSettingsForm({
@@ -136,7 +139,7 @@ export function SectionSettingsForm({
 }) {
   const f = useSectionForm<SettingsValues>({
     section,
-    toValues: (s) => ({ heading: { ...s.heading }, subtitle: { ...s.subtitle }, showSection: s.showSection }),
+    toValues: (s) => ({ heading: { ...s.heading }, subtitle: { ...s.subtitle } }),
     validate: (v) => {
       const e: FieldErrors<AboutField> = {};
       requiredPair(e, 'heading', v.heading, 'Section heading', 120);
@@ -146,7 +149,6 @@ export function SectionSettingsForm({
     toPayload: (v) => ({
       heading: normPair(v.heading),
       subtitle: normPair(v.subtitle),
-      showSection: v.showSection,
       expectedUpdatedAt: section.updatedAt,
     }),
     onSaved,
@@ -178,19 +180,6 @@ export function SectionSettingsForm({
             hint="Optional — a line under the heading. Leave both languages blank for none, as today."
           />
         </div>
-        <label className="f ac gp8 fs13 mt10">
-          <input
-            type="checkbox"
-            checked={f.values.showSection}
-            onChange={(e) => f.change({ ...f.values, showSection: e.target.checked })}
-          />
-          Show this section on the public website
-        </label>
-        {!f.values.showSection ? (
-          <p className="muted fs12 mt10">
-            While hidden, the home page section and the About page profile are left out. Nothing is deleted.
-          </p>
-        ) : null}
       </fieldset>
       {!readOnly ? (
         <Actions formId="about-settings-form" busy={f.busy} dirty={f.dirty} onCancel={f.reset} saveLabel="Save settings" />

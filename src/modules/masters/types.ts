@@ -5,6 +5,9 @@ export interface MasterRecord {
   name: string;
   description: string | null;
   isMandatory?: boolean;
+  /* Castes only. */
+  nameEn?: string | null;
+  displayOrder?: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -16,9 +19,12 @@ export interface MasterOption {
   code: string;
   name: string;
   isMandatory?: boolean;
+  /* Castes only: the English name, or null. Castes come in display order. */
+  nameEn?: string | null;
 }
 
-export type MasterSortField = 'createdAt' | 'updatedAt' | 'code' | 'name';
+/* displayOrder: ordered masters (castes) only. */
+export type MasterSortField = 'createdAt' | 'updatedAt' | 'code' | 'name' | 'displayOrder';
 
 export interface MasterListParams {
   page: number;
@@ -34,4 +40,6 @@ export interface MasterInput {
   name?: string;
   description?: string | null;
   isMandatory?: boolean;
+  nameEn?: string | null;
+  displayOrder?: number;
 }

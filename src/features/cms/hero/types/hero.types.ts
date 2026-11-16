@@ -45,7 +45,13 @@ export interface ApiHomeHero {
   checkStatusLabel: Bilingual;
   /** Every slide, hidden ones included, in display order. */
   slides: ApiHeroSlide[];
+  /** Whether the website shows the banner, the glance card inside it included; false hides the whole band. */
   isPublished: boolean;
+  /**
+   * Whether the website shows the glance card, while the banner is shown. Switched only from Home Page Management's
+   * "Show on website"; absent from an older API, which always showed the card.
+   */
+  showGlance?: boolean;
   /** Null while the Modules page content has not been seeded, so there is nothing to sum. */
   glance: HeroGlance | null;
   createdAt: string;

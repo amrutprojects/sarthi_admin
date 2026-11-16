@@ -32,7 +32,8 @@ const FORM_ID = 'cms-brand-bar-form';
 /*
  * Edit Brand Bar — the white bar under the top bar of the public website: the bold title, the academy's full name
  * in Marathi and in English (both lines shown together, each left out when blank), and the implementation partner
- * at the right (its small label in the visitor's language; no partner name, no partner block).
+ * at the right (its small label in the visitor's language; no partner name, no partner block), with a switch that
+ * hides the partner block while keeping its label and name.
  */
 export default function BrandBarEdit() {
   usePageTitle('Edit Brand Bar — Brand Bar');
@@ -117,6 +118,7 @@ function BrandBarForm({ bar }: { bar: ApiBrandBar }) {
               fullName={values.fullName}
               partnerLabel={values.partnerLabel}
               partnerName={values.partnerName}
+              showPartner={values.showPartner}
             />
           </div>
         </div>
@@ -164,6 +166,18 @@ function BrandBarForm({ bar }: { bar: ApiBrandBar }) {
             <h3>Implementation partner</h3>
           </div>
           <div className="card-b">
+            <label className="f ac gp8 fs13">
+              <input
+                type="checkbox"
+                aria-describedby="brand-bar-show-partner-hint"
+                checked={values.showPartner}
+                onChange={(e) => set('showPartner', e.target.checked)}
+              />
+              Show the implementation partner box on the website
+            </label>
+            <p id="brand-bar-show-partner-hint" className="muted fs12 mt4 mb14">
+              When off, the website shows the logo only; the partner&rsquo;s label and name are kept for later.
+            </p>
             <MasterField
               id="brand-bar-partner-name"
               label="Partner name"

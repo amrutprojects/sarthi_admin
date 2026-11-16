@@ -21,6 +21,7 @@ vi.mock('../../../modules/auth/auth-context', () => ({ useAuth: () => auth }));
 const WEBSITE = WEBSITE_MENUS.flatMap((m) => [`${m}.view`, `${m}.update`]);
 const CMS_LABELS = [
   'Home Page Management',
+  'Advisory Committee Management',
   'Programme Page Management',
   'Modules Page Management',
   'Eligibility Page Management',
@@ -108,6 +109,10 @@ describe('website portal layout', () => {
       expect(activeLabel(container)).toBe('Home Page Management');
       unmount();
     }
+    /* Advisory Committee is an entry of its own, not a home page tab. */
+    const advisory = sidebar('cms-advisory');
+    expect(activeLabel(advisory.container)).toBe('Advisory Committee Management');
+    advisory.unmount();
     const { container } = sidebar('cms-programme');
     expect(activeLabel(container)).toBe('Programme Page Management');
   });

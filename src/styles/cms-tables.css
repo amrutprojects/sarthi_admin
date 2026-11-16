@@ -127,7 +127,7 @@ table.tbl:has(td .switch) td:last-child > .f {
 
 /*
  * The head of a tab that is a section with buttons of its own (Home Page Management): what the tab shows on
- * the left, its Publish / Edit / Add buttons on the right; on a phone the buttons wrap under the text.
+ * the left, its Edit / Add buttons on the right; on a phone the buttons wrap under the text.
  */
 .cms-sections .cms-tab-head {
   display: flex;
@@ -151,6 +151,74 @@ table.tbl:has(td .switch) td:last-child > .f {
   justify-content: flex-end;
   gap: 8px;
   margin-left: auto;
+}
+
+/*
+ * Home Page Management: the section's "Show on website" switch above each tab's content, green-edged while the
+ * website shows the section and amber while it is hidden; on a phone the state text wraps under the switch.
+ */
+.cms-sections .vis-bar {
+  margin-bottom: 14px;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--green);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+.cms-sections .vis-bar.off {
+  border-left-color: var(--amber);
+  background: var(--amber-bg);
+}
+.cms-sections .vis-bar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.cms-sections .vis-bar-label {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 650;
+}
+.cms-sections .vis-bar-state {
+  color: var(--green);
+  font-size: 14px;
+  font-weight: 650;
+}
+.cms-sections .vis-bar.off .vis-bar-state {
+  color: var(--amber);
+}
+.cms-sections .vis-bar .switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.cms-sections .vis-bar-note {
+  margin: 6px 0 0;
+  color: var(--text-2);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.cms-sections .vis-bar-warn,
+.cms-sections .vis-bar-err {
+  color: var(--amber);
+  font-weight: 600;
+}
+.cms-sections .vis-bar-err {
+  font-size: 13.5px;
+}
+/* The tab strip's mark of a hidden section, after the tab's label. */
+.cms-sections .tabs .tab-pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 7px;
+  border: 1px solid #f3d8ae;
+  border-radius: 99px;
+  background: var(--amber-bg);
+  color: var(--amber);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.6;
+  vertical-align: middle;
 }
 
 /* Section titles, their explanations, filter labels and notices a size up. */

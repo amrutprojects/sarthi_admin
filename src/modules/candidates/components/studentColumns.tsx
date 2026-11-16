@@ -1,12 +1,8 @@
 import { Badge } from '../../../components/ui';
-import type { ServerColumn, StudentListItem, StudentSource } from '../../students';
+import { studentStatusLabel, type ServerColumn, type StudentListItem, type StudentSource } from '../../students';
 
 /* Student register columns, shared by the candidate master (/candidates) and the district page's student table. */
 export const SOURCES: Record<StudentSource, string> = { IMPORT: 'Imported', PUBLIC_REGISTRATION: 'Registration' };
-const statusLabel: Record<string, [string, string]> = {
-  RECEIVED: ['Received', 'green'],
-  REGISTRATION_PENDING: ['Pending verification', 'amber'],
-};
 
 const dateOnly = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—');
 
@@ -34,7 +30,7 @@ export const studentColumns: ServerColumn<StudentListItem>[] = [
     k: 'status',
     l: 'Status',
     render: (s) => {
-      const [l, tone] = statusLabel[s.status] ?? [s.status, 'grey'];
+      const [l, tone] = studentStatusLabel(s);
       return <Badge tone={tone}>{l}</Badge>;
     },
   },

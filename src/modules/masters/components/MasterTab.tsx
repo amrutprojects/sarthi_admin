@@ -19,7 +19,7 @@ type Dialog =
   | { type: 'delete'; row: MasterRecord };
 type Status = 'all' | 'active' | 'inactive';
 const PAGE_SIZE = 20;
-const FORM_FIELDS = ['code', 'name', 'description', 'isMandatory'] as const;
+const FORM_FIELDS = ['code', 'name', 'description', 'isMandatory', 'nameEn', 'displayOrder'] as const;
 
 /* Field errors from a 422 / 409 response, mapped onto the form. */
 function serverFieldErrors(err: unknown): Partial<Record<keyof MasterFormValues, string>> {
@@ -42,6 +42,9 @@ const toInput = (v: MasterFormValues, m: MasterConfig) => ({
   name: v.name,
   description: v.description || null,
   ...(m.hasMandatory ? { isMandatory: v.isMandatory } : {}),
+  ...(m.hasEnglishName ? { nameEn: v.nameEn || null } : {}),
+  /* Left out when blank: the backend appends a new record at the end, and an edit keeps the current place. */
+  ...(m.ordered && v.displayOrder !== null ? { displayOrder: v.displayOrder } : {}),
 });
 
 /*
@@ -54,7 +57,11 @@ export default function MasterTab({ master }: { master: MasterConfig }) {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<Status>('all');
-  const [sort, setSort] = useState<{ by: MasterSortField; order: 'ASC' | 'DESC' }>({ by: 'name', order: 'ASC' });
+  /* An ordered master (castes) opens in its official sequence. */
+  const [sort, setSort] = useState<{ by: MasterSortField; order: 'ASC' | 'DESC' }>({
+    by: master.ordered ? 'displayOrder' : 'name',
+    order: 'ASC',
+  });
   const [page, setPage] = useState(1);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const close = () => setDialog(null);
@@ -164,6 +171,17 @@ export default function MasterTab({ master }: { master: MasterConfig }) {
               <table className="tbl" aria-busy={list.isFetching}>
                 <thead>
                   <tr>
+                    {master.ordered ? (
+                      <th scope="col" aria-sort={ariaSort('displayOrder')}>
+                        <button
+                          type="button"
+                          className="tw-bg-transparent tw-p-0 tw-font-semibold"
+                          onClick={() => toggleSort('displayOrder')}
+                        >
+                          No.{sortMark('displayOrder')}
+                        </button>
+                      </th>
+                    ) : null}
                     <th scope="col" aria-sort={ariaSort('code')}>
                       <button type="button" className="tw-bg-transparent tw-p-0 tw-font-semibold" onClick={() => toggleSort('code')}>
                         Code{sortMark('code')}
@@ -189,9 +207,11 @@ export default function MasterTab({ master }: { master: MasterConfig }) {
                 <tbody className={list.isFetching ? 'tw-opacity-60' : undefined}>
                   {list.data.items.map((r) => (
                     <tr key={r.id}>
+                      {master.ordered ? <td className="mono">{r.displayOrder ?? '—'}</td> : null}
                       <td className="mono">{r.code}</td>
                       <td>
                         <b>{r.name}</b>
+                        {master.hasEnglishName && r.nameEn ? <div className="tw-text-xs tw-text-ink-2">{r.nameEn}</div> : null}
                         {r.description ? <div className="tw-truncate tw-text-xs tw-text-ink-muted">{r.description}</div> : null}
                       </td>
                       {master.hasMandatory ? <td>{r.isMandatory ? <Badge tone="saffron">Mandatory</Badge> : 'Optional'}</td> : null}
@@ -268,7 +288,9 @@ export default function MasterTab({ master }: { master: MasterConfig }) {
           <KvList
             pairs={[
               ['Code', <span className="mono">{dialog.row.code}</span>],
-              ['Name', dialog.row.name],
+              [master.hasEnglishName ? 'Name (Marathi)' : 'Name', dialog.row.name],
+              ...(master.hasEnglishName ? [['English name', dialog.row.nameEn || '—'] as [string, string]] : []),
+              ...(master.ordered ? [['Display order', String(dialog.row.displayOrder ?? '—')] as [string, string]] : []),
               ['Description', dialog.row.description || '—'],
               ...(master.hasMandatory ? [['Mandatory', dialog.row.isMandatory ? 'Yes' : 'No'] as [string, string]] : []),
               ['Status', <GenBadge status={dialog.row.isActive ? 'ACTIVE' : 'INACTIVE'} />],
@@ -341,7 +363,14 @@ function EditDialog({ master, row, onClose }: { master: MasterConfig; row: Maste
       <MasterForm
         master={master}
         mode="edit"
-        defaultValues={{ code: row.code, name: row.name, description: row.description ?? '', isMandatory: !!row.isMandatory }}
+        defaultValues={{
+          code: row.code,
+          name: row.name,
+          description: row.description ?? '',
+          isMandatory: !!row.isMandatory,
+          nameEn: row.nameEn ?? '',
+          displayOrder: row.displayOrder === undefined ? '' : String(row.displayOrder),
+        }}
         submitting={update.isPending}
         serverErrors={serverErrors}
         onCancel={onClose}

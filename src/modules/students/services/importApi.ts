@@ -27,6 +27,8 @@ export interface BatchCounts {
   reconciled: number;
   created?: number;
   linked?: number;
+  /* Of `created`: students added as pending approval (the source had not approved them yet; NOT_APPROVED accepted). */
+  pendingApproval?: number;
 }
 export interface DocumentsReport {
   zipName: string;
@@ -76,6 +78,64 @@ export interface ImportBatch {
   finalisedAt: string | null;
   createdAt: string;
 }
+/* Issue types a reviewer may accept with a reason (A-17); every other issue must be corrected at the source. */
+export const WAIVABLE_ISSUE_CODES = [
+  'NOT_APPROVED',
+  'FORMAT_INVALID',
+  'REF_UNKNOWN',
+  'TRACK_NOT_OFFERED',
+  'DOC_MISSING',
+  'DOC_INVALID',
+] as const;
+export type WaivableIssueCode = (typeof WAIVABLE_ISSUE_CODES)[number];
+/* Their labels, for the bulk accept's issue-type choice. */
+export const WAIVABLE_ISSUE_LABEL: Record<WaivableIssueCode, string> = {
+  NOT_APPROVED: 'Not yet approved at the source',
+  FORMAT_INVALID: 'Invalid format',
+  REF_UNKNOWN: 'Value not in the reference list',
+  TRACK_NOT_OFFERED: 'Track not offered',
+  DOC_MISSING: 'Required document missing',
+  DOC_INVALID: 'Document file rejected',
+};
+
+/*
+ * Profile and source details of an imported application (row values and the student detail). Optional: rows validated,
+ * and students imported, before these fields existed carry none. Alternate contacts arrive masked.
+ */
+export interface StudentProfileFields {
+  gender?: string | null;
+  maritalStatus?: string | null;
+  permanentAddress?: string | null;
+  landmark?: string | null;
+  districtId?: string | null;
+  districtName?: string | null;
+  talukaName?: string | null;
+  division?: string | null;
+  pinCode?: string | null;
+  alternateMobile?: string | null;
+  alternateEmail?: string | null;
+  disabilityStatus?: boolean | null;
+  disabilityType?: string | null;
+  disabilityCertificateNumber?: string | null;
+  qualificationName?: string | null;
+  qualificationStream?: string | null;
+  qualificationBoard?: string | null;
+  /* YYYY-MM-DD */
+  qualificationCompletedOn?: string | null;
+  gradingType?: 'PERCENTAGE' | 'CGPA' | null;
+  cgpaScale?: number | null;
+  /* numeric(5,2) as a string, e.g. "78.50". */
+  score?: string | null;
+  qualificationClass?: string | null;
+  schemeName?: string | null;
+  /* The source's own submission and last-update date-times (ISO). */
+  sourceSubmittedAt?: string | null;
+  sourceUpdatedAt?: string | null;
+  sourceRemarks?: string | null;
+  /* The file's other columns (and values that could not be stored), by header as written. */
+  sourceExtra?: Record<string, string>;
+}
+
 export interface RowIssue {
   field: string;
   code: string;
@@ -83,7 +143,7 @@ export interface RowIssue {
   status: 'OPEN' | 'ACCEPTED';
   reason?: string;
 }
-export interface ImportRowView {
+export interface ImportRowView extends StudentProfileFields {
   id: string;
   rowNumber: number;
   status: RowStatus;
@@ -105,6 +165,10 @@ export interface ImportRowView {
   approvedAt?: string | null;
   evidenceRef?: string | null;
   documents?: Record<string, { supplied: boolean; barcode: string | null }>;
+  /* The course centre was taken from the District column (no Course Centre column). */
+  centreFromDistrict?: boolean;
+  /* First / last name were split from this column. */
+  nameFrom?: 'full_name' | 'applicant_name' | null;
   issues: RowIssue[];
   match: { tier: string; studentId: string | null; rowNumber: number | null; note: string | null } | null;
   decision: string | null;
@@ -145,7 +209,7 @@ export interface StudentListItem extends StudentView {
   caste?: string | null;
   educationQualification?: string | null;
 }
-export interface StudentDetail extends StudentView {
+export interface StudentDetail extends StudentView, StudentProfileFields {
   firstName: string;
   lastName: string;
   fatherName: string;
@@ -159,6 +223,7 @@ export interface StudentDetail extends StudentView {
   evidenceRef: string | null;
   declarationAccepted: boolean | null;
   documents: { key: string; label: string; required: boolean; supplied: boolean; barcode: string | null }[];
+  talukaId?: string | null;
 }
 /*
  * Register buckets (GET /students?bucket=, GET /students/summary):
@@ -213,7 +278,8 @@ export interface StudentListQuery {
 }
 
 export interface ImportReference {
-  columns: { field: string; label: string; required: boolean }[];
+  /* alternative: when another column can stand in for this one, e.g. "required unless Full Name is given". */
+  columns: { field: string; label: string; required: boolean; alternative?: string | null; aliases?: string[] }[];
   tracks: { code: string; name: string; aliases: string[] }[];
   centres: { code: string; name: string }[];
   maxFileMb: number;
@@ -254,6 +320,12 @@ export const importApi = {
     paged<ImportRowView>(`/imports/${id}/rows`, q),
   accept: (id: string, rowId: string, reason: string) =>
     request<ImportRowView>(`/imports/${id}/rows/${rowId}/accept`, { method: 'POST', body: { reason } }),
+  /* Accept the waivable issues (only `code` when given) of every exception row; rows with a non-waivable issue are skipped. */
+  acceptAll: (id: string, reason: string, code?: WaivableIssueCode) =>
+    request<{ batch: ImportBatch; accepted: number; skipped: number }>(`/imports/${id}/accept-issues`, {
+      method: 'POST',
+      body: code ? { reason, code } : { reason },
+    }),
   reject: (id: string, rowId: string, reason: string) =>
     request<ImportRowView>(`/imports/${id}/rows/${rowId}/reject`, { method: 'POST', body: { reason } }),
   restore: (id: string, rowId: string) => request<ImportRowView>(`/imports/${id}/rows/${rowId}/restore`, { method: 'POST', body: {} }),

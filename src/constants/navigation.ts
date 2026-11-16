@@ -110,6 +110,11 @@ export type RouteName =
   | 'cmsAboutCard'
   | 'cmsAboutFactView'
   | 'cmsAboutCardView'
+  | 'cmsAdvisoryList'
+  | 'cmsAdvisoryCreate'
+  | 'cmsAdvisorySettings'
+  | 'cmsAdvisoryEdit'
+  | 'cmsAdvisoryView'
   | 'cmsProgrammeView'
   | 'cmsProgrammeEdit'
   | 'cmsStateList'
@@ -325,6 +330,8 @@ export const NAV: NavEntry[] = [
   { k: 'cms-ecosystem', l: 'The AMRUT Ecosystem', i: 'layers', r: homePageTabPath('ecosystem') },
   { k: 'cms-schemes', l: 'AMRUT Schemes Management', i: 'clipboard', r: homePageTabPath('schemes') },
   { k: 'cms-about', l: 'About AMRUT Management', i: 'building', r: homePageTabPath('about') },
+  /* The website's Advisory Committee page: a sidebar entry and list page of its own, not a Home Page Management tab. */
+  { k: 'cms-advisory', l: 'Advisory Committee Management', i: 'users', r: '/cms/advisory-committee' },
   { k: 'cms-programme', l: 'Programme Page Management', i: 'award', r: '/cms/programme' },
   { k: 'cms-modules', l: 'Modules Page Management', i: 'book', r: '/cms/modules' },
   { k: 'cms-eligibility', l: 'Eligibility Page Management', i: 'check', r: '/cms/eligibility' },
@@ -515,6 +522,12 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/about-amrut/cards/create', 'cmsAboutCard', 'cms-about'],
   ['/cms/about-amrut/cards/:id/edit', 'cmsAboutCard', 'cms-about'],
   ['/cms/about-amrut/cards/:id/view', 'cmsAboutCardView', 'cms-about'],
+  /* Advisory Committee (trainers list): its own list page; static paths (create, settings) before the :id patterns. */
+  ['/cms/advisory-committee', 'cmsAdvisoryList', 'cms-advisory'],
+  ['/cms/advisory-committee/create', 'cmsAdvisoryCreate', 'cms-advisory'],
+  ['/cms/advisory-committee/settings', 'cmsAdvisorySettings', 'cms-advisory'],
+  ['/cms/advisory-committee/:id/edit', 'cmsAdvisoryEdit', 'cms-advisory'],
+  ['/cms/advisory-committee/:id/view', 'cmsAdvisoryView', 'cms-advisory'],
   ['/cms/programme', 'cmsProgrammeView', 'cms-programme'],
   ['/cms/programme/edit', 'cmsProgrammeEdit', 'cms-programme'],
   ['/cms/states', 'cmsStateList', 'cms-states'],

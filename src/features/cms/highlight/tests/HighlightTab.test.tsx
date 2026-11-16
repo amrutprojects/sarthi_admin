@@ -4,6 +4,8 @@ import { useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../../../../../tests/test-utils';
 import HighlightTab from '../components/HighlightTab';
+import HighlightEdit from '../pages/HighlightEdit';
+import HighlightForm, { toFormValues, toPayload } from '../pages/HighlightForm';
 import { highlightService } from '../services/highlightService';
 import type { ApiObjective, ApiProgrammeHighlight } from '../types/highlight.types';
 
@@ -14,7 +16,7 @@ vi.mock('../../../../modules/auth/components/Can', () => ({
   useCan: () => (action: string) => permissions.has(action),
   Can: ({ action, children }: { action: string; children: unknown }) => (permissions.has(action) ? children : null),
 }));
-vi.mock('../services/highlightService', () => ({ highlightService: { get: vi.fn(), update: vi.fn(), setPublished: vi.fn() } }));
+vi.mock('../services/highlightService', () => ({ highlightService: { get: vi.fn(), update: vi.fn() } }));
 
 const AT = '2026-10-22T10:00:00.000Z';
 
@@ -67,16 +69,11 @@ const bodyRows = (table: HTMLElement) => within(table).getAllByRole('row').slice
 const cellText = (row: HTMLElement, col: number) => within(row).getAllByRole('cell')[col].textContent;
 /* A card of the tab, found by its heading. */
 const card = (heading: RegExp) => screen.getByRole('heading', { name: heading }).closest('.card') as HTMLElement;
-const toasts = () => document.getElementById('toast-root') as HTMLElement;
 
 describe('<HighlightTab> — Skill Development Diploma', () => {
   beforeEach(() => {
     permissions.clear();
     vi.mocked(highlightService.get).mockReset().mockResolvedValue(highlightData());
-    vi.mocked(highlightService.setPublished).mockReset().mockResolvedValue(highlightData());
-    /* The panel shell's toast container, which the publish toasts are appended to. */
-    if (!document.getElementById('toast-root')) document.body.insertAdjacentHTML('beforeend', '<div id="toast-root"></div>');
-    toasts().innerHTML = '';
   });
 
   it('shows the section text first, in both languages, with the section’s status', async () => {
@@ -138,31 +135,24 @@ describe('<HighlightTab> — Skill Development Diploma', () => {
     expect(within(objectives).queryByRole('table')).not.toBeInTheDocument();
   });
 
-  it('warns that an unpublished section is not live, and publishes it', async () => {
+  it('has no Publish button: the tab’s "Show on website" switch shows and hides the band', async () => {
     permissions.add('updateHighlight');
     vi.mocked(highlightService.get).mockResolvedValue(highlightData({ isPublished: false }));
     renderTab();
 
     await screen.findByRole('heading', { name: /Section text/ });
-    expect(screen.getByText('This content is not published')).toBeInTheDocument();
+    /* The card still says the band is off the website… */
     expect(within(card(/Section text/)).getByText('Inactive')).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    expect(highlightService.setPublished).toHaveBeenCalledWith(true);
-    await waitFor(() => expect(toasts()).toHaveTextContent('Section published'));
-    await waitFor(() => expect(highlightService.get).toHaveBeenCalledTimes(2));
+    /* …without a second switch, and without claiming the website shows a built-in copy meanwhile. */
+    expect(screen.queryByRole('button', { name: /^(Publish|Unpublish)$/ })).not.toBeInTheDocument();
+    expect(screen.queryByText('This content is not published')).not.toBeInTheDocument();
+    expect(screen.queryByText(/built-in copy/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit content' })).toBeInTheDocument();
   });
 
-  it('unpublishes a published section', async () => {
-    permissions.add('updateHighlight');
-    renderTab();
-
-    await screen.findByRole('heading', { name: /Section text/ });
-    expect(screen.queryByText('This content is not published')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Unpublish' }));
-    expect(highlightService.setPublished).toHaveBeenCalledWith(false);
-    await waitFor(() => expect(toasts()).toHaveTextContent('Section unpublished'));
-    await waitFor(() => expect(highlightService.get).toHaveBeenCalledTimes(2));
+  it('no longer offers a separate publish call', async () => {
+    const actual = await vi.importActual<{ highlightService: object }>('../services/highlightService');
+    expect(actual.highlightService).not.toHaveProperty('setPublished');
   });
 
   it('opens the edit form from Edit content', async () => {
@@ -173,7 +163,7 @@ describe('<HighlightTab> — Skill Development Diploma', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/cms/highlight/edit');
   });
 
-  it('offers no Publish, Unpublish or Edit actions to a view-only user', async () => {
+  it('offers no Edit action to a view-only user', async () => {
     renderTab();
 
     await screen.findByRole('heading', { name: /Section text/ });
@@ -192,5 +182,51 @@ describe('<HighlightTab> — Skill Development Diploma', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByRole('heading', { name: /Section text/ })).toBeInTheDocument();
     expect(highlightService.get).toHaveBeenCalledTimes(2);
+  });
+});
+
+/* Whether the website shows the band is the tab's "Show on website" switch alone: the edit page neither shows nor sends it. */
+describe('<HighlightEdit> — no publish control of its own', () => {
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = vi.fn();
+    /* The save's "Programme section updated" toast needs its container. */
+    if (!document.getElementById('toast-root')) document.body.insertAdjacentHTML('beforeend', '<div id="toast-root"></div>');
+    vi.mocked(highlightService.get).mockReset();
+    vi.mocked(highlightService.update).mockReset().mockResolvedValue(highlightData());
+  });
+
+  it('has no Visibility card in the edit form', () => {
+    renderWithProviders(<HighlightForm initial={toFormValues(highlightData())} onSave={vi.fn()} backTo="/cms/home-page?tab=diploma" />);
+
+    expect(screen.queryByRole('heading', { name: 'Visibility' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /Publish this section/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/unpublished/)).not.toBeInTheDocument();
+    /* The objectives' own Visible ticks stay: they are not the section's flag. */
+    expect(screen.getAllByRole('checkbox')).toHaveLength(3);
+  });
+
+  it('saves the text without isPublished, so a band hidden by the switch meanwhile stays hidden', async () => {
+    /* Hidden on the switch: a save must not put the flag back as this page found it, nor at all. */
+    vi.mocked(highlightService.get).mockResolvedValue(highlightData({ isPublished: false }));
+    renderWithProviders(
+      <>
+        <HighlightEdit />
+        <Location />
+      </>,
+      { route: '/cms/highlight/edit' },
+    );
+
+    const heading = await screen.findByLabelText(/^Heading \(English\)/);
+    await userEvent.clear(heading);
+    await userEvent.type(heading, 'New band heading');
+    await userEvent.click(screen.getByRole('button', { name: 'Save section' }));
+
+    await waitFor(() => expect(highlightService.update).toHaveBeenCalledTimes(1));
+    const sent = vi.mocked(highlightService.update).mock.calls[0]![0];
+    expect(sent).not.toHaveProperty('isPublished');
+    expect(Object.keys(sent).sort()).toEqual(['certification', 'heading', 'objectives', 'subheading', 'tagline']);
+    expect(sent.heading.en).toBe('New band heading');
+    expect(toPayload(toFormValues(highlightData({ isPublished: true })))).not.toHaveProperty('isPublished');
+    expect(await screen.findByTestId('location')).toHaveTextContent('/cms/home-page?tab=diploma');
   });
 });

@@ -43,7 +43,7 @@ describe('Home Hero Section menu', () => {
     const routes = ADMIN_ROUTES.filter((r) => r[2] === 'cms-hero');
     expect(routes).toEqual([['/cms/hero/edit', 'cmsHeroEdit', 'cms-hero']]);
     expect(HOME_PAGE_REDIRECTS).toContainEqual(['/cms/hero', 'hero']);
-    /* A view-only administrator sees the section but gets no Edit or Publish. */
+    /* A view-only administrator sees the section but gets no Edit, nor its "Show on website" switches. */
     expect(canDo(new Set(['cms-hero.view']), 'viewHero')).toBe(true);
     expect(canDo(new Set(['cms-hero.view']), 'updateHero')).toBe(false);
     expect(canDo(new Set(['cms-hero.view', 'cms-hero.update']), 'updateHero')).toBe(true);

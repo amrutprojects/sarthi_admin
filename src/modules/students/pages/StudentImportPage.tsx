@@ -12,6 +12,7 @@ import FileDrop from '../components/FileDrop';
 import { BATCH_STATUS_LABEL, ServerTable, StatusBadge, fmtDate } from '../components/importUi';
 import { useStudentSummary } from '../hooks/useStudents';
 import { asOfLabel, pctOf, studentListLink } from '../services/studentFigures';
+import { profileGroups, studentStatusLabel, type ProfilePair } from '../services/studentProfile';
 
 type Tab = 'batches' | 'students' | 'guide';
 
@@ -112,7 +113,7 @@ function UploadCard({ reference, onUploaded }: { reference: ImportReference | nu
               file={file}
               accept=".csv,.xlsx"
               prompt="Drop the Excel or CSV file here"
-              hint={`Excel (.xlsx) or UTF-8 CSV · up to ${maxMb} MB · up to ${(reference?.maxRows ?? 50000).toLocaleString('en-IN')} rows · first sheet, first row is the header`}
+              hint={`The template, or the approver dashboard export as is · Excel (.xlsx) or UTF-8 CSV · up to ${maxMb} MB · up to ${(reference?.maxRows ?? 50000).toLocaleString('en-IN')} rows · first sheet, first row is the header`}
               maxMb={maxMb}
               onPick={setFile}
               onReject={reject}
@@ -125,7 +126,7 @@ function UploadCard({ reference, onUploaded }: { reference: ImportReference | nu
               file={zip}
               accept=".zip"
               prompt="Drop the documents ZIP here"
-              hint="One folder per student, named by source_record_id (e.g. MA-0001/photo.jpg) — no other folders · the Excel doc_ columns name the file (photo.jpg) · PDF, JPG or PNG, up to 5 MB each"
+              hint="One folder per student, named by source_record_id (the Application ID of the approver export; e.g. MA-0001/photo.jpg) — no other folders · the Excel doc_ columns name the file (photo.jpg) · PDF, JPG or PNG, up to 5 MB each"
               maxMb={500}
               onPick={setZip}
               onReject={reject}
@@ -474,7 +475,14 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
             },
             { k: 'mobile', l: 'Mobile', className: 'mono', render: (s) => s.unmasked?.mobile ?? s.mobile ?? '—' },
             { k: 'aadhaar', l: 'Aadhaar', className: 'mono', render: (s) => s.unmasked?.aadhaar ?? s.aadhaar ?? '—' },
-            { k: 'status', l: 'Status', render: (s) => <Badge tone="blue">{s.status === 'RECEIVED' ? 'Received' : s.status}</Badge> },
+            {
+              k: 'status',
+              l: 'Status',
+              render: (s) => {
+                const [label, tone] = studentStatusLabel(s);
+                return <Badge tone={s.status === 'RECEIVED' ? 'blue' : tone}>{label}</Badge>;
+              },
+            },
             { k: 'at', l: 'Approved', render: (s) => (s.approvedAt ? fmtDate(s.approvedAt) : '—') },
           ]}
         />
@@ -486,11 +494,20 @@ function StudentsTab({ reference }: { reference: ImportReference | null }) {
 
 function StudentDrawer({ s, onClose }: { s: StudentDetail; onClose: () => void }) {
   const field = (l: string, v: React.ReactNode) => (
-    <div className="kv">
+    <div className="kv" key={l}>
       <span>{l}</span>
       <b>{v ?? '—'}</b>
     </div>
   );
+  const g = profileGroups(s);
+  const fields = (pairs: ProfilePair[]) => pairs.map(([l, v]) => field(l, v));
+  const group = (title: string, pairs: ProfilePair[]) =>
+    pairs.length ? (
+      <>
+        <h4 className="mb6 mt14">{title}</h4>
+        <div className="kv-grid">{fields(pairs)}</div>
+      </>
+    ) : null;
   return (
     <Drawer title={s.name} onClose={onClose}>
       <div className="mono fs12 muted mb10">
@@ -506,6 +523,7 @@ function StudentDrawer({ s, onClose }: { s: StudentDetail; onClose: () => void }
         {field('Religion', s.religion)}
         {field('Caste', s.caste)}
         {field('Education', s.educationQualification)}
+        {fields(g.profile)}
       </div>
       <h4 className="mb6 mt14">
         Contact & identity <span className="muted fs11">(masked)</span>
@@ -514,7 +532,10 @@ function StudentDrawer({ s, onClose }: { s: StudentDetail; onClose: () => void }
         {field('Mobile', s.mobile)}
         {field('Email', s.email)}
         {field('Aadhaar', s.aadhaar)}
+        {fields(g.contact)}
       </div>
+      {group('Address & location', g.address)}
+      {group('Qualification', g.qualification)}
       <h4 className="mb6 mt14">Programme</h4>
       <div className="kv-grid">
         {field('Course centre', s.centreName)}
@@ -526,7 +547,9 @@ function StudentDrawer({ s, onClose }: { s: StudentDetail; onClose: () => void }
         {field('Approved at', fmtDate(s.approvedAt))}
         {field('Evidence reference', s.evidenceRef)}
         {field('Declaration', s.declarationAccepted === null ? 'Not supplied' : s.declarationAccepted ? 'Accepted' : 'Not accepted')}
+        {fields(g.source)}
       </div>
+      {group('Other source values', g.extra)}
       <h4 className="mb6 mt14">
         Document files <span className="muted fs11">(stored in this student's folder)</span>
       </h4>
@@ -588,7 +611,15 @@ function GuideTab({ reference }: { reference: ImportReference | null }) {
                   <tr key={c.field}>
                     <td className="mono fs12">{c.field}</td>
                     <td>{c.label}</td>
-                    <td>{c.required ? <Badge tone="saffron">Required</Badge> : <span className="muted">Optional</span>}</td>
+                    <td>
+                      {c.required ? (
+                        <Badge tone="saffron">Required</Badge>
+                      ) : c.alternative ? (
+                        <span className="muted fs12">{c.alternative.charAt(0).toUpperCase() + c.alternative.slice(1)}</span>
+                      ) : (
+                        <span className="muted">Optional</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -612,20 +643,27 @@ function GuideTab({ reference }: { reference: ImportReference | null }) {
                   <b>Date of birth</b>: YYYY-MM-DD (Excel dates are read automatically). Other formats are not guessed.
                 </li>
                 <li>
-                  <b>Religion and caste</b>: must equal a supplied source option exactly.
+                  <b>Approver dashboard CSV</b>: accepted as exported. Full Name is split into first and last name, District gives the
+                  course centre, and Primary Mobile Number is used before Mobile.
                 </li>
                 <li>
-                  <b>Approval</b>: approval_status must be APPROVED with a past approved_at; never waivable.
+                  <b>Religion and caste</b>: must equal a supplied source option exactly (the spelling हिंदु is accepted).
+                </li>
+                <li>
+                  <b>Approval</b>: APPROVED with an approval date (approved_at, or Last Updated) → eligible student. Any other status
+                  (PENDING, SUBMITTED…) raises NOT_APPROVED, which a reviewer may accept → the student is added as pending approval, not
+                  eligible for a batch. REJECTED, CANCELLED and WITHDRAWN applications are never imported.
                 </li>
                 <li>
                   <b>Documents</b>: Yes/No presence flags; a missing required document can be accepted with a reason.
                 </li>
                 <li>
-                  <b>Documents ZIP</b>: one folder per student, named exactly like <span className="mono">source_record_id</span> (e.g.{' '}
-                  <span className="mono">MA-0001/photo.jpg</span>); files in any other folder are rejected. In the Excel document columns
-                  write the file name in that folder (<span className="mono">doc_photo</span> = <span className="mono">photo.jpg</span>), or
-                  write Yes and name files by type (<span className="mono">AADHAAR_CARD.pdf</span>). PDF, JPG or PNG up to 5 MB each; files
-                  move to the student’s own folder on finalise.
+                  <b>Documents ZIP</b>: one folder per student, named exactly like <span className="mono">source_record_id</span> (the
+                  Application ID of the approver export; e.g. <span className="mono">MA-0001/photo.jpg</span>); files in any other folder
+                  are rejected. In the Excel document columns write the file name in that folder (<span className="mono">doc_photo</span> ={' '}
+                  <span className="mono">photo.jpg</span>), or write Yes and name files by type (
+                  <span className="mono">AADHAAR_CARD.pdf</span>). PDF, JPG or PNG up to 5 MB each; files move to the student’s own folder
+                  on finalise.
                 </li>
                 <li>
                   <b>Duplicates</b>: same source ID, same Aadhaar, or same name + date of birth + contact need a reviewer's decision.

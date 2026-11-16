@@ -26,7 +26,6 @@ interface FormValues {
   tagline: BilingualValue;
   certification: BilingualValue;
   objectives: ObjectiveValues[];
-  isPublished: boolean;
 }
 
 const pairOf = (v: Bilingual | null | undefined): BilingualValue => (v ? { mr: v.mr, en: v.en } : { mr: '', en: '' });
@@ -38,9 +37,13 @@ export const toFormValues = (page: ApiProgrammeHighlight): FormValues => ({
   tagline: pairOf(page.tagline),
   certification: pairOf(page.certification),
   objectives: page.objectives.map((o) => ({ text: pairOf(o.text), isActive: o.isActive })),
-  isPublished: page.isPublished,
 });
 
+/*
+ * No isPublished: whether the website shows the band is the Diploma tab's "Show on website" switch alone. The save
+ * has no "changed since you opened it" check, so sending the flag as it was when this page opened would quietly
+ * undo a Hide made on the switch in the meantime; leaving it out keeps the flag as it is.
+ */
 const toPayload = (v: FormValues): UpdateProgrammeHighlightInput => ({
   heading: trimPair(v.heading),
   subheading: trimPair(v.subheading),
@@ -51,7 +54,6 @@ const toPayload = (v: FormValues): UpdateProgrammeHighlightInput => ({
     displayOrder: index,
     isActive: o.isActive,
   })),
-  isPublished: v.isPublished,
 });
 
 const required = (value: string, label: string, max: number): string | undefined => {
@@ -92,7 +94,8 @@ function validate(v: FormValues): FieldErrors<HighlightField> {
  * What is NOT here is the fact sheet beside it on the page. Total duration, per module and schedule
  * are summed from the modules, so they belong to the Modules Page screen; ideal completion, validity
  * and the deposit are the Programme page's fact sheet (Programme Page Management). Editing any of
- * them here would be a second place for the same numbers to disagree.
+ * them here would be a second place for the same numbers to disagree. Nor is whether the website shows the band:
+ * that is the Diploma tab's "Show on website" switch.
  */
 export default function HighlightForm({
   initial,
@@ -316,21 +319,6 @@ export default function HighlightForm({
               <Icon name="plus" />
               Add an objective
             </button>
-          </div>
-        </div>
-
-        <div className="card mb14">
-          <div className="card-h">
-            <h3>Visibility</h3>
-          </div>
-          <div className="card-b">
-            <label className="f ac gp8 fs13">
-              <input type="checkbox" checked={values.isPublished} onChange={(e) => change({ ...values, isPublished: e.target.checked })} />
-              Publish this section on the public website
-            </label>
-            {!values.isPublished ? (
-              <p className="muted fs12 mt10">While unpublished the website shows its own built-in copy of this section.</p>
-            ) : null}
           </div>
         </div>
       </form>

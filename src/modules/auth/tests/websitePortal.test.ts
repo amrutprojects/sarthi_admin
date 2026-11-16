@@ -33,6 +33,7 @@ describe('the website portal (Website Admin)', () => {
     /* The sidebar: the CMS entries, the ten home page menus gathered under one Home Page Management entry. */
     expect(SIDEBAR_KEYS.filter((k) => canOpen(WEBSITE, k, undefined, 'website'))).toEqual([
       'cms-home-page',
+      'cms-advisory',
       'cms-programme',
       'cms-modules',
       'cms-eligibility',
@@ -103,8 +104,11 @@ describe('start screen', () => {
   it('is the first CMS page a Website Admin may open', () => {
     expect(homePath({ permissions: WEBSITE, portal: 'website' })).toBe('/cms/home-page');
     expect(homeItem({ permissions: new Set(['cms-faqs.view']), portal: 'website' })).toMatchObject({ k: 'cms-faqs', r: '/cms/faqs' });
-    /* With all ten home page menus hidden, the next CMS page in website order. */
-    expect(homePath({ permissions: WEBSITE, hiddenMenus: new Set(HOME_PAGE_MENUS), portal: 'website' })).toBe('/cms/programme');
+    /* With all ten home page menus hidden, the next CMS page in website order: Advisory Committee, then Programme. */
+    expect(homePath({ permissions: WEBSITE, hiddenMenus: new Set(HOME_PAGE_MENUS), portal: 'website' })).toBe('/cms/advisory-committee');
+    expect(homePath({ permissions: WEBSITE, hiddenMenus: new Set([...HOME_PAGE_MENUS, 'cms-advisory']), portal: 'website' })).toBe(
+      '/cms/programme',
+    );
     /* The announcements ticker alone opens Home Page Management too, and so does the top bar. */
     expect(homePath({ permissions: new Set(['cms-announcements.view']), portal: 'website' })).toBe('/cms/home-page');
     expect(homePath({ permissions: new Set(['cms-topbar.view']), portal: 'website' })).toBe('/cms/home-page');
@@ -145,6 +149,8 @@ describe('canOpenPath', () => {
     expect(canOpenPath('/cms/announcements/create', wa)).toBe(true);
     expect(canOpenPath('/cms/announcements/123/view', wa)).toBe(true);
     expect(canOpenPath('/cms/about-amrut/facts/create', wa)).toBe(true);
+    expect(canOpenPath('/cms/advisory-committee', wa)).toBe(true);
+    expect(canOpenPath('/cms/advisory-committee/123/edit', wa)).toBe(true);
     expect(canOpenPath('/dashboard', wa)).toBe(false);
     expect(canOpenPath('/users', wa)).toBe(false);
     expect(canOpenPath('/no-such-page', wa)).toBe(false);

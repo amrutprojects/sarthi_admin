@@ -20,17 +20,24 @@ export interface ApiBrandBar {
   partnerLabel: Bilingual;
   /** The bold partner name at the right ("SUMAGO INFOTECH PVT LTD"); blank leaves the whole partner block out. */
   partnerName: string;
+  /**
+   * Whether the website shows the partner block (label over name) at the right of the bar. Off leaves it out and
+   * keeps the label and name for later; with a blank partner name there is no block either way.
+   */
+  showPartner: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-/** The update body: every key is required, and the whole bar is replaced. */
+/** The update body: every text key is required, and the whole bar is replaced. */
 export interface UpdateBrandBarInput {
   title: string;
   fullName: Bilingual;
   /** Blank in both languages leaves the small label out. */
   partnerLabel: Bilingual;
   partnerName: string;
+  /** Whether the website shows the partner block; left out, the server keeps the current setting. */
+  showPartner?: boolean;
   /** The updatedAt the form was opened with; the server answers 409 if it changed since. */
   expectedUpdatedAt?: string;
 }

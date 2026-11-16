@@ -9,13 +9,16 @@ import { HeroGlanceTab, HeroSlidesTab } from './components/HeroTabs';
 import HeroEdit from './pages/HeroEdit';
 import HeroForm from './pages/HeroForm';
 import { heroService } from './services/heroService';
+import { visibilityService } from '../visibility/visibilityService';
 import type { ApiHeroSlide, ApiHomeHero, Bilingual } from './types/hero.types';
 import { toFormValues } from './validation/hero.validation';
 
 /* Permissions are switched per test, to compare a view-only administrator with one who may update. */
 const auth = vi.hoisted(() => ({ permissions: new Set<string>() }));
 
-vi.mock('./services/heroService', () => ({ heroService: { get: vi.fn(), update: vi.fn(), setPublished: vi.fn() } }));
+vi.mock('./services/heroService', () => ({ heroService: { get: vi.fn(), update: vi.fn() } }));
+/* Home Page Management's "Show on website" switches, which the old links below open the page with. */
+vi.mock('../visibility/visibilityService', () => ({ visibilityService: { list: vi.fn(), set: vi.fn() } }));
 vi.mock('../../../modules/auth/auth-context', () => ({
   useAuth: () => ({ permissions: auth.permissions, hiddenMenus: new Set() }),
 }));
@@ -118,13 +121,14 @@ describe('Home Hero Section CMS', () => {
     /* The panel shell's toast container, emptied so each test only sees its own toasts. */
     if (!document.getElementById('toast-root')) document.body.insertAdjacentHTML('beforeend', '<div id="toast-root"></div>');
     toasts().innerHTML = '';
+    vi.mocked(visibilityService.list).mockResolvedValue([]);
   });
 
   /* The section's two tabs of Home Page Management: the slides, and the "Programme at a glance" card. */
   describe('view tabs', () => {
-    it('shows the saved texts, and Publish and Edit to an administrator who may update', async () => {
+    it('shows the saved texts, and Edit to an administrator who may update', async () => {
+      /* Hidden from the website: the tab's "Show on website" switch (HomePageView) says so and changes it. */
       vi.mocked(heroService.get).mockResolvedValue({ ...hero(), isPublished: false });
-      vi.mocked(heroService.setPublished).mockResolvedValue(hero());
       renderTab('slides');
 
       expect(await screen.findByRole('heading', { name: 'Buttons on every slide' })).toBeInTheDocument();
@@ -145,19 +149,21 @@ describe('Home Hero Section CMS', () => {
       expect(screen.getByText('Verify certificate')).toBeInTheDocument();
       expect(screen.getAllByText('Visible')).toHaveLength(2);
       expect(screen.getByText('Hidden')).toBeInTheDocument();
-      expect(screen.getByText('This content is not published')).toBeInTheDocument();
       /* The glance card has a tab of its own. */
       expect(screen.queryByRole('heading', { name: 'Programme at a glance' })).not.toBeInTheDocument();
-
-      await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-      await waitFor(() => expect(heroService.setPublished).toHaveBeenCalledWith(true));
-      await waitFor(() => expect(toasts()).toHaveTextContent('Section published'));
+      /* One switch per section: no Publish button, and no claim that the website shows a built-in copy meanwhile. */
+      expect(screen.queryByRole('button', { name: /^(Publish|Unpublish)$/ })).not.toBeInTheDocument();
+      expect(screen.queryByText('This content is not published')).not.toBeInTheDocument();
+      expect(screen.queryByText(/built-in copy/)).not.toBeInTheDocument();
+      /* Hiding the banner takes the card inside it along, but showing the banner does not decide the card. */
+      expect(screen.getByText(/Hiding the banner hides the “Programme at a glance” card inside it too/)).toBeInTheDocument();
+      expect(screen.queryByText(/Publishing applies to the whole banner/)).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: 'Edit content' }));
       expect(screen.getByTestId('location')).toHaveTextContent(/^\/cms\/hero\/edit$/);
     });
 
-    it('shows the texts without Publish or Edit to a view-only administrator', async () => {
+    it('shows the texts without Edit to a view-only administrator', async () => {
       auth.permissions = new Set(['cms-hero.view']);
       vi.mocked(heroService.get).mockResolvedValue(hero());
       renderTab('slides');
@@ -184,18 +190,32 @@ describe('Home Hero Section CMS', () => {
       expect(screen.queryByText(/hidden, so/)).not.toBeInTheDocument();
     });
 
-    it('has the same Publish and Edit on the glance tab, and its Edit returns there', async () => {
+    it('has the same Edit on the glance tab, and its Edit returns there', async () => {
       vi.mocked(heroService.get).mockResolvedValue(hero());
-      vi.mocked(heroService.setPublished).mockResolvedValue({ ...hero(), isPublished: false });
       renderTab('glance');
 
       await screen.findByRole('heading', { name: 'Programme at a glance' });
-      await userEvent.click(screen.getByRole('button', { name: 'Unpublish' }));
-      await waitFor(() => expect(heroService.setPublished).toHaveBeenCalledWith(false));
-      await waitFor(() => expect(toasts()).toHaveTextContent('Section unpublished'));
+      expect(screen.queryByRole('button', { name: /^(Publish|Unpublish)$/ })).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: 'Edit content' }));
       expect(screen.getByTestId('location')).toHaveTextContent('/cms/hero/edit?tab=glance');
+    });
+
+    it('marks the card active only while both the banner and the card are shown', async () => {
+      const cardBadge = async () =>
+        (await screen.findByRole('heading', { name: 'Programme at a glance' })).parentElement!.querySelector('.badge')!.textContent;
+      const cases: [Partial<ApiHomeHero>, string][] = [
+        [{}, 'Active'],
+        [{ showGlance: true }, 'Active'],
+        [{ showGlance: false }, 'Inactive'],
+        [{ isPublished: false, showGlance: true }, 'Inactive'],
+      ];
+      for (const [over, badge] of cases) {
+        vi.mocked(heroService.get).mockResolvedValue({ ...hero(), ...over });
+        const { unmount } = renderTab('glance');
+        expect(await cardBadge()).toBe(badge);
+        unmount();
+      }
     });
 
     it('says when hidden modules are left out of the figures', async () => {
@@ -225,6 +245,11 @@ describe('Home Hero Section CMS', () => {
       renderTab('slides');
       expect(await screen.findByText('Heading 1')).toBeInTheDocument();
     });
+
+    it('no longer offers a separate publish call: the section visibility API is the one switch', async () => {
+      const actual = await vi.importActual<{ heroService: object }>('./services/heroService');
+      expect(actual.heroService).not.toHaveProperty('setPublished');
+    });
   });
 
   describe('form', () => {
@@ -251,6 +276,15 @@ describe('Home Hero Section CMS', () => {
       expect(group(2).getByRole('checkbox')).toBeChecked();
       expect(group(3).getByRole('checkbox')).not.toBeChecked();
       expect(screen.getByRole('checkbox', { name: 'Publish this section on the public website' })).toBeChecked();
+    });
+
+    it('says an unpublished banner is hidden from the website, the glance card included', async () => {
+      renderForm();
+      await userEvent.click(screen.getByRole('checkbox', { name: 'Publish this section on the public website' }));
+      expect(
+        screen.getByText('While unpublished the banner is hidden from the website, the “Programme at a glance” card inside it included.'),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/built-in copy/)).not.toBeInTheDocument();
     });
 
     it('names blank fields and blocks the save', async () => {

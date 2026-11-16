@@ -133,7 +133,23 @@ describe('About AMRUT tab', () => {
     expect(await screen.findByLabelText('Section heading (English) *')).toHaveValue('About AMRUT');
     expect(screen.getByLabelText('Section heading (Marathi) *')).toHaveValue('अमृत विषयी माहिती');
     expect(screen.getByLabelText('Description (English) *')).toHaveValue('AMRUT - the Academy of Maharashtra Research');
-    expect(screen.getByRole('checkbox', { name: 'Show this section on the public website' })).toBeChecked();
+    /* Showing the section is the tab's one "Show on website" switch (Home Page Management), not a box here. */
+    expect(screen.queryByRole('checkbox', { name: /Show this section/ })).not.toBeInTheDocument();
+  });
+
+  it('saves the section settings without touching whether the website shows the section', async () => {
+    vi.mocked(aboutService.updateSection).mockResolvedValue({ ...about().section, heading: pair('अमृत विषयी माहिती', 'About AMRUT!') });
+    renderAt(TAB);
+    await userEvent.type(await screen.findByLabelText('Section heading (English) *'), '!');
+    await userEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+
+    await waitFor(() =>
+      expect(aboutService.updateSection).toHaveBeenCalledWith({
+        heading: pair('अमृत विषयी माहिती', 'About AMRUT!'),
+        subtitle: pair('', ''),
+        expectedUpdatedAt: T.updatedAt,
+      }),
+    );
   });
 
   it('lists the information rows and the cards as FAQ-style tables', async () => {

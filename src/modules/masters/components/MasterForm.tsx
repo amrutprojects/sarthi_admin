@@ -26,10 +26,11 @@ export default function MasterForm({ master, mode, defaultValues, submitting, se
     formState: { errors },
   } = useForm<MasterFormInput, unknown, MasterFormValues>({
     resolver: zodResolver(masterFormSchema(master)),
-    defaultValues: { code: '', name: '', description: '', isMandatory: false, ...defaultValues },
+    defaultValues: { code: '', name: '', description: '', isMandatory: false, nameEn: '', displayOrder: '', ...defaultValues },
   });
   const err = (k: keyof MasterFormValues) => errors[k]?.message ?? serverErrors[k];
   const id = (k: string) => `mf-${master.key}-${k}`;
+  const hint = 'tw-text-xs tw-text-ink-muted';
 
   return (
     <form
@@ -41,7 +42,7 @@ export default function MasterForm({ master, mode, defaultValues, submitting, se
       <div className="tw-grid tw-grid-cols-1 tw-gap-4 sm:tw-grid-cols-3">
         <div className={`${field} sm:tw-col-span-2`}>
           <label htmlFor={id('name')} className={labelCls}>
-            Name
+            {master.hasEnglishName ? 'Name (Marathi)' : 'Name'}
           </label>
           <input id={id('name')} className="inp" autoComplete="off" aria-invalid={!!err('name')} {...register('name')} />
           {err('name') ? (
@@ -69,6 +70,52 @@ export default function MasterForm({ master, mode, defaultValues, submitting, se
           ) : null}
         </div>
       </div>
+
+      {master.hasEnglishName || master.ordered ? (
+        <div className="tw-grid tw-grid-cols-1 tw-gap-4 sm:tw-grid-cols-3">
+          {master.hasEnglishName ? (
+            <div className={`${field} sm:tw-col-span-2`}>
+              <label htmlFor={id('nameEn')} className={labelCls}>
+                English name (optional)
+              </label>
+              <input id={id('nameEn')} className="inp" autoComplete="off" aria-invalid={!!err('nameEn')} {...register('nameEn')} />
+              <span className={hint}>Shown on the English website, e.g. “Brahmin (ब्राह्मण)”.</span>
+              {err('nameEn') ? (
+                <span className={errorText} role="alert">
+                  {err('nameEn')}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+          {master.ordered ? (
+            <div className={field}>
+              <label htmlFor={id('displayOrder')} className={labelCls}>
+                Display order
+              </label>
+              <input
+                id={id('displayOrder')}
+                className="inp"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={9999}
+                aria-invalid={!!err('displayOrder')}
+                {...register('displayOrder')}
+              />
+              <span className={hint}>
+                {mode === 'create'
+                  ? 'Position in every list (1 = first). Blank adds it at the end.'
+                  : 'Position in every list (1 = first).'}
+              </span>
+              {err('displayOrder') ? (
+                <span className={errorText} role="alert">
+                  {err('displayOrder')}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className={field}>
         <label htmlFor={id('description')} className={labelCls}>

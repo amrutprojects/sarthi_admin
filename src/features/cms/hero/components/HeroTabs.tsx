@@ -4,7 +4,7 @@ import { Can } from '../../../../modules/auth/components/Can';
 import Icon from '../../../../components/ui/Icon';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { SectionNote, SectionTabHead } from '../../components/SectionTabs';
-import { LoadState, fmtDateTime, useAction, useApiData } from '../../shared';
+import { LoadState, fmtDateTime, useApiData } from '../../shared';
 import { heroEditPath, type HeroTab } from '../constants';
 import { heroService } from '../services/heroService';
 import type { ApiHomeHero, Bilingual } from '../types/hero.types';
@@ -31,14 +31,13 @@ const link = (path: string) => (
 /*
  * One of Home Hero Section's two tabs of Home Page Management — the read-only view of the rotating banner at the
  * top of the home page, or of the "Programme at a glance" card beside it. Both read the same record, which is
- * saved and published as one: each tab has the Publish and Edit buttons, and the Edit page returns to the tab it
- * was opened from. A view-only administrator (cms-hero.view without cms-hero.update) gets the whole picture
- * without either button.
+ * saved as one: each tab has the Edit button, and the Edit page returns to the tab it was opened from. Whether the
+ * website shows the banner, and the card, is each tab's own "Show on website" switch above it (HomePageView). A
+ * view-only administrator (cms-hero.view without cms-hero.update) gets the whole picture without the button.
  */
 function HeroTabBody({ tab, sub, children }: { tab: HeroTab; sub: ReactNode; children: (hero: ApiHomeHero) => ReactNode }) {
   const go = useGo();
   const detail = useApiData(() => heroService.get(), []);
-  const { busy, run } = useAction();
 
   const hero = detail.data;
 
@@ -47,31 +46,12 @@ function HeroTabBody({ tab, sub, children }: { tab: HeroTab; sub: ReactNode; chi
       <SectionTabHead
         actions={
           hero ? (
-            <>
-              <Can action="updateHero">
-                <button
-                  type="button"
-                  className="btn"
-                  disabled={busy}
-                  onClick={() =>
-                    run(
-                      () => heroService.setPublished(!hero.isPublished),
-                      hero.isPublished ? 'Section unpublished' : 'Section published',
-                      () => detail.reload(),
-                    )
-                  }
-                >
-                  <Icon name="globe" />
-                  {hero.isPublished ? 'Unpublish' : 'Publish'}
-                </button>
-              </Can>
-              <Can action="updateHero">
-                <button type="button" className="btn primary" onClick={() => go(heroEditPath(tab))}>
-                  <Icon name="edit" />
-                  Edit content
-                </button>
-              </Can>
-            </>
+            <Can action="updateHero">
+              <button type="button" className="btn primary" onClick={() => go(heroEditPath(tab))}>
+                <Icon name="edit" />
+                Edit content
+              </button>
+            </Can>
           ) : undefined
         }
       >
@@ -82,13 +62,6 @@ function HeroTabBody({ tab, sub, children }: { tab: HeroTab; sub: ReactNode; chi
 
       {hero ? (
         <>
-          {!hero.isPublished ? (
-            <div className="mb14">
-              <Callout tone="warn" title="This content is not published">
-                The home page is showing the website&rsquo;s own built-in copy of this section. Publish to make the content below live.
-              </Callout>
-            </div>
-          ) : null}
           {children(hero)}
           {/* One save updates the slides and the glance card together, so both tabs show the same time. */}
           <div className="fs13 t2 mt10">Last updated {fmtDateTime(hero.updatedAt)}.</div>
@@ -108,8 +81,8 @@ export function HeroSlidesTab() {
       {(hero) => (
         <>
           <SectionNote>
-            Marathi is shown first, English underneath. Publishing applies to the whole banner, the &ldquo;Programme at a glance&rdquo; card
-            included.
+            Marathi is shown first, English underneath. Hiding the banner hides the &ldquo;Programme at a glance&rdquo; card inside it too;
+            the card can also be hidden on its own, from its tab.
           </SectionNote>
 
           <div className="card mb14">
@@ -163,7 +136,8 @@ export function HeroGlanceTab() {
         <div className="card mb14">
           <div className="card-h">
             <h3>Programme at a glance</h3>
-            <MasterStatusBadge isActive={hero.isPublished} />
+            {/* The card is on the website only while both the banner and the card itself are shown. */}
+            <MasterStatusBadge isActive={hero.isPublished && hero.showGlance !== false} />
           </div>
           <div className="card-b">
             {hero.glance ? (

@@ -12,11 +12,24 @@ export interface MasterConfig {
   codeMax: number;
   nameMax: number;
   hasMandatory?: boolean;
+  /* Castes: an English name beside the (Marathi) name, and a display order that sets the sequence of every list. */
+  hasEnglishName?: boolean;
+  ordered?: boolean;
 }
 
 export const MASTERS: MasterConfig[] = [
   { key: 'region', path: 'regions', label: 'Region', plural: 'Regions', permission: 'regions', codeMax: 10, nameMax: 150 },
-  { key: 'caste', path: 'castes', label: 'Caste', plural: 'Castes', permission: 'castes', codeMax: 20, nameMax: 80 },
+  {
+    key: 'caste',
+    path: 'castes',
+    label: 'Caste',
+    plural: 'Castes',
+    permission: 'castes',
+    codeMax: 20,
+    nameMax: 80,
+    hasEnglishName: true,
+    ordered: true,
+  },
   {
     key: 'documentType',
     path: 'document-types',

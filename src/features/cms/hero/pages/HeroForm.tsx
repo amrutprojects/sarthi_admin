@@ -349,7 +349,9 @@ export default function HeroForm({
               Publish this section on the public website
             </label>
             {!values.isPublished ? (
-              <p className="muted fs12 mt10">While unpublished the website shows its own built-in copy of this section.</p>
+              <p className="muted fs12 mt10">
+                While unpublished the banner is hidden from the website, the &ldquo;Programme at a glance&rdquo; card inside it included.
+              </p>
             ) : null}
           </div>
         </div>

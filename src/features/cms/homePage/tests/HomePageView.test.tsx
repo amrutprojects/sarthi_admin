@@ -13,6 +13,7 @@ import {
   type HomePageTab,
 } from '../../../../constants/navigation';
 import { WEBSITE_MENUS, type Portal } from '../../../../modules/auth/permissions';
+import { ApiError } from '../../../../services/api-client';
 import { aboutService, toItem } from '../../about/services/aboutService';
 import type * as AboutServiceModule from '../../about/services/aboutService';
 import { announcementsService } from '../../announcements/services/announcementsService';
@@ -23,7 +24,10 @@ import { heroService } from '../../hero/services/heroService';
 import { highlightService } from '../../highlight/services/highlightService';
 import { impactService } from '../../impact/services/impactService';
 import { schemesService } from '../../schemes/services/schemesService';
+import { fmtDateTime } from '../../shared';
 import { topBarService } from '../../topbar/services/topBarService';
+import { visibilityService } from '../../visibility/visibilityService';
+import type { SectionVisibility } from '../../visibility/visibility.types';
 /* Loaded up front, so the router's lazy import of the page resolves at once. */
 import HomePageView from '../pages/HomePageView';
 
@@ -68,10 +72,10 @@ const topBarApi = vi.hoisted(() => () => ({
 vi.mock('../../topbar/services/topBarService', () => ({ topBarService: topBarApi() }));
 vi.mock('../../brandbar/services/brandBarService', () => ({ brandBarService: { get: vi.fn(), update: vi.fn() } }));
 vi.mock('../../announcements/services/announcementsService', () => ({ announcementsService: listService() }));
-vi.mock('../../hero/services/heroService', () => ({ heroService: { get: vi.fn(), update: vi.fn(), setPublished: vi.fn() } }));
-vi.mock('../../highlight/services/highlightService', () => ({
-  highlightService: { get: vi.fn(), update: vi.fn(), setPublished: vi.fn() },
-}));
+vi.mock('../../hero/services/heroService', () => ({ heroService: { get: vi.fn(), update: vi.fn() } }));
+vi.mock('../../highlight/services/highlightService', () => ({ highlightService: { get: vi.fn(), update: vi.fn() } }));
+/* Each tab's "Show on website" switch (features/cms/visibility has its own tests). */
+vi.mock('../../visibility/visibilityService', () => ({ visibilityService: { list: vi.fn(), set: vi.fn() } }));
 vi.mock('../../board/services/boardService', () => ({
   photoSrc: (url: string | null) => (url ? `/api/v1${url}` : null),
   boardService: listService(),
@@ -116,6 +120,7 @@ const brandBar = {
   fullName: pair('अमृत - महाराष्ट्र संशोधन, उन्नती व प्रशिक्षण प्रबोधिनी', 'Academy of Maharashtra Research, Upliftment and Training'),
   partnerLabel: pair('अंमलबजावणी भागीदार', 'Implementation Partner'),
   partnerName: 'SUMAGO INFOTECH PVT LTD',
+  showPartner: true,
   ...T,
 };
 const announcement = {
@@ -321,6 +326,10 @@ beforeEach(() => {
   vi.mocked(schemesService.list).mockResolvedValue([scheme]);
   vi.mocked(schemesService.getSection).mockResolvedValue(schemesSection);
   vi.mocked(aboutService.get).mockResolvedValue(about());
+  /* Every section shown on the website, as the API lists them for a Website Admin. */
+  vi.mocked(visibilityService.list).mockResolvedValue(
+    HOME_PAGE_TABS.map((t): SectionVisibility => ({ key: t.k, menu: t.menu, visible: true, configured: true, updatedAt: T.updatedAt })),
+  );
 });
 
 describe('Home Page Management', () => {
@@ -356,9 +365,17 @@ describe('Home Page Management', () => {
       await userEvent.click(screen.getByRole('tab', { name: label }));
       expect(await openTab()).toBe(label);
       const panel = screen.getByRole('tabpanel');
-      expect(await within(panel).findByText(CONTENT[label]!)).toBeInTheDocument();
+      const content = await within(panel).findByText(CONTENT[label]!);
       expect(currentPath()).toBe(`/cms/home-page?tab=${HOME_PAGE_TABS.find((t) => t.l === label)!.k}`);
+      /* Its section's one "Show on website" switch, above the tab's own content. */
+      const toggle = await within(panel).findByRole('switch', { name: 'Show on website' });
+      expect(toggle).toBeChecked();
+      expect(toggle.compareDocumentPosition(content) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      /* And no second switch of the tab's own: the Hero and Diploma Publish buttons are gone. */
+      expect(within(panel).queryByRole('button', { name: /^(Publish|Unpublish)$/ })).not.toBeInTheDocument();
     }
+    /* The list behind the switches is loaded once for the page, not per tab. */
+    expect(visibilityService.list).toHaveBeenCalledTimes(1);
     /* The section actions a Website Admin's update rights allow, in the tab's own head. */
     await userEvent.click(screen.getByRole('tab', { name: 'Skill Development Diploma' }));
     expect(await within(screen.getByRole('tabpanel')).findByRole('button', { name: 'Edit content' })).toBeInTheDocument();
@@ -380,8 +397,10 @@ describe('Home Page Management', () => {
     expect(await openTab()).toBe('Leadership & Governing Board');
     expect(tabLabels()).toEqual(['Leadership & Governing Board', 'About AMRUT']);
     expect(await screen.findByText('Board Member One')).toBeInTheDocument();
-    /* A view-only administrator gets no Add button. */
+    /* A view-only administrator gets no Add button, and a Shown badge instead of the "Show on website" switch. */
     expect(screen.queryByRole('button', { name: /Add Member/ })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('tabpanel')).queryByRole('switch', { name: 'Show on website' })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('tabpanel')).getByText('Shown', { selector: '.vis-bar .badge' })).toBeInTheDocument();
     unmount();
 
     /* A link to a tab the user may not open, or to no tab at all, opens the first one they may. */
@@ -558,5 +577,136 @@ describe('<HomePageView>', () => {
     const panels = document.querySelectorAll('[role="tabpanel"]');
     expect([...panels].map((p) => p.id)).toEqual(['home-page-panel-diploma', 'home-page-panel-impact']);
     expect(await screen.findByText('Diploma band heading')).toBeInTheDocument();
+  });
+});
+
+/*
+ * About AMRUT edits inline, on the tab itself: its switch must not remount it, which would throw the unsaved edits
+ * away, yet its next save has to send the version the switch left, or it is refused as changed since it was opened.
+ */
+describe('the About AMRUT tab’s "Show on website" switch', () => {
+  const SWITCHED = '2026-11-16T10:00:00.000Z';
+  const SAVED = '2026-11-16T11:00:00.000Z';
+  const CHANGED_ELSEWHERE = 'This section was changed elsewhere — reload to see the latest version.';
+  const field = (label: string) => screen.getByLabelText(new RegExp(`^${label} \\(English\\)`));
+  /* The section as the server holds it after the switch, which the tab reads again to check its version. */
+  const afterSwitch = (changes: Partial<ReturnType<typeof about>['section']> = {}) =>
+    vi.mocked(aboutService.get).mockResolvedValue({
+      ...about(),
+      section: { ...about().section, showSection: false, updatedAt: SWITCHED, ...changes },
+    });
+
+  it('keeps the inline editors’ unsaved edits, and their next saves send the newest version', async () => {
+    vi.mocked(visibilityService.set).mockResolvedValue({
+      key: 'about',
+      menu: 'cms-about',
+      visible: false,
+      configured: true,
+      updatedAt: SWITCHED,
+    });
+    vi.mocked(aboutService.updateSection).mockImplementation(async ({ expectedUpdatedAt: _sent, ...input }) => ({
+      ...about().section,
+      ...input,
+      updatedAt: SAVED,
+    }));
+    renderApp('/cms/home-page?tab=about');
+
+    await screen.findByLabelText(/^Description \(English\)/, {}, { timeout: 5000 });
+    await userEvent.type(field('Description'), ' – draft');
+    await userEvent.type(field('Section heading'), '!');
+    const description = field('Description');
+    /* Nobody else saved the section meanwhile: only the switch changed it. */
+    afterSwitch();
+
+    const panel = screen.getByRole('tabpanel');
+    await userEvent.click(within(panel).getByRole('switch', { name: 'Show on website' }));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Yes, hide' }));
+    await waitFor(() => expect(within(panel).getByRole('switch', { name: 'Show on website' })).not.toBeChecked());
+    expect(visibilityService.set).toHaveBeenCalledWith('about', false);
+
+    /* Not remounted: the same fields, both drafts still there; the section is read again only to take its new version. */
+    expect(await within(panel).findByText(`Last saved ${fmtDateTime(SWITCHED)}`)).toBeInTheDocument();
+    expect(aboutService.get).toHaveBeenCalledTimes(2);
+    expect(within(panel).queryByText(CHANGED_ELSEWHERE)).toBeNull();
+    expect(field('Description')).toBe(description);
+    expect(description).toHaveValue('About description – draft');
+    expect(field('Section heading')).toHaveValue('About heading!');
+    expect(within(panel).getAllByText('Unsaved changes')).toHaveLength(2);
+
+    /* The first save sends the version the switch left… */
+    await userEvent.click(within(panel).getByRole('button', { name: 'Save description' }));
+    await waitFor(() => expect(aboutService.updateSection).toHaveBeenCalledTimes(1));
+    expect(aboutService.updateSection).toHaveBeenLastCalledWith({
+      description: pair('वर्णन', 'About description – draft'),
+      expectedUpdatedAt: SWITCHED,
+    });
+
+    /* …and the next one the version that save left, with the other draft still unsaved until then. */
+    expect(field('Section heading')).toHaveValue('About heading!');
+    await userEvent.click(within(panel).getByRole('button', { name: 'Save settings' }));
+    await waitFor(() => expect(aboutService.updateSection).toHaveBeenCalledTimes(2));
+    expect(aboutService.updateSection).toHaveBeenLastCalledWith({
+      heading: pair('अमृत विषयी माहिती', 'About heading!'),
+      subtitle: BLANK,
+      expectedUpdatedAt: SAVED,
+    });
+  });
+
+  it('keeps the old version when the section was saved elsewhere meanwhile, so the next save is refused, not an overwrite', async () => {
+    const STALE = 'This was changed after you opened it. Reload to see the latest version, then make your changes again.';
+    vi.mocked(visibilityService.set).mockResolvedValue({
+      key: 'about',
+      menu: 'cms-about',
+      visible: false,
+      configured: true,
+      updatedAt: SWITCHED,
+    });
+    vi.mocked(aboutService.updateSection).mockRejectedValue(new ApiError(STALE, 409, 'CONFLICT'));
+    renderApp('/cms/home-page?tab=about');
+
+    await screen.findByLabelText(/^Description \(English\)/, {}, { timeout: 5000 });
+    await userEvent.type(field('Description'), ' – draft');
+    const description = field('Description');
+    /* Another administrator saved a new description after this tab loaded; the switch's version covers that save. */
+    afterSwitch({ description: pair('वर्णन', 'Their description') });
+
+    const panel = screen.getByRole('tabpanel');
+    await userEvent.click(within(panel).getByRole('switch', { name: 'Show on website' }));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Yes, hide' }));
+
+    expect(await within(panel).findByText(CHANGED_ELSEWHERE)).toBeInTheDocument();
+    /* Still not remounted, the draft kept, and the version the one this tab loaded. */
+    expect(field('Description')).toBe(description);
+    expect(description).toHaveValue('About description – draft');
+    expect(within(panel).getByText(`Last saved ${fmtDateTime(T.updatedAt)}`)).toBeInTheDocument();
+
+    await userEvent.click(within(panel).getByRole('button', { name: 'Save description' }));
+    await waitFor(() => expect(aboutService.updateSection).toHaveBeenCalledTimes(1));
+    expect(aboutService.updateSection).toHaveBeenLastCalledWith({
+      description: pair('वर्णन', 'About description – draft'),
+      expectedUpdatedAt: T.updatedAt,
+    });
+    /* Refused as stale, with the draft still there to copy before reloading. */
+    await waitFor(() => expect(document.getElementById('toast-root')).toHaveTextContent(STALE));
+    expect(description).toHaveValue('About description – draft');
+  });
+
+  it('still remounts a tab without inline editors, so it reloads what the switch changed', async () => {
+    vi.mocked(visibilityService.set).mockResolvedValue({
+      key: 'impact',
+      menu: 'cms-impact',
+      visible: false,
+      configured: true,
+      updatedAt: SWITCHED,
+    });
+    renderApp('/cms/home-page?tab=impact');
+
+    expect(await screen.findByText('Impact districts', {}, { timeout: 5000 })).toBeInTheDocument();
+    const panel = screen.getByRole('tabpanel');
+    await userEvent.click(await within(panel).findByRole('switch', { name: 'Show on website' }));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Yes, hide' }));
+
+    await waitFor(() => expect(impactService.getSection).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText('Impact districts')).toBeInTheDocument();
   });
 });

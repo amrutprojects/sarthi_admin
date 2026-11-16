@@ -9,7 +9,13 @@ import BrandBarTab from './components/BrandBarTab';
 import BrandBarEdit from './pages/BrandBarEdit';
 import { brandBarService } from './services/brandBarService';
 import type { ApiBrandBar, Bilingual } from './types/brandbar.types';
-import { brandBarPayload, brandBarToForm, validateBrandBarForm, type BrandBarFormValues } from './validation/brandbar.validation';
+import {
+  brandBarPayload,
+  brandBarToForm,
+  partnerSwitchPayload,
+  validateBrandBarForm,
+  type BrandBarFormValues,
+} from './validation/brandbar.validation';
 
 const auth = vi.hoisted(() => ({ permissions: new Set<string>() }));
 
@@ -37,6 +43,7 @@ const brandBar = (extra: Partial<ApiBrandBar> = {}): ApiBrandBar => ({
   fullName: FULL_NAME,
   partnerLabel: PARTNER_LABEL,
   partnerName: PARTNER,
+  showPartner: true,
   createdAt: '2026-10-01T10:00:00.000Z',
   updatedAt: '2026-10-02T10:00:00.000Z',
   ...extra,
@@ -67,6 +74,17 @@ const currentPath = () => screen.getByTestId('location').textContent;
 const crumbs = () => [...document.querySelectorAll('.crumb > a, .crumb > span')].map((c) => c.textContent);
 const bar = (lang: 'Marathi' | 'English') => screen.getByRole('figure', { name: `${lang} preview` });
 const summary = () => screen.getByRole('heading', { name: 'Brand bar' }).closest('.card') as HTMLElement;
+const PARTNER_SWITCH = 'Show the implementation partner box on the website';
+const partnerSwitch = () => screen.getByRole('switch', { name: PARTNER_SWITCH });
+/* The bar exactly as loaded, with only the partner box switched, and the version it was loaded at. */
+const switchedTo = (showPartner: boolean) => ({
+  title: TITLE,
+  fullName: FULL_NAME,
+  partnerLabel: PARTNER_LABEL,
+  partnerName: PARTNER,
+  showPartner,
+  expectedUpdatedAt: brandBar().updatedAt,
+});
 
 beforeEach(() => {
   auth.permissions = new Set(ALL);
@@ -134,6 +152,100 @@ describe('Brand Bar tab', () => {
   });
 });
 
+describe('Brand Bar tab — implementation partner switch', () => {
+  const partnerRow = () => within(summary()).getByText('Implementation partner').closest('.kv') as HTMLElement;
+
+  it('says the box is shown, and hides it after asking, sending the bar as loaded with the version', async () => {
+    const hidden = brandBar({ showPartner: false, updatedAt: '2026-10-03T10:00:00.000Z' });
+    vi.mocked(brandBarService.update).mockResolvedValue(hidden);
+    renderAt(TAB);
+
+    await screen.findByRole('heading', { name: 'Brand bar' });
+    expect(partnerSwitch()).toHaveAttribute('aria-checked', 'true');
+    expect(partnerRow()).toHaveTextContent('Shown');
+
+    await userEvent.click(partnerSwitch());
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('Hide the implementation partner box?');
+    expect(dialog).toHaveTextContent('the website shows the logo only');
+    expect(brandBarService.update).not.toHaveBeenCalled();
+
+    vi.mocked(brandBarService.get).mockResolvedValue(hidden);
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Yes, hide' }));
+    await waitFor(() => expect(brandBarService.update).toHaveBeenCalledWith(switchedTo(false)));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    /* Reloaded: the tab and the preview now show the box hidden; its label and name are kept. */
+    await waitFor(() => expect(partnerSwitch()).toHaveAttribute('aria-checked', 'false'));
+    expect(brandBarService.get).toHaveBeenCalledTimes(2);
+    expect(partnerRow()).toHaveTextContent('Hidden');
+    expect(bar('English')).not.toHaveTextContent(PARTNER);
+    expect(bar('English')).not.toHaveTextContent(PARTNER_LABEL.en);
+    expect(within(summary()).getByText(PARTNER)).toBeInTheDocument();
+    expect(toasts()).toHaveTextContent('The implementation partner box is now hidden on the website');
+  });
+
+  it('sends nothing when hiding is cancelled', async () => {
+    renderAt(TAB);
+    await screen.findByRole('heading', { name: 'Brand bar' });
+    await userEvent.click(partnerSwitch());
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(brandBarService.update).not.toHaveBeenCalled();
+    expect(partnerSwitch()).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('shows a hidden box again without asking', async () => {
+    vi.mocked(brandBarService.get).mockResolvedValue(brandBar({ showPartner: false }));
+    vi.mocked(brandBarService.update).mockResolvedValue(brandBar());
+    renderAt(TAB);
+
+    await screen.findByRole('heading', { name: 'Brand bar' });
+    expect(partnerSwitch()).toHaveAttribute('aria-checked', 'false');
+    expect(partnerRow()).toHaveTextContent('Hidden');
+    expect(bar('Marathi')).not.toHaveTextContent(PARTNER);
+
+    vi.mocked(brandBarService.get).mockResolvedValue(brandBar());
+    await userEvent.click(partnerSwitch());
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await waitFor(() => expect(brandBarService.update).toHaveBeenCalledWith(switchedTo(true)));
+    await waitFor(() => expect(partnerSwitch()).toHaveAttribute('aria-checked', 'true'));
+    expect(bar('Marathi')).toHaveTextContent(`${PARTNER_LABEL.mr}${PARTNER}`);
+    expect(toasts()).toHaveTextContent('The implementation partner box is now shown on the website');
+  });
+
+  it('reloads after someone else saved meanwhile, so the next switch sends their version', async () => {
+    vi.mocked(brandBarService.update).mockRejectedValueOnce(
+      new ApiError('The Brand Bar was changed after you opened it. Reload to see the latest version.', 409, 'CONFLICT'),
+    );
+    renderAt(TAB);
+    await screen.findByRole('heading', { name: 'Brand bar' });
+    await userEvent.click(partnerSwitch());
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Yes, hide' }));
+    await waitFor(() => expect(toasts()).toHaveTextContent('The Brand Bar was changed after you opened it'));
+    await waitFor(() => expect(brandBarService.get).toHaveBeenCalledTimes(2));
+    expect(partnerSwitch()).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('cannot be switched without a partner name, and says why', async () => {
+    vi.mocked(brandBarService.get).mockResolvedValue(brandBar({ partnerName: '' }));
+    renderAt(TAB);
+    await screen.findByRole('heading', { name: 'Brand bar' });
+    expect(partnerSwitch()).toBeDisabled();
+    expect(partnerRow()).toHaveTextContent('Not shown');
+    expect(partnerRow()).toHaveTextContent('No partner name is set, so there is no box to show. Add one with Edit first.');
+  });
+
+  it('gives a view-only administrator the state only', async () => {
+    auth.permissions = new Set(['cms-brandbar.view']);
+    vi.mocked(brandBarService.get).mockResolvedValue(brandBar({ showPartner: false }));
+    renderAt(TAB);
+    await screen.findByRole('heading', { name: 'Brand bar' });
+    expect(screen.queryByRole('switch')).toBeNull();
+    expect(within(partnerRow()).getByText('Hidden')).toBeInTheDocument();
+    expect(partnerRow()).not.toHaveTextContent('Add one with Edit');
+  });
+});
+
 describe('Edit Brand Bar', () => {
   it('saves every field with the loaded version, and returns to the tab', async () => {
     vi.mocked(brandBarService.update).mockResolvedValue(brandBar());
@@ -162,11 +274,37 @@ describe('Edit Brand Bar', () => {
         fullName: pair(FULL_NAME.mr, ''),
         partnerLabel: PARTNER_LABEL,
         partnerName: 'Partner Ltd',
+        showPartner: true,
         expectedUpdatedAt: brandBar().updatedAt,
       }),
     );
     await waitFor(() => expect(currentPath()).toBe(TAB));
     expect(toasts()).toHaveTextContent('Brand bar updated');
+  });
+
+  it('hides the partner box with its checkbox, keeping the label and name', async () => {
+    vi.mocked(brandBarService.update).mockResolvedValue(brandBar({ showPartner: false }));
+    renderAt(EDIT);
+    const show = await screen.findByRole('checkbox', { name: PARTNER_SWITCH });
+    expect(show).toBeChecked();
+    expect(show).toHaveAccessibleDescription('When off, the website shows the logo only; the partner’s label and name are kept for later.');
+    expect(bar('English')).toHaveTextContent(`${PARTNER_LABEL.en}${PARTNER}`);
+
+    await userEvent.click(show);
+    /* The preview leaves the box out; the fields still hold the label and name. */
+    expect(bar('English')).not.toHaveTextContent(PARTNER);
+    expect(bar('English')).not.toHaveTextContent(PARTNER_LABEL.en);
+    expect(screen.getByLabelText('Partner name')).toHaveValue(PARTNER);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(brandBarService.update).toHaveBeenCalledWith(switchedTo(false)));
+  });
+
+  it('opens with the checkbox off for a hidden box', async () => {
+    vi.mocked(brandBarService.get).mockResolvedValue(brandBar({ showPartner: false }));
+    renderAt(EDIT);
+    expect(await screen.findByRole('checkbox', { name: PARTNER_SWITCH })).not.toBeChecked();
+    expect(bar('Marathi')).not.toHaveTextContent(PARTNER);
   });
 
   it('names each problem before sending anything', async () => {
@@ -223,10 +361,21 @@ describe('Edit Brand Bar', () => {
 
 describe('<BrandBarPreview>', () => {
   it('leaves out a blank full-name line, the label in the bar’s language, and the partner block without a name', () => {
-    renderWithProviders(<BrandBarPreview title={TITLE} fullName={pair(FULL_NAME.mr, '')} partnerLabel={PARTNER_LABEL} partnerName="" />);
+    renderWithProviders(
+      <BrandBarPreview title={TITLE} fullName={pair(FULL_NAME.mr, '')} partnerLabel={PARTNER_LABEL} partnerName="" showPartner />,
+    );
     expect(bar('Marathi')).toHaveTextContent(`${TITLE}${FULL_NAME.mr}`);
     expect(bar('Marathi')).not.toHaveTextContent(PARTNER_LABEL.mr);
     expect(bar('English')).not.toHaveTextContent(FULL_NAME.en);
+  });
+
+  it('leaves the partner block out while it is switched off, name and all', () => {
+    renderWithProviders(
+      <BrandBarPreview title={TITLE} fullName={FULL_NAME} partnerLabel={PARTNER_LABEL} partnerName={PARTNER} showPartner={false} />,
+    );
+    expect(bar('Marathi')).toHaveTextContent(`${TITLE}${FULL_NAME.mr}${FULL_NAME.en}`);
+    expect(bar('Marathi')).not.toHaveTextContent(PARTNER_LABEL.mr);
+    expect(bar('English')).not.toHaveTextContent(PARTNER);
   });
 });
 
@@ -236,7 +385,7 @@ describe('brand bar validation', () => {
 
   it('accepts the seeded bar, and one with every optional text blank', () => {
     expect(problems(ok)).toEqual([]);
-    expect(problems({ title: TITLE, fullName: pair('', ''), partnerLabel: pair('', ''), partnerName: '' })).toEqual([]);
+    expect(problems({ title: TITLE, fullName: pair('', ''), partnerLabel: pair('', ''), partnerName: '', showPartner: true })).toEqual([]);
   });
 
   it('requires a title of at most 60 characters', () => {
@@ -272,9 +421,27 @@ describe('brand bar validation', () => {
   it('sends every key, whitespace normalised like the server, with the version', () => {
     expect(
       brandBarPayload(
-        { title: ' AMRUT  KALASH ', fullName: pair(' अमृत ', '  '), partnerLabel: pair('', ''), partnerName: ' SUMAGO ' },
+        {
+          title: ' AMRUT  KALASH ',
+          fullName: pair(' अमृत ', '  '),
+          partnerLabel: pair('', ''),
+          partnerName: ' SUMAGO ',
+          showPartner: false,
+        },
         'v1',
       ),
-    ).toEqual({ title: TITLE, fullName: pair('अमृत', ''), partnerLabel: pair('', ''), partnerName: 'SUMAGO', expectedUpdatedAt: 'v1' });
+    ).toEqual({
+      title: TITLE,
+      fullName: pair('अमृत', ''),
+      partnerLabel: pair('', ''),
+      partnerName: 'SUMAGO',
+      showPartner: false,
+      expectedUpdatedAt: 'v1',
+    });
+  });
+
+  it('switches only the partner box for the tab, with the loaded version', () => {
+    expect(partnerSwitchPayload(brandBar(), false)).toEqual(switchedTo(false));
+    expect(partnerSwitchPayload(brandBar({ showPartner: false }), true)).toEqual(switchedTo(true));
   });
 });

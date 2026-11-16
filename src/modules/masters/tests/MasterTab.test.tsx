@@ -17,6 +17,7 @@ vi.mock('../services/masterApi', () => ({
 
 const region = MASTERS.find((m) => m.key === 'region')!;
 const docTypes = MASTERS.find((m) => m.key === 'documentType')!;
+const castes = MASTERS.find((m) => m.key === 'caste')!;
 const record = (over: Partial<MasterRecord> = {}): MasterRecord => ({
   id: 'r1',
   code: 'PUN',
@@ -115,6 +116,58 @@ describe('<MasterTab>', () => {
       ),
     );
     expect(await screen.findByText(/reserved by a deleted record/)).toBeInTheDocument();
+  });
+
+  it('lists castes in their display order, with the English name, and saves both fields', async () => {
+    ['castes.create', 'castes.update'].forEach((p) => permissions.add(p));
+    vi.mocked(masterApi.list).mockResolvedValue(
+      page([record({ id: 'c1', code: 'C12', name: 'ब्राह्मण', nameEn: 'Brahmin', displayOrder: 1 })]),
+    );
+    vi.mocked(masterApi.create).mockResolvedValue(record({ id: 'c2' }));
+    vi.mocked(masterApi.update).mockResolvedValue(record({ id: 'c1' }));
+    renderWithProviders(<MasterTab master={castes} />);
+
+    expect(await screen.findByText('ब्राह्मण')).toBeInTheDocument();
+    expect(screen.getByText('Brahmin')).toBeInTheDocument();
+    expect(masterApi.list).toHaveBeenCalledWith(
+      castes,
+      expect.objectContaining({ sortBy: 'displayOrder', sortOrder: 'ASC' }),
+      expect.anything(),
+    );
+
+    /* A new caste without a display order is left to the backend, which adds it at the end. */
+    await userEvent.click(screen.getByRole('button', { name: /Add caste/ }));
+    await userEvent.type(screen.getByLabelText('Code'), 'c27');
+    await userEvent.type(screen.getByLabelText('Name (Marathi)'), 'मारवाडी');
+    await userEvent.type(screen.getByLabelText('English name (optional)'), 'Marwari');
+    await userEvent.click(screen.getByRole('button', { name: 'Create caste' }));
+    await waitFor(() =>
+      expect(masterApi.create).toHaveBeenCalledWith(
+        castes,
+        { code: 'C27', name: 'मारवाडी', description: null, nameEn: 'Marwari' },
+        expect.any(String),
+      ),
+    );
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit' }));
+    const order = screen.getByLabelText('Display order');
+    expect(order).toHaveValue(1);
+    await userEvent.clear(order);
+    await userEvent.type(order, '3');
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    await waitFor(() =>
+      expect(masterApi.update).toHaveBeenCalledWith(castes, 'c1', expect.objectContaining({ nameEn: 'Brahmin', displayOrder: 3 })),
+    );
+  });
+
+  it('shows no English name or display order for the other masters', async () => {
+    permissions.add('regions.create');
+    vi.mocked(masterApi.list).mockResolvedValue(page([]));
+    renderWithProviders(<MasterTab master={region} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Add region/ }));
+    expect(screen.getByLabelText('Name')).toBeInTheDocument();
+    expect(screen.queryByLabelText('English name (optional)')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Display order')).not.toBeInTheDocument();
   });
 });
 

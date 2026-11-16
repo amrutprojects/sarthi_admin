@@ -31,7 +31,10 @@ export interface UpdateProgrammeHighlightInput {
   tagline: Bilingual;
   certification: Bilingual;
   objectives: { text: Bilingual; displayOrder: number; isActive: boolean }[];
-  isPublished: boolean;
+  /*
+   * No isPublished, though the API still accepts it: the "Show on website" switch (PUT /cms/section-visibility/diploma)
+   * is the one writer of the flag, and this save, which has no stale check, would otherwise put back an old value.
+   */
 }
 
 /* Error keys are paths, because the objectives are a list — "objectives.2.text.mr". */

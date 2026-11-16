@@ -4,7 +4,15 @@ import { Badge, Callout, Kpi, PageHead } from '../../../components/ui';
 import { Drawer, Modal } from '../../../components/ui/Overlay';
 import { useAuth, useCan } from '../../auth';
 import { ApiError, type PageMeta } from '../../../services/api-client';
-import { importApi, type ImportBatch, type ImportRowView } from '../services/importApi';
+import {
+  WAIVABLE_ISSUE_CODES,
+  WAIVABLE_ISSUE_LABEL,
+  importApi,
+  type ImportBatch,
+  type ImportRowView,
+  type WaivableIssueCode,
+} from '../services/importApi';
+import { profileGroups, type ProfilePair } from '../services/studentProfile';
 import { toastError, toastOk } from '../../../components/feedback/apiFeedback';
 import DocumentList from '../components/DocumentList';
 import DocumentsReportCard from '../components/DocumentsReportCard';
@@ -23,6 +31,8 @@ const FILTERS: [string, string][] = [
 const EDITABLE = ['VALIDATED_WITH_EXCEPTIONS', 'READY_TO_FINALISE'];
 
 type Action = { type: 'accept' } | { type: 'reject' } | { type: 'decide'; decision: 'SAME_PERSON' | 'DIFFERENT_PERSON' | 'HOLD' };
+/* Where the first / last name of a row came from when the file had no separate name columns. */
+const NAME_FROM: Record<string, string> = { full_name: 'Full Name', applicant_name: 'Applicant Name' };
 
 /* Import batch detail (UI-224) with the import preview (UI-223): counts, row grid, row drawer, finalise. */
 export default function ImportBatchPage() {
@@ -40,6 +50,9 @@ export default function ImportBatchPage() {
   const [finalising, setFinalising] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [uploadingDocs, setUploadingDocs] = useState(false);
+  const [acceptingAll, setAcceptingAll] = useState(false);
+  const [acceptCode, setAcceptCode] = useState<WaivableIssueCode | ''>('');
+  const [acceptBusy, setAcceptBusy] = useState(false);
 
   const loadBatch = useCallback(async () => {
     try {
@@ -81,6 +94,22 @@ export default function ImportBatchPage() {
   const c = batch.counts;
   const editable = EDITABLE.includes(batch.status);
   const isCreator = batch.createdById === user?.id;
+  const pendingApproval = c.pendingApproval ?? 0;
+
+  async function acceptAll(reason: string) {
+    setAcceptBusy(true);
+    try {
+      const r = await importApi.acceptAll(id, reason, acceptCode || undefined);
+      toastOk(r.message);
+      setAcceptingAll(false);
+      setAcceptCode('');
+      await reloadAll();
+    } catch (e) {
+      toastError(e);
+    } finally {
+      setAcceptBusy(false);
+    }
+  }
 
   return (
     <div className="page">
@@ -94,6 +123,11 @@ export default function ImportBatchPage() {
             {can('resolveImport') && EDITABLE.includes(batch.status) ? (
               <button type="button" className="btn" onClick={() => setUploadingDocs(true)}>
                 Upload documents
+              </button>
+            ) : null}
+            {can('resolveImport') && editable && c.exceptions > 0 ? (
+              <button type="button" className="btn" onClick={() => setAcceptingAll(true)}>
+                Accept waivable issues
               </button>
             ) : null}
             {can('cancelImport') && !['FINALISED', 'CANCELLED'].includes(batch.status) ? (
@@ -137,7 +171,7 @@ export default function ImportBatchPage() {
         <Callout
           tone="ok"
           title="Finalised. "
-        >{`${c.created ?? 0} students created and ${c.linked ?? 0} linked to existing students on ${fmtDate(batch.finalisedAt)}. The batch can no longer change.`}</Callout>
+        >{`${c.created ?? 0} students created${pendingApproval > 0 ? ` (${pendingApproval} of them pending approval)` : ''} and ${c.linked ?? 0} linked to existing students on ${fmtDate(batch.finalisedAt)}. The batch can no longer change.`}</Callout>
       ) : null}
 
       <div className="grid g6 mb14 mt14">
@@ -153,7 +187,7 @@ export default function ImportBatchPage() {
 
       {batch.ignoredColumns.length ? (
         <div className="mb14">
-          <Callout tone="info" title="Columns ignored: ">
+          <Callout tone="info" title="Other columns: ">
             {batch.ignoredColumns.join(', ')}
           </Callout>
         </div>
@@ -269,6 +303,42 @@ export default function ImportBatchPage() {
           }}
         />
       ) : null}
+      {acceptingAll ? (
+        <ReasonModal
+          busy={acceptBusy}
+          title="Accept waivable issues"
+          confirmLabel="Accept issues"
+          intro={
+            <>
+              Accepts, with one reason, the open waivable issues of every exception row ({c.exceptions.toLocaleString('en-IN')} now). Rows
+              that also have an Aadhaar, identity or approval-evidence issue are skipped: correct them at the source or reject them. A row
+              accepted while not yet approved at the source becomes a student pending approval, not eligible for a batch.
+            </>
+          }
+          onClose={() => {
+            setAcceptingAll(false);
+            setAcceptCode('');
+          }}
+          onConfirm={(reason) => void acceptAll(reason)}
+        >
+          <div className="fld mb10">
+            <label htmlFor="accept-code">Issue type</label>
+            <select
+              id="accept-code"
+              className="inp"
+              value={acceptCode}
+              onChange={(e) => setAcceptCode(e.target.value as WaivableIssueCode | '')}
+            >
+              <option value="">All waivable issues</option>
+              {WAIVABLE_ISSUE_CODES.map((k) => (
+                <option key={k} value={k}>
+                  {WAIVABLE_ISSUE_LABEL[k]}
+                </option>
+              ))}
+            </select>
+          </div>
+        </ReasonModal>
+      ) : null}
       {cancelling ? (
         <ReasonModal
           title={`Cancel ${batch.code}`}
@@ -325,11 +395,20 @@ function RowDrawer({
   }
 
   const kv = (l: string, v: React.ReactNode) => (
-    <div className="kv">
+    <div className="kv" key={l}>
       <span>{l}</span>
       <b>{v ?? '—'}</b>
     </div>
   );
+  const g = profileGroups(row);
+  const group = (title: string, pairs: ProfilePair[]) =>
+    pairs.length ? (
+      <>
+        <h4 className="mb6 mt14">{title}</h4>
+        <div className="kv-grid">{pairs.map(([l, v]) => kv(l, v))}</div>
+      </>
+    ) : null;
+  const nameFrom = row.nameFrom ? NAME_FROM[row.nameFrom] : undefined;
   return (
     <Drawer
       title={`Row ${row.rowNumber} — ${row.name || 'unnamed'}`}
@@ -413,7 +492,16 @@ function RowDrawer({
         Values received <span className="muted fs11">(normalised; protected values masked)</span>
       </h4>
       <div className="kv-grid">
-        {kv('Name', row.name)}
+        {kv(
+          'Name',
+          nameFrom ? (
+            <>
+              {row.name || '—'} <span className="muted fs11">(split from {nameFrom})</span>
+            </>
+          ) : (
+            row.name
+          ),
+        )}
         {kv('Father name', row.fatherName)}
         {kv('Mother name', row.motherName)}
         {kv('Date of birth', row.dateOfBirth)}
@@ -422,12 +510,33 @@ function RowDrawer({
         {kv('Aadhaar', row.aadhaar)}
         {kv('Religion', row.religion)}
         {kv('Caste', row.caste)}
-        {kv('Course centre', row.centreCode)}
+        {kv(
+          'Course centre',
+          row.centreFromDistrict && row.centreCode ? (
+            <>
+              {row.centreCode} <span className="muted fs11">(from district)</span>
+            </>
+          ) : (
+            row.centreCode
+          ),
+        )}
         {kv('Technology', row.trackCode ? `${row.trackCode} (${row.trackSourceValue})` : row.trackSourceValue)}
         {kv('Education', row.educationQualification)}
         {kv('Approval', `${row.approvalStatus ?? '—'} · ${fmtDate(row.approvedAt)}`)}
         {kv('Evidence', row.evidenceRef)}
       </div>
+      {group('Profile', [...g.profile, ...g.contact])}
+      {group('Address & location', g.address)}
+      {group('Qualification', g.qualification)}
+      {group('Source record', g.source)}
+      {g.extra.length ? (
+        <>
+          <h4 className="mb6 mt14">
+            Other source values <span className="muted fs11">(columns not stored in a field, as received)</span>
+          </h4>
+          <div className="kv-grid">{g.extra.map(([l, v]) => kv(l, v))}</div>
+        </>
+      ) : null}
       {row.status !== 'RECONCILED' ? (
         <>
           <h4 className="mb6 mt14">
@@ -467,7 +576,7 @@ function RowDrawer({
           }
           intro={
             action.type === 'accept'
-              ? 'Only waivable issues (reference values, track not offered, missing documents) can be accepted. Identity, Aadhaar and approval issues must be corrected at the source.'
+              ? 'Only waivable issues (not yet approved at the source, invalid formats, reference values, track not offered, documents) can be accepted. Identity, Aadhaar and approval-evidence issues must be corrected at the source. A row accepted while not yet approved becomes a student pending approval.'
               : action.type === 'reject'
                 ? 'A rejected row never becomes a student but stays visible in the batch. You can restore it before finalisation.'
                 : action.decision === 'SAME_PERSON'

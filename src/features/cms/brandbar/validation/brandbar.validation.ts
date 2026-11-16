@@ -17,6 +17,8 @@ export interface BrandBarFormValues {
   partnerLabel: Bilingual;
   /* Blank: the whole partner block is left out of the bar. */
   partnerName: string;
+  /* Off: the website leaves the partner block out, and the label and name above are kept for later. */
+  showPartner: boolean;
 }
 
 export const TITLE_MAX = 60;
@@ -29,6 +31,7 @@ export const brandBarToForm = (b: ApiBrandBar): BrandBarFormValues => ({
   fullName: { ...b.fullName },
   partnerLabel: { ...b.partnerLabel },
   partnerName: b.partnerName,
+  showPartner: b.showPartner,
 });
 
 /* The same normalisation the server applies, so what is compared and sent is what will be stored. */
@@ -42,9 +45,17 @@ export function brandBarPayload(v: BrandBarFormValues, expectedUpdatedAt: string
     fullName: pairOf(v.fullName),
     partnerLabel: pairOf(v.partnerLabel),
     partnerName: line(v.partnerName),
+    showPartner: v.showPartner,
     expectedUpdatedAt,
   };
 }
+
+/*
+ * The bar as it was loaded with only the partner block switched, for the tab's quick switch: the same PUT as the
+ * form, so the texts go back exactly as they are and a save made since the tab loaded is refused with a 409.
+ */
+export const partnerSwitchPayload = (b: ApiBrandBar, showPartner: boolean): UpdateBrandBarInput =>
+  brandBarPayload({ ...brandBarToForm(b), showPartner }, b.updatedAt);
 
 const tooLong = (value: string, label: string, max: number) =>
   value.length > max ? `${label} must be at most ${max} characters` : undefined;

@@ -11,7 +11,8 @@ export interface SectionTab<T extends string> {
  * ModulesTabBar: the panel's `.tabs` strip with the ARIA tabs pattern on top. A roving tabindex, so Tab
  * moves into the strip once and out again, and the arrow keys, Home and End move between tabs and open
  * the one they land on. `tabs-fit` lets the labels wrap on a phone. `idPrefix` keeps the element ids
- * unique per page, so each tab can name the panel it controls.
+ * unique per page, so each tab can name the panel it controls. `marks` puts something after a tab's label
+ * (Home Page Management's "Hidden" pill); it is part of the tab's accessible name.
  */
 export function SectionTabBar<T extends string>({
   tabs,
@@ -19,12 +20,14 @@ export function SectionTabBar<T extends string>({
   onChange,
   idPrefix,
   label,
+  marks,
 }: {
   tabs: readonly SectionTab<T>[];
   active: T;
   onChange: (next: T) => void;
   idPrefix: string;
   label: string;
+  marks?: Partial<Record<T, ReactNode>>;
 }) {
   const buttons = useRef<Partial<Record<T, HTMLButtonElement | null>>>({});
 
@@ -63,6 +66,7 @@ export function SectionTabBar<T extends string>({
             onKeyDown={(e) => onKeyDown(e, index)}
           >
             {l}
+            {marks?.[k]}
           </button>
         );
       })}
@@ -102,8 +106,8 @@ export function SectionTabPanel<T extends string>({
 
 /*
  * The head of a tab that is a section of its own, with buttons of its own (Home Page Management, where each tab is
- * a separate part of the public page): a line saying what the tab shows, and the section's actions — Publish,
- * Edit, Add — which the page of a single section puts in its page header (.cms-sections .cms-tab-head).
+ * a separate part of the public page): a line saying what the tab shows, and the section's actions — Edit, Add,
+ * Settings — which the page of a single section puts in its page header (.cms-sections .cms-tab-head).
  */
 export function SectionTabHead({ children, actions }: { children: ReactNode; actions?: ReactNode }) {
   return (

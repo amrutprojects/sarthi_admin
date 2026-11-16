@@ -11,6 +11,7 @@ export default function BrandBarPreview({
   fullName,
   partnerLabel,
   partnerName,
+  showPartner,
 }: {
   title: string;
   /* A blank line is left out. */
@@ -19,10 +20,12 @@ export default function BrandBarPreview({
   partnerLabel: Bilingual;
   /* Blank: the whole partner block is left out. */
   partnerName: string;
+  /* Off: the whole partner block is left out too, as the website does. */
+  showPartner: boolean;
 }) {
   const bar = (lang: 'mr' | 'en') => {
     const label = partnerLabel[lang].trim();
-    const partner = partnerName.trim();
+    const partner = showPartner ? partnerName.trim() : '';
     return (
       <div
         lang={lang}

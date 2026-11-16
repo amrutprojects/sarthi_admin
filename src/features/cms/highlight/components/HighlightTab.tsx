@@ -1,10 +1,10 @@
-import { Callout, useGo } from '../../../../components/ui';
+import { useGo } from '../../../../components/ui';
 import { Can } from '../../../../modules/auth/components/Can';
 import Icon from '../../../../components/ui/Icon';
 import FieldTable, { Bi } from '../../components/FieldTable';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { SectionNote, SectionTabHead } from '../../components/SectionTabs';
-import { LoadState, fmtDateTime, useAction, useApiData } from '../../shared';
+import { LoadState, fmtDateTime, useApiData } from '../../shared';
 import { highlightService } from '../services/highlightService';
 import type { ApiProgrammeHighlight } from '../types/highlight.types';
 
@@ -90,12 +90,12 @@ function ObjectivesCard({ page }: { page: ApiProgrammeHighlight }) {
  * the programme band on the home page is showing, its text and then its objectives.
  *
  * cms-highlight.view and cms-highlight.update are separate permissions: a view-only administrator gets the whole
- * picture, and the Publish and Edit content buttons render only for cms-highlight.update.
+ * picture, and the Edit content button renders only for cms-highlight.update. Whether the website shows the band
+ * is the tab's "Show on website" switch above it (HomePageView).
  */
 export default function HighlightTab() {
   const go = useGo();
   const detail = useApiData(() => highlightService.get(), []);
-  const { busy, run } = useAction();
 
   const page = detail.data;
 
@@ -104,31 +104,12 @@ export default function HighlightTab() {
       <SectionTabHead
         actions={
           page ? (
-            <>
-              <Can action="updateHighlight">
-                <button
-                  type="button"
-                  className="btn"
-                  disabled={busy}
-                  onClick={() =>
-                    run(
-                      () => highlightService.setPublished(!page.isPublished),
-                      page.isPublished ? 'Section unpublished' : 'Section published',
-                      () => detail.reload(),
-                    )
-                  }
-                >
-                  <Icon name="globe" />
-                  {page.isPublished ? 'Unpublish' : 'Publish'}
-                </button>
-              </Can>
-              <Can action="updateHighlight">
-                <button type="button" className="btn primary" onClick={() => go('/cms/highlight/edit')}>
-                  <Icon name="edit" />
-                  Edit content
-                </button>
-              </Can>
-            </>
+            <Can action="updateHighlight">
+              <button type="button" className="btn primary" onClick={() => go('/cms/highlight/edit')}>
+                <Icon name="edit" />
+                Edit content
+              </button>
+            </Can>
           ) : undefined
         }
       >
@@ -139,13 +120,6 @@ export default function HighlightTab() {
 
       {page ? (
         <>
-          {!page.isPublished ? (
-            <div className="mb14">
-              <Callout tone="warn" title="This content is not published">
-                The home page is showing the website&rsquo;s own built-in copy of this section. Publish to make the content below live.
-              </Callout>
-            </div>
-          ) : null}
           <SectionNote>
             Marathi is shown first, English underneath, as on the public site. An inactive objective is kept here but not shown on the home
             page.

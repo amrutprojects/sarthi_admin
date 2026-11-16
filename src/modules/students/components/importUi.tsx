@@ -125,7 +125,7 @@ export function ServerTable<T extends { id: string }>({
   );
 }
 
-/* Dialog asking for a mandatory reason (decisions, rejections and waivers are audited with it). */
+/* Dialog asking for a mandatory reason (decisions, rejections and waivers are audited with it); `children` adds controls above it. */
 export function ReasonModal({
   title,
   intro,
@@ -134,6 +134,7 @@ export function ReasonModal({
   busy,
   onConfirm,
   onClose,
+  children,
 }: {
   title: string;
   intro?: ReactNode;
@@ -142,6 +143,7 @@ export function ReasonModal({
   busy?: boolean;
   onConfirm: (reason: string) => void;
   onClose: () => void;
+  children?: ReactNode;
 }) {
   const [reason, setReason] = useState('');
   const ok = reason.trim().length >= 3;
@@ -166,6 +168,7 @@ export function ReasonModal({
       }
     >
       {intro ? <div className="mb10 fs13">{intro}</div> : null}
+      {children}
       <div className="fld">
         <label htmlFor="reason-inp">
           Reason <span className="muted">(required, recorded in the audit log)</span>

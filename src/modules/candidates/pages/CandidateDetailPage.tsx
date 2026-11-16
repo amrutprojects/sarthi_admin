@@ -5,13 +5,17 @@ import { Badge, Callout, Card, EmptyState, KvList, LinkButton, PageHead } from '
 import { toastError } from '../../../components/feedback/apiFeedback';
 import { ApiError } from '../../../services/api-client';
 import { useAuth } from '../../auth';
-import { fmtDate, studentApi, type StudentDetail, type StudentDocument } from '../../students';
+import {
+  fmtDate,
+  profileGroups,
+  studentApi,
+  studentStatusLabel,
+  type ProfilePair,
+  type StudentDetail,
+  type StudentDocument,
+} from '../../students';
 
 const SOURCE: Record<string, string> = { IMPORT: 'Imported', PUBLIC_REGISTRATION: 'Registration' };
-const STATUS: Record<string, [string, string]> = {
-  RECEIVED: ['Received', 'green'],
-  REGISTRATION_PENDING: ['Pending verification', 'amber'],
-};
 const dash = (v: ReactNode) => (v === null || v === undefined || v === '' ? '—' : v);
 
 /*
@@ -63,7 +67,18 @@ export default function CandidateDetailPage() {
   }
 
   const s = student.data;
-  const [statusLabel, statusTone] = STATUS[s.status] ?? [s.status, 'grey'];
+  const [statusLabel, statusTone] = studentStatusLabel(s);
+  /* Profile and source details of an imported application; groups without a value are left out. */
+  const g = profileGroups(s);
+  const group = (title: string, pairs: ProfilePair[]) =>
+    pairs.length ? (
+      <>
+        <h4 className="mb6 mt14">{title}</h4>
+        <div className="kv-grid">
+          <KvList pairs={pairs} />
+        </div>
+      </>
+    ) : null;
   const track = s.trackToBeConfirmed ? `To be confirmed (source: ${dash(s.trackSourceValue)})` : `${s.trackCode} · ${dash(s.trackName)}`;
   const batch =
     s.batch === undefined
@@ -114,6 +129,7 @@ export default function CandidateDetailPage() {
                 ['Religion', dash(s.religion)],
                 ['Caste', dash(s.caste)],
                 ['Education', dash(s.educationQualification)],
+                ...g.profile,
               ]}
             />
           </div>
@@ -121,14 +137,10 @@ export default function CandidateDetailPage() {
             Contact & identity <span className="muted fs11">(masked)</span>
           </h4>
           <div className="kv-grid">
-            <KvList
-              pairs={[
-                ['Mobile', dash(s.mobile)],
-                ['Email', dash(s.email)],
-                ['Aadhaar', dash(s.aadhaar)],
-              ]}
-            />
+            <KvList pairs={[['Mobile', dash(s.mobile)], ['Email', dash(s.email)], ['Aadhaar', dash(s.aadhaar)], ...g.contact]} />
           </div>
+          {group('Address & location', g.address)}
+          {group('Qualification', g.qualification)}
         </Card>
         <Card title="Programme">
           <KvList
@@ -148,6 +160,28 @@ export default function CandidateDetailPage() {
           <Lifecycle s={s} />
         </Card>
       </div>
+
+      {g.source.length || g.extra.length ? (
+        <div className="mb14">
+          <Card title="Source record" sub="as received from the source portal">
+            {g.source.length ? (
+              <div className="kv-grid">
+                <KvList pairs={g.source} />
+              </div>
+            ) : null}
+            {g.extra.length ? (
+              <>
+                <h4 className={'mb6' + (g.source.length ? ' mt14' : '')}>
+                  Other source values <span className="muted fs11">(columns not stored in a field, as received)</span>
+                </h4>
+                <div className="kv-grid">
+                  <KvList pairs={g.extra} />
+                </div>
+              </>
+            ) : null}
+          </Card>
+        </div>
+      ) : null}
 
       <Card title="Documents" sub="declared by the source, and the files stored for this student">
         <Documents s={s} files={files} canDownload={permissions.has('imports.view')} />
