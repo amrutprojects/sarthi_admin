@@ -11,11 +11,13 @@ import EcosystemTab from '../../ecosystem/components/EcosystemTab';
 import { HeroGlanceTab, HeroSlidesTab } from '../../hero/components/HeroTabs';
 import HighlightTab from '../../highlight/components/HighlightTab';
 import ImpactTab from '../../impact/components/ImpactTab';
+import NavMenuTab from '../../navmenu/components/NavMenuTab';
 import SchemesTab from '../../schemes/components/SchemesTab';
 import TopBarTab from '../../topbar/components/TopBarTab';
 import { usePageTitle } from '../../useMasterQuery';
 import { useSectionTab } from '../../useSectionTab';
 import SectionVisibilityBar, { HiddenTabMark } from '../../visibility/SectionVisibilityBar';
+import { isVisibilitySection } from '../../visibility/constants';
 import { useSectionVisibility } from '../../visibility/useSectionVisibility';
 import type { SectionVisibility } from '../../visibility/visibility.types';
 import { HOME_PAGE_TITLE } from '../homePageNav';
@@ -28,6 +30,7 @@ import { HOME_PAGE_TITLE } from '../homePageNav';
 const TAB_CONTENT: Record<HomePageTab, ComponentType<{ switched?: SectionVisibility }>> = {
   'top-bar': TopBarTab,
   'brand-bar': BrandBarTab,
+  'nav-menu': NavMenuTab,
   announcements: AnnouncementsTab,
   hero: HeroSlidesTab,
   glance: HeroGlanceTab,
@@ -49,12 +52,13 @@ const KEEPS_DRAFTS: ReadonlySet<HomePageTab> = new Set<HomePageTab>(['about']);
 /*
  * Home Page Management — every section of the public home page on one page, one tab per section in the order
  * the home page shows them, with the same tab strip as Programme Page Management and the tab kept in the URL
- * (?tab=). The sections remain ten menus with permissions of their own: a tab is shown only to a user who
+ * (?tab=). The sections remain eleven menus with permissions of their own: a tab is shown only to a user who
  * may open its menu (its view permission, Menu Visibility and the website portal, as in the sidebar), the
  * first such tab opens by default, and a link to a missing or forbidden tab opens that one instead.
  *
  * Above each tab's content is its section's one "Show on website" switch, and the strip marks the sections that
- * are hidden, so what is off the website shows at a glance from any tab.
+ * are hidden, so what is off the website shows at a glance from any tab. The Navigation Menu tab is not a section
+ * and has no such switch: each of its items has a switch of its own, on the tab.
  */
 export default function HomePageView() {
   usePageTitle(HOME_PAGE_TITLE);
@@ -84,12 +88,19 @@ export default function HomePageView() {
             const Content = TAB_CONTENT[k];
             return (
               <SectionTabPanel key={k} tab={k} active={tab} idPrefix="home-page">
-                <SectionVisibilityBar section={k} label={l} visibility={visibility} />
-                {KEEPS_DRAFTS.has(k) ? (
-                  <Content switched={visibility.switched(k)} />
+                {isVisibilitySection(k) ? (
+                  <>
+                    <SectionVisibilityBar section={k} label={l} visibility={visibility} />
+                    {KEEPS_DRAFTS.has(k) ? (
+                      <Content switched={visibility.switched(k)} />
+                    ) : (
+                      /* Remounted after its section is switched, so it reloads what the switch changed. */
+                      <Content key={visibility.revision(k)} />
+                    )}
+                  </>
                 ) : (
-                  /* Remounted after its section is switched, so it reloads what the switch changed. */
-                  <Content key={visibility.revision(k)} />
+                  /* Not a section (the Navigation Menu): no "Show on website" bar, nor its loading or error line. */
+                  <Content />
                 )}
               </SectionTabPanel>
             );

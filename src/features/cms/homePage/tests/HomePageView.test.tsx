@@ -23,9 +23,12 @@ import { ecosystemService } from '../../ecosystem/services/ecosystemService';
 import { heroService } from '../../hero/services/heroService';
 import { highlightService } from '../../highlight/services/highlightService';
 import { impactService } from '../../impact/services/impactService';
+import { NAV_MENU_ITEMS } from '../../navmenu/constants';
+import { navMenuService } from '../../navmenu/services/navMenuService';
 import { schemesService } from '../../schemes/services/schemesService';
 import { fmtDateTime } from '../../shared';
 import { topBarService } from '../../topbar/services/topBarService';
+import { VISIBILITY_TABS } from '../../visibility/constants';
 import { visibilityService } from '../../visibility/visibilityService';
 import type { SectionVisibility } from '../../visibility/visibility.types';
 /* Loaded up front, so the router's lazy import of the page resolves at once. */
@@ -71,6 +74,7 @@ const topBarApi = vi.hoisted(() => () => ({
 }));
 vi.mock('../../topbar/services/topBarService', () => ({ topBarService: topBarApi() }));
 vi.mock('../../brandbar/services/brandBarService', () => ({ brandBarService: { get: vi.fn(), update: vi.fn() } }));
+vi.mock('../../navmenu/services/navMenuService', () => ({ navMenuService: { list: vi.fn(), set: vi.fn() } }));
 vi.mock('../../announcements/services/announcementsService', () => ({ announcementsService: listService() }));
 vi.mock('../../hero/services/heroService', () => ({ heroService: { get: vi.fn(), update: vi.fn() } }));
 vi.mock('../../highlight/services/highlightService', () => ({ highlightService: { get: vi.fn(), update: vi.fn() } }));
@@ -242,6 +246,7 @@ const about = () => ({
 const HOME_PAGE_MENUS = [
   'cms-topbar',
   'cms-brandbar',
+  'cms-navmenu',
   'cms-announcements',
   'cms-hero',
   'cms-highlight',
@@ -254,6 +259,7 @@ const HOME_PAGE_MENUS = [
 const LABELS = [
   'Top Bar',
   'Brand Bar',
+  'Navigation Menu',
   'Announcements',
   'AMRUT Kalash – apply online',
   'Programme at a glance',
@@ -268,6 +274,7 @@ const LABELS = [
 const CONTENT: Record<string, string> = {
   'Top Bar': 'Verify Certificate',
   'Brand Bar': 'Brand bar preview',
+  'Navigation Menu': '10 of 10 shown in the menu',
   Announcements: 'Announcement title',
   'AMRUT Kalash – apply online': 'Hero slide heading',
   'Programme at a glance': '36 (entered)',
@@ -312,6 +319,7 @@ beforeEach(() => {
   vi.mocked(topBarService.list).mockResolvedValue([topBarLink]);
   vi.mocked(topBarService.getSettings).mockResolvedValue(topBarSettings);
   vi.mocked(brandBarService.get).mockResolvedValue(brandBar);
+  vi.mocked(navMenuService.list).mockResolvedValue(NAV_MENU_ITEMS.map((i) => ({ key: i.key, show: true, updatedAt: null })));
   vi.mocked(announcementsService.list).mockResolvedValue([announcement]);
   vi.mocked(announcementsService.getSection).mockResolvedValue(announcementsSection);
   vi.mocked(heroService.get).mockResolvedValue(hero());
@@ -326,9 +334,9 @@ beforeEach(() => {
   vi.mocked(schemesService.list).mockResolvedValue([scheme]);
   vi.mocked(schemesService.getSection).mockResolvedValue(schemesSection);
   vi.mocked(aboutService.get).mockResolvedValue(about());
-  /* Every section shown on the website, as the API lists them for a Website Admin. */
+  /* Every section shown on the website, as the API lists them for a Website Admin (the Navigation Menu is not a section). */
   vi.mocked(visibilityService.list).mockResolvedValue(
-    HOME_PAGE_TABS.map((t): SectionVisibility => ({ key: t.k, menu: t.menu, visible: true, configured: true, updatedAt: T.updatedAt })),
+    VISIBILITY_TABS.map((t): SectionVisibility => ({ key: t.k, menu: t.menu, visible: true, configured: true, updatedAt: T.updatedAt })),
   );
 });
 
@@ -351,6 +359,7 @@ describe('Home Page Management', () => {
     expect(await screen.findByText('Verify Certificate')).toBeInTheDocument();
     /* Only the open tab loads its section. */
     expect(brandBarService.get).not.toHaveBeenCalled();
+    expect(navMenuService.list).not.toHaveBeenCalled();
     expect(announcementsService.list).not.toHaveBeenCalled();
     expect(heroService.get).not.toHaveBeenCalled();
     expect(boardService.list).not.toHaveBeenCalled();
@@ -367,6 +376,13 @@ describe('Home Page Management', () => {
       const panel = screen.getByRole('tabpanel');
       const content = await within(panel).findByText(CONTENT[label]!);
       expect(currentPath()).toBe(`/cms/home-page?tab=${HOME_PAGE_TABS.find((t) => t.l === label)!.k}`);
+      if (label === 'Navigation Menu') {
+        /* Not a section: no "Show on website" bar, only a switch per menu item. */
+        expect(within(panel).queryByRole('switch', { name: 'Show on website' })).not.toBeInTheDocument();
+        expect(panel.querySelector('.vis-bar')).toBeNull();
+        expect(within(panel).getAllByRole('switch')).toHaveLength(NAV_MENU_ITEMS.length);
+        continue;
+      }
       /* Its section's one "Show on website" switch, above the tab's own content. */
       const toggle = await within(panel).findByRole('switch', { name: 'Show on website' });
       expect(toggle).toBeChecked();
@@ -379,7 +395,7 @@ describe('Home Page Management', () => {
     /* The section actions a Website Admin's update rights allow, in the tab's own head. */
     await userEvent.click(screen.getByRole('tab', { name: 'Skill Development Diploma' }));
     expect(await within(screen.getByRole('tabpanel')).findByRole('button', { name: 'Edit content' })).toBeInTheDocument();
-    /* Opens every one of the eleven tabs in turn, so it needs more than the default 5 s on a busy run. */
+    /* Opens every one of the twelve tabs in turn, so it needs more than the default 5 s on a busy run. */
   }, 15_000);
 
   it('opens the tab named in ?tab=', async () => {
@@ -415,7 +431,7 @@ describe('Home Page Management', () => {
   it('hides the tabs of the menus that Menu Visibility hides', async () => {
     signInAs(
       HOME_PAGE_MENUS.map((m) => `${m}.view`),
-      { hidden: ['cms-topbar', 'cms-brandbar', 'cms-announcements', 'cms-hero', 'cms-schemes'] },
+      { hidden: ['cms-topbar', 'cms-brandbar', 'cms-navmenu', 'cms-announcements', 'cms-hero', 'cms-schemes'] },
     );
     renderApp('/cms/home-page');
 
@@ -423,11 +439,20 @@ describe('Home Page Management', () => {
     expect(tabLabels()).toEqual(
       LABELS.filter(
         (l) =>
-          !['Top Bar', 'Brand Bar', 'Announcements', 'AMRUT Kalash – apply online', 'Programme at a glance', 'AMRUT Schemes'].includes(l),
+          ![
+            'Top Bar',
+            'Brand Bar',
+            'Navigation Menu',
+            'Announcements',
+            'AMRUT Kalash – apply online',
+            'Programme at a glance',
+            'AMRUT Schemes',
+          ].includes(l),
       ),
     );
     expect(topBarService.list).not.toHaveBeenCalled();
     expect(brandBarService.get).not.toHaveBeenCalled();
+    expect(navMenuService.list).not.toHaveBeenCalled();
     expect(announcementsService.list).not.toHaveBeenCalled();
   });
 
@@ -451,6 +476,7 @@ describe('Home Page Management', () => {
     const moved: [string, string][] = [
       ['/cms/top-bar', 'Top Bar'],
       ['/cms/brand-bar', 'Brand Bar'],
+      ['/cms/nav-menu', 'Navigation Menu'],
       ['/cms/announcements', 'Announcements'],
       ['/cms/hero', 'AMRUT Kalash – apply online'],
       ['/cms/highlight', 'Skill Development Diploma'],

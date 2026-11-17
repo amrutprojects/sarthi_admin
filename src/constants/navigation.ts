@@ -219,7 +219,8 @@ export type AdminRoute = [path: string, name: RouteName, navKey: string];
 /*
  * Home Page Management (/cms/home-page): one sidebar entry and one page, whose tabs are the sections of the
  * public home page in the order it shows them, starting with the Top Bar (the strip at the very top of every
- * page), the Brand Bar under it and the announcements ticker. Each tab belongs to one of ten menus (Home Hero Section has two tabs), and
+ * page), the Brand Bar under it, the Navigation Menu (the menu bar under the brand bar, whose items have switches of
+ * their own) and the announcements ticker. Each tab belongs to one of eleven menus (Home Hero Section has two tabs), and
  * those menus keep their own keys, so their permission codes, Menu Visibility rows and the Website Admin role are
  * unchanged; a tab is shown only to a user who can open its menu. Each menu's Add, Edit and Settings pages keep
  * their own paths, and their Back, Cancel and Save return to the menu's tab.
@@ -230,6 +231,7 @@ export const HOME_PAGE_PATH = '/cms/home-page';
 export const HOME_PAGE_TABS = [
   { k: 'top-bar', l: 'Top Bar', menu: 'cms-topbar' },
   { k: 'brand-bar', l: 'Brand Bar', menu: 'cms-brandbar' },
+  { k: 'nav-menu', l: 'Navigation Menu', menu: 'cms-navmenu' },
   { k: 'announcements', l: 'Announcements', menu: 'cms-announcements' },
   { k: 'hero', l: 'AMRUT Kalash – apply online', menu: 'cms-hero' },
   { k: 'glance', l: 'Programme at a glance', menu: 'cms-hero' },
@@ -247,12 +249,13 @@ export const homePageTabPath = (tab: HomePageTab): string => `${HOME_PAGE_PATH}?
 
 /*
  * Each home page menu's former landing page → its tab. The router redirects them, so old links and bookmarks keep
- * working. Top Bar, Brand Bar and Announcements never had a page of their own; their paths open the tab like the others, beside
- * their own pages.
+ * working. Top Bar, Brand Bar, Navigation Menu and Announcements never had a page of their own; their paths open the tab like the
+ * others, beside their own pages.
  */
 export const HOME_PAGE_REDIRECTS: readonly (readonly [path: string, tab: HomePageTab])[] = [
   ['/cms/top-bar', 'top-bar'],
   ['/cms/brand-bar', 'brand-bar'],
+  ['/cms/nav-menu', 'nav-menu'],
   ['/cms/announcements', 'announcements'],
   ['/cms/hero', 'hero'],
   ['/cms/highlight', 'diploma'],
@@ -317,11 +320,12 @@ export const NAV: NavEntry[] = [
   { g: 'CMS' },
   { k: HOME_PAGE_MENU, l: 'Home Page Management', i: 'home', r: HOME_PAGE_PATH },
   /*
-   * The ten menus behind Home Page Management's tabs, in home page order. Not sidebar entries of their own
+   * The eleven menus behind Home Page Management's tabs, in home page order. Not sidebar entries of their own
    * (SIDEBAR_NAV leaves them out), but still menus with permissions and Menu Visibility rows of their own.
    */
   { k: 'cms-topbar', l: 'Top Bar', i: 'globe', r: homePageTabPath('top-bar') },
   { k: 'cms-brandbar', l: 'Brand Bar', i: 'award', r: homePageTabPath('brand-bar') },
+  { k: 'cms-navmenu', l: 'Navigation Menu', i: 'menu', r: homePageTabPath('nav-menu') },
   { k: 'cms-announcements', l: 'Announcements', i: 'megaphone', r: homePageTabPath('announcements') },
   { k: 'cms-hero', l: 'Home Hero Section', i: 'home', r: homePageTabPath('hero') },
   { k: 'cms-highlight', l: 'Home Programme Section', i: 'doc', r: homePageTabPath('diploma') },
@@ -476,7 +480,7 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/apply/:id/edit', 'cmsApplyEdit', 'cms-apply'],
   ['/cms/apply/:id', 'cmsApplyView', 'cms-apply'],
   /*
-   * Home Page Management: one tabbed page for the ten home page menus (HOME_PAGE_TABS above). Each menu's
+   * Home Page Management: one tabbed page for the eleven home page menus (HOME_PAGE_TABS above). Each menu's
    * own pages stay under its key, so their permission checks still apply; its former landing page redirects
    * to its tab (HOME_PAGE_REDIRECTS, router.tsx).
    */

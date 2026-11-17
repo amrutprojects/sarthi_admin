@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../components/ui/Icon';
 import { SIDEBAR_NAV, isNavGroup, sidebarKey, type NavEntry } from '../../constants/navigation';
-import { useAuth } from '../../modules/auth/auth-context';
 import { useCanOpen } from '../../modules/auth/components/Can';
 import { goTo } from '../../hooks/useLegacyEvents';
 import { useLegacyTick } from '../../utils/legacyBus';
+import amrutLogo from '../../assets/images/amrut-logo-en-dark.webp';
 
 interface SidebarProps {
   active: string;
@@ -17,7 +17,6 @@ export default function Sidebar({ active, collapsed, open, onToggle }: SidebarPr
   const navigate = useNavigate();
   useLegacyTick(); // task counts change when legacy pages update data
   const canOpen = useCanOpen();
-  const { portal } = useAuth();
 
   /* Only screens the role may open; a group heading is dropped when nothing under it is visible. */
   const visible = SIDEBAR_NAV.filter((n) => isNavGroup(n) || canOpen(n.k)).filter((n, i, arr): n is NavEntry => {
@@ -31,10 +30,10 @@ export default function Sidebar({ active, collapsed, open, onToggle }: SidebarPr
   return (
     <aside className={'sidebar' + (open ? ' open' : '')} id="sidebar">
       <div className="sb-brand">
-        <div className="sb-logo">A×S</div>
+        {/* The light-on-dark variant of the English logo: the sidebar is dark brown. */}
+        <img className="sb-logo-img" src={amrutLogo} alt="AMRUT" />
         <div className="sb-brand-txt">
-          <b>AMRUT × SUMAGO</b>
-          <span>{portal === 'website' ? 'Website Admin' : 'Programme Management Portal'}</span>
+          <b>Amrut Kalash Admin</b>
         </div>
       </div>
       <div className="sb-scroll">

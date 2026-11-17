@@ -4,8 +4,10 @@ import type { HomePageTab } from '../../../constants/navigation';
 /**
  * A home page section, named by its Home Page Management tab key ('top-bar', 'hero', 'glance', …). The API
  * uses exactly these keys, so a tab and its section's switch never need a lookup table between them.
+ * Every tab is a section except the Navigation Menu ('nav-menu'), whose items each have a switch of their own
+ * (features/cms/navmenu), so it has no "Show on website" switch and no row in this API.
  */
-export type SectionVisibilityKey = HomePageTab;
+export type SectionVisibilityKey = Exclude<HomePageTab, 'nav-menu'>;
 
 export interface SectionVisibility {
   key: SectionVisibilityKey;

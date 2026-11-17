@@ -34,10 +34,11 @@ const CMS_LABELS = [
   'Taluka Master',
 ];
 
-/* The menus behind Home Page Management's tabs, the top bar first, then the brand bar and the announcements ticker. */
+/* The menus behind Home Page Management's tabs, the top bar first, then the brand bar, the navigation menu and the announcements ticker. */
 const HOME_PAGE_MENUS = [
   'cms-topbar',
   'cms-brandbar',
+  'cms-navmenu',
   'cms-announcements',
   'cms-hero',
   'cms-highlight',
@@ -65,7 +66,7 @@ describe('website portal layout', () => {
     const { container } = sidebar();
     expect([...container.querySelectorAll('.sb-group')].map((g) => g.textContent)).toEqual(['CMS']);
     expect([...container.querySelectorAll('.sb-item .sb-label')].map((l) => l.textContent)).toEqual(CMS_LABELS);
-    expect(screen.getByText('Website Admin')).toBeInTheDocument();
+    expect(screen.getByText('Amrut Kalash Admin')).toBeInTheDocument();
     expect(screen.queryByText('Certificate Verification')).not.toBeInTheDocument();
     expect(screen.queryByText('AMRUT Public Site')).not.toBeInTheDocument();
   });
@@ -76,7 +77,7 @@ describe('website portal layout', () => {
     expect(labels(container)).toEqual(['FAQ Management', 'State Master']);
   });
 
-  it('shows one Home Page Management entry for any one of the ten home page menus, in its place', () => {
+  it('shows one Home Page Management entry for any one of the eleven home page menus, in its place', () => {
     for (const menu of HOME_PAGE_MENUS) {
       signInAs('website', ['cms-apply.view', `${menu}.view`, 'cms-programme.view']);
       const { container, unmount } = sidebar();
@@ -85,7 +86,7 @@ describe('website portal layout', () => {
     }
   });
 
-  it('drops Home Page Management when no home page menu opens, or Menu Visibility hides all ten', () => {
+  it('drops Home Page Management when no home page menu opens, or Menu Visibility hides all eleven', () => {
     signInAs('website', ['cms-faqs.view']);
     const { container, unmount } = sidebar();
     expect(labels(container)).not.toContain('Home Page Management');
@@ -120,7 +121,8 @@ describe('website portal layout', () => {
   it('the full panel is unchanged for other roles', () => {
     signInAs('admin', ['dashboard.view', 'cms-faqs.view']);
     sidebar();
-    expect(screen.getByText('Programme Management Portal')).toBeInTheDocument();
+    expect(screen.getByText('Amrut Kalash Admin')).toBeInTheDocument();
+    expect(screen.getByAltText('AMRUT')).toBeInTheDocument();
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('FAQ Management')).toBeInTheDocument();
     expect(screen.getByText('Certificate Verification')).toBeInTheDocument();

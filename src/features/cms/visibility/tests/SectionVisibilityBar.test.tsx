@@ -5,8 +5,8 @@ import { renderWithProviders } from '../../../../../tests/test-utils';
 import { HOME_PAGE_TABS, type HomePageTab } from '../../../../constants/navigation';
 import { ACTION_ACCESS } from '../../../../modules/auth/permissions';
 import HomePageView from '../../homePage/pages/HomePageView';
-import { HIDE_CONSEQUENCE, VISIBILITY_UPDATE_ACTION } from '../constants';
-import type { SectionVisibility } from '../visibility.types';
+import { HIDE_CONSEQUENCE, VISIBILITY_TABS, VISIBILITY_UPDATE_ACTION, isVisibilitySection } from '../constants';
+import type { SectionVisibility, SectionVisibilityKey } from '../visibility.types';
 import { visibilityService } from '../visibilityService';
 
 /* The signed-in user, as AuthProvider would expose it; switched per test. */
@@ -39,6 +39,7 @@ const stubTab = vi.hoisted(() => async (key: string) => {
 });
 vi.mock('../../topbar/components/TopBarTab', async () => ({ default: await stubTab('top-bar') }));
 vi.mock('../../brandbar/components/BrandBarTab', async () => ({ default: await stubTab('brand-bar') }));
+vi.mock('../../navmenu/components/NavMenuTab', async () => ({ default: await stubTab('nav-menu') }));
 vi.mock('../../announcements/components/AnnouncementsTab', async () => ({ default: await stubTab('announcements') }));
 vi.mock('../../hero/components/HeroTabs', async () => ({ HeroSlidesTab: await stubTab('hero'), HeroGlanceTab: await stubTab('glance') }));
 vi.mock('../../highlight/components/HighlightTab', async () => ({ default: await stubTab('diploma') }));
@@ -50,7 +51,7 @@ vi.mock('../../about/components/AboutTab', async () => ({ default: await stubTab
 
 const UPDATED = '2026-11-02T10:00:00.000Z';
 const SWITCHED = '2026-11-16T10:00:00.000Z';
-const row = (k: HomePageTab, over: Partial<SectionVisibility> = {}): SectionVisibility => ({
+const row = (k: SectionVisibilityKey, over: Partial<SectionVisibility> = {}): SectionVisibility => ({
   key: k,
   menu: HOME_PAGE_TABS.find((t) => t.k === k)!.menu,
   visible: true,
@@ -100,7 +101,8 @@ const toasts = () => document.getElementById('toast-root')!;
 
 beforeEach(() => {
   signInAs(EVERY);
-  rows = HOME_PAGE_TABS.map((t) => row(t.k));
+  /* Every section; the Navigation Menu tab is not one, so the API has no row for it. */
+  rows = VISIBILITY_TABS.map((t) => row(t.k));
   refusal = null;
   fetchMock.mockClear();
   vi.stubGlobal('fetch', fetchMock);
@@ -124,7 +126,12 @@ describe('section visibility API', () => {
   });
 
   it('needs each section menu’s own update permission to switch it', () => {
-    for (const t of HOME_PAGE_TABS) expect(ACTION_ACCESS[VISIBILITY_UPDATE_ACTION[t.k]]).toEqual([`${t.menu}.update`]);
+    for (const t of VISIBILITY_TABS) expect(ACTION_ACCESS[VISIBILITY_UPDATE_ACTION[t.k]]).toEqual([`${t.menu}.update`]);
+  });
+
+  it('counts every Home Page Management tab as a section except the Navigation Menu', () => {
+    expect(HOME_PAGE_TABS.filter((t) => !isVisibilitySection(t.k)).map((t) => t.k)).toEqual(['nav-menu']);
+    expect(VISIBILITY_TABS.map((t) => t.k)).toEqual(HOME_PAGE_TABS.map((t) => t.k).filter((k) => k !== 'nav-menu'));
   });
 });
 
@@ -132,7 +139,7 @@ describe('the "Show on website" bar of Home Page Management', () => {
   it('sits above every tab’s own content, and the list is loaded once for the page', async () => {
     renderAt('top-bar');
 
-    for (const { k, l } of HOME_PAGE_TABS) {
+    for (const { k, l } of VISIBILITY_TABS) {
       await userEvent.click(screen.getByRole('tab', { name: l }));
       const content = await within(panel()).findByText(`${k} content`);
       const control = await findToggle();
@@ -148,7 +155,7 @@ describe('the "Show on website" bar of Home Page Management', () => {
     expect(screen.queryByText('Hidden')).not.toBeInTheDocument();
   }, 15_000);
 
-  it.each(HOME_PAGE_TABS.map((t) => [t.l, t.k] as const))(
+  it.each(VISIBILITY_TABS.map((t) => [t.l, t.k] as const))(
     '%s: hiding asks first with what goes with it, then shows again without asking',
     async (label, key) => {
       renderAt(key);
@@ -365,5 +372,32 @@ describe('the "Show on website" bar of Home Page Management', () => {
 
     await userEvent.click(within(panel()).getByRole('button', { name: 'Retry' }));
     expect(await findToggle()).toBeChecked();
+  });
+
+  describe('the Navigation Menu tab', () => {
+    /* Not a section: its menu items each have a switch of their own, on the tab (features/cms/navmenu). */
+    it('has no bar above its content, and the strip never marks it', async () => {
+      renderAt('nav-menu');
+
+      expect(await within(panel()).findByText('nav-menu content')).toBeInTheDocument();
+      await waitFor(() => expect(gets()).toHaveLength(1));
+      expect(panel().querySelector('.vis-bar')).toBeNull();
+      expect(within(panel()).queryByText('Show on website')).not.toBeInTheDocument();
+      expect(within(panel()).queryByRole('switch')).not.toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Navigation Menu' })).toBeInTheDocument();
+      /* The other tabs keep theirs. */
+      await userEvent.click(screen.getByRole('tab', { name: 'Brand Bar' }));
+      expect(await findToggle()).toBeChecked();
+    });
+
+    it('shows no loading or error line while the sections’ list is loading or has failed', async () => {
+      fetchMock.mockImplementationOnce(async () => respond(500, { success: false, message: 'Server error', error: { code: 'ERROR' } }));
+      renderAt('nav-menu');
+
+      expect(await within(panel()).findByText('nav-menu content')).toBeInTheDocument();
+      await waitFor(() => expect(gets()).toHaveLength(1));
+      expect(within(panel()).queryByText(/Could not load whether this section is shown/)).not.toBeInTheDocument();
+      expect(panel().querySelector('.vis-bar, .skel')).toBeNull();
+    });
   });
 });

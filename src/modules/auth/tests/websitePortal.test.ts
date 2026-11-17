@@ -10,6 +10,7 @@ const SIDEBAR_KEYS = keysOf(SIDEBAR_NAV);
 const HOME_PAGE_MENUS = [
   'cms-topbar',
   'cms-brandbar',
+  'cms-navmenu',
   'cms-announcements',
   'cms-hero',
   'cms-highlight',
@@ -69,10 +70,10 @@ describe('the website portal (Website Admin)', () => {
 });
 
 describe('Home Page Management', () => {
-  it('gathers the ten home page menus, the same ones as its tabs', () => {
+  it('gathers the eleven home page menus, the same ones as its tabs', () => {
     expect(MENU_GROUPS['cms-home-page']).toEqual(HOME_PAGE_MENUS);
     expect([...new Set(HOME_PAGE_TABS.map((t) => t.menu))]).toEqual(HOME_PAGE_MENUS);
-    /* No permission code of its own: its screen rule is any one of the ten view codes. */
+    /* No permission code of its own: its screen rule is any one of the eleven view codes. */
     expect(SCREEN_ACCESS['cms-home-page']).toEqual(HOME_PAGE_MENUS.map((m) => `${m}.view`));
     expect(WEBSITE_MENUS).not.toContain('cms-home-page');
   });
@@ -104,7 +105,7 @@ describe('start screen', () => {
   it('is the first CMS page a Website Admin may open', () => {
     expect(homePath({ permissions: WEBSITE, portal: 'website' })).toBe('/cms/home-page');
     expect(homeItem({ permissions: new Set(['cms-faqs.view']), portal: 'website' })).toMatchObject({ k: 'cms-faqs', r: '/cms/faqs' });
-    /* With all ten home page menus hidden, the next CMS page in website order: Advisory Committee, then Programme. */
+    /* With all eleven home page menus hidden, the next CMS page in website order: Advisory Committee, then Programme. */
     expect(homePath({ permissions: WEBSITE, hiddenMenus: new Set(HOME_PAGE_MENUS), portal: 'website' })).toBe('/cms/advisory-committee');
     expect(homePath({ permissions: WEBSITE, hiddenMenus: new Set([...HOME_PAGE_MENUS, 'cms-advisory']), portal: 'website' })).toBe(
       '/cms/programme',
@@ -112,6 +113,8 @@ describe('start screen', () => {
     /* The announcements ticker alone opens Home Page Management too, and so does the top bar. */
     expect(homePath({ permissions: new Set(['cms-announcements.view']), portal: 'website' })).toBe('/cms/home-page');
     expect(homePath({ permissions: new Set(['cms-topbar.view']), portal: 'website' })).toBe('/cms/home-page');
+    /* So does the Navigation Menu alone. */
+    expect(homePath({ permissions: new Set(['cms-navmenu.view']), portal: 'website' })).toBe('/cms/home-page');
   });
 
   it('is Home Page Management when a home page section is the first CMS screen', () => {
@@ -170,5 +173,8 @@ describe('canOpenPath', () => {
     expect(canOpenPath('/cms/top-bar', wa)).toBe(true);
     expect(canOpenPath('/cms/top-bar', boardOnly)).toBe(false);
     expect(canOpenPath('/cms/top-bar/settings', boardOnly)).toBe(false);
+    expect(canOpenPath('/cms/nav-menu', wa)).toBe(true);
+    expect(canOpenPath('/cms/nav-menu', boardOnly)).toBe(false);
+    expect(canOpenPath('/cms/nav-menu', { permissions: new Set(['cms-navmenu.view']), portal: 'website' })).toBe(true);
   });
 });

@@ -1,5 +1,17 @@
+import { HOME_PAGE_TABS, type HomePageTab } from '../../../constants/navigation';
 import type { Action } from '../../../modules/auth/permissions';
 import type { SectionVisibilityKey } from './visibility.types';
+
+/*
+ * Whether a Home Page Management tab is a home page section, with a "Show on website" switch above its content:
+ * every tab but the Navigation Menu, whose items each have a switch of their own.
+ */
+export const isVisibilitySection = (tab: HomePageTab): tab is SectionVisibilityKey => tab !== 'nav-menu';
+
+/* The tabs that are sections, in tab order: the ones GET /cms/section-visibility can list. */
+export const VISIBILITY_TABS = HOME_PAGE_TABS.filter((t): t is Extract<(typeof HOME_PAGE_TABS)[number], { k: SectionVisibilityKey }> =>
+  isVisibilitySection(t.k),
+);
 
 /*
  * The action that lets a user switch a section: its menu's update permission (<menu>.update), the same one its
