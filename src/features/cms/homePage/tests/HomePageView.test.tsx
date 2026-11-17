@@ -165,6 +165,8 @@ const highlight = () => ({
   certification: pair('प्रमाणपत्र', 'Diploma certificate'),
   objectives: [],
   isPublished: true,
+  hiddenRows: [],
+  rowLabels: {},
   ...T,
 });
 const member = {
@@ -319,7 +321,7 @@ beforeEach(() => {
   vi.mocked(topBarService.list).mockResolvedValue([topBarLink]);
   vi.mocked(topBarService.getSettings).mockResolvedValue(topBarSettings);
   vi.mocked(brandBarService.get).mockResolvedValue(brandBar);
-  vi.mocked(navMenuService.list).mockResolvedValue(NAV_MENU_ITEMS.map((i) => ({ key: i.key, show: true, updatedAt: null })));
+  vi.mocked(navMenuService.list).mockResolvedValue(NAV_MENU_ITEMS.map((i) => ({ key: i.key, show: true, label: null, updatedAt: null })));
   vi.mocked(announcementsService.list).mockResolvedValue([announcement]);
   vi.mocked(announcementsService.getSection).mockResolvedValue(announcementsSection);
   vi.mocked(heroService.get).mockResolvedValue(hero());

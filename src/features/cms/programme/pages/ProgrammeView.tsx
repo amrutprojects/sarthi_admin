@@ -232,8 +232,8 @@ function FactsTab({
     <>
       <SectionNote>
         Total hours, Modules and Electives are summed from the modules on the Modules page; the other figures are entered with Edit content.
-        Switch a row off to leave it out of the fact sheet on the website &mdash; its figure is kept, and the home page&rsquo;s programme
-        section still shows the duration, validity and deposit.
+        Switch a row off to leave it out of the fact sheet on the website &mdash; its figure is kept. The same row is also left out of the
+        home page&rsquo;s programme section (Total hours, Ideal duration, Validity and Security deposit appear there too).
       </SectionNote>
       <div className="card">
         <div className="card-h">

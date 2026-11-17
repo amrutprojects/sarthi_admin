@@ -17,10 +17,16 @@ export interface NavMenuItem {
   key: string;
   /** Hidden takes the item out of the menu bar and the mobile menu only: its page still opens by its address. */
   show: boolean;
+  /** The item's own name on the website, in both languages; null = the website's default name. */
+  label: Bilingual | null;
   updatedAt: string | null;
 }
 
-/** The PUT body: strict, so nothing else may be sent. */
+/**
+ * The PUT body: strict, so nothing else may be sent, and at least one of the two. `label: null` (or both halves
+ * blank) puts the website's default name back.
+ */
 export interface UpdateNavMenuItemInput {
-  show: boolean;
+  show?: boolean;
+  label?: Bilingual | null;
 }

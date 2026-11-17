@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Badge, Dash } from '../../../../components/ui';
+import Icon from '../../../../components/ui/Icon';
 import { useCan } from '../../../../modules/auth/components/Can';
 import { SectionTabHead } from '../../components/SectionTabs';
 import { ConfirmModal, LoadState, useAction, useApiData } from '../../shared';
-import { navMenuEntry } from '../constants';
+import { navMenuEntry, navMenuName } from '../constants';
 import { navMenuService } from '../services/navMenuService';
 import type { NavMenuItem } from '../types/navmenu.types';
+import NavMenuNameModal from './NavMenuNameModal';
 
 /* Where the item leads: a page of the website, or the login portal for the Login / Register button. */
 const Page = ({ itemKey, path }: { itemKey: string; path: string | null }) => {
@@ -20,6 +22,9 @@ const Page = ({ itemKey, path }: { itemKey: string; path: string | null }) => {
  * its page still opens from other links. Hiding asks first, showing does not; the list is reloaded after each change.
  * Without cms-navmenu.update the rows show a Shown / Hidden badge instead.
  *
+ * Each item shows the name the website uses now — its own name when one was set, else the default — and, with
+ * cms-navmenu.update, an "Edit name" action that opens NavMenuNameModal.
+ *
  * Not a home page section, so it has no "Show on website" bar of its own above it (see HomePageView).
  */
 export default function NavMenuTab() {
@@ -27,11 +32,12 @@ export default function NavMenuTab() {
   const canUpdate = can('updateNavMenu');
   const { busy, run } = useAction();
   const [confirming, setConfirming] = useState<NavMenuItem | null>(null);
+  const [editing, setEditing] = useState<NavMenuItem | null>(null);
   const list = useApiData(() => navMenuService.list(), []);
   const items = list.data;
 
   const change = async (item: NavMenuItem, next: boolean) => {
-    const { en } = navMenuEntry(item.key).label;
+    const { en } = navMenuName(item);
     /* Reloaded while still busy, so no switch is used again on the list it has just changed. */
     const ok = await run(
       () => navMenuService.set(item.key, next),
@@ -42,7 +48,7 @@ export default function NavMenuTab() {
     if (!ok) await list.reload();
   };
 
-  const confirmingEntry = confirming ? navMenuEntry(confirming.key) : null;
+  const confirmingName = confirming ? navMenuName(confirming) : null;
 
   return (
     <>
@@ -73,11 +79,17 @@ export default function NavMenuTab() {
                   <th scope="col" style={{ width: '180px' }}>
                     Status
                   </th>
+                  {canUpdate ? (
+                    <th scope="col" style={{ width: '130px' }}>
+                      Action
+                    </th>
+                  ) : null}
                 </tr>
               </thead>
               <tbody>
                 {items.map((item, i) => {
-                  const { label, path } = navMenuEntry(item.key);
+                  const { path } = navMenuEntry(item.key);
+                  const label = navMenuName(item);
                   return (
                     <tr className="norow" key={item.key}>
                       <td>
@@ -90,6 +102,9 @@ export default function NavMenuTab() {
                             {label.mr}
                           </div>
                         ) : null}
+                        <div className="fs11" style={{ color: item.label ? 'var(--info)' : 'var(--muted)', marginTop: 2 }}>
+                          {item.label ? 'Custom name' : 'Default name'}
+                        </div>
                       </td>
                       <td>
                         <Page itemKey={item.key} path={path} />
@@ -116,6 +131,20 @@ export default function NavMenuTab() {
                           <Badge tone={item.show ? 'green' : 'grey'}>{item.show ? 'Shown' : 'Hidden'}</Badge>
                         )}
                       </td>
+                      {canUpdate ? (
+                        <td>
+                          <button
+                            type="button"
+                            className="btn xs"
+                            aria-label={`Edit name of ${label.en}`}
+                            title="Edit the name shown on the website"
+                            disabled={busy}
+                            onClick={() => setEditing(item)}
+                          >
+                            <Icon name="edit" /> Edit name
+                          </button>
+                        </td>
+                      ) : null}
                     </tr>
                   );
                 })}
@@ -125,9 +154,20 @@ export default function NavMenuTab() {
         </div>
       ) : null}
 
-      {confirming && confirmingEntry ? (
+      {editing ? (
+        <NavMenuNameModal
+          item={editing}
+          onClose={() => setEditing(null)}
+          onSaved={async () => {
+            setEditing(null);
+            await list.reload();
+          }}
+        />
+      ) : null}
+
+      {confirming && confirmingName ? (
         <ConfirmModal
-          title={`Hide "${confirmingEntry.label.en}" from the menu?`}
+          title={`Hide "${confirmingName.en}" from the menu?`}
           message={
             confirming.key === 'login'
               ? 'Visitors will no longer see the Login / Register button in the menu bar or the mobile menu. Nothing is deleted, and it can be shown again at any time.'

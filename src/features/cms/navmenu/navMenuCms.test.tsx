@@ -42,8 +42,8 @@ const PAGES = ['/', '/about', '/programme', '/advisory-committee', '/modules', '
 
 /* What GET /cms/nav-menu lists, kept up to date by the PUTs below: all ten keys in menu order, every one shown. */
 let items: NavMenuItem[];
-/* A PUT's answer when it is not the default success, e.g. a 403. */
-let refusal: { status: number; message: string } | null;
+/* A PUT's answer when it is not the default success, e.g. a 403, or a 422 with field details. */
+let refusal: { status: number; message: string; details?: { field: string; message: string }[] } | null;
 
 const respond = (status: number, body: unknown) =>
   ({ ok: status < 400, status, statusText: '', json: () => Promise.resolve(body) }) as Response;
@@ -55,10 +55,14 @@ const fetchMock = vi.fn(async (url: string, init: RequestInit = {}) => {
   }
   const put = path.match(/\/cms\/nav-menu\/([^/]+)$/);
   if (init.method === 'PUT' && put) {
-    if (refusal) return respond(refusal.status, { success: false, message: refusal.message, error: { code: 'REFUSED' } });
+    if (refusal) {
+      return respond(refusal.status, { success: false, message: refusal.message, error: { code: 'REFUSED', details: refusal.details } });
+    }
     const key = decodeURIComponent(put[1]!);
-    const { show } = JSON.parse(String(init.body)) as { show: boolean };
-    const next = { key, show, updatedAt: CHANGED };
+    const body = JSON.parse(String(init.body)) as { show?: boolean; label?: NavMenuItem['label'] };
+    const current = items.find((i) => i.key === key)!;
+    const label = 'label' in body ? (body.label && body.label.mr && body.label.en ? body.label : null) : current.label;
+    const next: NavMenuItem = { key, show: body.show ?? current.show, label, updatedAt: CHANGED };
     items = items.map((i) => (i.key === key ? next : i));
     return respond(200, { success: true, message: 'Navigation menu item updated', data: next });
   }
@@ -76,7 +80,7 @@ const findTable = () => screen.findByRole('table');
 
 beforeEach(() => {
   auth.permissions = new Set(ALL);
-  items = NAV_MENU_ITEMS.map((i) => ({ key: i.key, show: true, updatedAt: null }));
+  items = NAV_MENU_ITEMS.map((i) => ({ key: i.key, show: true, label: null, updatedAt: null }));
   refusal = null;
   fetchMock.mockClear();
   vi.stubGlobal('fetch', fetchMock);
@@ -92,10 +96,20 @@ describe('navigation menu API', () => {
     expect(await navMenuService.list()).toEqual(items);
     expect(fetchMock.mock.calls[0]![0]).toMatch(/\/cms\/nav-menu$/);
 
-    expect(await navMenuService.set('faq', false)).toEqual({ key: 'faq', show: false, updatedAt: CHANGED });
+    expect(await navMenuService.set('faq', false)).toEqual({ key: 'faq', show: false, label: null, updatedAt: CHANGED });
     const [url, init] = fetchMock.mock.calls[1]!;
     expect(url).toMatch(/\/cms\/nav-menu\/faq$/);
     expect(init).toMatchObject({ method: 'PUT', body: JSON.stringify({ show: false }) });
+  });
+
+  it('sends a name as PUT /cms/nav-menu/<key> {label}, and null for the default name', async () => {
+    const name = { mr: 'प्रश्न', en: 'Questions' };
+    expect(await navMenuService.setLabel('faq', name)).toEqual({ key: 'faq', show: true, label: name, updatedAt: CHANGED });
+    expect(fetchMock.mock.calls[0]![0]).toMatch(/\/cms\/nav-menu\/faq$/);
+    expect(fetchMock.mock.calls[0]![1]).toMatchObject({ method: 'PUT', body: JSON.stringify({ label: name }) });
+
+    expect((await navMenuService.setLabel('faq', null)).label).toBeNull();
+    expect(fetchMock.mock.calls[1]![1]).toMatchObject({ method: 'PUT', body: JSON.stringify({ label: null }) });
   });
 
   it('knows the ten items of the website’s menu bar, in menu order', () => {
@@ -132,12 +146,14 @@ describe('Navigation Menu tab', () => {
       'Menu item',
       'Page',
       'Status',
+      'Action',
     ]);
     expect(rows()).toHaveLength(10);
     rows().forEach((row, i) => {
       const cells = within(row).getAllByRole('cell');
       expect(cells[0]).toHaveTextContent(String(i + 1));
-      expect(cells[1]).toHaveTextContent(`${ENGLISH[i]}${MARATHI[i]}`);
+      expect(cells[1]).toHaveTextContent(`${ENGLISH[i]}${MARATHI[i]}Default name`);
+      expect(within(cells[4]!).getByRole('button', { name: `Edit name of ${ENGLISH[i]}` })).toHaveTextContent('Edit name');
       expect(within(cells[1]!).getByText(MARATHI[i]!)).toHaveAttribute('lang', 'mr');
       expect(cells[2]).toHaveTextContent(PAGES[i]!);
       const toggle = within(cells[3]!).getByRole('switch', { name: `Show ${ENGLISH[i]} in the menu` });
@@ -239,6 +255,8 @@ describe('Navigation Menu tab', () => {
     await findTable();
 
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Edit name/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Action' })).not.toBeInTheDocument();
     expect(within(rowOf('Modules')).getByText('Hidden')).toHaveClass('badge');
     expect(within(rowOf('Home')).getByText('Shown')).toHaveClass('badge');
     expect(screen.getAllByText('Shown', { selector: '.badge' })).toHaveLength(9);
@@ -254,5 +272,150 @@ describe('Navigation Menu tab', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     await findTable();
     expect(rows()).toHaveLength(10);
+  });
+});
+
+describe('Navigation Menu tab — item names', () => {
+  const CUSTOM = { mr: 'प्रश्न', en: 'Questions' };
+  const openEdit = async (english: string) => {
+    await userEvent.click(screen.getByRole('button', { name: `Edit name of ${english}` }));
+    return screen.getByRole('dialog');
+  };
+  const inputs = (dialog: HTMLElement) => ({
+    mr: within(dialog).getByLabelText('Name (Marathi)') as HTMLInputElement,
+    en: within(dialog).getByLabelText('Name (English)') as HTMLInputElement,
+  });
+  const labelPuts = () => puts().map(([, init]) => JSON.parse(String(init!.body)) as unknown);
+
+  it('shows an item’s own name in its row, with the switch and the hide question using it', async () => {
+    items = items.map((i) => (i.key === 'faq' ? { ...i, label: CUSTOM } : i));
+    renderTab();
+    await findTable();
+
+    const row = rowOf('Questions');
+    expect(within(row).getAllByRole('cell')[1]).toHaveTextContent('Questionsप्रश्नCustom name');
+    expect(within(row).getByText('प्रश्न')).toHaveAttribute('lang', 'mr');
+    expect(screen.queryByText('FAQs', { selector: 'b' })).not.toBeInTheDocument();
+    expect(rowOf('Home')).toHaveTextContent('Default name');
+
+    await userEvent.click(switchOf('Questions'));
+    expect(screen.getByRole('dialog')).toHaveTextContent('Hide "Questions" from the menu?');
+  });
+
+  it('opens with the current name and saves a new one in both languages, trimmed, then reloads the list', async () => {
+    renderTab();
+    await findTable();
+
+    const dialog = await openEdit('FAQs');
+    const { mr, en } = inputs(dialog);
+    expect(mr).toHaveValue('प्रश्नोत्तरे');
+    expect(en).toHaveValue('FAQs');
+    expect(mr).toHaveAttribute('maxLength', '40');
+    expect(en).toHaveAttribute('maxLength', '40');
+    expect(dialog).toHaveTextContent("Shown in the website’s menu bar and mobile menu. Leave both blank to use the default name.");
+    /* No name of its own yet, so nothing to reset. */
+    expect(within(dialog).queryByRole('button', { name: 'Reset to default' })).not.toBeInTheDocument();
+
+    await userEvent.clear(mr);
+    await userEvent.type(mr, '  प्रश्न ');
+    await userEvent.clear(en);
+    await userEvent.type(en, ' Questions ');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(toasts()).toHaveTextContent('Menu item renamed to "Questions"'));
+    expect(puts()).toHaveLength(1);
+    expect(puts()[0]![0]).toMatch(/\/cms\/nav-menu\/faq$/);
+    expect(labelPuts()).toEqual([{ label: CUSTOM }]);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await waitFor(() => expect(gets()).toHaveLength(2));
+    expect(rowOf('Questions')).toHaveTextContent('Custom name');
+    /* Only the name changed. */
+    expect(switchOf('Questions')).toBeChecked();
+  });
+
+  it('refuses one half without the other, and saves both blank as the default name', async () => {
+    items = items.map((i) => (i.key === 'contact' ? { ...i, label: { mr: 'संपर्क साधा', en: 'Reach us' } } : i));
+    renderTab();
+    await findTable();
+
+    const dialog = await openEdit('Reach us');
+    const { mr, en } = inputs(dialog);
+    await userEvent.clear(en);
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Enter the English name too, or leave both blank to use the default name');
+    expect(en).toHaveAttribute('aria-invalid', 'true');
+    expect(puts()).toHaveLength(0);
+
+    await userEvent.clear(mr);
+    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(toasts()).toHaveTextContent('"Contact" now uses its default name'));
+    expect(labelPuts()).toEqual([{ label: null }]);
+    await waitFor(() => expect(rowOf('Contact')).toHaveTextContent('Default name'));
+  });
+
+  it('refuses a name over 40 characters', async () => {
+    items = items.map((i) => (i.key === 'home' ? { ...i, label: { mr: 'मुख्य', en: 'H'.repeat(41) } } : i));
+    renderTab();
+    await findTable();
+
+    const dialog = await openEdit('H'.repeat(41));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('English name must be at most 40 characters');
+    expect(puts()).toHaveLength(0);
+  });
+
+  it('saves the default name typed back as the default name', async () => {
+    items = items.map((i) => (i.key === 'about' ? { ...i, label: { mr: 'आमच्याबद्दल', en: 'About us' } } : i));
+    renderTab();
+    await findTable();
+
+    const { mr, en } = inputs(await openEdit('About us'));
+    await userEvent.clear(mr);
+    await userEvent.type(mr, 'अमृत विषयी');
+    await userEvent.clear(en);
+    await userEvent.type(en, 'About AMRUT');
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(puts()).toHaveLength(1));
+    expect(labelPuts()).toEqual([{ label: null }]);
+  });
+
+  it('puts the default name back with "Reset to default"', async () => {
+    items = items.map((i) => (i.key === 'login' ? { ...i, label: { mr: 'प्रवेश', en: 'Sign in' } } : i));
+    renderTab();
+    await findTable();
+
+    const dialog = await openEdit('Sign in');
+    expect(dialog).toHaveTextContent('Default name: Login / Register · लॉगिन / नोंदणी करा');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Reset to default' }));
+    await waitFor(() => expect(toasts()).toHaveTextContent('"Login / Register" now uses its default name'));
+    expect(puts()[0]![0]).toMatch(/\/cms\/nav-menu\/login$/);
+    expect(labelPuts()).toEqual([{ label: null }]);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await waitFor(() => expect(rowOf('Login / Register')).toHaveTextContent('Default name'));
+  });
+
+  it('shows the server’s field messages on the form and keeps the dialog open', async () => {
+    refusal = { status: 422, message: 'Validation failed', details: [{ field: 'body.label.en', message: 'English name is not allowed' }] };
+    renderTab();
+    await findTable();
+
+    const dialog = await openEdit('Modules');
+    await userEvent.type(inputs(dialog).en, ' list');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(within(dialog).getByRole('alert')).toHaveTextContent('English name is not allowed'));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(inputs(dialog).en).toHaveValue('Modules list');
+  });
+
+  it('closes without sending anything on Cancel', async () => {
+    renderTab();
+    await findTable();
+
+    const dialog = await openEdit('Home');
+    await userEvent.type(inputs(dialog).en, ' page');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(puts()).toHaveLength(0);
   });
 });

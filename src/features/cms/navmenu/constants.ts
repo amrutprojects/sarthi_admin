@@ -29,3 +29,6 @@ export const NAV_MENU_ITEMS: readonly NavMenuEntry[] = [
 /* An item's labels and page by its key; a key this panel does not know yet is named by the key itself. */
 export const navMenuEntry = (key: string): Pick<NavMenuEntry, 'label' | 'path'> =>
   NAV_MENU_ITEMS.find((i) => i.key === key) ?? { label: { en: key, mr: '' }, path: null };
+
+/* The name the website shows for an item now: its own name when one is set, else the default one above. */
+export const navMenuName = (item: { key: string; label: Bilingual | null }): Bilingual => item.label ?? navMenuEntry(item.key).label;

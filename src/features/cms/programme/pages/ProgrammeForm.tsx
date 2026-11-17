@@ -434,7 +434,7 @@ export default function ProgrammeForm({
               {factNumber('applyLeadDays', 'Apply before (days)')}
               <MasterField
                 id="pf-facts-partnerName"
-                label="Partner name"
+                label="Implementation Partner name"
                 required
                 error={errors['facts.partnerName']}
                 hint="A registered company name, so it is not translated."

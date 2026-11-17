@@ -1,8 +1,9 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useLocation } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../../../../../tests/test-utils';
+import { ApiError } from '../../../../services/api-client';
 import HighlightTab from '../components/HighlightTab';
 import HighlightEdit from '../pages/HighlightEdit';
 import HighlightForm, { toFormValues, toPayload } from '../pages/HighlightForm';
@@ -16,7 +17,9 @@ vi.mock('../../../../modules/auth/components/Can', () => ({
   useCan: () => (action: string) => permissions.has(action),
   Can: ({ action, children }: { action: string; children: unknown }) => (permissions.has(action) ? children : null),
 }));
-vi.mock('../services/highlightService', () => ({ highlightService: { get: vi.fn(), update: vi.fn() } }));
+vi.mock('../services/highlightService', () => ({
+  highlightService: { get: vi.fn(), update: vi.fn(), setRowVisibility: vi.fn(), setRowLabel: vi.fn() },
+}));
 
 const AT = '2026-10-22T10:00:00.000Z';
 
@@ -40,6 +43,8 @@ const highlightData = (over: Partial<ApiProgrammeHighlight> = {}): ApiProgrammeH
     objective({ id: 'o3', text: { mr: 'जुने उद्दिष्ट', en: 'Retired objective' }, displayOrder: 2, isActive: false }),
   ],
   isPublished: true,
+  hiddenRows: [],
+  rowLabels: {},
   createdAt: AT,
   updatedAt: AT,
   ...over,
@@ -182,6 +187,397 @@ describe('<HighlightTab> — Skill Development Diploma', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByRole('heading', { name: /Section text/ })).toBeInTheDocument();
     expect(highlightService.get).toHaveBeenCalledTimes(2);
+  });
+});
+
+/* The home page band's fact table, row by row: each row has its own Shown / Hidden switch. */
+describe('<HighlightTab> fact table row switches', () => {
+  const ROWS_EN = [
+    'Total duration',
+    'Ideal completion',
+    'Candidature validity',
+    'Per module',
+    'Schedule',
+    'Security deposit',
+    'Certification',
+  ];
+  const ROWS_MR = ['एकूण कालावधी', 'आदर्श कालावधी', 'उमेदवारीची वैधता', 'प्रति मॉड्यूल', 'वेळापत्रक', 'अनामत रक्कम', 'प्रमाणपत्र'];
+  const toasts = () => document.getElementById('toast-root') as HTMLElement;
+  const switchOf = (english: string) => screen.getByRole('switch', { name: `Show ${english} in the home page fact table` });
+  const rowsCard = () => card(/Fact table rows/);
+
+  beforeEach(() => {
+    permissions.clear();
+    if (!document.getElementById('toast-root')) document.body.insertAdjacentHTML('beforeend', '<div id="toast-root"></div>');
+    toasts().innerHTML = '';
+    vi.mocked(highlightService.get).mockReset().mockResolvedValue(highlightData());
+    vi.mocked(highlightService.setRowVisibility).mockReset();
+  });
+
+  it('lists all seven rows in website order, with Marathi, where each value comes from, and a switch', async () => {
+    permissions.add('updateHighlight');
+    renderTab();
+    await screen.findByRole('heading', { name: /Fact table rows/ });
+    const table = within(rowsCard()).getByRole('table');
+    expect(headers(table)).toEqual(['Sr. No.', 'Row', 'Value from', 'Status', 'Action']);
+    const rows = bodyRows(table);
+    expect(rows).toHaveLength(7);
+    rows.forEach((row, i) => {
+      expect(cellText(row, 0)).toBe(String(i + 1));
+      expect(within(row).getByText(ROWS_EN[i]!)).toBeInTheDocument();
+      expect(within(row).getByText(ROWS_MR[i]!)).toHaveAttribute('lang', 'mr');
+      const toggle = within(row).getByRole('switch', { name: `Show ${ROWS_EN[i]} in the home page fact table` });
+      expect(toggle).toHaveAttribute('aria-checked', 'true');
+      expect(toggle).toHaveClass('switch', 'on');
+    });
+    expect(rows.map((r) => cellText(r, 2)!.replace(/Also hidden.*/, ''))).toEqual([
+      'Modules page',
+      'Programme Page Management',
+      'Programme Page Management',
+      'Modules page',
+      'Modules page',
+      'Programme Page Management',
+      'This section — Certification',
+    ]);
+    /* The four rows the Programme fact sheet's switches also hide say so. */
+    const linked = rows.map((r) => /Also hidden when switched off in Programme Page Management → Fact sheet/.test(cellText(r, 2)!));
+    expect(linked).toEqual([true, true, true, false, false, true, false]);
+    expect(within(rowsCard()).getByText('7 of 7 shown')).toHaveClass('tag');
+    /* The card comes after the objectives. */
+    expect(screen.getByRole('heading', { name: /Objectives/ }).compareDocumentPosition(rowsCard())).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it('asks before hiding a row, then sends the PATCH and shows the section it answers with', async () => {
+    permissions.add('updateHighlight');
+    vi.mocked(highlightService.setRowVisibility).mockResolvedValue(highlightData({ hiddenRows: ['securityDeposit'] }));
+    renderTab();
+    await screen.findByRole('heading', { name: /Fact table rows/ });
+
+    await userEvent.click(switchOf('Security deposit'));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('Hide "Security deposit" from the home page fact table?');
+    expect(dialog).toHaveTextContent('Its figure is not deleted');
+    expect(highlightService.setRowVisibility).not.toHaveBeenCalled();
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Yes, hide' }));
+    await waitFor(() => expect(toasts()).toHaveTextContent('Security deposit is now hidden from the home page fact table'));
+    expect(highlightService.setRowVisibility).toHaveBeenCalledTimes(1);
+    expect(highlightService.setRowVisibility).toHaveBeenCalledWith('securityDeposit', false);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    /* Refreshed from the PATCH answer, without a second GET. */
+    expect(switchOf('Security deposit')).toHaveAttribute('aria-checked', 'false');
+    expect(within(rowsCard()).getByText('6 of 7 shown')).toBeInTheDocument();
+    expect(switchOf('Schedule')).toHaveAttribute('aria-checked', 'true');
+    expect(highlightService.get).toHaveBeenCalledTimes(1);
+  });
+
+  it('does nothing when the confirmation is cancelled', async () => {
+    permissions.add('updateHighlight');
+    renderTab();
+    await screen.findByRole('heading', { name: /Fact table rows/ });
+
+    await userEvent.click(switchOf('Total duration'));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(highlightService.setRowVisibility).not.toHaveBeenCalled();
+    expect(switchOf('Total duration')).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('shows a hidden row again without asking', async () => {
+    permissions.add('updateHighlight');
+    vi.mocked(highlightService.get).mockResolvedValue(highlightData({ hiddenRows: ['totalDuration', 'certification'] }));
+    vi.mocked(highlightService.setRowVisibility).mockResolvedValue(highlightData({ hiddenRows: ['totalDuration'] }));
+    renderTab();
+    await screen.findByRole('heading', { name: /Fact table rows/ });
+    expect(within(rowsCard()).getByText('5 of 7 shown')).toBeInTheDocument();
+    expect(switchOf('Certification')).toHaveAttribute('aria-checked', 'false');
+
+    await userEvent.click(switchOf('Certification'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await waitFor(() => expect(toasts()).toHaveTextContent('Certification is now shown in the home page fact table'));
+    expect(highlightService.setRowVisibility).toHaveBeenCalledWith('certification', true);
+    await waitFor(() => expect(switchOf('Certification')).toHaveAttribute('aria-checked', 'true'));
+    expect(switchOf('Total duration')).toHaveAttribute('aria-checked', 'false');
+    expect(within(rowsCard()).getByText('6 of 7 shown')).toBeInTheDocument();
+  });
+
+  it('locks every switch while a change is on its way', async () => {
+    permissions.add('updateHighlight');
+    let answer!: (page: ApiProgrammeHighlight) => void;
+    vi.mocked(highlightService.setRowVisibility).mockReturnValue(new Promise((resolve) => (answer = resolve)));
+    vi.mocked(highlightService.get).mockResolvedValue(highlightData({ hiddenRows: ['schedule'] }));
+    renderTab();
+    await screen.findByRole('heading', { name: /Fact table rows/ });
+
+    await userEvent.click(switchOf('Schedule'));
+    await waitFor(() => expect(switchOf('Per module')).toBeDisabled());
+    screen.getAllByRole('switch').forEach((s) => expect(s).toBeDisabled());
+    screen.getAllByRole('button', { name: /^Edit name of / }).forEach((b) => expect(b).toBeDisabled());
+    answer(highlightData());
+    await waitFor(() => expect(switchOf('Per module')).toBeEnabled());
+    expect(switchOf('Schedule')).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('shows a refusal as the server sent it, and reloads so the switches show what the website has', async () => {
+    permissions.add('updateHighlight');
+    vi.mocked(highlightService.setRowVisibility).mockRejectedValue(new ApiError('You do not have permission to do this', 403, 'FORBIDDEN'));
+    renderTab();
+    await screen.findByRole('heading', { name: /Fact table rows/ });
+
+    await userEvent.click(switchOf('Candidature validity'));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Yes, hide' }));
+    await waitFor(() => expect(toasts()).toHaveTextContent('You do not have permission to do this'));
+    await waitFor(() => expect(highlightService.get).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(await screen.findByRole('switch', { name: 'Show Candidature validity in the home page fact table' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+  });
+
+  it('gives a view-only administrator a Shown / Hidden badge per row instead of the switches', async () => {
+    vi.mocked(highlightService.get).mockResolvedValue(highlightData({ hiddenRows: ['perModule'] }));
+    renderTab();
+    await screen.findByRole('heading', { name: /Fact table rows/ });
+
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Edit name/ })).not.toBeInTheDocument();
+    expect(headers(within(rowsCard()).getByRole('table'))).toEqual(['Sr. No.', 'Row', 'Value from', 'Status']);
+    const rows = bodyRows(within(rowsCard()).getByRole('table'));
+    expect(rows.map((r) => cellText(r, 3))).toEqual(['Shown', 'Shown', 'Shown', 'Hidden', 'Shown', 'Shown', 'Shown']);
+    expect(within(rowsCard()).getByText('6 of 7 shown')).toBeInTheDocument();
+  });
+
+  it('keeps the edit form’s save free of hiddenRows', () => {
+    expect(toPayload(toFormValues(highlightData({ hiddenRows: ['schedule'] })))).not.toHaveProperty('hiddenRows');
+  });
+});
+
+/* Each fact table row's name, in both languages, edited one row at a time like the Navigation Menu's item names. */
+describe('<HighlightTab> fact table row names', () => {
+  const CUSTOM = { mr: 'एकूण तास', en: 'Total hours' };
+  const toasts = () => document.getElementById('toast-root') as HTMLElement;
+  const switchOf = (english: string) => screen.getByRole('switch', { name: `Show ${english} in the home page fact table` });
+  const rowsCard = () => card(/Fact table rows/);
+  const rowOf = (english: string) => within(rowsCard()).getByText(english, { selector: 'b' }).closest('tr') as HTMLElement;
+  const openEdit = async (english: string) => {
+    await userEvent.click(screen.getByRole('button', { name: `Edit name of ${english}` }));
+    return screen.getByRole('dialog');
+  };
+  const inputs = (dialog: HTMLElement) => ({
+    mr: within(dialog).getByLabelText('Name (Marathi)') as HTMLInputElement,
+    en: within(dialog).getByLabelText('Name (English)') as HTMLInputElement,
+  });
+
+  beforeEach(() => {
+    permissions.clear();
+    permissions.add('updateHighlight');
+    if (!document.getElementById('toast-root')) document.body.insertAdjacentHTML('beforeend', '<div id="toast-root"></div>');
+    toasts().innerHTML = '';
+    vi.mocked(highlightService.get).mockReset().mockResolvedValue(highlightData());
+    vi.mocked(highlightService.setRowVisibility).mockReset();
+    vi.mocked(highlightService.setRowLabel).mockReset();
+  });
+
+  it('shows a row’s own name, with the switch, the hide question and its toast using it', async () => {
+    vi.mocked(highlightService.get).mockResolvedValue(highlightData({ rowLabels: { totalDuration: CUSTOM } }));
+    vi.mocked(highlightService.setRowVisibility).mockResolvedValue(
+      highlightData({ rowLabels: { totalDuration: CUSTOM }, hiddenRows: ['totalDuration'] }),
+    );
+    renderTab();
+    await screen.findByRole('heading', { name: /Fact table rows/ });
+
+    const row = rowOf('Total hours');
+    expect(within(row).getAllByRole('cell')[1]).toHaveTextContent('Total hoursएकूण तासCustom name');
+    expect(within(row).getByText('एकूण तास')).toHaveAttribute('lang', 'mr');
+    expect(within(rowsCard()).queryByText('Total duration', { selector: 'b' })).not.toBeInTheDocument();
+    expect(rowOf('Schedule')).toHaveTextContent('Default name');
+
+    await userEvent.click(switchOf('Total hours'));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('Hide "Total hours" from the home page fact table?');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Yes, hide' }));
+    await waitFor(() => expect(toasts()).toHaveTextContent('Total hours is now hidden from the home page fact table'));
+  });
+
+  it('opens with the current name and saves a new one in both languages, trimmed, showing the PATCH answer', async () => {
+    vi.mocked(highlightService.setRowLabel).mockResolvedValue(highlightData({ rowLabels: { totalDuration: CUSTOM } }));
+    renderTab();
+    await screen.findByRole('heading', { name: /Fact table rows/ });
+
+    const dialog = await openEdit('Total duration');
+    const { mr, en } = inputs(dialog);
+    expect(mr).toHaveValue('एकूण कालावधी');
+    expect(en).toHaveValue('Total duration');
+    expect(mr).toHaveAttribute('maxLength', '40');
+    expect(en).toHaveAttribute('maxLength', '40');
+    expect(dialog).toHaveTextContent('Shown as the row name in the home page fact table. Leave both blank to use the default name.');
+    /* No name of its own yet, so nothing to reset. */
+    expect(within(dialog).queryByRole('button', { name: 'Reset to default' })).not.toBeInTheDocument();
+
+    await userEvent.clear(mr);
+    await userEvent.type(mr, '  एकूण तास ');
+    await userEvent.clear(en);
+    await userEvent.type(en, ' Total hours ');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(toasts()).toHaveTextContent('Fact table row renamed to "Total hours"'));
+    expect(highlightService.setRowLabel).toHaveBeenCalledTimes(1);
+    expect(highlightService.setRowLabel).toHaveBeenCalledWith('totalDuration', CUSTOM);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(rowOf('Total hours')).toHaveTextContent('Custom name');
+    /* Refreshed from the PATCH answer, without a second GET; only the name changed. */
+    expect(highlightService.get).toHaveBeenCalledTimes(1);
+    expect(highlightService.setRowVisibility).not.toHaveBeenCalled();
+    expect(switchOf('Total hours')).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('refuses one half without the other, and saves both blank as the default name', async () => {
+    vi.mocked(highlightService.get).mockResolvedValue(highlightData({ rowLabels: { schedule: { mr: 'वेळ', en: 'Timings' } } }));
+    vi.mocked(highlightService.setRowLabel).mockResolvedValue(highlightData());
+    renderTab();
+    await screen.findByRole('heading', { name: /Fact table rows/ });
+
+    const dialog = await openEdit('Timings');
+    const { mr, en } = inputs(dialog);
+    await userEvent.clear(en);
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Enter the English name too, or leave both blank to use the default name');
+    expect(en).toHaveAttribute('aria-invalid', 'true');
+    expect(highlightService.setRowLabel).not.toHaveBeenCalled();
+
+    await userEvent.clear(mr);
+    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(toasts()).toHaveTextContent('"Schedule" now uses its default name'));
+    expect(highlightService.setRowLabel).toHaveBeenCalledWith('schedule', null);
+    await waitFor(() => expect(rowOf('Schedule')).toHaveTextContent('Default name'));
+  });
+
+  it('refuses a name over 40 characters', async () => {
+    vi.mocked(highlightService.get).mockResolvedValue(highlightData({ rowLabels: { perModule: { mr: 'मॉड्यूल', en: 'P'.repeat(41) } } }));
+    renderTab();
+    await screen.findByRole('heading', { name: /Fact table rows/ });
+
+    const dialog = await openEdit('P'.repeat(41));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('English name must be at most 40 characters');
+    expect(highlightService.setRowLabel).not.toHaveBeenCalled();
+  });
+
+  it('saves the default name typed back as the default name', async () => {
+    vi.mocked(highlightService.get).mockResolvedValue(highlightData({ rowLabels: { certification: { mr: 'दाखला', en: 'Certificate' } } }));
+    vi.mocked(highlightService.setRowLabel).mockResolvedValue(highlightData());
+    renderTab();
+    await screen.findByRole('heading', { name: /Fact table rows/ });
+
+    const { mr, en } = inputs(await openEdit('Certificate'));
+    await userEvent.clear(mr);
+    await userEvent.type(mr, 'प्रमाणपत्र');
+    await userEvent.clear(en);
+    await userEvent.type(en, 'Certification');
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(highlightService.setRowLabel).toHaveBeenCalledTimes(1));
+    expect(highlightService.setRowLabel).toHaveBeenCalledWith('certification', null);
+  });
+
+  it('puts the default name back with "Reset to default"', async () => {
+    vi.mocked(highlightService.get).mockResolvedValue(highlightData({ rowLabels: { securityDeposit: { mr: 'ठेव', en: 'Deposit' } } }));
+    vi.mocked(highlightService.setRowLabel).mockResolvedValue(highlightData());
+    renderTab();
+    await screen.findByRole('heading', { name: /Fact table rows/ });
+
+    const dialog = await openEdit('Deposit');
+    expect(dialog).toHaveTextContent('Default name: Security deposit · अनामत रक्कम');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Reset to default' }));
+    await waitFor(() => expect(toasts()).toHaveTextContent('"Security deposit" now uses its default name'));
+    expect(highlightService.setRowLabel).toHaveBeenCalledWith('securityDeposit', null);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(rowOf('Security deposit')).toHaveTextContent('Default name');
+  });
+
+  it('shows the server’s field messages on the form and keeps the dialog open', async () => {
+    vi.mocked(highlightService.setRowLabel).mockRejectedValue(
+      new ApiError('Validation failed', 422, 'VALIDATION_ERROR', [{ field: 'body.label.en', message: 'English name is not allowed' }]),
+    );
+    renderTab();
+    await screen.findByRole('heading', { name: /Fact table rows/ });
+
+    const dialog = await openEdit('Per module');
+    await userEvent.type(inputs(dialog).en, ' fee');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(within(dialog).getByRole('alert')).toHaveTextContent('English name is not allowed'));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(inputs(dialog).en).toHaveValue('Per module fee');
+  });
+
+  it('closes without sending anything on Cancel', async () => {
+    renderTab();
+    await screen.findByRole('heading', { name: /Fact table rows/ });
+
+    const dialog = await openEdit('Schedule');
+    await userEvent.type(inputs(dialog).en, ' times');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(highlightService.setRowLabel).not.toHaveBeenCalled();
+  });
+
+  it('keeps the edit form’s save free of rowLabels', () => {
+    expect(toPayload(toFormValues(highlightData({ rowLabels: { schedule: CUSTOM } })))).not.toHaveProperty('rowLabels');
+  });
+});
+
+describe('fact table row API', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('sends one row’s switch as PATCH /cms/highlight/rows/<key> {show}, and returns the section it answers with', async () => {
+    /* The real service and api-client, down to the request; the module mock above replaces them for the screens only. */
+    const { highlightService: real } = await vi.importActual<{ highlightService: typeof highlightService }>('../services/highlightService');
+    const answer = highlightData({ hiddenRows: ['securityDeposit'] });
+    const fetchMock = vi.fn(
+      async (_url: string, _init?: RequestInit) =>
+        ({
+          ok: true,
+          status: 200,
+          statusText: '',
+          json: () => Promise.resolve({ success: true, message: 'Updated', data: answer }),
+        }) as Response,
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    expect(await real.setRowVisibility('securityDeposit', false)).toEqual(answer);
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(new URL(url, 'http://admin.test').pathname).toMatch(/\/cms\/highlight\/rows\/securityDeposit$/);
+    expect(init).toMatchObject({ method: 'PATCH', body: JSON.stringify({ show: false }) });
+
+    await real.setRowVisibility('certification', true);
+    expect(fetchMock.mock.calls[1]![0]).toMatch(/\/cms\/highlight\/rows\/certification$/);
+    expect(fetchMock.mock.calls[1]![1]).toMatchObject({ method: 'PATCH', body: JSON.stringify({ show: true }) });
+  });
+
+  it('sends one row’s name as PATCH /cms/highlight/rows/<key> {label}, and null for the default name', async () => {
+    const { highlightService: real } = await vi.importActual<{ highlightService: typeof highlightService }>('../services/highlightService');
+    const name = { mr: 'वेळ', en: 'Timings' };
+    const answer = highlightData({ rowLabels: { schedule: name } });
+    const fetchMock = vi.fn(
+      async (_url: string, _init?: RequestInit) =>
+        ({
+          ok: true,
+          status: 200,
+          statusText: '',
+          json: () => Promise.resolve({ success: true, message: 'Updated', data: answer }),
+        }) as Response,
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    expect(await real.setRowLabel('schedule', name)).toEqual(answer);
+    expect(fetchMock.mock.calls[0]![0]).toMatch(/\/cms\/highlight\/rows\/schedule$/);
+    expect(fetchMock.mock.calls[0]![1]).toMatchObject({ method: 'PATCH', body: JSON.stringify({ label: name }) });
+
+    await real.setRowLabel('schedule', null);
+    expect(fetchMock.mock.calls[1]![1]).toMatchObject({ method: 'PATCH', body: JSON.stringify({ label: null }) });
   });
 });
 
