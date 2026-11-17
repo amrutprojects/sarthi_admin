@@ -15,4 +15,11 @@ export const programmeService = {
   /* Visibility has its own endpoint so it can be toggled without resubmitting the content. */
   setPublished: async (isPublished: boolean): Promise<ApiProgrammePage> =>
     (await request<ApiProgrammePage>('/cms/programme/status', { method: 'PATCH', body: { isPublished } })).data,
+
+  /*
+   * Shows or hides one row of the website's fact sheet; nothing else changes. Answers with the whole page, as the GET
+   * does. The server answers 403 without cms-programme.update and 422 for an unknown key.
+   */
+  setFactVisibility: async (key: string, show: boolean): Promise<ApiProgrammePage> =>
+    (await request<ApiProgrammePage>(`/cms/programme/facts/${encodeURIComponent(key)}`, { method: 'PATCH', body: { show } })).data,
 };

@@ -8,22 +8,22 @@ import { advisoryService } from '../services/advisoryService';
 import type { ApiAdvisoryGroup } from '../types/advisory.types';
 import GroupFormModal from './GroupFormModal';
 
-const trainers = (n: number) => (n === 1 ? '1 trainer' : `${n} trainers`);
+const membersLabel = (n: number) => (n === 1 ? '1 Advisory Committee member' : `${n} Advisory Committee members`);
 
 /* The contract's wording; a group with nobody in it has nothing to keep. */
 const deleteMessage = (g: ApiAdvisoryGroup) =>
   `Delete group "${g.name.en}"? ` +
   (g.memberCount === 0
-    ? 'It has no trainers.'
-    : `Its ${trainers(g.memberCount)} ${g.memberCount === 1 ? 'stays' : 'stay'}, shown without a group heading.`);
+    ? 'It has no Advisory Committee members.'
+    : `Its ${membersLabel(g.memberCount)} ${g.memberCount === 1 ? 'stays' : 'stay'}, shown without a group heading.`);
 
 /*
- * The Groups card on the Advisory Committee list: the headings the website lists trainers under (such as the
- * organisation they belong to), in website order. Groups are optional; a trainer's group is picked on its form.
+ * The Groups card on the Advisory Committee list: the headings the website lists Advisory Committee members under (such as the
+ * organisation they belong to), in website order. Groups are optional; an Advisory Committee member's group is picked on its form.
  *
- * Like the trainers, every action names its group by id, and a reorder sends the whole list of ids, so a list
+ * Like the Advisory Committee members, every action names its group by id, and a reorder sends the whole list of ids, so a list
  * that has moved on since it was loaded can never change the wrong group. Deleting or renaming a group also
- * changes the trainers table (its Group column), hence onMembersChanged.
+ * changes the Advisory Committee members table (its Group column), hence onMembersChanged.
  */
 export default function GroupsCard({
   groups,
@@ -63,7 +63,7 @@ export default function GroupsCard({
     <div className="card mb14">
       <div className="card-h">
         <h3>
-          Groups <span className="sub">optional headings the trainers are listed under on the website</span>
+          Groups <span className="sub">optional headings the Advisory Committee members are listed under on the website</span>
         </h3>
         <Can action="createAdvisoryMember">
           <button type="button" className="btn sm" onClick={() => setEditing('new')}>
@@ -76,14 +76,14 @@ export default function GroupsCard({
         <LoadState loading={groups.loading && !groups.data} error={groups.error} onRetry={() => void groups.reload()} />
         {groups.data && all.length === 0 ? (
           <p className="muted" style={{ margin: 0 }}>
-            Optional: show trainers under headings such as the organisation they belong to. Without groups the website lists every trainer
-            together. Add a group, then choose it on each trainer&rsquo;s form.
+            Optional: show Advisory Committee members under headings such as the organisation they belong to. Without groups the website lists every Advisory Committee member
+            together. Add a group, then choose it on each Advisory Committee member&rsquo;s form.
           </p>
         ) : null}
         {all.length ? (
           <>
             <p className="muted fs12" style={{ marginTop: 0 }}>
-              The website lists trainers without a group first, then each group under its heading, in this order. A trainer&rsquo;s group is
+              The website lists Advisory Committee members without a group first, then each group under its heading, in this order. An Advisory Committee member&rsquo;s group is
               chosen on its form.
             </p>
             <div className="tbl-wrap">
@@ -92,7 +92,7 @@ export default function GroupsCard({
                   <tr>
                     <th style={{ width: canReorder ? 120 : 86 }}>Order</th>
                     <th>Group name</th>
-                    <th style={{ width: 110 }}>Trainers</th>
+                    <th style={{ width: 210 }}>Advisory Committee members</th>
                     <th>Status</th>
                     <th style={{ width: 110 }}>Action</th>
                   </tr>
@@ -139,7 +139,7 @@ export default function GroupsCard({
                           </div>
                         </div>
                       </td>
-                      <td>{trainers(g.memberCount)}</td>
+                      <td>{membersLabel(g.memberCount)}</td>
                       <td>
                         <StatusToggle
                           isActive={g.isActive}
@@ -205,9 +205,9 @@ export default function GroupsCard({
           confirmLabel={confirming.isActive ? 'Yes, hide' : 'Yes, show'}
           message={
             confirming.isActive
-              ? `Hide group "${confirming.name.en}" from the website? Its heading and the trainers in it are hidden with it; ` +
+              ? `Hide group "${confirming.name.en}" from the website? Its heading and the Advisory Committee members in it are hidden with it; ` +
                 'they stay in this list and the group can be shown again.'
-              : `Show group "${confirming.name.en}" on the website again? Its trainers that are shown on the website appear under its heading.`
+              : `Show group "${confirming.name.en}" on the website again? Its Advisory Committee members that are shown on the website appear under its heading.`
           }
           onClose={() => setConfirming(null)}
           onConfirm={() => {

@@ -25,8 +25,8 @@ import {
 const FORM_ID = 'cms-advisory-settings-form';
 
 /*
- * Section settings — the heading and subtitle above the trainers on the website's Advisory Committee page.
- * Kept apart from the trainers so the introduction can be edited without touching any of them.
+ * Section settings — the heading and subtitle above the Advisory Committee members on the website's Advisory Committee page.
+ * Kept apart from the Advisory Committee members so the introduction can be edited without touching any of them.
  */
 export default function AdvisorySettingsEdit() {
   usePageTitle('Advisory Committee — Section Settings');
@@ -38,7 +38,7 @@ export default function AdvisorySettingsEdit() {
       <PageHead
         crumbs={[...ADVISORY_CRUMBS, { l: 'Section settings' }]}
         title="Section Settings"
-        sub="The heading and subtitle above the trainers on the website's Advisory Committee page, in Marathi and English."
+        sub="The heading and subtitle above the Advisory Committee members on the website's Advisory Committee page, in Marathi and English."
         back={<BackButton to={ADVISORY_PATH} />}
       />
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />

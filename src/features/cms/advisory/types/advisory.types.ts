@@ -12,11 +12,11 @@ export interface BilingualList {
   en: string[];
 }
 
-/** The five bulleted lists of a trainer's profile ("View Profile" on the website), in the order the form shows them. */
+/** The five bulleted lists of an Advisory Committee member's profile ("View Profile" on the website), in the order the form shows them. */
 export const PROFILE_LISTS = ['administrativeRoles', 'keyAchievements', 'majorContributions', 'researchLeadership', 'education'] as const;
 export type ProfileListKey = (typeof PROFILE_LISTS)[number];
 
-/** One trainer / committee member, hidden ones included (the admin list). */
+/** One Advisory Committee member, hidden ones included (the admin list). */
 export interface ApiAdvisoryMember {
   id: string;
   name: Bilingual;
@@ -34,7 +34,7 @@ export interface ApiAdvisoryMember {
   education: BilingualList;
   /** Relative to the API base URL and needs the session; null when the website shows the person icon. */
   photoUrl: string | null;
-  /** The group heading the trainer is listed under on the website; null = no group (listed first, without a heading). */
+  /** The group heading the Advisory Committee member is listed under on the website; null = no group (listed first, without a heading). */
   groupId: string | null;
   group: { id: string; name: Bilingual } | null;
   displayOrder: number;
@@ -45,16 +45,16 @@ export interface ApiAdvisoryMember {
 }
 
 /**
- * A heading the trainers are listed under on the website, e.g. the organisation they belong to. Hidden groups
+ * A heading the Advisory Committee members are listed under on the website, e.g. the organisation they belong to. Hidden groups
  * included (the admin list).
  */
 export interface ApiAdvisoryGroup {
   id: string;
   name: Bilingual;
   displayOrder: number;
-  /** true = shown on the website; a hidden group hides its heading AND its trainers. */
+  /** true = shown on the website; a hidden group hides its heading AND its Advisory Committee members. */
   isActive: boolean;
-  /** The trainers in the group, hidden ones included. */
+  /** The Advisory Committee members in the group, hidden ones included. */
   memberCount: number;
   createdAt: string;
   updatedAt: string;
@@ -68,7 +68,7 @@ export interface AdvisoryGroupInput {
   expectedUpdatedAt?: string;
 }
 
-/** The heading and subtitle above the trainers on the website's Advisory Committee page. */
+/** The heading and subtitle above the Advisory Committee members on the website's Advisory Committee page. */
 export interface ApiAdvisorySection {
   id: string;
   heading: Bilingual;

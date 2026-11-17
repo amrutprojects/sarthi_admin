@@ -89,7 +89,7 @@ const PROFILE = {
 
 const member = (n: number, extra: Partial<ApiAdvisoryMember> = {}): ApiAdvisoryMember => ({
   id: `00000000-0000-4000-8000-00000000000${n}`,
-  name: pair(`प्रशिक्षक ${n}`, `Trainer ${n}`),
+  name: pair(`सदस्य ${n}`, `Member ${n}`),
   designation: pair(`पद ${n}`, `Position ${n}`),
   ...NO_PROFILE,
   photoUrl: null,
@@ -113,13 +113,13 @@ const group = (n: number, extra: Partial<ApiAdvisoryGroup> = {}): ApiAdvisoryGro
   ...extra,
 });
 
-/* A trainer in the given group, as the API returns it: the id and the group's name. */
+/* An Advisory Committee member in the given group, as the API returns it: the id and the group's name. */
 const inGroupOf = (g: ApiAdvisoryGroup) => ({ groupId: g.id, group: { id: g.id, name: g.name } });
 
 const section = (): ApiAdvisorySection => ({
   id: 's1',
   heading: pair('अमृत कलश सल्लागार समिती', 'AMRUT Kalash Advisory Committee'),
-  subtitle: pair('तज्ज्ञ प्रशिक्षक', 'The expert trainers'),
+  subtitle: pair('तज्ज्ञ सल्लागार समिती सदस्य', 'The expert Advisory Committee members'),
   createdAt: '2026-10-01T10:00:00.000Z',
   updatedAt: '2026-10-02T10:00:00.000Z',
 });
@@ -170,39 +170,39 @@ beforeEach(() => {
 });
 
 describe('Advisory Committee list', () => {
-  it('renders the section settings and the trainers from the API, in display order', async () => {
+  it('renders the section settings and the Advisory Committee members from the API, in display order', async () => {
     vi.mocked(advisoryService.list).mockResolvedValue([
       member(1, { photoUrl: '/cms/advisory-committee/photos/a.png' }),
       member(2, { isActive: false, designation: BLANK }),
     ]);
     renderAt(LIST);
 
-    await screen.findByText('Trainer 1');
+    await screen.findByText('Member 1');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Advisory Committee Management');
     expect(crumbs()).toEqual(['Dashboard', 'CMS', 'Advisory Committee Management']);
     expect(headings()).toEqual(['Sr. No.', 'Order', 'Photo', 'Name', 'Position', 'Group', 'Status', 'Action']);
 
-    const first = row('Trainer 1');
-    expect(within(first).getByRole('img', { name: 'Photo of Trainer 1' })).toHaveAttribute(
+    const first = row('Member 1');
+    expect(within(first).getByRole('img', { name: 'Photo of Member 1' })).toHaveAttribute(
       'src',
       '/api/v1/cms/advisory-committee/photos/a.png',
     );
-    expect(within(first).getByText('प्रशिक्षक 1')).toBeInTheDocument();
+    expect(within(first).getByText('सदस्य 1')).toBeInTheDocument();
     expect(within(first).getByText('Position 1')).toBeInTheDocument();
     expect(within(first).getByText('पद 1')).toBeInTheDocument();
-    expect(within(first).getByRole('switch', { name: 'Trainer 1: active' })).toHaveAttribute('aria-checked', 'true');
+    expect(within(first).getByRole('switch', { name: 'Member 1: active' })).toHaveAttribute('aria-checked', 'true');
 
-    const second = row('Trainer 2');
-    expect(within(second).getByRole('switch', { name: 'Trainer 2: inactive' })).toHaveAttribute('aria-checked', 'false');
+    const second = row('Member 2');
+    expect(within(second).getByRole('switch', { name: 'Member 2: inactive' })).toHaveAttribute('aria-checked', 'false');
     /* A blank position shows a dash, and so does "no group". */
     expect(within(second).getAllByText('—')).toHaveLength(2);
     expect(screen.getByText('2 listed, 1 shown on the website')).toBeInTheDocument();
-    expect(names()).toEqual(['Trainer 1', 'Trainer 2']);
+    expect(names()).toEqual(['Member 1', 'Member 2']);
 
     /* Section settings card */
     expect(await screen.findByText('AMRUT Kalash Advisory Committee')).toBeInTheDocument();
     expect(screen.getByText('अमृत कलश सल्लागार समिती')).toBeInTheDocument();
-    expect(screen.getByText('The expert trainers')).toBeInTheDocument();
+    expect(screen.getByText('The expert Advisory Committee members')).toBeInTheDocument();
   });
 
   it('shows the loading state, the empty state, and a retryable error', async () => {
@@ -212,7 +212,7 @@ describe('Advisory Committee list', () => {
     expect(document.querySelector('table[aria-busy="true"]')).not.toBeNull();
     resolve([]);
     expect(await screen.findByText('No records found')).toBeInTheDocument();
-    expect(screen.getByText(/Use Add trainer to add the first one/)).toBeInTheDocument();
+    expect(screen.getByText(/Use Add Advisory Committee member to add the first one/)).toBeInTheDocument();
     loading.unmount();
 
     vi.mocked(advisoryService.list)
@@ -221,13 +221,13 @@ describe('Advisory Committee list', () => {
     renderAt(LIST);
     expect(await screen.findByText(/Could not load data from the server/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(await screen.findByText('Trainer 1')).toBeInTheDocument();
+    expect(await screen.findByText('Member 1')).toBeInTheDocument();
   });
 
-  it('opens Add trainer, and Edit settings once the settings have loaded', async () => {
+  it('opens Add Advisory Committee member, and Edit settings once the settings have loaded', async () => {
     vi.mocked(advisoryService.list).mockResolvedValue([member(1)]);
     const { unmount } = renderAt(LIST);
-    await userEvent.click(await screen.findByRole('button', { name: /Add trainer/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /Add Advisory Committee member/ }));
     expect(currentPath()).toBe('/cms/advisory-committee/create');
     unmount();
 
@@ -242,53 +242,53 @@ describe('Advisory Committee list', () => {
     vi.mocked(advisoryService.list).mockResolvedValue([member(1), member(2)]);
     vi.mocked(advisoryService.get).mockResolvedValue(member(2));
     const { unmount } = renderAt(LIST);
-    await userEvent.click(await screen.findByRole('button', { name: 'View Trainer 2' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'View Member 2' }));
     expect(currentPath()).toBe(`/cms/advisory-committee/${member(2).id}/view`);
     unmount();
 
     const again = renderAt(LIST);
-    await userEvent.click(await screen.findByText('Trainer 1'));
+    await userEvent.click(await screen.findByText('Member 1'));
     expect(currentPath()).toBe(advisoryMemberViewPath(member(1).id));
     again.unmount();
 
     renderAt(LIST);
-    await userEvent.click(await screen.findByRole('button', { name: 'Edit Trainer 2' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit Member 2' }));
     expect(currentPath()).toBe(`/cms/advisory-committee/${member(2).id}/edit`);
   });
 
-  it('hides a trainer through the status switch after asking, by id', async () => {
+  it('hides an Advisory Committee member through the status switch after asking, by id', async () => {
     vi.mocked(advisoryService.list).mockResolvedValue([member(1), member(2)]);
     vi.mocked(advisoryService.setStatus).mockResolvedValue(member(2, { isActive: false }));
     renderAt(LIST);
-    await userEvent.click(await screen.findByRole('switch', { name: 'Trainer 2: active' }));
+    await userEvent.click(await screen.findByRole('switch', { name: 'Member 2: active' }));
     const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveTextContent('Hide Trainer 2 from the website?');
+    expect(dialog).toHaveTextContent('Hide Member 2 from the website?');
     expect(advisoryService.setStatus).not.toHaveBeenCalled();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Yes, hide' }));
     await waitFor(() => expect(advisoryService.setStatus).toHaveBeenCalledWith(member(2).id, false));
-    await waitFor(() => expect(toasts()).toHaveTextContent('Trainer hidden from the website'));
+    await waitFor(() => expect(toasts()).toHaveTextContent('Advisory Committee member hidden from the website'));
     expect(advisoryService.list).toHaveBeenCalledTimes(2);
     expect(currentPath()).toBe(LIST);
   });
 
-  it('deletes the trainer named in the dialog, by id — and Cancel deletes nothing', async () => {
+  it('deletes the Advisory Committee member named in the dialog, by id — and Cancel deletes nothing', async () => {
     vi.mocked(advisoryService.list).mockResolvedValue([member(1), member(2), member(3)]);
     vi.mocked(advisoryService.remove).mockResolvedValue();
     renderAt(LIST);
-    await screen.findByText('Trainer 2');
+    await screen.findByText('Member 2');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Delete Trainer 2' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Delete Member 2' }));
     let dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveTextContent('Delete Trainer 2?');
+    expect(dialog).toHaveTextContent('Delete Member 2?');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     expect(advisoryService.remove).not.toHaveBeenCalled();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Delete Trainer 2' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Delete Member 2' }));
     dialog = screen.getByRole('dialog');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
     await waitFor(() => expect(advisoryService.remove).toHaveBeenCalledWith(member(2).id));
     expect(advisoryService.remove).toHaveBeenCalledTimes(1);
-    await waitFor(() => expect(toasts()).toHaveTextContent('Trainer deleted'));
+    await waitFor(() => expect(toasts()).toHaveTextContent('Advisory Committee member deleted'));
     expect(advisoryService.list).toHaveBeenCalledTimes(2);
     expect(currentPath()).toBe(LIST);
   });
@@ -297,11 +297,11 @@ describe('Advisory Committee list', () => {
     vi.mocked(advisoryService.list).mockResolvedValue([member(1), member(2), member(3)]);
     vi.mocked(advisoryService.reorder).mockResolvedValue([]);
     renderAt(LIST);
-    await screen.findByText('Trainer 3');
-    expect(screen.getByRole('button', { name: 'Move Trainer 1 up' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Move Trainer 3 down' })).toBeDisabled();
+    await screen.findByText('Member 3');
+    expect(screen.getByRole('button', { name: 'Move Member 1 up' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Move Member 3 down' })).toBeDisabled();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Move Trainer 3 up' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Move Member 3 up' }));
     await waitFor(() => expect(advisoryService.reorder).toHaveBeenCalledWith([member(1).id, member(3).id, member(2).id]));
     await waitFor(() => expect(toasts()).toHaveTextContent('Display order updated'));
     expect(currentPath()).toBe(LIST);
@@ -309,8 +309,8 @@ describe('Advisory Committee list', () => {
     /* Sorted by name descending, the table no longer shows the website order. */
     await userEvent.click(screen.getByRole('columnheader', { name: /Name/ }));
     await userEvent.click(screen.getByRole('columnheader', { name: /Name/ }));
-    expect(names()).toEqual(['Trainer 3', 'Trainer 2', 'Trainer 1']);
-    expect(screen.getByRole('button', { name: 'Move Trainer 2 up' })).toBeDisabled();
+    expect(names()).toEqual(['Member 3', 'Member 2', 'Member 1']);
+    expect(screen.getByRole('button', { name: 'Move Member 2 up' })).toBeDisabled();
     expect(screen.getByText('Sort by Order, ascending, with no search to reorder.')).toBeInTheDocument();
     expect(advisoryService.reorder).toHaveBeenCalledTimes(1);
   });
@@ -333,25 +333,25 @@ describe('Advisory Committee list', () => {
     await waitFor(() => expect(names()).toEqual(['Anil Patil']));
     await userEvent.clear(box);
     await userEvent.type(box, 'nobody');
-    expect(await screen.findByText('No trainer matches the current search.')).toBeInTheDocument();
+    expect(await screen.findByText('No Advisory Committee member matches the current search.')).toBeInTheDocument();
   });
 
   it('gives a view-only administrator View only: no Add, Edit, status switch, Delete, reorder or Edit settings', async () => {
     auth.permissions = new Set(['cms-advisory.view']);
     vi.mocked(advisoryService.list).mockResolvedValue([member(1), member(2)]);
     renderAt(LIST);
-    await screen.findByText('Trainer 1');
-    expect(screen.getByRole('button', { name: 'View Trainer 1' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Add trainer/ })).toBeNull();
+    await screen.findByText('Member 1');
+    expect(screen.getByRole('button', { name: 'View Member 1' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Add Advisory Committee member/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /^(Edit|Delete|Move) / })).toBeNull();
     expect(screen.queryByRole('switch')).toBeNull();
     expect(screen.queryByRole('button', { name: /Edit settings/ })).toBeNull();
     /* The status is still shown, as a badge. */
-    expect(within(row('Trainer 1')).getByText('Active')).toBeInTheDocument();
+    expect(within(row('Member 1')).getByText('Active')).toBeInTheDocument();
   });
 });
 
-describe('View trainer', () => {
+describe('View Advisory Committee member', () => {
   const viewed = () => member(7, { photoUrl: '/cms/advisory-committee/photos/v.png' });
   const field = (label: string) => screen.getByText(label, { selector: 'td b' }).closest('tr') as HTMLElement;
 
@@ -359,14 +359,14 @@ describe('View trainer', () => {
     vi.mocked(advisoryService.get).mockResolvedValue(viewed());
     renderAt(advisoryMemberViewPath(viewed().id));
 
-    expect(await screen.findByRole('heading', { name: /Trainer 7/ })).toHaveTextContent('Trainer 7Order 7');
+    expect(await screen.findByRole('heading', { name: /Member 7/ })).toHaveTextContent('Member 7Order 7');
     expect(advisoryService.get).toHaveBeenCalledWith(viewed().id);
     expect(crumbs()).toEqual(['Dashboard', 'CMS', 'Advisory Committee Management', 'View']);
-    expect(within(field('Photo')).getByRole('img', { name: 'Photo of Trainer 7' })).toHaveAttribute(
+    expect(within(field('Photo')).getByRole('img', { name: 'Photo of Member 7' })).toHaveAttribute(
       'src',
       '/api/v1/cms/advisory-committee/photos/v.png',
     );
-    expect(field('Name')).toHaveTextContent('प्रशिक्षक 7Trainer 7');
+    expect(field('Name')).toHaveTextContent('सदस्य 7Member 7');
     expect(field('Position')).toHaveTextContent('पद 7Position 7');
     expect(screen.queryByText('Organisation', { selector: 'td b' })).toBeNull();
     expect(screen.queryByText('Expertise', { selector: 'td b' })).toBeNull();
@@ -376,7 +376,7 @@ describe('View trainer', () => {
   it('shows the profile: Experience as text and each list as bullets, per language, naming a blank language', async () => {
     vi.mocked(advisoryService.get).mockResolvedValue(member(7, PROFILE));
     renderAt(advisoryMemberViewPath(member(7).id));
-    await screen.findByRole('heading', { name: /Trainer 7/ });
+    await screen.findByRole('heading', { name: /Member 7/ });
 
     expect(field('Experience')).toHaveTextContent('तांत्रिक शिक्षणातील ३० वर्षे30 years in technical education');
 
@@ -399,7 +399,7 @@ describe('View trainer', () => {
   it('marks a missing photo and blank texts', async () => {
     vi.mocked(advisoryService.get).mockResolvedValue(member(8, { designation: BLANK, isActive: false }));
     renderAt(advisoryMemberViewPath(member(8).id));
-    await screen.findByRole('heading', { name: /Trainer 8/ });
+    await screen.findByRole('heading', { name: /Member 8/ });
     expect(field('Photo')).toHaveTextContent('No photo');
     expect(field('Position')).toHaveTextContent('—');
     for (const label of [
@@ -417,19 +417,19 @@ describe('View trainer', () => {
     expect(field('Group')).toHaveTextContent('No group — listed first on the website, without a heading');
   });
 
-  it("shows the trainer's group in both languages, and says when a hidden group hides the trainer", async () => {
+  it("shows the Advisory Committee member's group in both languages, and says when a hidden group hides the Advisory Committee member", async () => {
     const g = group(1, { name: pair('अमृत', 'AMRUT'), isActive: false });
     vi.mocked(advisoryService.get).mockResolvedValue(member(7, inGroupOf(g)));
     vi.mocked(advisoryService.listGroups).mockResolvedValue([g]);
     renderAt(advisoryMemberViewPath(member(7).id));
-    await screen.findByRole('heading', { name: /Trainer 7/ });
+    await screen.findByRole('heading', { name: /Member 7/ });
 
-    await waitFor(() => expect(field('Group')).toHaveTextContent('Hidden group — the website shows neither its heading nor its trainers'));
+    await waitFor(() => expect(field('Group')).toHaveTextContent('Hidden group — the website shows neither its heading nor its Advisory Committee members'));
     expect(field('Group')).toHaveTextContent('अमृतAMRUT');
     expect(field('On the website')).toHaveTextContent('Hidden from the website: its group is hidden');
   });
 
-  it('hides, deletes (after asking) and edits the trainer', async () => {
+  it('hides, deletes (after asking) and edits the Advisory Committee member', async () => {
     vi.mocked(advisoryService.get).mockResolvedValue(viewed());
     vi.mocked(advisoryService.setStatus).mockResolvedValue(viewed());
     vi.mocked(advisoryService.remove).mockResolvedValue();
@@ -439,7 +439,7 @@ describe('View trainer', () => {
     await waitFor(() => expect(advisoryService.setStatus).toHaveBeenCalledWith(viewed().id, false));
 
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('Delete Trainer 7?');
+    expect(screen.getByRole('dialog')).toHaveTextContent('Delete Member 7?');
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }));
     await waitFor(() => expect(advisoryService.remove).toHaveBeenCalledWith(viewed().id));
     await waitFor(() => expect(currentPath()).toBe(LIST));
@@ -454,17 +454,17 @@ describe('View trainer', () => {
     auth.permissions = new Set(['cms-advisory.view']);
     vi.mocked(advisoryService.get).mockResolvedValue(viewed());
     renderAt(advisoryMemberViewPath(viewed().id));
-    await screen.findByRole('heading', { name: /Trainer 7/ });
+    await screen.findByRole('heading', { name: /Member 7/ });
     expect(screen.queryByRole('button', { name: /^(Edit|Delete|Hide from website|Show on website)$/ })).toBeNull();
     expect(screen.getByRole('button', { name: /Back/ })).toBeInTheDocument();
   });
 });
 
-describe('Add trainer', () => {
+describe('Add Advisory Committee member', () => {
   it('requires the name in both languages', async () => {
     renderAt('/cms/advisory-committee/create');
-    expect(crumbs()).toEqual(['Dashboard', 'CMS', 'Advisory Committee Management', 'Add trainer']);
-    await userEvent.click(screen.getByRole('button', { name: 'Add trainer' }));
+    expect(crumbs()).toEqual(['Dashboard', 'CMS', 'Advisory Committee Management', 'Add Advisory Committee member']);
+    await userEvent.click(screen.getByRole('button', { name: 'Add Advisory Committee member' }));
     expect(await screen.findByText('Name (Marathi) is required')).toBeInTheDocument();
     expect(screen.getByText('Name (English) is required')).toBeInTheDocument();
     expect(advisoryService.create).not.toHaveBeenCalled();
@@ -488,14 +488,14 @@ describe('Add trainer', () => {
     renderAt('/cms/advisory-committee/create');
     await userEvent.type(screen.getByLabelText('Name (Marathi) *'), 'अनिल पाटील');
     await userEvent.type(screen.getByLabelText('Name (English) *'), 'Anil Patil');
-    await userEvent.type(screen.getByLabelText('Position (English)'), 'Master Trainer');
-    await userEvent.click(screen.getByRole('button', { name: 'Add trainer' }));
+    await userEvent.type(screen.getByLabelText('Position (English)'), 'Senior Advisor');
+    await userEvent.click(screen.getByRole('button', { name: 'Add Advisory Committee member' }));
 
     expect(await screen.findByText('Position (Marathi) is required when the English text is filled in')).toBeInTheDocument();
     expect(screen.getByLabelText('Position (Marathi)')).toHaveAttribute('aria-invalid', 'true');
     expect(advisoryService.create).not.toHaveBeenCalled();
 
-    await userEvent.type(screen.getByLabelText('Position (Marathi)'), 'मास्टर प्रशिक्षक');
+    await userEvent.type(screen.getByLabelText('Position (Marathi)'), 'वरिष्ठ सल्लागार');
     expect(screen.queryByText('Position (Marathi) is required when the English text is filled in')).toBeNull();
   });
 
@@ -509,7 +509,7 @@ describe('Add trainer', () => {
     await userEvent.paste('• Set up the AMRUT skill lab\n\n  - National award, 2020  \n2) 1.5 lakh trainees\n*\n');
     await userEvent.click(screen.getByLabelText('Education (Marathi)'));
     await userEvent.paste('पीएच.डी.');
-    await userEvent.click(screen.getByRole('button', { name: 'Add trainer' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add Advisory Committee member' }));
 
     await waitFor(() => expect(advisoryService.create).toHaveBeenCalledTimes(1));
     expect(vi.mocked(advisoryService.create).mock.calls[0]![0]).toEqual({
@@ -533,7 +533,7 @@ describe('Add trainer', () => {
     await userEvent.paste(Array.from({ length: 31 }, (_, i) => `Role ${i + 1}`).join('\n'));
     await userEvent.click(screen.getByLabelText('Education (Marathi)'));
     await userEvent.paste(`पीएच.डी.\n\n${'अ'.repeat(401)}`);
-    await userEvent.click(screen.getByRole('button', { name: 'Add trainer' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add Advisory Committee member' }));
 
     expect(
       await screen.findByText('Administrative Roles (English) may have at most 30 items, one per line (it has 31)'),
@@ -553,7 +553,7 @@ describe('Add trainer', () => {
     expect(await screen.findByText('The photo is larger than 5 MB')).toBeInTheDocument();
   });
 
-  it('lets a rejected photo be set aside, so the trainer can still be added without one', async () => {
+  it('lets a rejected photo be set aside, so the Advisory Committee member can still be added without one', async () => {
     vi.mocked(advisoryService.create).mockResolvedValue(member(9));
     renderAt('/cms/advisory-committee/create');
     await userEvent.type(screen.getByLabelText('Name (Marathi) *'), 'अनिल पाटील');
@@ -563,13 +563,13 @@ describe('Add trainer', () => {
     expect(await screen.findByText('The photo must be a JPEG, PNG or WebP image')).toBeInTheDocument();
 
     /* While the error stands, saving is refused… */
-    await userEvent.click(screen.getByRole('button', { name: 'Add trainer' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add Advisory Committee member' }));
     expect(advisoryService.create).not.toHaveBeenCalled();
 
     /* …and there is a way out that does not mean leaving the page. */
     await userEvent.click(screen.getByRole('button', { name: 'Continue without a photo' }));
     expect(screen.queryByText('The photo must be a JPEG, PNG or WebP image')).toBeNull();
-    await userEvent.click(screen.getByRole('button', { name: 'Add trainer' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add Advisory Committee member' }));
     await waitFor(() => expect(advisoryService.create).toHaveBeenCalledTimes(1));
     expect(vi.mocked(advisoryService.create).mock.calls[0]![1]).toBeNull();
   });
@@ -602,7 +602,7 @@ describe('Add trainer', () => {
     await userEvent.click(screen.getByLabelText('Administrative Roles (English)'));
     await userEvent.paste('Principal\nHead of Department');
     await userEvent.click(screen.getByRole('checkbox', { name: /Shown on the website/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Add trainer' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add Advisory Committee member' }));
 
     await waitFor(() => expect(advisoryService.create).toHaveBeenCalledTimes(1));
     const [input, file] = vi.mocked(advisoryService.create).mock.calls[0]!;
@@ -615,7 +615,7 @@ describe('Add trainer', () => {
       isActive: false,
     });
     await waitFor(() => expect(currentPath()).toBe(LIST));
-    expect(toasts()).toHaveTextContent('Trainer added');
+    expect(toasts()).toHaveTextContent('Advisory Committee member added');
   });
 
   it('sends no photo when none was chosen, and shows a server message on its field', async () => {
@@ -625,7 +625,7 @@ describe('Add trainer', () => {
     renderAt('/cms/advisory-committee/create');
     await userEvent.type(screen.getByLabelText('Name (Marathi) *'), 'अनिल');
     await userEvent.type(screen.getByLabelText('Name (English) *'), 'Anil');
-    await userEvent.click(screen.getByRole('button', { name: 'Add trainer' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add Advisory Committee member' }));
     expect(await screen.findByText('Name (English) is not allowed')).toBeInTheDocument();
     expect(vi.mocked(advisoryService.create).mock.calls[0]![1]).toBeNull();
     expect(screen.getByLabelText('Name (Marathi) *')).toHaveValue('अनिल');
@@ -644,7 +644,7 @@ describe('Add trainer', () => {
     const area = screen.getByLabelText('Key Achievements (English)');
     await userEvent.click(area);
     await userEvent.paste('First\n\n• Second');
-    await userEvent.click(screen.getByRole('button', { name: 'Add trainer' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add Advisory Committee member' }));
 
     expect(
       await screen.findByText('Line 3: Key Achievements (English) item 2 contains characters that are not allowed'),
@@ -663,7 +663,7 @@ describe('Add trainer', () => {
     renderAt('/cms/advisory-committee/create');
     await userEvent.type(screen.getByLabelText('Name (Marathi) *'), 'अनिल');
     await userEvent.type(screen.getByLabelText('Name (English) *'), 'Anil');
-    await userEvent.click(screen.getByRole('button', { name: 'Add trainer' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add Advisory Committee member' }));
     await waitFor(() => expect(toasts()).toHaveTextContent('Unrecognized key: organisation'));
     expect(currentPath()).toBe('/cms/advisory-committee/create');
   });
@@ -671,12 +671,12 @@ describe('Add trainer', () => {
   it('explains the missing permission instead of showing the form', () => {
     auth.permissions = new Set(['cms-advisory.view']);
     renderAt('/cms/advisory-committee/create');
-    expect(screen.getByText('You can view this section but not add trainers')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Add trainer' })).toBeNull();
+    expect(screen.getByText('You can view this section but not add Advisory Committee members')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add Advisory Committee member' })).toBeNull();
   });
 });
 
-describe('Edit trainer', () => {
+describe('Edit Advisory Committee member', () => {
   it('loads the saved record and sends only what changed, with the version it was opened at', async () => {
     const saved = member(4, { photoUrl: '/cms/advisory-committee/photos/b.png' });
     vi.mocked(advisoryService.get).mockResolvedValue(saved);
@@ -685,7 +685,7 @@ describe('Edit trainer', () => {
 
     const position = await screen.findByLabelText('Position (English)');
     expect(position).toHaveValue('Position 4');
-    expect(screen.getByLabelText('Name (Marathi) *')).toHaveValue('प्रशिक्षक 4');
+    expect(screen.getByLabelText('Name (Marathi) *')).toHaveValue('सदस्य 4');
     expect(screen.getByRole('img', { name: 'Photo preview' }).querySelector('img')).toHaveAttribute(
       'src',
       '/api/v1/cms/advisory-committee/photos/b.png',
@@ -778,12 +778,12 @@ describe('Edit trainer', () => {
     const saved = member(6);
     vi.mocked(advisoryService.get).mockResolvedValue(saved);
     vi.mocked(advisoryService.update).mockRejectedValue(
-      new ApiError('This trainer was changed after you opened it. Reload to see the latest version.', 409, 'CONFLICT'),
+      new ApiError('This Advisory Committee member was changed after you opened it. Reload to see the latest version.', 409, 'CONFLICT'),
     );
     renderAt(advisoryMemberEditPath(saved.id));
     await userEvent.type(await screen.findByLabelText('Name (English) *'), ' Jr');
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
-    await waitFor(() => expect(toasts()).toHaveTextContent('This trainer was changed after you opened it.'));
+    await waitFor(() => expect(toasts()).toHaveTextContent('This Advisory Committee member was changed after you opened it.'));
     expect(currentPath()).toBe(advisoryMemberEditPath(saved.id));
   });
 });
@@ -934,7 +934,7 @@ describe('advisory validation', () => {
     expect(memberFormError(400, 'Invalid upload: Field value too long', [])).toBe(PROFILE_TOO_LONG);
     expect(
       memberFormError(422, 'Validation failed', [
-        { field: 'body.data', message: 'The trainer is larger than 256 KB; shorten the profile' },
+        { field: 'body.data', message: 'The Advisory Committee member is larger than 256 KB; shorten the profile' },
       ]),
     ).toBe(PROFILE_TOO_LONG);
     /* Another message about "data" is shown as worded. */
@@ -945,10 +945,10 @@ describe('advisory validation', () => {
     expect(memberFormError(422, 'Validation failed', [{ field: 'body.name.en', message: 'Name (English) is too long' }])).toBeUndefined();
     expect(memberFormError(422, 'Validation failed', [{ field: 'photo', message: 'The photo is larger than 5 MB' }])).toBeUndefined();
     expect(memberFormError(400, 'Malformed JSON request body', [])).toBeUndefined();
-    expect(memberFormError(409, 'This trainer was changed after you opened it.', [])).toBeUndefined();
+    expect(memberFormError(409, 'This Advisory Committee member was changed after you opened it.', [])).toBeUndefined();
   });
 
-  it('sends a group only when one is chosen, and null to take a trainer out of its group', () => {
+  it('sends a group only when one is chosen, and null to take an Advisory Committee member out of its group', () => {
     expect(memberPayload(named)).not.toHaveProperty('groupId');
     expect(memberPayload({ ...named, groupId: 'g1' }).groupId).toBe('g1');
     const saved = member(1, { groupId: 'g1', group: { id: 'g1', name: pair('अमृत', 'AMRUT') } });
@@ -1038,17 +1038,17 @@ describe('Advisory groups (list page)', () => {
   it('explains what groups are for while there are none, and offers no group filter', async () => {
     vi.mocked(advisoryService.list).mockResolvedValue([member(1)]);
     renderAt(LIST);
-    expect(await screen.findByText(/Optional: show trainers under headings such as the organisation they belong to/)).toBeInTheDocument();
-    await screen.findByText('Trainer 1');
+    expect(await screen.findByText(/Optional: show Advisory Committee members under headings such as the organisation they belong to/)).toBeInTheDocument();
+    await screen.findByText('Member 1');
     expect(screen.queryByLabelText('Group')).toBeNull();
     expect(screen.getByRole('button', { name: /Add group/ })).toBeInTheDocument();
   });
 
-  it("lists the groups in website order with their trainer counts, and each trainer's group, hidden groups marked", async () => {
+  it("lists the groups in website order with their Advisory Committee member counts, and each Advisory Committee member's group, hidden groups marked", async () => {
     vi.mocked(advisoryService.listGroups).mockResolvedValue([AMRUT, COEP]);
     vi.mocked(advisoryService.list).mockResolvedValue([member(1, inGroupOf(AMRUT)), member(2, inGroupOf(COEP)), member(3)]);
     renderAt(LIST);
-    await screen.findByText('2 trainers');
+    await screen.findByText('2 Advisory Committee members');
 
     const [first, second] = groupRows();
     expect(groupRows()).toHaveLength(2);
@@ -1056,13 +1056,13 @@ describe('Advisory groups (list page)', () => {
     expect(within(first!).getByText('अमृत')).toHaveAttribute('lang', 'mr');
     expect(within(first!).getByRole('switch', { name: 'Group AMRUT: active' })).toHaveAttribute('aria-checked', 'true');
     expect(second).toHaveTextContent('COEP');
-    expect(second).toHaveTextContent('1 trainer');
+    expect(second).toHaveTextContent('1 Advisory Committee member');
     expect(within(second!).getByRole('switch', { name: 'Group COEP: inactive' })).toHaveAttribute('aria-checked', 'false');
 
-    await screen.findByText('Trainer 1');
-    expect(within(row('Trainer 1')).getByText('AMRUT')).toBeInTheDocument();
-    expect(within(row('Trainer 2')).getByText('(hidden)')).toBeInTheDocument();
-    /* Trainer 2 is active, but its group is hidden, so the website does not show it. */
+    await screen.findByText('Member 1');
+    expect(within(row('Member 1')).getByText('AMRUT')).toBeInTheDocument();
+    expect(within(row('Member 2')).getByText('(hidden)')).toBeInTheDocument();
+    /* Member 2 is active, but its group is hidden, so the website does not show it. */
     expect(screen.getByText('3 listed, 2 shown on the website')).toBeInTheDocument();
   });
 
@@ -1123,7 +1123,7 @@ describe('Advisory groups (list page)', () => {
       }),
     );
     await waitFor(() => expect(toasts()).toHaveTextContent('Group updated'));
-    /* The trainers table shows the group names too, so it is reloaded with the groups. */
+    /* The Advisory Committee members table shows the group names too, so it is reloaded with the groups. */
     expect(advisoryService.list).toHaveBeenCalledTimes(2);
   });
 
@@ -1133,7 +1133,7 @@ describe('Advisory groups (list page)', () => {
     renderAt(LIST);
     await userEvent.click(await screen.findByRole('switch', { name: 'Group AMRUT: active' }));
     const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveTextContent('Hide group "AMRUT" from the website? Its heading and the trainers in it are hidden with it');
+    expect(dialog).toHaveTextContent('Hide group "AMRUT" from the website? Its heading and the Advisory Committee members in it are hidden with it');
     expect(advisoryService.setGroupStatus).not.toHaveBeenCalled();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Yes, hide' }));
     await waitFor(() => expect(advisoryService.setGroupStatus).toHaveBeenCalledWith(AMRUT.id, false));
@@ -1141,29 +1141,29 @@ describe('Advisory groups (list page)', () => {
     expect(advisoryService.setStatus).not.toHaveBeenCalled();
   });
 
-  it('deletes a group after saying its trainers stay, without a group heading — and Cancel deletes nothing', async () => {
+  it('deletes a group after saying its Advisory Committee members stay, without a group heading — and Cancel deletes nothing', async () => {
     vi.mocked(advisoryService.listGroups).mockResolvedValue([AMRUT, COEP, group(3, { name: pair('रिक्त', 'Empty') })]);
     vi.mocked(advisoryService.list).mockResolvedValue([member(1, inGroupOf(AMRUT)), member(2, inGroupOf(AMRUT))]);
     vi.mocked(advisoryService.removeGroup).mockResolvedValue({ membersUngrouped: 2 });
     renderAt(LIST);
 
     await userEvent.click(await screen.findByRole('button', { name: 'Delete group COEP' }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('Delete group "COEP"? Its 1 trainer stays, shown without a group heading.');
+    expect(screen.getByRole('dialog')).toHaveTextContent('Delete group "COEP"? Its 1 Advisory Committee member stays, shown without a group heading.');
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
     await userEvent.click(screen.getByRole('button', { name: 'Delete group Empty' }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('Delete group "Empty"? It has no trainers.');
+    expect(screen.getByRole('dialog')).toHaveTextContent('Delete group "Empty"? It has no Advisory Committee members.');
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
     expect(advisoryService.removeGroup).not.toHaveBeenCalled();
 
     await userEvent.click(screen.getByRole('button', { name: 'Delete group AMRUT' }));
     const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveTextContent('Delete group "AMRUT"? Its 2 trainers stay, shown without a group heading.');
+    expect(dialog).toHaveTextContent('Delete group "AMRUT"? Its 2 Advisory Committee members stay, shown without a group heading.');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
     await waitFor(() => expect(advisoryService.removeGroup).toHaveBeenCalledWith(AMRUT.id));
     await waitFor(() => expect(toasts()).toHaveTextContent('Group deleted'));
     expect(advisoryService.removeGroup).toHaveBeenCalledTimes(1);
     expect(advisoryService.remove).not.toHaveBeenCalled();
-    /* Its trainers lose their group, so both lists are reloaded. */
+    /* Its Advisory Committee members lose their group, so both lists are reloaded. */
     expect(advisoryService.listGroups).toHaveBeenCalledTimes(2);
     expect(advisoryService.list).toHaveBeenCalledTimes(2);
   });
@@ -1195,14 +1195,14 @@ describe('Advisory groups (list page)', () => {
     auth.permissions = new Set(['cms-advisory.view']);
     vi.mocked(advisoryService.listGroups).mockResolvedValue([AMRUT, COEP]);
     renderAt(LIST);
-    await screen.findByText('2 trainers');
+    await screen.findByText('2 Advisory Committee members');
     expect(screen.queryByRole('button', { name: /Add group/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /group/ })).toBeNull();
     expect(screen.queryByRole('switch')).toBeNull();
     expect(within(groupRows()[1]!).getByText('Inactive')).toBeInTheDocument();
   });
 
-  it('filters the trainers by group, and moves a trainer within the chosen group', async () => {
+  it('filters the Advisory Committee members by group, and moves an Advisory Committee member within the chosen group', async () => {
     vi.mocked(advisoryService.listGroups).mockResolvedValue([AMRUT, COEP]);
     vi.mocked(advisoryService.list).mockResolvedValue([
       member(1, inGroupOf(AMRUT)),
@@ -1214,25 +1214,25 @@ describe('Advisory groups (list page)', () => {
     renderAt(LIST);
     const filter = await screen.findByLabelText('Group');
     expect(optionTexts(filter)).toEqual(['All groups', 'No group', 'AMRUT', 'COEP (hidden)']);
-    await screen.findByText('Trainer 4');
+    await screen.findByText('Member 4');
 
     await userEvent.selectOptions(filter, AMRUT.id);
-    await waitFor(() => expect(names()).toEqual(['Trainer 1', 'Trainer 3']));
+    await waitFor(() => expect(names()).toEqual(['Member 1', 'Member 3']));
     expect(screen.getByText('filtered')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Move Trainer 3 down' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Move Member 3 down' })).toBeDisabled();
 
-    /* Up from Trainer 3 is Trainer 1 — the trainer above it under the AMRUT heading — not Trainer 2. */
-    await userEvent.click(screen.getByRole('button', { name: 'Move Trainer 3 up' }));
+    /* Up from Member 3 is Member 1 — the Advisory Committee member above it under the AMRUT heading — not Member 2. */
+    await userEvent.click(screen.getByRole('button', { name: 'Move Member 3 up' }));
     await waitFor(() => expect(advisoryService.reorder).toHaveBeenCalledWith([member(3).id, member(2).id, member(1).id, member(4).id]));
 
     await userEvent.selectOptions(filter, 'none');
-    await waitFor(() => expect(names()).toEqual(['Trainer 2']));
+    await waitFor(() => expect(names()).toEqual(['Member 2']));
     await userEvent.click(screen.getByRole('button', { name: 'Reset' }));
-    await waitFor(() => expect(names()).toEqual(['Trainer 1', 'Trainer 2', 'Trainer 3', 'Trainer 4']));
+    await waitFor(() => expect(names()).toEqual(['Member 1', 'Member 2', 'Member 3', 'Member 4']));
   });
 });
 
-describe('Trainer group', () => {
+describe('Advisory Committee member group', () => {
   const AMRUT = group(1, { name: pair('अमृत', 'AMRUT') });
   const COEP = group(2, { name: pair('सीओईपी', 'COEP'), isActive: false });
   const optionTexts = (select: HTMLElement) =>
@@ -1254,7 +1254,7 @@ describe('Trainer group', () => {
 
     await fillName();
     await userEvent.selectOptions(select, COEP.id);
-    await userEvent.click(screen.getByRole('button', { name: 'Add trainer' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add Advisory Committee member' }));
     await waitFor(() => expect(advisoryService.create).toHaveBeenCalledTimes(1));
     expect(vi.mocked(advisoryService.create).mock.calls[0]![0]).toMatchObject({
       name: pair('अनिल पाटील', 'Anil Patil'),
@@ -1262,7 +1262,7 @@ describe('Trainer group', () => {
     });
   });
 
-  it("starts from the trainer's group — named while the groups load — and takes the trainer out of it with null", async () => {
+  it("starts from the Advisory Committee member's group — named while the groups load — and takes the Advisory Committee member out of it with null", async () => {
     const saved = member(4, inGroupOf(AMRUT));
     vi.mocked(advisoryService.get).mockResolvedValue(saved);
     vi.mocked(advisoryService.update).mockResolvedValue(saved);
@@ -1294,7 +1294,7 @@ describe('Trainer group', () => {
     const select = screen.getByLabelText('Group');
     await waitFor(() => expect(optionTexts(select)).toContain('AMRUT'));
     await userEvent.selectOptions(select, AMRUT.id);
-    await userEvent.click(screen.getByRole('button', { name: 'Add trainer' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add Advisory Committee member' }));
     expect(await screen.findByText('Choose an existing group')).toBeInTheDocument();
     expect(select).toHaveAttribute('aria-invalid', 'true');
     expect(toasts()).not.toHaveTextContent('Validation failed');
@@ -1312,7 +1312,7 @@ describe('Trainer group', () => {
   });
 });
 
-describe('Trainer save refused for its size', () => {
+describe('Advisory Committee member save refused for its size', () => {
   const fillName = async () => {
     await userEvent.type(screen.getByLabelText('Name (Marathi) *'), 'अनिल');
     await userEvent.type(screen.getByLabelText('Name (English) *'), 'Anil');
@@ -1323,13 +1323,13 @@ describe('Trainer save refused for its size', () => {
     ['a 400 from the upload field limit', new ApiError('Invalid upload: Field value too long', 400, 'BAD_REQUEST')],
     [
       'a 422 on the "data" field',
-      new ApiError('Validation failed', 422, 'VALIDATION_ERROR', [{ field: 'body.data', message: 'The trainer is too large to save' }]),
+      new ApiError('Validation failed', 422, 'VALIDATION_ERROR', [{ field: 'body.data', message: 'The Advisory Committee member is too large to save' }]),
     ],
   ])('says the profile is too long on the form, not in a toast, for %s', async (_case, err) => {
     vi.mocked(advisoryService.create).mockRejectedValue(err);
     renderAt('/cms/advisory-committee/create');
     await fillName();
-    await userEvent.click(screen.getByRole('button', { name: 'Add trainer' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add Advisory Committee member' }));
 
     expect(await screen.findByText(PROFILE_TOO_LONG)).toBeInTheDocument();
     expect(screen.getByText(PROFILE_TOO_LONG).closest('[role="alert"]')).not.toBeNull();
@@ -1347,11 +1347,11 @@ describe('Trainer save refused for its size', () => {
       .mockResolvedValueOnce(member(9));
     renderAt('/cms/advisory-committee/create');
     await fillName();
-    await userEvent.click(screen.getByRole('button', { name: 'Add trainer' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add Advisory Committee member' }));
     expect(await screen.findByText('data must be valid JSON')).toBeInTheDocument();
     expect(screen.queryByText(PROFILE_TOO_LONG)).toBeNull();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Add trainer' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add Advisory Committee member' }));
     await waitFor(() => expect(currentPath()).toBe(LIST));
   });
 });

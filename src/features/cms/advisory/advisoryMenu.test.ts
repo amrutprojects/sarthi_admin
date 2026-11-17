@@ -52,7 +52,7 @@ describe('Advisory Committee Management menu', () => {
       ['/cms/advisory-committee/:id/view', 'cmsAdvisoryView', 'cms-advisory'],
     ]);
     expect(ADVISORY_PATH).toBe('/cms/advisory-committee');
-    /* The eye button and a click on a row open the View page by the trainer's id. */
+    /* The eye button and a click on a row open the View page by the Advisory Committee member's id. */
     expect(advisoryMemberViewPath('m-1')).toBe('/cms/advisory-committee/m-1/view');
     expect(advisoryMemberEditPath('m-1')).toBe('/cms/advisory-committee/m-1/edit');
     expect(matchPath('/cms/advisory-committee/:id/view', advisoryMemberViewPath('m-1'))?.params.id).toBe('m-1');

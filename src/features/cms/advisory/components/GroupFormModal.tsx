@@ -96,13 +96,13 @@ export default function GroupFormModal({
           /* A server message on the name as a whole ("body.name") is shown on its Marathi half. */
           errorMr={show('name.mr') ?? show('name')}
           errorEn={show('name.en')}
-          hint="The heading printed above the group's trainers on the website, e.g. the organisation they belong to."
+          hint="The heading printed above the group's Advisory Committee members on the website, e.g. the organisation they belong to."
         />
         <div className="mt10">
           <MasterField
             id="advisory-group-active"
             label="Status"
-            hint="A hidden group hides its heading and its trainers from the website; they stay in this list."
+            hint="A hidden group hides its heading and its Advisory Committee members from the website; they stay in this list."
           >
             <label className="f ac gp8 fs13" style={{ minHeight: 36 }}>
               <input

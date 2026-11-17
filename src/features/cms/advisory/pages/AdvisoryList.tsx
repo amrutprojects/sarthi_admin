@@ -34,7 +34,7 @@ const Pair = ({ value }: { value: Bilingual }) =>
     <span className="muted">—</span>
   );
 
-/* The trainer's photo, round like on the website; the person icon when there is none or it fails to load. */
+/* The Advisory Committee member's photo, round like on the website; the person icon when there is none or it fails to load. */
 function Thumb({ member }: { member: ApiAdvisoryMember }) {
   const [broken, setBroken] = useState(false);
   const src = photoSrc(member.photoUrl);
@@ -64,14 +64,14 @@ function Thumb({ member }: { member: ApiAdvisoryMember }) {
   );
 }
 
-/* Search, sorting and paging in the browser: the API returns every trainer at once (clientList.ts). */
+/* Search, sorting and paging in the browser: the API returns every Advisory Committee member at once (clientList.ts). */
 const LIST: ClientListOptions<ApiAdvisoryMember> = {
   searchText: (m) => [m.name.en, m.name.mr, m.designation.en, m.designation.mr].join(' '),
   sortValue: {
     displayOrder: (m) => m.displayOrder,
     name: (m) => m.name.en,
     designation: (m) => m.designation.en,
-    /* Trainers without a group sort last, as blanks do. */
+    /* Advisory Committee members without a group sort last, as blanks do. */
     group: (m) => m.group?.name.en,
     /* Shown first on ascending. */
     isActive: (m) => (m.isActive ? 0 : 1),
@@ -83,7 +83,7 @@ const LIST: ClientListOptions<ApiAdvisoryMember> = {
 const NO_GROUP = 'none';
 
 interface AdvisoryQuery extends MasterQuery {
-  /* '' = every trainer, NO_GROUP = trainers without a group, otherwise a group's id. */
+  /* '' = every Advisory Committee member, NO_GROUP = Advisory Committee members without a group, otherwise a group's id. */
   group: string;
 }
 
@@ -91,12 +91,12 @@ const inGroup = (m: ApiAdvisoryMember, group: string) => group === '' || (group 
 
 /*
  * Advisory Committee Management — the website's Advisory Committee page (अमृत कलश सल्लागार समिती): its heading
- * and subtitle, and the trainers / committee members listed on it. The list works like Board Members Management's:
- * search, sorting and paging, each trainer viewed, edited, shown or hidden and deleted on its own, and moved up
+ * and subtitle, and the Advisory Committee members listed on it. The list works like Board Members Management's:
+ * search, sorting and paging, each Advisory Committee member viewed, edited, shown or hidden and deleted on its own, and moved up
  * or down while the table shows the website order.
  *
- * Every action names its trainer by id, never by its position on screen, so a list that has moved on since it
- * was loaded can never delete, hide or reorder the wrong trainer.
+ * Every action names its Advisory Committee member by id, never by its position on screen, so a list that has moved on since it
+ * was loaded can never delete, hide or reorder the wrong Advisory Committee member.
  */
 export default function AdvisoryList() {
   usePageTitle(ADVISORY_TITLE);
@@ -105,7 +105,7 @@ export default function AdvisoryList() {
   const members = useApiData(() => advisoryService.list(), []);
   const section = useApiData(() => advisoryService.getSection(), []);
   const groups = useApiData(() => advisoryService.listGroups(), []);
-  /* Display order first, so the table reads the way the website shows the trainers. */
+  /* Display order first, so the table reads the way the website shows the Advisory Committee members. */
   const initial = useMemo<AdvisoryQuery>(() => ({ ...masterQuery('displayOrder'), group: '' }), []);
   const { query, patch, reset } = useMasterQuery(initial);
   const { busy, run } = useAction();
@@ -118,16 +118,16 @@ export default function AdvisoryList() {
   const inFilter = useMemo(() => all.filter((m) => inGroup(m, query.group)), [all, query.group]);
   const { rows, meta } = useMemo(() => clientPage(inFilter, query, LIST), [inFilter, query]);
 
-  /* A group deleted while it was the filter: back to every trainer, rather than a filter the select cannot show. */
+  /* A group deleted while it was the filter: back to every Advisory Committee member, rather than a filter the select cannot show. */
   useEffect(() => {
     if (groups.data && query.group && query.group !== NO_GROUP && !groups.data.some((g) => g.id === query.group)) patch({ group: '' });
   }, [groups.data, query.group, patch]);
 
   /*
-   * Moving a trainer swaps it with its neighbour in the website order, so the buttons only work while the table
+   * Moving an Advisory Committee member swaps it with its neighbour in the website order, so the buttons only work while the table
    * shows exactly that order: sorted by Order ascending, nothing searched or filtered by status. Paging is fine —
    * the neighbour may be on the next page, and the whole list is sent. With a group picked in the filter the
-   * neighbour is the previous / next trainer of that group: the order the website shows under its heading.
+   * neighbour is the previous / next Advisory Committee member of that group: the order the website shows under its heading.
    */
   const canUpdate = can('updateAdvisoryMember');
   const canReorder = canUpdate && all.length > 1;
@@ -218,7 +218,7 @@ export default function AdvisoryList() {
           <div style={{ whiteSpace: 'normal', minWidth: 140, maxWidth: 260 }}>
             <div>
               {m.group.name.en}
-              {/* The website hides a hidden group's trainers too, whatever their own status. */}
+              {/* The website hides a hidden group's Advisory Committee members too, whatever their own status. */}
               {hiddenGroups.has(m.group.id) ? <span className="muted"> (hidden)</span> : null}
             </div>
             <div className="muted fs12" lang="mr">
@@ -285,7 +285,7 @@ export default function AdvisoryList() {
   const searched = query.search !== '' || query.status !== '';
   const filtered = searched || query.group !== '';
   const s = section.data;
-  /* A trainer in a hidden group is not on the website either. */
+  /* An Advisory Committee member in a hidden group is not on the website either. */
   const shownCount = all.filter((m) => m.isActive && !(m.groupId && hiddenGroups.has(m.groupId))).length;
 
   return (
@@ -293,14 +293,14 @@ export default function AdvisoryList() {
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'CMS' }, { l: ADVISORY_TITLE }]}
         title={ADVISORY_TITLE}
-        sub="The website's Advisory Committee page (अमृत कलश सल्लागार समिती): its heading and subtitle, and the trainers and advisors listed on it, in Marathi and English."
+        sub="The website's Advisory Committee page (अमृत कलश सल्लागार समिती): its heading and subtitle, and the Advisory Committee members listed on it, in Marathi and English."
         back={<BackButton to="/dashboard" />}
         actions={
           <div className="f ac gp8 wrap">
             <Can action="createAdvisoryMember">
               <button type="button" className="btn primary" onClick={() => go(ADVISORY_CREATE_PATH)}>
                 <Icon name="plus" />
-                Add trainer
+                Add Advisory Committee member
               </button>
             </Can>
           </div>
@@ -310,7 +310,7 @@ export default function AdvisoryList() {
       <div className="card mb14">
         <div className="card-h">
           <h3>
-            Section settings <span className="sub">the heading and subtitle above the trainers</span>
+            Section settings <span className="sub">the heading and subtitle above the Advisory Committee members</span>
           </h3>
           <Can action="updateAdvisoryMember">
             <button type="button" className="btn sm" disabled={!s} onClick={() => go(ADVISORY_SETTINGS_PATH)}>
@@ -385,12 +385,12 @@ export default function AdvisoryList() {
           searchLabel="name or position"
           emptyMsg={
             searched
-              ? 'No trainer matches the current search.'
+              ? 'No Advisory Committee member matches the current search.'
               : query.group === NO_GROUP
-                ? 'Every trainer is in a group.'
+                ? 'Every Advisory Committee member is in a group.'
                 : query.group
-                  ? 'No trainer is in the chosen group. A trainer’s group is chosen on its form.'
-                  : 'No trainers have been added yet. Use Add trainer to add the first one.'
+                  ? 'No Advisory Committee member is in the chosen group. An Advisory Committee member’s group is chosen on its form.'
+                  : 'No Advisory Committee members have been added yet. Use Add Advisory Committee member to add the first one.'
           }
           rowLink={can('viewAdvisoryCommittee') ? (m) => advisoryMemberViewPath(m.id) : undefined}
         />
@@ -398,12 +398,12 @@ export default function AdvisoryList() {
 
       {confirming ? (
         <ConfirmModal
-          title={confirming.isActive ? 'Hide trainer' : 'Show trainer'}
+          title={confirming.isActive ? 'Hide Advisory Committee member' : 'Show Advisory Committee member'}
           busy={busy}
           confirmLabel={confirming.isActive ? 'Yes, hide' : 'Yes, show'}
           message={
             confirming.isActive
-              ? `Hide ${memberLabel(confirming)} from the website? The trainer stays in this list and can be shown again.`
+              ? `Hide ${memberLabel(confirming)} from the website? The Advisory Committee member stays in this list and can be shown again.`
               : `Show ${memberLabel(confirming)} on the website's Advisory Committee page again?`
           }
           onClose={() => setConfirming(null)}
@@ -411,7 +411,7 @@ export default function AdvisoryList() {
             const m = confirming;
             void run(
               () => advisoryService.setStatus(m.id, !m.isActive),
-              m.isActive ? 'Trainer hidden from the website' : 'Trainer shown on the website',
+              m.isActive ? 'Advisory Committee member hidden from the website' : 'Advisory Committee member shown on the website',
               async () => {
                 setConfirming(null);
                 await members.reload();
@@ -423,12 +423,12 @@ export default function AdvisoryList() {
 
       {deleting ? (
         <ConfirmModal
-          title="Delete trainer"
+          title="Delete Advisory Committee member"
           danger
           busy={busy}
           confirmLabel="Delete"
           message={
-            `Delete ${memberLabel(deleting)}? The trainer is removed from the website and from this list, and the photo is deleted. ` +
+            `Delete ${memberLabel(deleting)}? The Advisory Committee member is removed from the website and from this list, and the photo is deleted. ` +
             'The record itself is kept for audit history.'
           }
           onClose={() => setDeleting(null)}
@@ -436,7 +436,7 @@ export default function AdvisoryList() {
             const m = deleting;
             void run(
               () => advisoryService.remove(m.id),
-              'Trainer deleted',
+              'Advisory Committee member deleted',
               async () => {
                 setDeleting(null);
                 await members.reload();

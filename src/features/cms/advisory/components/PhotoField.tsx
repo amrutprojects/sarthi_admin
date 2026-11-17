@@ -6,7 +6,7 @@ import { PHOTO_ACCEPT, PHOTO_MAX_MB, checkPhoto } from '../validation/advisory.v
 export type PhotoChoice = { kind: 'keep' } | { kind: 'new'; file: File } | { kind: 'remove' };
 
 interface PhotoFieldProps {
-  /* The saved photo (already a loadable URL), or null when the trainer has none. */
+  /* The saved photo (already a loadable URL), or null when the Advisory Committee member has none. */
   current: string | null;
   choice: PhotoChoice;
   onChange: (choice: PhotoChoice) => void;
@@ -15,7 +15,7 @@ interface PhotoFieldProps {
 }
 
 /*
- * The trainer's photo: a round preview, a file picker (click or drop), and Remove / Undo. The same control
+ * The Advisory Committee member's photo: a round preview, a file picker (click or drop), and Remove / Undo. The same control
  * as Board Members Management's.
  *
  * A chosen file is checked here by its first bytes, like the server does, and previewed from memory
@@ -132,7 +132,7 @@ export default function PhotoField({ current, choice, onChange, error, onError }
             ) : error ? (
               /*
                * A rejected file was never taken (the choice is unchanged), but its error blocks saving. Without
-               * this there would be no way out on Add trainer — no saved photo and no new file means no other
+               * this there would be no way out on Add Advisory Committee member — no saved photo and no new file means no other
                * button — short of picking a valid photo or leaving the page.
                */
               <button type="button" className="btn xs" onClick={() => onError(undefined)}>

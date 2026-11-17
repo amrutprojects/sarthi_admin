@@ -69,9 +69,9 @@ function ListField({
 }
 
 /*
- * The group heading the trainer is listed under on the website: "No group" or one of the groups in website
+ * The group heading the Advisory Committee member is listed under on the website: "No group" or one of the groups in website
  * order, hidden ones marked. The saved group keeps its own entry while the list loads (or if it has gone
- * meanwhile), so the select never shows "No group" for a trainer that has one.
+ * meanwhile), so the select never shows "No group" for an Advisory Committee member that has one.
  */
 function GroupSelect({
   value,
@@ -92,7 +92,7 @@ function GroupSelect({
       id="advisory-group"
       label="Group"
       error={error}
-      hint="Optional. The heading the trainer is listed under on the website; trainers with no group are listed first, without a heading. Groups are managed on the Advisory Committee list."
+      hint="Optional. The heading the Advisory Committee member is listed under on the website; Advisory Committee members with no group are listed first, without a heading. Groups are managed on the Advisory Committee list."
     >
       <select className="inp" {...fieldAria('advisory-group', error)} value={value} onChange={(e) => onChange(e.target.value)}>
         <option value="">No group</option>
@@ -109,7 +109,7 @@ function GroupSelect({
 }
 
 /*
- * The Add / Edit trainer form, on its own page like every other CMS form.
+ * The Add / Edit Advisory Committee member form, on its own page like every other CMS form.
  *
  * - The photo is previewed locally and uploaded only when the form is saved, in the same request as
  *   the text, so a save either keeps everything or changes everything.
@@ -222,7 +222,7 @@ export default function MemberForm({
 
         <div className="card mb14">
           <div className="card-h">
-            <h3>Trainer details</h3>
+            <h3>Advisory Committee member details</h3>
           </div>
           <div className="card-b">
             <BilingualField
@@ -301,7 +301,7 @@ export default function MemberForm({
             <MasterField
               id="advisory-active"
               label="Status"
-              hint="Hidden trainers stay in this list but are not shown on the website's Advisory Committee page. The order is changed with the arrows on the list."
+              hint="Hidden Advisory Committee members stay in this list but are not shown on the website's Advisory Committee page. The order is changed with the arrows on the list."
             >
               <label className="f ac gp8 fs13" style={{ minHeight: 36 }}>
                 <input id="advisory-active" type="checkbox" checked={values.isActive} onChange={(e) => set('isActive', e.target.checked)} />

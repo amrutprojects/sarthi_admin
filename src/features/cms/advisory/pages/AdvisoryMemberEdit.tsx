@@ -10,12 +10,12 @@ import { advisoryService, photoSrc } from '../services/advisoryService';
 import { memberChanges, memberToForm } from '../validation/advisory.validation';
 
 /*
- * Edit trainer — a dedicated page that loads the trainer's saved record by its id, so the form always
+ * Edit Advisory Committee member — a dedicated page that loads the Advisory Committee member's saved record by its id, so the form always
  * starts from what is actually stored. Only the fields changed here are sent, with the version the
  * page was opened at; a save over someone else's newer edit is refused (409) rather than overwriting it.
  */
 export default function AdvisoryMemberEdit() {
-  usePageTitle('Edit Advisory Committee Trainer');
+  usePageTitle('Edit Advisory Committee Member');
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const can = useCan();
@@ -27,7 +27,7 @@ export default function AdvisoryMemberEdit() {
     <div className="page">
       <PageHead
         crumbs={[...ADVISORY_CRUMBS, { l: 'Edit' }]}
-        title={member ? `Edit ${memberLabel(member)}` : 'Edit trainer'}
+        title={member ? `Edit ${memberLabel(member)}` : 'Edit Advisory Committee member'}
         sub="Leaving the photo untouched keeps the current one. Changes appear on the public website once saved."
         back={<BackButton to={ADVISORY_PATH} />}
       />
@@ -35,8 +35,8 @@ export default function AdvisoryMemberEdit() {
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
 
       {member && !can('updateAdvisoryMember') ? (
-        <Callout tone="warn" title="You can view this section but not edit trainers">
-          Editing a trainer needs the &ldquo;Update Advisory Committee Management&rdquo; permission.
+        <Callout tone="warn" title="You can view this section but not edit Advisory Committee members">
+          Editing an Advisory Committee member needs the &ldquo;Update Advisory Committee Management&rdquo; permission.
         </Callout>
       ) : null}
 
@@ -52,7 +52,7 @@ export default function AdvisoryMemberEdit() {
             const changes = memberChanges(member, values);
             if (photo.kind === 'remove') changes.removePhoto = true;
             await advisoryService.update(member.id, changes, photo.kind === 'new' ? photo.file : null);
-            toastOk('Trainer updated');
+            toastOk('Advisory Committee member updated');
             navigate(ADVISORY_PATH);
           }}
         />

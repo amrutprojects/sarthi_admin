@@ -51,7 +51,29 @@ export interface UpdateProgrammePageInput {
 export interface ApiProgrammePage extends Required<UpdateProgrammePageInput> {
   id: string;
   updatedAt: string;
+  /*
+   * Keys of the fact sheet rows the website leaves out (PROGRAMME_FACT_ROWS), in display order. Changed only one
+   * row at a time through PATCH /cms/programme/facts/:key; the edit form's PUT never sends it, and the server keeps it.
+   */
+  hiddenFacts: string[];
 }
+
+/*
+ * The rows of the fact sheet box on /programme, in website order, each of which can be hidden on its own. The first
+ * three are summed from the Modules page; the rest print the facts above.
+ */
+export const PROGRAMME_FACT_ROWS = [
+  { key: 'totalHours', label: { en: 'Total hours', mr: 'एकूण तास' } },
+  { key: 'modules', label: { en: 'Modules', mr: 'मॉड्यूल्स' } },
+  { key: 'electives', label: { en: 'Electives', mr: 'ऐच्छिक क्षेत्रे' } },
+  { key: 'idealDuration', label: { en: 'Ideal duration', mr: 'आदर्श कालावधी' } },
+  { key: 'validity', label: { en: 'Validity', mr: 'वैधता' } },
+  { key: 'securityDeposit', label: { en: 'Security deposit', mr: 'अनामत रक्कम' } },
+  { key: 'applyBefore', label: { en: 'Apply before', mr: 'अर्ज कधी करावा' } },
+  { key: 'partner', label: { en: 'Partner', mr: 'भागीदार' } },
+] as const;
+export type ProgrammeFactRow = (typeof PROGRAMME_FACT_ROWS)[number];
+export type ProgrammeFactKey = ProgrammeFactRow['key'];
 
 /* The tabs of the read-only Programme page view, one per part of the public page, in website order. */
 export const PROGRAMME_TABS = [

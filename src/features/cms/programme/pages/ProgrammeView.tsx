@@ -1,15 +1,22 @@
-import type { ReactNode } from 'react';
-import { Callout, PageHead, useGo } from '../../../../components/ui';
-import { Can } from '../../../../modules/auth/components/Can';
+import { useState, type ReactNode } from 'react';
+import { Badge, Callout, PageHead, useGo } from '../../../../components/ui';
+import { Can, useCan } from '../../../../modules/auth/components/Can';
 import Icon from '../../../../components/ui/Icon';
 import FieldTable, { Bi, FieldValue } from '../../components/FieldTable';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { SectionNote, SectionTabBar, SectionTabPanel } from '../../components/SectionTabs';
-import { LoadState, fmtDateTime, useAction, useApiData } from '../../shared';
+import { ConfirmModal, LoadState, fmtDateTime, useAction, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
 import { useSectionTab } from '../../useSectionTab';
 import { programmeService } from '../services/programmeService';
-import { PROGRAMME_TABS, type ApiProgrammePage, type Bilingual } from '../types/programme.types';
+import {
+  PROGRAMME_FACT_ROWS,
+  PROGRAMME_TABS,
+  type ApiProgrammePage,
+  type Bilingual,
+  type ProgrammeFactKey,
+  type ProgrammeFactRow,
+} from '../types/programme.types';
 
 /*
  * A text cell of a list table. Panel cells never wrap (styles.css: table.tbl td { white-space: nowrap }); these may.
@@ -188,31 +195,126 @@ function CertificationTab({ page }: { page: ApiProgrammePage }) {
   );
 }
 
-/* Fact sheet tab: the figures in the right-hand rail of /programme. */
-function FactsTab({ page }: { page: ApiProgrammePage }) {
+/*
+ * Fact sheet tab: the box in the right-hand rail of /programme, row by row in website order, each row with a switch of
+ * its own. A hidden row is left out of the box on the website; its figure is kept. Hiding asks first, showing does not.
+ * Without cms-programme.update the rows show a Shown / Hidden badge instead.
+ */
+function FactsTab({
+  page,
+  canUpdate,
+  busy,
+  onSwitch,
+}: {
+  page: ApiProgrammePage;
+  canUpdate: boolean;
+  busy: boolean;
+  onSwitch: (row: ProgrammeFactRow, show: boolean) => Promise<void>;
+}) {
+  const [confirming, setConfirming] = useState<ProgrammeFactRow | null>(null);
+  const hidden = new Set(page.hiddenFacts);
+  const shownCount = PROGRAMME_FACT_ROWS.filter((r) => !hidden.has(r.key)).length;
+  const { facts } = page;
+  /* This page does not load the modules, so the three figures summed from them are not repeated here. */
+  const calculated = <span className="muted">Calculated from the Modules page</span>;
+  const values: Record<ProgrammeFactKey, ReactNode> = {
+    totalHours: calculated,
+    modules: calculated,
+    electives: calculated,
+    idealDuration: `${facts.idealMonths} months`,
+    validity: `${facts.validityMonths} months`,
+    securityDeposit: `₹${facts.securityDeposit.toLocaleString('en-IN')}`,
+    applyBefore: `${facts.applyLeadDays} days`,
+    partner: <FieldValue value={facts.partnerName} />,
+  };
+
   return (
     <>
-      {/* The fact sheet on /programme. Total hours, the module line and the elective count there are summed from the modules. */}
       <SectionNote>
-        Total hours, the module line and the elective count on this fact sheet are summed from the modules on the Modules page, so they are
-        not shown here. The home page&rsquo;s programme section shows the duration, validity and deposit from here too.
+        Total hours, Modules and Electives are summed from the modules on the Modules page; the other figures are entered with Edit content.
+        Switch a row off to leave it out of the fact sheet on the website &mdash; its figure is kept, and the home page&rsquo;s programme
+        section still shows the duration, validity and deposit.
       </SectionNote>
       <div className="card">
         <div className="card-h">
           <h3>
-            Programme fact sheet &mdash; /programme <span className="sub">the right-hand rail of the public page</span>
+            Programme fact sheet &mdash; /programme <span className="sub">the right-hand box on the website</span>
           </h3>
+          <span className="tag">
+            {shownCount} of {PROGRAMME_FACT_ROWS.length} shown
+          </span>
         </div>
-        <FieldTable
-          rows={[
-            ['Ideal duration', `${page.facts.idealMonths} months`],
-            ['Validity', `${page.facts.validityMonths} months`],
-            ['Security deposit', `₹${page.facts.securityDeposit.toLocaleString('en-IN')}`],
-            ['Apply before', `${page.facts.applyLeadDays} days`],
-            ['Partner', <FieldValue value={page.facts.partnerName} />],
-          ]}
-        />
+        <div className="tbl-wrap">
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th scope="col" style={{ width: '76px' }}>
+                  Sr. No.
+                </th>
+                <th scope="col" style={{ width: '28%' }}>
+                  Field
+                </th>
+                <th scope="col">Content</th>
+                <th scope="col" style={{ width: '180px' }}>
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {PROGRAMME_FACT_ROWS.map((row, i) => {
+                const shown = !hidden.has(row.key);
+                return (
+                  <tr className="norow" key={row.key}>
+                    <td>
+                      <span className="t2">{i + 1}</span>
+                    </td>
+                    <td style={{ whiteSpace: 'normal' }}>
+                      <b>{row.label.en}</b>
+                      <div className="bi-alt" lang="mr">
+                        {row.label.mr}
+                      </div>
+                    </td>
+                    <td style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>{values[row.key]}</td>
+                    <td>
+                      {canUpdate ? (
+                        <span className="f ac gp8">
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={shown}
+                            aria-label={`Show ${row.label.en} in the fact sheet`}
+                            aria-busy={busy || undefined}
+                            className={'switch' + (shown ? ' on' : '')}
+                            disabled={busy}
+                            title={shown ? 'Shown — switch off to hide it' : 'Hidden — switch on to show it'}
+                            onClick={() => (shown ? setConfirming(row) : void onSwitch(row, true))}
+                          />
+                          <span className="fs12" style={{ fontWeight: 600, color: shown ? 'var(--green)' : 'var(--muted)' }}>
+                            {shown ? 'Shown' : 'Hidden'}
+                          </span>
+                        </span>
+                      ) : (
+                        <Badge tone={shown ? 'green' : 'grey'}>{shown ? 'Shown' : 'Hidden'}</Badge>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {confirming ? (
+        <ConfirmModal
+          title={`Hide "${confirming.label.en}" from the website's fact sheet?`}
+          message="Visitors will no longer see this row in the fact sheet on the Programme page. Its figure is not deleted, and the row can be shown again at any time."
+          confirmLabel="Yes, hide"
+          busy={busy}
+          onClose={() => setConfirming(null)}
+          onConfirm={() => void onSwitch(confirming, false).then(() => setConfirming(null))}
+        />
+      ) : null}
     </>
   );
 }
@@ -264,17 +366,34 @@ function ModesTab({ page }: { page: ApiProgrammePage }) {
 /*
  * Programme Page Management — the read-only view of what the public /programme page shows: introduction, objectives,
  * learning methodology, assessment criteria, certification, and the fact sheet and training modes in the right-hand
- * rail. View-only administrators get the whole picture; the Edit and Publish buttons render only for
- * cms-programme.update. The page is shown one part per tab, with the same tab strip as Modules Page Management,
- * and the tab kept in the URL (?tab=).
+ * rail. View-only administrators get the whole picture; the Edit and Publish buttons and the fact sheet's row switches
+ * render only for cms-programme.update. The page is shown one part per tab, with the same tab strip as Modules Page
+ * Management, and the tab kept in the URL (?tab=).
  */
 export default function ProgrammeView() {
   usePageTitle('Programme Page');
   const go = useGo();
+  const can = useCan();
   const detail = useApiData(() => programmeService.get(), []);
   const { busy, run } = useAction();
   const [tab, selectTab] = useSectionTab(PROGRAMME_TABS);
-  const page = detail.data;
+  /*
+   * A fact sheet switch's PATCH answers with the whole page, which is shown in place of the loaded copy without a
+   * second GET. It is tied to the copy it replaced, so any reload (Publish, Retry) shows the server's page again.
+   */
+  const [patched, setPatched] = useState<{ over: ApiProgrammePage | null; page: ApiProgrammePage } | null>(null);
+  const page = patched && patched.over === detail.data ? patched.page : detail.data;
+
+  /* The same busy flag as Publish, so no switch is used while another change to the page is on its way. */
+  const switchFact = async (row: ProgrammeFactRow, show: boolean) => {
+    const loaded = detail.data;
+    const ok = await run(
+      async () => setPatched({ over: loaded, page: await programmeService.setFactVisibility(row.key, show) }),
+      `${row.label.en} is now ${show ? 'shown in' : 'hidden from'} the fact sheet`,
+    );
+    /* After a failure, reloaded so the switches show what the website has now. */
+    if (!ok) await detail.reload();
+  };
 
   return (
     <div className="page">
@@ -341,7 +460,11 @@ export default function ProgrammeView() {
             <CertificationTab page={page} />
           </SectionTabPanel>
           <SectionTabPanel tab="facts" active={tab} idPrefix="programme">
-            <FactsTab page={page} />
+            {/*
+             * Locked during any reload too (the one after a failed switch, or Retry): a switch used meanwhile would
+             * have its PATCH answer replaced by the reload's older page, and the row would show the wrong state.
+             */}
+            <FactsTab page={page} canUpdate={can('updateProgrammePage')} busy={busy || detail.loading} onSwitch={switchFact} />
           </SectionTabPanel>
           <SectionTabPanel tab="modes" active={tab} idPrefix="programme">
             <ModesTab page={page} />

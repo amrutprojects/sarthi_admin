@@ -29,7 +29,7 @@ const bodyOf = (input: AdvisoryMemberInput, photo: File | null): AdvisoryMemberI
 export const photoSrc = (photoUrl: string | null): string | null => (photoUrl ? API_BASE_URL + photoUrl : null);
 
 export const advisoryService = {
-  /* Every trainer, hidden ones included, in display order. The list is short, so it is not paged. */
+  /* Every Advisory Committee member, hidden ones included, in display order. The list is short, so it is not paged. */
   list: async (): Promise<ApiAdvisoryMember[]> => (await request<ApiAdvisoryMember[]>(BASE)).data,
 
   get: async (id: string): Promise<ApiAdvisoryMember> => (await request<ApiAdvisoryMember>(`${BASE}/${enc(id)}`)).data,
@@ -48,7 +48,7 @@ export const advisoryService = {
     await request<null>(`${BASE}/${enc(id)}`, { method: 'DELETE' });
   },
 
-  /* The whole list in its new order, by id. A 409 means someone added or deleted a trainer meanwhile. */
+  /* The whole list in its new order, by id. A 409 means someone added or deleted an Advisory Committee member meanwhile. */
   reorder: async (ids: string[]): Promise<ApiAdvisoryMember[]> =>
     (await request<ApiAdvisoryMember[]>(`${BASE}/order`, { method: 'PUT', body: { ids } })).data,
 
@@ -57,20 +57,20 @@ export const advisoryService = {
   updateSection: async (input: UpdateAdvisorySectionInput): Promise<ApiAdvisorySection> =>
     (await request<ApiAdvisorySection>(`${BASE}/settings`, { method: 'PUT', body: input })).data,
 
-  /* Groups — the headings trainers are listed under on the website. Every group, hidden ones included, in display order. */
+  /* Groups — the headings Advisory Committee members are listed under on the website. Every group, hidden ones included, in display order. */
   listGroups: async (): Promise<ApiAdvisoryGroup[]> => (await request<ApiAdvisoryGroup[]>(`${BASE}/groups`)).data,
 
   createGroup: async (input: AdvisoryGroupInput): Promise<ApiAdvisoryGroup> =>
     (await request<ApiAdvisoryGroup>(`${BASE}/groups`, { method: 'POST', body: input })).data,
 
-  /* Partial, like the trainer update, with the version the form was opened at. */
+  /* Partial, like the Advisory Committee member update, with the version the form was opened at. */
   updateGroup: async (id: string, input: AdvisoryGroupInput): Promise<ApiAdvisoryGroup> =>
     (await request<ApiAdvisoryGroup>(`${BASE}/groups/${enc(id)}`, { method: 'PATCH', body: input })).data,
 
   setGroupStatus: async (id: string, isActive: boolean): Promise<ApiAdvisoryGroup> =>
     (await request<ApiAdvisoryGroup>(`${BASE}/groups/${enc(id)}/status`, { method: 'PATCH', body: { isActive } })).data,
 
-  /* The group's trainers are kept, without a group; the server says how many that was. */
+  /* The group's Advisory Committee members are kept, without a group; the server says how many that was. */
   removeGroup: async (id: string): Promise<{ membersUngrouped: number }> =>
     (await request<{ membersUngrouped: number }>(`${BASE}/groups/${enc(id)}`, { method: 'DELETE' })).data,
 

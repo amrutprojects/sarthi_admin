@@ -526,7 +526,7 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/about-amrut/cards/create', 'cmsAboutCard', 'cms-about'],
   ['/cms/about-amrut/cards/:id/edit', 'cmsAboutCard', 'cms-about'],
   ['/cms/about-amrut/cards/:id/view', 'cmsAboutCardView', 'cms-about'],
-  /* Advisory Committee (trainers list): its own list page; static paths (create, settings) before the :id patterns. */
+  /* Advisory Committee (Advisory Committee members list): its own list page; static paths (create, settings) before the :id patterns. */
   ['/cms/advisory-committee', 'cmsAdvisoryList', 'cms-advisory'],
   ['/cms/advisory-committee/create', 'cmsAdvisoryCreate', 'cms-advisory'],
   ['/cms/advisory-committee/settings', 'cmsAdvisorySettings', 'cms-advisory'],

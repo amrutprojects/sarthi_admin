@@ -59,18 +59,18 @@ const ProfileList = ({ value }: { value: BilingualList }) => (
   />
 );
 
-/* The group heading the trainer is listed under, or where the website lists a trainer without one. */
+/* The group heading the Advisory Committee member is listed under, or where the website lists an Advisory Committee member without one. */
 function Group({ group, hidden }: { group: ApiAdvisoryMember['group']; hidden: boolean }) {
   if (!group) return <span className="muted">No group — listed first on the website, without a heading</span>;
   return (
     <div className="fc gp4">
       <Bi value={group.name} />
-      {hidden ? <span className="muted fs12">Hidden group — the website shows neither its heading nor its trainers</span> : null}
+      {hidden ? <span className="muted fs12">Hidden group — the website shows neither its heading nor its Advisory Committee members</span> : null}
     </div>
   );
 }
 
-/* The trainer's photo as the website shows it, round; a note when the website shows the person icon instead. */
+/* The Advisory Committee member's photo as the website shows it, round; a note when the website shows the person icon instead. */
 function Photo({ member }: { member: ApiAdvisoryMember }) {
   const [broken, setBroken] = useState(false);
   const src = photoSrc(member.photoUrl);
@@ -102,16 +102,16 @@ function Photo({ member }: { member: ApiAdvisoryMember }) {
 }
 
 /*
- * View trainer — read-only detail page of one Advisory Committee member, reached from the View action (or a click
+ * View Advisory Committee member — read-only detail page of one Advisory Committee member, reached from the View action (or a click
  * on the row) on the Advisory Committee Management list. Loads the saved record by its id.
  */
 export default function AdvisoryMemberView() {
-  usePageTitle('Advisory Committee Trainer');
+  usePageTitle('Advisory Committee Member');
   const { id = '' } = useParams();
   const go = useGo();
   const navigate = useNavigate();
   const detail = useApiData(() => advisoryService.get(id), [id]);
-  /* Only to tell whether the trainer's group is hidden; without the list the group is shown by name alone. */
+  /* Only to tell whether the Advisory Committee member's group is hidden; without the list the group is shown by name alone. */
   const groups = useApiData(() => advisoryService.listGroups(), []);
   const { busy, run } = useAction();
   const [deleting, setDeleting] = useState(false);
@@ -123,7 +123,7 @@ export default function AdvisoryMemberView() {
     <div className="page">
       <PageHead
         crumbs={[...ADVISORY_CRUMBS, { l: 'View' }]}
-        title={member ? memberLabel(member) : 'Trainer'}
+        title={member ? memberLabel(member) : 'Advisory Committee member'}
         badge={member ? <span className="tag">Order {member.displayOrder}</span> : undefined}
         back={<BackButton to={ADVISORY_PATH} />}
         actions={
@@ -143,7 +143,7 @@ export default function AdvisoryMemberView() {
                     onClick={() =>
                       run(
                         () => advisoryService.setStatus(member.id, !member.isActive),
-                        member.isActive ? 'Trainer hidden from the website' : 'Trainer shown on the website',
+                        member.isActive ? 'Advisory Committee member hidden from the website' : 'Advisory Committee member shown on the website',
                         () => detail.reload(),
                       )
                     }
@@ -170,7 +170,7 @@ export default function AdvisoryMemberView() {
           <div className="card">
             <div className="card-h">
               <h3>
-                Trainer details <span className="sub">as the website&rsquo;s Advisory Committee page shows them</span>
+                Advisory Committee member details <span className="sub">as the website&rsquo;s Advisory Committee page shows them</span>
               </h3>
             </div>
             <FieldTable
@@ -201,19 +201,19 @@ export default function AdvisoryMemberView() {
 
       {member && deleting ? (
         <ConfirmModal
-          title="Delete trainer"
+          title="Delete Advisory Committee member"
           danger
           busy={busy}
           confirmLabel="Delete"
           message={
-            `Delete ${memberLabel(member)}? The trainer is removed from the website and from this list, and the photo is deleted. ` +
+            `Delete ${memberLabel(member)}? The Advisory Committee member is removed from the website and from this list, and the photo is deleted. ` +
             'The record itself is kept for audit history.'
           }
           onClose={() => setDeleting(false)}
           onConfirm={() =>
             run(
               () => advisoryService.remove(member.id),
-              'Trainer deleted',
+              'Advisory Committee member deleted',
               () => {
                 setDeleting(false);
                 navigate(ADVISORY_PATH);

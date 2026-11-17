@@ -133,7 +133,7 @@ const sameItems = (a: string[], b: string[]) => a.length === b.length && a.every
 const sameList = (a: BilingualList, b: BilingualList) => sameItems(a.mr, b.mr) && sameItems(a.en, b.en);
 
 /*
- * Every field of the form, as the API takes it. A new trainer goes to the end of the list. No group is the
+ * Every field of the form, as the API takes it. A new Advisory Committee member goes to the end of the list. No group is the
  * server's default, so groupId is only sent when one is chosen.
  */
 export function memberPayload(v: MemberFormValues): AdvisoryMemberInput {
@@ -288,8 +288,8 @@ const TOO_BIG_RE = /too (?:large|long|big)|larger than|exceed/i;
 /*
  * A save refused as a whole rather than for one field, for a message on the form itself instead of a toast
  * that is gone before it is read. The usual cause is size: a 413 from the server's body limit, or a 400/422
- * saying the body — or the multipart "data" field holding the whole trainer — is too large. Only long
- * profile lists get a trainer that big, hence the advice. Any other message on "data" is shown as worded.
+ * saying the body — or the multipart "data" field holding the whole Advisory Committee member — is too large. Only long
+ * profile lists get an Advisory Committee member that big, hence the advice. Any other message on "data" is shown as worded.
  * undefined = not a whole-form error (field messages and the toast handle it).
  */
 export function memberFormError(status: number, message: string, details: { field?: string; message: string }[]): string | undefined {

@@ -3,9 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../../../../../tests/test-utils';
+import { ApiError } from '../../../../services/api-client';
 import ProgrammeView from '../pages/ProgrammeView';
 import { programmeService } from '../services/programmeService';
-import type { ApiProgrammePage, Bilingual } from '../types/programme.types';
+import { PROGRAMME_FACT_ROWS, type ApiProgrammePage, type Bilingual } from '../types/programme.types';
 
 /* The screen's collaborators are replaced at their public boundaries: the auth guard and the API service. */
 const permissions = new Set<string>();
@@ -14,7 +15,9 @@ vi.mock('../../../../modules/auth/components/Can', () => ({
   useCan: () => (action: string) => permissions.has(action),
   Can: ({ action, children }: { action: string; children: unknown }) => (permissions.has(action) ? children : null),
 }));
-vi.mock('../services/programmeService', () => ({ programmeService: { get: vi.fn(), update: vi.fn(), setPublished: vi.fn() } }));
+vi.mock('../services/programmeService', () => ({
+  programmeService: { get: vi.fn(), update: vi.fn(), setPublished: vi.fn(), setFactVisibility: vi.fn() },
+}));
 
 const pair = (mr: string, en: string): Bilingual => ({ mr, en });
 
@@ -43,6 +46,7 @@ const programmeData = (over: Partial<ApiProgrammePage> = {}): ApiProgrammePage =
   facts: { idealMonths: 6, validityMonths: 12, securityDeposit: 125000, applyLeadDays: 30, partnerName: 'SUMAGO INFOTECH PVT LTD' },
   isPublished: true,
   updatedAt: '2026-10-22T10:00:00.000Z',
+  hiddenFacts: [],
   ...over,
 });
 
@@ -62,6 +66,10 @@ const renderAt = (route = '/cms/programme') =>
   );
 
 const TAB_LABELS = ['About the programme', 'Learning methodology', 'Assessment', 'Certification', 'Fact sheet', 'Training modes'];
+/* The rows of the website's fact sheet box, in website order. */
+const FACT_KEYS = ['totalHours', 'modules', 'electives', 'idealDuration', 'validity', 'securityDeposit', 'applyBefore', 'partner'];
+const FACT_ENGLISH = ['Total hours', 'Modules', 'Electives', 'Ideal duration', 'Validity', 'Security deposit', 'Apply before', 'Partner'];
+const FACT_MARATHI = ['एकूण तास', 'मॉड्यूल्स', 'ऐच्छिक क्षेत्रे', 'आदर्श कालावधी', 'वैधता', 'अनामत रक्कम', 'अर्ज कधी करावा', 'भागीदार'];
 
 const tab = (name: string) => screen.getByRole('tab', { name });
 const panel = () => screen.getByRole('tabpanel');
@@ -79,6 +87,8 @@ const expectPair = (row: HTMLElement, col: number, mr: string, en: string) => {
   expect(within(cell(row, col)).getByText(en)).toHaveAttribute('lang', 'en');
 };
 const toasts = () => document.getElementById('toast-root') as HTMLElement;
+const switchOf = (english: string) => screen.getByRole('switch', { name: `Show ${english} in the fact sheet` });
+const factRow = (english: string) => screen.getByText(english, { selector: 'b' }).closest('tr') as HTMLElement;
 
 describe('<ProgrammeView> tabs', () => {
   beforeEach(() => {
@@ -177,9 +187,17 @@ describe('<ProgrammeView> tabs', () => {
 
     expect(await screen.findByRole('heading', { name: /Programme fact sheet/ })).toBeInTheDocument();
     const [table] = tables();
-    expect(headers(table)).toEqual(['Sr. No.', 'Field', 'Content']);
-    expect(column(table, 1)).toEqual(['Ideal duration', 'Validity', 'Security deposit', 'Apply before', 'Partner']);
-    expect(column(table, 2)).toEqual(['6 months', '12 months', '₹1,25,000', '30 days', 'SUMAGO INFOTECH PVT LTD']);
+    expect(headers(table)).toEqual(['Sr. No.', 'Field', 'Content', 'Status']);
+    expect(column(table, 0)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8']);
+    expect(bodyRows(table).map((r) => within(cell(r, 1)).getByText(/./, { selector: 'b' }).textContent)).toEqual(FACT_ENGLISH);
+    expect(column(table, 2)).toEqual([
+      ...Array<string>(3).fill('Calculated from the Modules page'),
+      '6 months',
+      '12 months',
+      '₹1,25,000',
+      '30 days',
+      'SUMAGO INFOTECH PVT LTD',
+    ]);
     expect(within(panel()).getByText(/summed from the modules on the Modules page/)).toBeInTheDocument();
   });
 
@@ -306,5 +324,141 @@ describe('<ProgrammeView> tabs', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByRole('tab', { name: 'About the programme' })).toBeInTheDocument();
     expect(programmeService.get).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('<ProgrammeView> fact sheet row switches', () => {
+  beforeEach(() => {
+    permissions.clear();
+    permissions.add('updateProgrammePage');
+    vi.mocked(programmeService.get).mockReset().mockResolvedValue(programmeData());
+    vi.mocked(programmeService.setPublished).mockReset();
+    vi.mocked(programmeService.setFactVisibility).mockReset();
+    if (!document.getElementById('toast-root')) document.body.insertAdjacentHTML('beforeend', '<div id="toast-root"></div>');
+    toasts().innerHTML = '';
+  });
+
+  const openFacts = async () => {
+    renderAt('/cms/programme?tab=facts');
+    await screen.findByRole('heading', { name: /Programme fact sheet/ });
+  };
+
+  it('lists all eight rows in website order, each with its Marathi label and a switch', async () => {
+    await openFacts();
+
+    const rows = bodyRows(tables()[0]!);
+    expect(rows).toHaveLength(8);
+    rows.forEach((row, i) => {
+      expect(cell(row, 1)).toHaveTextContent(`${FACT_ENGLISH[i]}${FACT_MARATHI[i]}`);
+      expect(within(cell(row, 1)).getByText(FACT_MARATHI[i]!)).toHaveAttribute('lang', 'mr');
+      const toggle = within(cell(row, 3)).getByRole('switch', { name: `Show ${FACT_ENGLISH[i]} in the fact sheet` });
+      expect(toggle).toBeChecked();
+      expect(toggle).toHaveClass('switch', 'on');
+      expect(cell(row, 3)).toHaveTextContent('Shown');
+    });
+    expect(screen.getByText('8 of 8 shown')).toHaveClass('tag');
+  });
+
+  it('hides a row after asking, sending only that row, and shows the page the PATCH answers with', async () => {
+    vi.mocked(programmeService.setFactVisibility).mockResolvedValue(programmeData({ hiddenFacts: ['securityDeposit'] }));
+    await openFacts();
+
+    await userEvent.click(switchOf('Security deposit'));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent(`Hide "Security deposit" from the website's fact sheet?`);
+    expect(dialog).toHaveTextContent('Its figure is not deleted');
+    expect(programmeService.setFactVisibility).not.toHaveBeenCalled();
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Yes, hide' }));
+    await waitFor(() => expect(toasts()).toHaveTextContent('Security deposit is now hidden from the fact sheet'));
+    expect(programmeService.setFactVisibility).toHaveBeenCalledTimes(1);
+    expect(programmeService.setFactVisibility).toHaveBeenCalledWith('securityDeposit', false);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+    /* Refreshed from the PATCH answer: no second GET. */
+    expect(switchOf('Security deposit')).not.toBeChecked();
+    expect(factRow('Security deposit')).toHaveTextContent('Hidden');
+    expect(factRow('Security deposit')).toHaveTextContent('₹1,25,000');
+    expect(switchOf('Partner')).toBeChecked();
+    expect(screen.getByText('7 of 8 shown')).toBeInTheDocument();
+    expect(programmeService.get).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends nothing when hiding is cancelled', async () => {
+    await openFacts();
+
+    await userEvent.click(switchOf('Total hours'));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(programmeService.setFactVisibility).not.toHaveBeenCalled();
+    expect(switchOf('Total hours')).toBeChecked();
+  });
+
+  it('shows a hidden row again without asking', async () => {
+    vi.mocked(programmeService.get).mockResolvedValue(programmeData({ hiddenFacts: ['totalHours', 'partner'] }));
+    vi.mocked(programmeService.setFactVisibility).mockResolvedValue(programmeData({ hiddenFacts: ['totalHours'] }));
+    await openFacts();
+
+    expect(switchOf('Partner')).not.toBeChecked();
+    expect(switchOf('Total hours')).not.toBeChecked();
+    expect(screen.getByText('6 of 8 shown')).toBeInTheDocument();
+
+    await userEvent.click(switchOf('Partner'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await waitFor(() => expect(toasts()).toHaveTextContent('Partner is now shown in the fact sheet'));
+    expect(programmeService.setFactVisibility).toHaveBeenCalledWith('partner', true);
+    await waitFor(() => expect(switchOf('Partner')).toBeChecked());
+    expect(switchOf('Total hours')).not.toBeChecked();
+    expect(screen.getByText('7 of 8 shown')).toBeInTheDocument();
+  });
+
+  it('shows a refusal as the server sent it, and reloads so the switches show what the website has', async () => {
+    vi.mocked(programmeService.setFactVisibility).mockRejectedValue(
+      new ApiError('You do not have permission to do this', 403, 'FORBIDDEN'),
+    );
+    await openFacts();
+
+    await userEvent.click(switchOf('Validity'));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Yes, hide' }));
+    await waitFor(() => expect(toasts()).toHaveTextContent('Not permitted: You do not have permission to do this'));
+    await waitFor(() => expect(programmeService.get).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(switchOf('Validity')).toBeChecked();
+    expect(screen.getByText('8 of 8 shown')).toBeInTheDocument();
+  });
+
+  it('shows the server’s page again after a reload, not the copy a switch answered with', async () => {
+    vi.mocked(programmeService.setFactVisibility).mockResolvedValue(programmeData({ hiddenFacts: ['modules'] }));
+    vi.mocked(programmeService.setPublished).mockResolvedValue(programmeData({ isPublished: false }));
+    await openFacts();
+
+    await userEvent.click(switchOf('Modules'));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Yes, hide' }));
+    await waitFor(() => expect(switchOf('Modules')).not.toBeChecked());
+
+    vi.mocked(programmeService.get).mockResolvedValue(programmeData({ hiddenFacts: ['modules'], isPublished: false }));
+    await userEvent.click(screen.getByRole('button', { name: 'Unpublish' }));
+    expect(await screen.findByRole('button', { name: 'Publish' })).toBeInTheDocument();
+    expect(screen.getByText('This content is not published')).toBeInTheDocument();
+    expect(switchOf('Modules')).not.toBeChecked();
+  });
+
+  it('gives a view-only administrator a Shown / Hidden badge per row instead of the switches', async () => {
+    permissions.clear();
+    vi.mocked(programmeService.get).mockResolvedValue(programmeData({ hiddenFacts: ['electives', 'applyBefore'] }));
+    await openFacts();
+
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+    expect(within(factRow('Electives')).getByText('Hidden')).toHaveClass('badge');
+    expect(within(factRow('Apply before')).getByText('Hidden')).toHaveClass('badge');
+    expect(within(factRow('Total hours')).getByText('Shown')).toHaveClass('badge');
+    expect(screen.getAllByText('Shown', { selector: '.badge' })).toHaveLength(6);
+    expect(screen.getByText('6 of 8 shown')).toBeInTheDocument();
+  });
+
+  it('knows the eight row keys the server and the website use', () => {
+    expect(PROGRAMME_FACT_ROWS.map((r) => r.key)).toEqual(FACT_KEYS);
+    expect(PROGRAMME_FACT_ROWS.map((r) => r.label.en)).toEqual(FACT_ENGLISH);
+    expect(PROGRAMME_FACT_ROWS.map((r) => r.label.mr)).toEqual(FACT_MARATHI);
   });
 });

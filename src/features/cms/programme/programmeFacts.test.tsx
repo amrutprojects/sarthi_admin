@@ -1,6 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../../../../tests/test-utils';
 import { ApiError } from '../../../services/api-client';
 import ProgrammeEdit from './pages/ProgrammeEdit';
@@ -9,7 +9,9 @@ import ProgrammeView from './pages/ProgrammeView';
 import { programmeService } from './services/programmeService';
 import type { ApiProgrammePage, Bilingual } from './types/programme.types';
 
-vi.mock('./services/programmeService', () => ({ programmeService: { get: vi.fn(), update: vi.fn(), setPublished: vi.fn() } }));
+vi.mock('./services/programmeService', () => ({
+  programmeService: { get: vi.fn(), update: vi.fn(), setPublished: vi.fn(), setFactVisibility: vi.fn() },
+}));
 vi.mock('../../../modules/auth/auth-context', () => ({
   useAuth: () => ({ permissions: new Set(['cms-programme.view', 'cms-programme.update']), hiddenMenus: new Set() }),
 }));
@@ -33,6 +35,7 @@ const page = (): ApiProgrammePage => ({
   facts: { idealMonths: 6, validityMonths: 12, securityDeposit: 2000, applyLeadDays: 30, partnerName: 'SUMAGO INFOTECH PVT LTD' },
   isPublished: true,
   updatedAt: '2026-10-01T10:00:00.000Z',
+  hiddenFacts: [],
 });
 
 const save = () => userEvent.click(screen.getByRole('button', { name: 'Save Programme page' }));
@@ -91,7 +94,8 @@ describe('Programme fact sheet', () => {
   });
 
   it('sends the figures as numbers and the partner name trimmed', async () => {
-    vi.mocked(programmeService.get).mockResolvedValue(page());
+    /* Rows hidden from the fact sheet are switched on the view page, so the form neither shows nor sends them. */
+    vi.mocked(programmeService.get).mockResolvedValue({ ...page(), hiddenFacts: ['validity', 'partner'] });
     vi.mocked(programmeService.update).mockResolvedValue(page());
     renderWithProviders(<ProgrammeEdit />);
     const deposit = await screen.findByLabelText(/Security deposit/);
@@ -101,7 +105,7 @@ describe('Programme fact sheet', () => {
     await save();
     await waitFor(() => expect(programmeService.update).toHaveBeenCalledTimes(1));
     const body = vi.mocked(programmeService.update).mock.calls[0]![0];
-    /* The PUT body is .strict() on the server: the page's own fields plus facts, nothing read-only such as id. */
+    /* The PUT body is .strict() on the server: the page's own fields plus facts, nothing read-only such as id or hiddenFacts. */
     expect(Object.keys(body).sort()).toEqual([
       'assessment',
       'assessmentNote',
@@ -146,5 +150,38 @@ describe('Programme fact sheet', () => {
     expect(screen.getByText('₹1,25,000')).toBeInTheDocument();
     expect(screen.getByText('30 days')).toBeInTheDocument();
     expect(screen.getByText('SUMAGO INFOTECH PVT LTD')).toBeInTheDocument();
+    /* cms-programme.update (the real permission map) gives each of the eight rows its switch. */
+    expect(screen.getAllByRole('switch')).toHaveLength(8);
+  });
+});
+
+describe('fact sheet row API', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('sends one row’s switch as PATCH /cms/programme/facts/<key> {show}, and returns the whole page it answers with', async () => {
+    /* The real service and api-client, down to the request; the module mock above replaces them for the screens only. */
+    const { programmeService: real } = await vi.importActual<{ programmeService: typeof programmeService }>('./services/programmeService');
+    const answer = { ...page(), hiddenFacts: ['securityDeposit'] };
+    const fetchMock = vi.fn(
+      async (_url: string, _init?: RequestInit) =>
+        ({
+          ok: true,
+          status: 200,
+          statusText: '',
+          json: () => Promise.resolve({ success: true, message: 'Updated', data: answer }),
+        }) as Response,
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    expect(await real.setFactVisibility('securityDeposit', false)).toEqual(answer);
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(new URL(url, 'http://admin.test').pathname).toMatch(/\/cms\/programme\/facts\/securityDeposit$/);
+    expect(init).toMatchObject({ method: 'PATCH', body: JSON.stringify({ show: false }) });
+
+    await real.setFactVisibility('partner', true);
+    expect(fetchMock.mock.calls[1]![0]).toMatch(/\/cms\/programme\/facts\/partner$/);
+    expect(fetchMock.mock.calls[1]![1]).toMatchObject({ method: 'PATCH', body: JSON.stringify({ show: true }) });
   });
 });
