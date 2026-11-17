@@ -199,7 +199,7 @@ function CreateBatchModal({ onClose }: { onClose: () => void }) {
             className="btn primary"
             onClick={() => {
               onClose();
-              AS.ui.toast('Demo action recorded — no data was persisted.', 'ok');
+              AS.ui.toast('This feature will be available soon.', 'ok');
             }}
           >
             Create batch

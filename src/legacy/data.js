@@ -930,7 +930,7 @@
      ========================================================= */
   var onlineCount = stateKpis.online;
   var lms = {
-    status: 'MOCK_CONNECTED', endpoint: 'https://lms.sumago.demo/api/v2 (mock)',
+    status: 'MOCK_CONNECTED', endpoint: 'Endpoint not configured',
     lastSync: '2026-09-07 06:00', nextSync: '2026-09-08 06:00',
     studentsSynced: onlineCount, coursesSynced: 5, modules: 42,
     assignmentsSubmitted: 1486, mcqsCompleted: 3820, assessmentsSynced: 180,
@@ -948,7 +948,7 @@
     registered: stateKpis.enrolled, active30d: Math.round(stateKpis.enrolled * 0.82),
     dau: Math.round(stateKpis.enrolled * 0.41), materialViews: 14820,
     mcqCompletion: 76, notificationsSent: 24, assignmentsSubmitted: 1486,
-    androidVersion: '1.4.2 (demo)', iosVersion: '1.4.0 (demo)', crashFree: 99.2,
+    androidVersion: '1.4.2', iosVersion: '1.4.0', crashFree: 99.2,
     todayMaterial: 'Module 8 - Spreadsheet formulas: SUM, AVERAGE, IF',
     todayMcq: 'Daily quiz - MS Excel basics (10 questions)',
     upcoming: 'Live doubt-clearing session, 5:00 PM (Online mode)'

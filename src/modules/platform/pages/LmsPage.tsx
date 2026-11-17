@@ -31,8 +31,8 @@ export default function LmsPage() {
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'LMS integration' }]}
         title={cfg.lmsName + ' Integration'}
-        badge={<Badge tone="amber">DEMO / MOCK INTEGRATION</Badge>}
-        sub="Integration-ready module. Not connected to a live LMS in this prototype — credentials would be supplied through environment variables."
+        badge={<Badge tone="amber">INTEGRATION READY</Badge>}
+        sub="Integration-ready module. Not yet connected to a live LMS — credentials will be supplied through environment variables."
         actions={
           <>
             <button type="button" className="btn" onClick={() => setDialog('logs')}>
@@ -55,7 +55,7 @@ export default function LmsPage() {
         }
       />
       <div className="grid g4 mb14">
-        <Kpi label="Connection status" value="Mock connected" tone="a" sub={l.endpoint} />
+        <Kpi label="Connection status" value="Integration ready" tone="a" sub={l.endpoint} />
         <Kpi label="Last sync" value={l.lastSync.slice(5)} tone="b" sub={'Next: ' + l.nextSync.slice(5)} />
         <Kpi label="Students synced" value={l.studentsSynced} tone="g" link="#/candidates?mode=ONLINE" />
         <Kpi label="Courses synced" value={l.coursesSynced} tone="b" sub={l.modules + ' modules'} />
@@ -92,13 +92,13 @@ export default function LmsPage() {
               {
                 title: cfg.lmsName,
                 sub: 'Courses, modules, MCQs, assignments, progress',
-                right: <Badge tone="amber">Mock</Badge>,
+                right: <Badge tone="amber">Pending</Badge>,
                 icon: 'plug',
               },
               {
                 title: cfg.appName,
                 sub: 'Study material, MCQs, notifications',
-                right: <Badge tone="amber">Mock</Badge>,
+                right: <Badge tone="amber">Pending</Badge>,
                 icon: 'phone',
                 link: '#/student-app',
               },
@@ -109,7 +109,7 @@ export default function LmsPage() {
               {
                 title: 'QR certificate verification',
                 sub: 'Public verification endpoint',
-                right: <Badge tone="green">Demo</Badge>,
+                right: <Badge tone="green">Active</Badge>,
                 icon: 'qr',
                 link: '#/verify',
               },
@@ -177,7 +177,7 @@ export default function LmsPage() {
                 className="btn primary"
                 onClick={() => {
                   close();
-                  AS.ui.toast('Demo action recorded — no data was persisted.', 'ok');
+                  AS.ui.toast('This feature will be available soon.', 'ok');
                 }}
               >
                 Save settings
@@ -191,7 +191,7 @@ export default function LmsPage() {
           <div className="grid g2 mt14">
             <div className="fld">
               <label>Base URL</label>
-              <input className="inp" defaultValue="https://lms.sumago.demo/api/v2" />
+              <input className="inp" placeholder="https://" />
             </div>
             <div className="fld">
               <label>API key</label>

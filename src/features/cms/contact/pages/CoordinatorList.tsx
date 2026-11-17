@@ -12,7 +12,7 @@ import { contactService } from '../services/contactService';
 import type { ApiCoordinator } from '../types/contact.types';
 
 /*
- * District / cluster coordinators tab: the coordinator cards of the public Contact page as a listing
+ * Division / cluster coordinators tab: the coordinator cards of the public Contact page as a listing
  * with search, sorting and paging, all served by the backend, in website order by default. Each row
  * is viewed, edited, switched on or off and deleted on its own, as on FAQ Management.
  */
@@ -98,7 +98,7 @@ export default function CoordinatorList() {
       <div className="card">
         <div className="card-h">
           <h3>
-            District / cluster coordinators <span className="sub">live from the backend</span>
+            Division / cluster coordinators <span className="sub">live from the backend</span>
           </h3>
           <div className="f ac gp8">
             {filtered ? <span className="tag">filtered</span> : null}

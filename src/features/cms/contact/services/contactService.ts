@@ -66,7 +66,11 @@ export const contactService = {
   setPublished: async (isPublished: boolean): Promise<ApiContactPage> =>
     (await request<ApiContactPage>('/cms/contact/status', { method: 'PATCH', body: { isPublished } })).data,
 
-  /* ---------------- District / cluster coordinators ---------------- */
+  /* The "District offices" section's "Show on website" switch, on its own endpoint like publishing. */
+  setDistrictOfficesSection: async (show: boolean): Promise<ApiContactPage> =>
+    (await request<ApiContactPage>('/cms/contact/district-offices-section', { method: 'PATCH', body: { show } })).data,
+
+  /* ---------------- Division / cluster coordinators ---------------- */
 
   listCoordinators: (q: MasterQuery) => list<ApiCoordinator>(COORDINATORS, q),
 

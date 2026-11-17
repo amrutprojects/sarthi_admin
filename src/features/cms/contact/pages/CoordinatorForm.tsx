@@ -46,7 +46,7 @@ function mapServerErrors(err: ApiError): FieldErrors<CoordinatorField> {
 }
 
 /*
- * The district / cluster coordinator create and edit form, on its own page (no modal).
+ * The division / cluster coordinator create and edit form, on its own page (no modal).
  *
  * Same behaviour as the other CMS master forms: validates on submit and re-validates a field once it
  * has been touched, blocks a double submit, keeps the entered values when a save fails, and shows the

@@ -93,6 +93,7 @@ export const contactPage = (over: Partial<ApiContactPage> = {}): ApiContactPage 
   pageTitle: { mr: 'संपर्क', en: 'Contact us' },
   pageSubtitle: { mr: 'आमच्याशी बोला', en: 'Talk to us' },
   isPublished: true,
+  showDistrictOffices: true,
   /* Not set: the website's WhatsApp button falls back to the AMRUT phone and its default message. */
   whatsappNumber: '',
   whatsappMessage: { mr: '', en: '' },

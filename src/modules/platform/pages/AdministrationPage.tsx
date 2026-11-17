@@ -5,7 +5,7 @@ import { useLegacyTick } from '../../../utils/legacyBus';
 import * as G from '../../../services/mock/governanceService';
 import { Can } from '../../auth';
 
-const demoToast = () => AS.ui.toast('Demo action recorded — no data was persisted.', 'ok');
+const demoToast = () => AS.ui.toast('This feature will be available soon.', 'ok');
 
 export default function AdministrationPage() {
   useLegacyTick();
@@ -121,10 +121,10 @@ export default function AdministrationPage() {
         </Card>
       </div>
       <Card title="Offline centre district allocation">
-        <Callout tone="warn" title="Indicative demo distribution">
+        <Callout tone="warn" title="Indicative distribution">
           {'Approved offline centres currently sit in: ' +
             DB.centres.map((c) => G.districtName(c.districtId)).join(', ') +
-            '. This is an indicative demo distribution and is '}
+            '. This is an indicative distribution and is '}
           <b>not</b>
           {' a final approved district allocation. It is fully configurable.'}
         </Callout>

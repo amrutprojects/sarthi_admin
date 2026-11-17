@@ -7,7 +7,7 @@ import { contactService } from '../services/contactService';
 import { contactListPath } from '../types/contact.types';
 import CoordinatorForm from './CoordinatorForm';
 
-/* Add coordinator — a dedicated page, reached from Add coordinator on the District / cluster coordinators tab. */
+/* Add coordinator — a dedicated page, reached from Add coordinator on the Division / cluster coordinators tab. */
 export default function CoordinatorCreate() {
   usePageTitle('Add Coordinator');
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ export default function CoordinatorCreate() {
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'CMS' }, { l: 'Contact Page', link: listPath }, { l: 'Add coordinator' }]}
         title="Add Coordinator"
-        sub="Adds a district / cluster coordinator card to the public Contact page. Each district it covers links to its own District Office page."
+        sub="Adds a division / cluster coordinator card to the public Contact page. Each district it covers links to its own District Office page."
         back={<BackButton to={listPath} />}
       />
       <CoordinatorForm

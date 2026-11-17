@@ -23,16 +23,15 @@ const renderPage = () =>
 const kpi = (label: string) => screen.getByText(label, { selector: '.kpi-t' }).closest('.kpi') as HTMLElement;
 
 describe('ExecutivePage — live student figures', () => {
-  it('shows Applications / Eligible / Enrolled / Awaiting batch from the summary; RAG and finance stay demo', async () => {
+  it('shows Applications / Eligible / Enrolled / Awaiting batch from the summary, with no demo labelling', async () => {
     vi.spyOn(studentApi, 'summary').mockResolvedValue(summaryFixture());
     renderPage();
     await waitFor(() => expect(within(kpi('Applications')).getByText('15,000')).toBeInTheDocument());
     expect(within(kpi('Eligible')).getByText('14,950')).toBeInTheDocument();
     expect(within(kpi('Enrolled')).getByText('0')).toBeInTheDocument();
     expect(within(kpi('Awaiting batch')).getByText('14,950')).toBeInTheDocument();
-    expect(within(kpi('Districts GREEN')).getByText('Demo data')).toBeInTheDocument();
-    expect(screen.getByText('Financial snapshot').closest('h3')).toHaveTextContent('Demo data');
-    expect(screen.queryByText('DEMO DATA')).not.toBeInTheDocument();
+    expect(screen.getByText('Financial snapshot').closest('h3')).toHaveTextContent(/^Financial snapshot/);
+    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment/i);
     expect(screen.getAllByText(/Student figures are live as of/).length).toBeGreaterThan(0);
   });
 

@@ -16,7 +16,7 @@ export default function ReportsPage() {
         title="Reports & MIS"
         sub="Standard programme reports with filters and Excel / CSV / PDF export."
         actions={
-          <button type="button" className="btn primary" onClick={() => AS.ui.toast('MIS pack generation queued (demo).', 'ok')}>
+          <button type="button" className="btn primary" onClick={() => AS.ui.toast('MIS pack generation queued.', 'ok')}>
             <Icon name="download" />
             Export full MIS pack
           </button>

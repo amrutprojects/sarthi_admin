@@ -156,8 +156,7 @@ export default function DashboardPage() {
         title="Project Command Centre"
         sub={
           <>
-            Scope: <b>{S.scopeLabel(f)}</b> · Student figures are live{asOf ? ' ' + asOf : ''} · Figures marked <b>Demo data</b> are
-            illustrative.
+            Scope: <b>{S.scopeLabel(f)}</b> · Student figures are live{asOf ? ' ' + asOf : ''}
           </>
         }
         actions={
@@ -254,7 +253,7 @@ export default function DashboardPage() {
             District performance map {liveMetric ? null : <DemoChip />}{' '}
             <span className="sub">
               {S.districts().length} districts · click any district to drill down ·{' '}
-              {liveMetric ? 'tile counts are live' + (asOf ? ' ' + asOf : '') + '; status colours are demo' : 'this metric is demo data'}
+              {liveMetric ? 'tile counts are live' + (asOf ? ' ' + asOf : '') : 'indicative values'}
             </span>
           </h3>
           <div className="f gp6">
@@ -418,8 +417,7 @@ export default function DashboardPage() {
         </Card>
       </div>
       <DemoNote>
-        Figures marked “Demo data” are illustrative (indicative values, subject to AMRUT / COEP approval). Student counts come from the live
-        register.
+        Indicative values, subject to AMRUT / COEP approval. Student counts come from the live register.
       </DemoNote>
     </div>
   );

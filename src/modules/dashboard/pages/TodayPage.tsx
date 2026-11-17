@@ -63,7 +63,7 @@ export default function TodayPage() {
         badge={<LivePill>{live.filter((s) => s.status === 'LIVE').length} LIVE</LivePill>}
         sub={
           <>
-            Operational snapshot for <b>{dateFmt(S.asOf())}</b> (configurable project date in demo mode).
+            Operational snapshot for <b>{dateFmt(S.asOf())}</b>.
           </>
         }
         actions={

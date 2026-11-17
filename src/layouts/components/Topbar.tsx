@@ -61,8 +61,8 @@ export default function Topbar({ onBurger }: { onBurger: () => void }) {
       body:
         U.callout(
           'info',
-          'Prototype help centre',
-          'This is a clickable prototype of the AMRUT × SUMAGO Programme Management Portal. All records are demo data. Every KPI on every screen is calculated from the same candidate dataset, so numbers stay consistent as you drill down.',
+          'Help centre',
+          'Welcome to the AMRUT × SUMAGO Programme Management Portal. Every KPI on every screen is calculated from the same candidate dataset, so numbers stay consistent as you drill down.',
         ) +
         '<h4 class="mt18 mb10">Try these guided journeys</h4><div class="grid g2">' +
         JOURNEYS.map(
@@ -124,9 +124,8 @@ export default function Topbar({ onBurger }: { onBurger: () => void }) {
           <kbd>Ctrl K</kbd>
         </div>
       ) : null}
-      {/* The spacer normally shares the free room with the search box (refresh.css); without it, it takes it all, so the pill and user stay right. */}
+      {/* The spacer normally shares the free room with the search box (refresh.css); without it, it takes it all, so the user stays right. */}
       <div className="tb-spacer" style={programme ? undefined : { flexGrow: 1 }} />
-      <span className="demo-pill">DEMO ENVIRONMENT — SAMPLE DATA</span>
       <div className="tb-actions">
         {programme ? (
           <>

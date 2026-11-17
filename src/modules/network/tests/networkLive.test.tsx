@@ -68,23 +68,22 @@ describe('DistrictsPage — live counts per district', () => {
     const card = await screen.findByTestId('district-NAG');
     await waitFor(() => expect(within(card).getByText('448')).toBeInTheDocument());
     expect(within(card).getByText('440')).toBeInTheDocument();
-    /* Two demo figures on a card: its target / achievement and its RAG status. */
-    expect(within(card).getAllByText('Demo data')).toHaveLength(2);
-    /* A district missing from the summary reads 0, not the demo figure. */
+    /* A district missing from the summary reads 0, not the dataset figure. */
     expect(within(screen.getByTestId('district-JAL')).getAllByText('0')).toHaveLength(3);
     expect(screen.getByText(/Applications, Eligible and Enrolled are live student figures as of/)).toBeInTheDocument();
     for (const l of ['On track (GREEN)', 'Critical', 'State achievement']) {
-      expect(within(kpi(l)).getByText('Demo data')).toBeInTheDocument();
+      expect(kpi(l)).toBeInTheDocument();
     }
+    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment/i);
     await userEvent.click(within(card).getByText('448'));
     expect(screen.getByTestId('where')).toHaveTextContent('/candidates?bucket=applications&centre=NAG');
   });
 
-  it('marks the demo columns of the table', async () => {
+  it('labels the table columns without a demo marker', async () => {
     vi.spyOn(studentApi, 'summary').mockResolvedValue(summaryFixture());
     renderAt('/districts');
-    expect(await screen.findByText('Target (demo)')).toBeInTheDocument();
-    expect(screen.getByText('Achievement (demo)')).toBeInTheDocument();
+    expect((await screen.findAllByText('Achievement')).length).toBeGreaterThan(0);
+    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment/i);
   });
 
   it('shows an error with Retry when the summary fails', async () => {
@@ -108,10 +107,10 @@ describe('DistrictDetailPage — live KPIs and student table', () => {
     expect(summary).toHaveBeenCalledWith('NAG');
     expect(list).toHaveBeenCalledWith({ centre: 'NAG', page: 1, limit: 10 });
     expect(within(kpi('Enrolled')).getByText('14,950 awaiting batch')).toBeInTheDocument();
-    expect(within(kpi('Target')).getByText('Demo data')).toBeInTheDocument();
-    expect(within(kpi('Applications')).queryByText('Demo data')).not.toBeInTheDocument();
+    expect(kpi('Target')).toBeInTheDocument();
     expect(await screen.findByText('Asha Patil')).toBeInTheDocument();
-    expect(screen.getByText('Taluka rollup').closest('h3')).toHaveTextContent('Demo data');
+    expect(screen.getByText('Taluka rollup')).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment/i);
   });
 
   it('links the KPIs, "View all" and the rows to the real student list', async () => {
@@ -155,7 +154,8 @@ describe('MapPage — live tiles and Top 5', () => {
     expect(goLinks(container)).toEqual(
       expect.arrayContaining(['#/candidates?bucket=eligible&centre=NAG', '#/candidates?bucket=eligible&centre=PUN']),
     );
-    expect(screen.getByText('Lowest 5 districts').closest('h3')).toHaveTextContent('Demo data');
+    expect(screen.getByText('Lowest 5 districts')).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment/i);
   });
 
   it('switches the tiles to live applications', async () => {

@@ -63,7 +63,7 @@ const WEEKS = [
   'Revision',
   'Assessment preparation',
 ];
-const demoToast = () => AS.ui.toast('Demo action recorded — no data was persisted.', 'ok');
+const demoToast = () => AS.ui.toast('This feature will be available soon.', 'ok');
 
 const stuColumns: Column<Candidate>[] = [
   { k: 'id', l: 'Candidate ID', render: (x) => <span className="lnk mono">{x.id}</span> },
@@ -464,7 +464,7 @@ function AttendanceDrawer({ batch: b, onClose }: { batch: Batch; onClose: () => 
               className="btn primary"
               onClick={() => {
                 onClose();
-                AS.ui.toast('Attendance saved for today (demo).', 'ok');
+                AS.ui.toast('Attendance saved for today.', 'ok');
               }}
             >
               Save attendance

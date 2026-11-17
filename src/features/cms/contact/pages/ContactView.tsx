@@ -12,6 +12,7 @@ import { contactService } from '../services/contactService';
 import { CARD_FIELDS, CONTACT_TABS, type ApiContactOrganization, type ApiContactPage, type OrgType } from '../types/contact.types';
 import CoordinatorList from './CoordinatorList';
 import DistrictOfficeList from './DistrictOfficeList';
+import DistrictOfficesSectionBar from './DistrictOfficesSectionBar';
 
 /* The wording of the two card tabs, and the page each one's Edit button opens. */
 const CARD_COPY: Record<OrgType, { title: string; sub: string; note: string; edit: string }> = {
@@ -30,13 +31,13 @@ const CARD_COPY: Record<OrgType, { title: string; sub: string; note: string; edi
 };
 
 /* The Edit button in a section's card header; it opens that section's own Edit page. */
-function EditButton({ to }: { to: string }) {
+function EditButton({ to, label = 'Edit' }: { to: string; label?: string }) {
   const go = useGo();
   return (
     <Can action="updateContactPage">
       <button type="button" className="btn sm" onClick={() => go(to)}>
         <Icon name="edit" />
-        Edit
+        {label}
       </button>
     </Can>
   );
@@ -106,8 +107,22 @@ function CardTab({ type, org }: { type: OrgType; org?: ApiContactOrganization })
  * of its own — it shows the AMRUT and partner cards, so it can never disagree with them — and only the WhatsApp
  * button's number and message are kept here, each falling back to the AMRUT phone / the website's own message.
  */
-function HelplineTab({ page, amrut }: { page: ApiContactPage; amrut?: ApiContactOrganization }) {
+/* A Programme Helpline value the website falls back for: why, in muted text. */
+const notSet = (what: string) => <span className="muted">Not set: the website&rsquo;s built-in {what} is used.</span>;
+
+function HelplineTab({
+  page,
+  amrut,
+  partner,
+}: {
+  page: ApiContactPage;
+  amrut?: ApiContactOrganization;
+  partner?: ApiContactOrganization;
+}) {
   const message = page.whatsappMessage;
+  /* A hidden card is not sent to the website, so the popup uses its built-in values for that card's rows. */
+  const amrutLive = amrut?.isActive ? amrut : undefined;
+  const partnerLive = partner?.isActive ? partner : undefined;
   return (
     <>
       <SectionNote>Marathi is shown first, English underneath. The WhatsApp number is the same in both languages, so it shows once.</SectionNote>
@@ -136,10 +151,45 @@ function HelplineTab({ page, amrut }: { page: ApiContactPage; amrut?: ApiContact
             ],
           ]}
         />
+      </div>
+
+      {/*
+       * The "Programme Helpline" popup (the Helpline button on every page). It has no fields of its own: it shows the
+       * AMRUT card's phone and email and the Implementation Partner card's helpdesk hours and name, so it can never
+       * disagree with the Contact page. Listed here, with where each is edited, so it can be found from this tab.
+       */}
+      <div className="card mt14">
+        <div className="card-h">
+          <h3>
+            Programme Helpline <span className="sub">the popup of the Helpline button, as the website shows it</span>
+          </h3>
+          <div className="f ac gp8 wrap">
+            <EditButton to="/cms/contact/amrut/edit" label="Edit phone & email" />
+            <EditButton to="/cms/contact/partner/edit" label="Edit hours & partner" />
+          </div>
+        </div>
+        {(amrut && !amrut.isActive) || (partner && !partner.isActive) ? (
+          <div className="card-b">
+            <Callout tone="warn">
+              {amrut && !amrut.isActive ? 'The AMRUT contact details card is hidden, so the popup uses the website’s built-in phone and email. ' : ''}
+              {partner && !partner.isActive
+                ? 'The Implementation partner card is hidden, so the popup uses the website’s built-in hours and partner name.'
+                : ''}
+            </Callout>
+          </div>
+        ) : null}
+        <FieldTable
+          rows={[
+            ['Phone', amrutLive?.phone ? amrutLive.phone : notSet('phone number')],
+            ['Email', amrutLive?.email ? amrutLive.email : notSet('email')],
+            ['Hours', partnerLive?.helpdeskHours ? <Bi value={partnerLive.helpdeskHours} /> : notSet('helpdesk hours')],
+            ['Implementation Partner', partnerLive ? <Bi value={partnerLive.name} /> : notSet('partner name')],
+          ]}
+        />
         <div className="card-b">
           <div className="hint">
-            The Helpline popup shows the AMRUT phone and email and the Implementation Partner&rsquo;s helpdesk hours and name from this page.
-            While the page is unpublished, both buttons use the website&rsquo;s built-in details.
+            The Helpline popup shows the AMRUT phone and email (AMRUT contact details tab) and the Implementation Partner&rsquo;s helpdesk
+            hours and name (Implementation partner tab). While the page is unpublished, both buttons use the website&rsquo;s built-in details.
           </div>
         </div>
       </div>
@@ -176,7 +226,7 @@ export default function ContactView() {
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'CMS' }, { l: 'Contact Page' }]}
         title="Contact Page Management"
-        sub="The banner, contact cards, district coordinators and district offices shown on the public Contact page."
+        sub="The banner, contact cards, division coordinators and district offices shown on the public Contact page."
         actions={
           page ? (
             <div className="f ac gp8 wrap">
@@ -227,12 +277,14 @@ export default function ContactView() {
             <CardTab type="IMPLEMENTATION_PARTNER" org={partner} />
           </SectionTabPanel>
           <SectionTabPanel tab="helpline" active={tab} idPrefix="contact">
-            <HelplineTab page={page} amrut={amrut} />
+            <HelplineTab page={page} amrut={amrut} partner={partner} />
           </SectionTabPanel>
           <SectionTabPanel tab="coordinators" active={tab} idPrefix="contact">
             <CoordinatorList />
           </SectionTabPanel>
           <SectionTabPanel tab="offices" active={tab} idPrefix="contact">
+            {/* Whether the Contact page shows its District offices list at all; the list below is each district's own details. */}
+            <DistrictOfficesSectionBar page={page} onSaved={() => void detail.reload()} />
             <DistrictOfficeList />
           </SectionTabPanel>
           {/* The banner, both cards and the WhatsApp details are saved together, so their tabs share one time; each listed row shows its own. */}

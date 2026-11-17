@@ -78,7 +78,7 @@ export default function TrainersPage() {
               <button
                 type="button"
                 className="btn primary"
-                onClick={() => AS.ui.toast('Demo action recorded — no data was persisted.', 'ok')}
+                onClick={() => AS.ui.toast('This feature will be available soon.', 'ok')}
               >
                 <Icon name="plus" />
                 Add trainer

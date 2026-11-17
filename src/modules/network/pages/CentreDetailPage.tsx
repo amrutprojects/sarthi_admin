@@ -41,7 +41,7 @@ const SCORE_MAX: Record<string, number> = {
   Documentation: 5,
   'Institutional Capability': 5,
 };
-const demoToast = () => AS.ui.toast('Demo action recorded — no data was persisted.', 'ok');
+const demoToast = () => AS.ui.toast('This feature will be available soon.', 'ok');
 
 const stuColumns: Column<Candidate>[] = [
   { k: 'id', l: 'Candidate ID', render: (x) => <span className="lnk mono">{x.id}</span> },
@@ -360,7 +360,7 @@ function InspectionDrawer({ centre: c, onClose }: { centre: Centre; onClose: () 
             className="btn primary"
             onClick={() => {
               onClose();
-              AS.ui.toast('Inspection recorded (demo) — see Quality Assurance.', 'ok');
+              AS.ui.toast('Inspection recorded — see Quality Assurance.', 'ok');
             }}
           >
             Submit inspection

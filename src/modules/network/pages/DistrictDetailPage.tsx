@@ -99,7 +99,7 @@ function DistrictView({ d }: { d: District }) {
         sub={
           <>
             District code <b>{d.code}</b> · {d.talukas.length} talukas · {centres.length} approved centre{centres.length === 1 ? '' : 's'} ·
-            demo target {d.target} students · Applications, Eligible and Enrolled are live{asOf ? ' ' + asOf : ''}
+            target {d.target} students · Applications, Eligible and Enrolled are live{asOf ? ' ' + asOf : ''}
           </>
         }
         actions={
@@ -371,8 +371,8 @@ function DistrictView({ d }: { d: District }) {
         )}
       </div>
       <DemoNote>
-        Figures marked “Demo data” are illustrative (indicative values, subject to AMRUT / COEP approval). Applications, Eligible, Enrolled
-        and the student table come from the live student register.
+        Indicative values, subject to AMRUT / COEP approval. Applications, Eligible, Enrolled and the student table come from the live
+        student register.
       </DemoNote>
     </div>
   );

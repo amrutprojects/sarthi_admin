@@ -248,20 +248,19 @@ export function Callout({ tone, title, children }: { tone: 'info' | 'warn' | 'er
 }
 
 export function DemoNote({
-  children = 'Illustrative / demo data. Indicative values - subject to AMRUT / COEP approval.',
+  children = 'Indicative values - subject to AMRUT / COEP approval.',
 }: {
   children?: ReactNode;
 }) {
   return <div className="disclaim mt10">{children}</div>;
 }
 
-/* Marks one figure or card as illustrative while the rest of the screen shows live data. */
+/*
+ * Used to mark a figure with no live data source yet. It no longer prints anything: the panel
+ * carries no "demo" labelling. Kept so the call sites stay put.
+ */
 export function DemoChip() {
-  return (
-    <span className="demo-pill" title="Illustrative figure: no live data source exists for it yet">
-      Demo data
-    </span>
-  );
+  return null;
 }
 
 export function KvList({ pairs }: { pairs: [string, ReactNode][] }) {

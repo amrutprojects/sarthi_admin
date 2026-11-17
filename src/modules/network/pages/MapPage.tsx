@@ -129,7 +129,7 @@ export default function MapPage() {
               k: 'colorMode',
               l: 'Shading',
               options: [
-                { v: 'status', l: 'By district status (RAG, demo)' },
+                { v: 'status', l: 'By district status (RAG)' },
                 { v: 'metric', l: 'By metric intensity' },
               ],
             },
@@ -140,16 +140,16 @@ export default function MapPage() {
                 { v: 'enrolled', l: 'Enrolled' },
                 { v: 'applications', l: 'Applications' },
                 { v: 'eligible', l: 'Eligible' },
-                { v: 'active', l: 'Training active (demo)' },
-                { v: 'completed', l: 'Completed (demo)' },
-                { v: 'certified', l: 'Certified (demo)' },
-                { v: 'attendance', l: 'Attendance % (demo)' },
-                { v: 'achievement', l: 'Achievement % (demo)' },
+                { v: 'active', l: 'Training active' },
+                { v: 'completed', l: 'Completed' },
+                { v: 'certified', l: 'Certified' },
+                { v: 'attendance', l: 'Attendance %' },
+                { v: 'achievement', l: 'Achievement %' },
               ],
             },
             {
               k: 'statusFilter',
-              l: 'Status filter (demo)',
+              l: 'Status filter',
               options: [
                 { v: 'ALL', l: 'All statuses' },
                 { v: 'GREEN', l: 'On track' },
@@ -179,9 +179,8 @@ export default function MapPage() {
               {liveMetric ? 'Live student counts per district' : 'District metric'} {liveMetric ? null : <DemoChip />}{' '}
               <span className="sub">
                 {liveMetric
-                  ? (summary.isError ? 'live figures could not be loaded' : asOf || 'loading live figures…') +
-                    (s.colorMode === 'status' ? ' · status colours are demo data' : '')
-                  : 'this metric is demo data'}
+                  ? summary.isError ? 'live figures could not be loaded' : asOf || 'loading live figures…'
+                  : 'indicative values'}
               </span>
             </h3>
           </div>
@@ -259,8 +258,8 @@ export default function MapPage() {
         </Card>
       </div>
       <DemoNote>
-        Figures marked “Demo data” or “(demo)” are illustrative (indicative values, subject to AMRUT / COEP approval). Applications,
-        Eligible and Enrolled tile counts and the Top 5 come from the live student register.
+        Indicative values, subject to AMRUT / COEP approval. Applications, Eligible and Enrolled tile counts and the Top 5 come from the
+        live student register.
       </DemoNote>
     </div>
   );

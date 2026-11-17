@@ -74,7 +74,7 @@ export default function CentresPage() {
   const totalStudents = cs.reduce((a, c) => a + c.students, 0);
   const avgScore = Math.round(cs.reduce((a, c) => a + c.score, 0) / cs.length);
   const avgAtt = Math.round(cs.reduce((a, c) => a + c.attendance, 0) / cs.length);
-  const demo = () => AS.ui.toast('Demo action recorded — no data was persisted.', 'ok');
+  const demo = () => AS.ui.toast('This feature will be available soon.', 'ok');
 
   return (
     <div className="page">

@@ -232,7 +232,7 @@ export default function AssessmentsPage() {
                 className="btn primary"
                 onClick={() => {
                   setScheduling(false);
-                  AS.ui.toast('Demo action recorded — no data was persisted.', 'ok');
+                  AS.ui.toast('This feature will be available soon.', 'ok');
                 }}
               >
                 Schedule &amp; notify

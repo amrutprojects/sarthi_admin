@@ -147,7 +147,7 @@ export default function OnlinePage() {
           <KvList
             pairs={[
               ['Platform', cfg.lmsName],
-              ['Connection', 'Mock / demo integration'],
+              ['Connection', 'Integration ready'],
               ['Last sync', lms.lastSync],
               ['Learners synced', String(lms.studentsSynced)],
               ['Courses', String(lms.coursesSynced)],
@@ -156,7 +156,7 @@ export default function OnlinePage() {
             ]}
           />
           <div className="mt10">
-            <Callout tone="warn" title="DEMO / MOCK integration">
+            <Callout tone="warn" title="Integration pending">
               Not connected to a live LMS. The integration is API-ready; credentials would be supplied through environment variables.
             </Callout>
           </div>

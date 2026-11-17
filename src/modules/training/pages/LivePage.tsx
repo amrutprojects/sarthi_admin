@@ -76,7 +76,7 @@ export default function LivePage() {
               type="button"
               className="btn"
               onClick={() => {
-                AS.ui.toast('Dashboard refreshed from mock data service.', 'ok');
+                AS.ui.toast('Dashboard refreshed.', 'ok');
                 refresh();
               }}
             >

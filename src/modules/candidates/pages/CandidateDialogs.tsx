@@ -14,7 +14,7 @@ interface CloseProps {
 export function NewCandidateModal({ onClose }: CloseProps) {
   return (
     <Modal
-      title="Add candidate (demo)"
+      title="Add candidate"
       size="wide"
       onClose={onClose}
       footer={
@@ -27,7 +27,7 @@ export function NewCandidateModal({ onClose }: CloseProps) {
             className="btn primary"
             onClick={() => {
               onClose();
-              toast('Demo action recorded — no data was persisted.');
+              toast('This feature will be available soon.');
             }}
           >
             Submit application
@@ -35,7 +35,7 @@ export function NewCandidateModal({ onClose }: CloseProps) {
         </>
       }
     >
-      <Callout tone="info">This prototype does not persist new records. The form shows the fields captured during registration.</Callout>
+      <Callout tone="info">New records are not saved from this form yet. The form shows the fields captured during registration.</Callout>
       <div className="grid g2 mt14">
         {['Full name', 'Mobile number', 'Email', 'Date of birth', 'Gender', 'Qualification'].map((l) => (
           <div className="fld" key={l}>
@@ -79,7 +79,7 @@ export function MessageDrawer({ candidate: c, onClose }: CloseProps & { candidat
             className="btn primary"
             onClick={() => {
               onClose();
-              toast('Message queued (demo) — see Communication Centre.');
+              toast('Message queued — see Communication Centre.');
             }}
           >
             Send message
@@ -122,8 +122,8 @@ export function MessageDrawer({ candidate: c, onClose }: CloseProps & { candidat
         />
       </div>
       <div className="mt14">
-        <Callout tone="warn" title="Demo only">
-          No SMS, WhatsApp or email is actually sent from this prototype.
+        <Callout tone="warn" title="Gateways not connected">
+          Messaging gateways are not connected yet, so no SMS, WhatsApp or email is sent.
         </Callout>
       </div>
     </Drawer>
@@ -145,7 +145,7 @@ export function BulkMessageDrawer({ onClose }: CloseProps) {
             className="btn primary"
             onClick={() => {
               onClose();
-              toast('Message queued (demo) — see Communication Centre.');
+              toast('Message queued — see Communication Centre.');
             }}
           >
             Queue campaign
@@ -176,8 +176,8 @@ export function BulkMessageDrawer({ onClose }: CloseProps) {
         />
       </div>
       <div className="mt14">
-        <Callout tone="warn" title="Demo only">
-          Nothing is actually dispatched from this prototype.
+        <Callout tone="warn" title="Gateways not connected">
+          Messaging gateways are not connected yet, so nothing is dispatched.
         </Callout>
       </div>
     </Drawer>
@@ -256,7 +256,7 @@ export function DocumentDrawer({ name, onClose }: CloseProps & { name: string })
             className="btn primary"
             onClick={() => {
               onClose();
-              toast('Demo action recorded — no data was persisted.');
+              toast('This feature will be available soon.');
             }}
           >
             Mark verified

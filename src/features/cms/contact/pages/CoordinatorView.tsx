@@ -9,7 +9,7 @@ import { usePageTitle } from '../../useMasterQuery';
 import { contactService } from '../services/contactService';
 import { contactListPath } from '../types/contact.types';
 
-/* View coordinator — read-only detail page, reached from the View action on the District / cluster coordinators tab. */
+/* View coordinator — read-only detail page, reached from the View action on the Division / cluster coordinators tab. */
 export default function CoordinatorView() {
   usePageTitle('Coordinator');
   const { id = '' } = useParams();

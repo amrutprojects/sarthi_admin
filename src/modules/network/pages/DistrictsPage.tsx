@@ -50,20 +50,20 @@ const liveCol = (k: keyof BucketCounts, l: string, bold = false): Column<Row> =>
   render: (x) => <LiveCount n={x.live[k]} bold={bold} link={studentListLink({ bucket: k, centre: x.d.code })} />,
 });
 
-/* Target, training, attendance, achievement and status have no live source yet: their headers say "(demo)". */
+/* Target, training, attendance, achievement and status have no live source yet. */
 const columns: Column<Row>[] = [
   { k: 'name', l: 'District', sortVal: (x) => x.d.name, render: (x) => <b className="lnk">{x.d.name}</b> },
   { k: 'region', l: 'Region', sortVal: (x) => x.d.region, render: (x) => x.d.region },
   liveCol('applications', 'Applications'),
   liveCol('eligible', 'Eligible'),
   liveCol('enrolled', 'Enrolled', true),
-  { k: 'target', l: 'Target (demo)', align: 'right', sortVal: (x) => x.d.target, render: (x) => x.d.target },
-  { k: 'active', l: 'Training active (demo)', align: 'right', sortVal: (x) => x.k.trainingActive, render: (x) => x.k.trainingActive },
-  { k: 'completed', l: 'Completed (demo)', align: 'right', sortVal: (x) => x.k.completed, render: (x) => x.k.completed },
-  { k: 'certified', l: 'Certified (demo)', align: 'right', sortVal: (x) => x.k.certified, render: (x) => x.k.certified },
+  { k: 'target', l: 'Target', align: 'right', sortVal: (x) => x.d.target, render: (x) => x.d.target },
+  { k: 'active', l: 'Training active', align: 'right', sortVal: (x) => x.k.trainingActive, render: (x) => x.k.trainingActive },
+  { k: 'completed', l: 'Completed', align: 'right', sortVal: (x) => x.k.completed, render: (x) => x.k.completed },
+  { k: 'certified', l: 'Certified', align: 'right', sortVal: (x) => x.k.certified, render: (x) => x.k.certified },
   {
     k: 'att',
-    l: 'Attendance (demo)',
+    l: 'Attendance',
     align: 'right',
     sortVal: (x) => x.k.attendance,
     exportVal: (x) => x.k.attendance + '%',
@@ -71,13 +71,13 @@ const columns: Column<Row>[] = [
   },
   {
     k: 'progress',
-    l: 'Achievement (demo)',
+    l: 'Achievement',
     align: 'right',
     sortVal: (x) => x.k.achievementPct,
     exportVal: (x) => x.k.achievementPct + '%',
     render: (x) => <ProgRow pct={x.k.achievementPct} tone={achTone(x.k.achievementPct)} />,
   },
-  { k: 'status', l: 'Status (demo)', sortVal: (x) => x.st.l, render: (x) => <Badge tone={x.st.tone}>{x.st.l}</Badge> },
+  { k: 'status', l: 'Status', sortVal: (x) => x.st.l, render: (x) => <Badge tone={x.st.tone}>{x.st.l}</Badge> },
 ];
 
 export default function DistrictsPage() {
@@ -124,7 +124,7 @@ export default function DistrictsPage() {
           all.length +
           ' districts of Maharashtra. Applications, Eligible and Enrolled are live student figures' +
           (asOf ? ' ' + asOf : '') +
-          '; target, training, attendance, achievement and status are demo data.'
+          '.'
         }
         actions={
           <>
@@ -174,7 +174,7 @@ export default function DistrictsPage() {
           { k: 'region', l: 'Region', options: [{ v: 'ALL', l: 'All regions' }].concat(S.regions().map((x) => ({ v: x, l: x }))) },
           {
             k: 'filter',
-            l: 'Status (demo)',
+            l: 'Status',
             options: [
               { v: 'ALL', l: 'All districts' },
               { v: 'green', l: 'On track (GREEN)' },
@@ -188,8 +188,8 @@ export default function DistrictsPage() {
             k: 'sort',
             l: 'Sort by',
             options: [
-              { v: 'performance', l: 'Highest performance (demo)' },
-              { v: 'lowest', l: 'Lowest performance (demo)' },
+              { v: 'performance', l: 'Highest performance' },
+              { v: 'lowest', l: 'Lowest performance' },
               { v: 'enrolled', l: 'Most enrolled' },
               { v: 'name', l: 'District name' },
             ],
@@ -272,8 +272,7 @@ export default function DistrictsPage() {
         />
       </div>
       <DemoNote>
-        Columns and figures marked “demo” are illustrative (indicative values, subject to AMRUT / COEP approval). Applications, Eligible and
-        Enrolled come from the live student register.
+        Indicative values, subject to AMRUT / COEP approval. Applications, Eligible and Enrolled come from the live student register.
       </DemoNote>
     </div>
   );

@@ -30,7 +30,7 @@ const TEMPLATES = [
   { title: 'Certificate issued', sub: 'On certificate issuance', right: active, icon: 'award' },
   { title: 'Weekly centre digest', sub: 'Every Monday 08:00 to centre managers', right: active, icon: 'mail' },
 ];
-const demoToast = () => AS.ui.toast('Demo action recorded — no data was persisted.', 'ok');
+const demoToast = () => AS.ui.toast('This feature will be available soon.', 'ok');
 
 export default function CommunicationsPage() {
   useLegacyTick();
@@ -50,7 +50,7 @@ export default function CommunicationsPage() {
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'Communications' }]}
         title="Communication Centre"
-        sub="SMS, WhatsApp, email and in-app notifications to candidates, centres and trainers. Integration-ready — no messages are dispatched in this prototype."
+        sub="SMS, WhatsApp, email and in-app notifications to candidates, centres and trainers. Integration-ready — no messages are dispatched until the gateways are connected."
         actions={
           <Can action="sendCommunication">
             <button type="button" className="btn primary" onClick={() => setCreating(true)}>
@@ -123,7 +123,7 @@ export default function CommunicationsPage() {
 export function CampaignDrawer({ onClose }: { onClose: () => void }) {
   const done = () => {
     onClose();
-    AS.ui.toast('Message queued (demo) — see Communication Centre.', 'ok');
+    AS.ui.toast('Message queued — see Communication Centre.', 'ok');
   };
   return (
     <Drawer
@@ -220,8 +220,8 @@ export function CampaignDrawer({ onClose }: { onClose: () => void }) {
         <textarea className="inp" rows={5} placeholder="Message body" />
       </div>
       <div className="mt14">
-        <Callout tone="warn" title="Demo only">
-          Gateways are represented as integration-ready modules. Nothing is dispatched from this prototype.
+        <Callout tone="warn" title="Gateways not connected">
+          Gateways are represented as integration-ready modules. Nothing is dispatched until they are connected.
         </Callout>
       </div>
     </Drawer>

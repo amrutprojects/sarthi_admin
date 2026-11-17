@@ -41,7 +41,7 @@ const PIPELINE = [
   { name: 'Dhule Rural Skill Centre', district: 'DHU', step: 2, score: null },
   { name: 'Ratnagiri Coastal Skill Academy', district: 'RAT', step: 11, score: 82 },
 ];
-const demoToast = () => AS.ui.toast('Demo action recorded — no data was persisted.', 'ok');
+const demoToast = () => AS.ui.toast('This feature will be available soon.', 'ok');
 
 const columns: Column<Centre>[] = [
   { k: 'name', l: 'Centre', render: (c) => <b className="lnk">{c.name}</b> },
@@ -198,8 +198,7 @@ export default function CentreOnboardingPage() {
           }
         >
           <Callout tone="info" title="Onboarding record">
-            Demo pipeline record. In production this drawer shows the full document checklist, inspection photographs, evaluation sheet and
-            approval trail.
+            The full document checklist, inspection photographs, evaluation sheet and approval trail will appear here.
           </Callout>
           <div className="mt14">
             <Timeline items={ONBOARD_STEPS.map(([t, s], i) => ({ title: t, sub: s, state: i < 6 ? 'done' : i === 6 ? 'cur' : '' }))} />

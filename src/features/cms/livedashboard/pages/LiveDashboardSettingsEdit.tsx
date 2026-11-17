@@ -159,7 +159,7 @@ function SettingsForm({ settings }: { settings: ApiLiveDashboardSettings }) {
             {pair('disclaimer', 'Note', 300, {
               required: false,
               hint: values.showDisclaimer
-                ? 'Optional — e.g. a note that the figures are illustrative. Nothing is shown while both languages are blank.'
+                ? 'Optional — e.g. a note about where the figures come from. Nothing is shown while both languages are blank.'
                 : 'Kept, but not shown while the note is switched off.',
             })}
           </div>

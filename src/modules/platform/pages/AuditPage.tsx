@@ -47,7 +47,7 @@ export default function AuditPage() {
         }
       />
       <div className="grid g4 mb14">
-        <Kpi label="Log entries" value={log.length} tone="b" sub="Last 20 days (demo)" />
+        <Kpi label="Log entries" value={log.length} tone="b" sub="Last 20 days" />
         <Kpi label="Modules tracked" value={12} tone="v" />
         <Kpi label="Users tracked" value={7} tone="b" />
         <Kpi label="Retention" value="7 years" tone="" sub="Configurable" />

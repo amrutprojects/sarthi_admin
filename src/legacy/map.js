@@ -114,8 +114,7 @@
           ? '<div class="r"><span>Applications</span><b>' + esc(lc[0]) + '</b></div>' +
             '<div class="r"><span>Eligible</span><b>' + esc(lc[1]) + '</b></div>' +
             '<div class="r"><span>Enrolled</span><b>' + esc(lc[2]) + '</b></div>' +
-            '<div class="r" style="margin-top:4px"><span class="muted">Demo data below</span></div>' +
-            '<div class="r"><span>Target</span><b>' + k.target + '</b></div>'
+            '<div class="r" style="margin-top:4px"><span>Target</span><b>' + k.target + '</b></div>'
           : '<div class="r"><span>Target</span><b>' + k.target + '</b></div>' +
             '<div class="r"><span>Enrolled</span><b>' + k.enrolled + '</b></div>') +
         '<div class="r"><span>Training active</span><b>' + k.trainingActive + '</b></div>' +

@@ -60,7 +60,7 @@ export default function FinancePage() {
       />
       <div className="mb14">
         <Callout tone="warn" title="Indicative — subject to AMRUT / COEP approval">
-          All commercial values on this screen are configuration parameters in the prototype. They do not represent contractual terms,
+          All commercial values on this screen are configuration parameters. They do not represent contractual terms,
           approved rates or actual disbursement.
         </Callout>
       </div>

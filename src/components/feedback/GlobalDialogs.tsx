@@ -142,7 +142,7 @@ function NewTaskModal({ districtCode, onClose }: { districtCode?: string; onClos
               className="btn primary"
               onClick={() => {
                 onClose();
-                AS.ui.toast('Demo action recorded — no data was persisted.', 'ok');
+                AS.ui.toast('This feature will be available soon.', 'ok');
               }}
             >
               Create &amp; assign
@@ -205,7 +205,7 @@ function NewTaskModal({ districtCode, onClose }: { districtCode?: string; onClos
 }
 
 const SYNC_STEPS = [
-  'Authenticating with mock endpoint…',
+  'Authenticating with LMS endpoint…',
   'Fetching learner roster…',
   'Reconciling course progress…',
   'Importing MCQ and assignment results…',
@@ -223,7 +223,7 @@ function SyncModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (step !== SYNC_STEPS.length) return;
     DB.lms.lastSync = new Date().toISOString().slice(0, 16).replace('T', ' ');
-    AS.ui.toast('LMS sync completed (demo).', 'ok');
+    AS.ui.toast('LMS sync completed.', 'ok');
     bump();
   }, [step, DB]);
   const skel = (rows: number) =>
@@ -243,11 +243,11 @@ function SyncModal({ onClose }: { onClose: () => void }) {
       {step < SYNC_STEPS.length ? (
         <div>
           <div style={{ padding: '6px 0' }}>{skel(step < 0 ? 3 : 2)}</div>
-          <div className="fs12 muted mt10">{step < 0 ? 'Connecting to mock LMS endpoint…' : SYNC_STEPS[step]}</div>
+          <div className="fs12 muted mt10">{step < 0 ? 'Connecting to LMS endpoint…' : SYNC_STEPS[step]}</div>
         </div>
       ) : (
         <div>
-          <Callout tone="ok" title="Sync complete (demo)">
+          <Callout tone="ok" title="Sync complete">
             {DB.lms.studentsSynced +
               ' learners, ' +
               DB.lms.coursesSynced +

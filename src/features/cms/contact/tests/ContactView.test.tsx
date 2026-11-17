@@ -19,6 +19,7 @@ vi.mock('../services/contactService', () => ({
     get: vi.fn(),
     update: vi.fn(),
     setPublished: vi.fn(),
+    setDistrictOfficesSection: vi.fn(),
     listCoordinators: vi.fn(),
     setCoordinatorStatus: vi.fn(),
     removeCoordinator: vi.fn(),
@@ -50,7 +51,11 @@ const panel = () => screen.getByRole('tabpanel');
 /* The open tab's panel, once the page has loaded. */
 const openPanel = () => screen.findByRole('tabpanel');
 /* The body rows of the tab's table, and the Field / Sr. No. / Content text of each. */
-const bodyRows = () => within(panel()).getAllByRole('row').slice(1);
+/* Rows with cells only, so a tab with more than one table (Helpline & WhatsApp) skips every header row. */
+const bodyRows = () =>
+  within(panel())
+    .getAllByRole('row')
+    .filter((r) => within(r).queryAllByRole('cell').length > 0);
 const cellText = (row: HTMLElement, col: number) => within(row).getAllByRole('cell')[col].textContent;
 const fields = () => bodyRows().map((r) => cellText(r, 1));
 const row = (label: string) => bodyRows().find((r) => cellText(r, 1) === label) as HTMLElement;
@@ -66,6 +71,7 @@ describe('<ContactView> tabs', () => {
     permissions.clear();
     svc.get.mockReset().mockResolvedValue(contactPage());
     svc.setPublished.mockReset().mockResolvedValue(contactPage());
+    svc.setDistrictOfficesSection.mockReset().mockResolvedValue(contactPage());
     svc.listCoordinators.mockReset().mockResolvedValue(listPage(COORDINATORS));
     svc.listDistrictOffices.mockReset().mockResolvedValue(listPage(OFFICES));
     svc.setCoordinatorStatus.mockReset().mockResolvedValue({ ...COORDINATORS[0]!, isActive: false });
@@ -86,7 +92,7 @@ describe('<ContactView> tabs', () => {
       'AMRUT contact details',
       'Implementation partner',
       'Helpline & WhatsApp',
-      'District / cluster coordinators',
+      'Division / cluster coordinators',
       'District offices',
     ].forEach((name, i) => expect(tabs[i]).toHaveAccessibleName(name));
     expect(tab('Page information')).toHaveAttribute('aria-selected', 'true');
@@ -184,14 +190,49 @@ describe('<ContactView> tabs', () => {
 
     expect(await screen.findByRole('tab', { name: 'Helpline & WhatsApp' })).toHaveAttribute('aria-selected', 'true');
     expect(within(panel()).getByRole('heading', { name: /Helpline & WhatsApp/ })).toBeInTheDocument();
-    expect(fields()).toEqual(['WhatsApp number', 'Pre-filled message']);
+    expect(fields()).toEqual(['WhatsApp number', 'Pre-filled message', 'Phone', 'Email', 'Hours', 'Implementation Partner']);
     /* Neither set: the button uses the AMRUT card's phone and the website's own message. */
     expect(cellText(row('WhatsApp number'), 2)).toBe('Not set: the AMRUT phone number (+91 97301 51450) is used.');
     expect(cellText(row('Pre-filled message'), 2)).toBe('Not set: the website’s default message is used.');
     /* The Helpline popup has no fields of its own: the card says where it reads from. */
-    expect(within(panel()).getByText(/The Helpline popup shows the AMRUT phone and email and the Implementation Partner’s helpdesk hours and name from this page\./)).toBeInTheDocument();
+    expect(within(panel()).getByText(/The Helpline popup shows the AMRUT phone and email \(AMRUT contact details tab\)/)).toBeInTheDocument();
     /* Saved with the banner and the cards, so it shares their time. */
     expect(screen.getByText(/Last updated/)).toBeInTheDocument();
+  });
+
+  it('lists the Programme Helpline popup’s four values with where each is edited', async () => {
+    permissions.add('updateContactPage');
+    renderAt('/cms/contact?tab=helpline');
+
+    expect(await within(await openPanel()).findByRole('heading', { name: /Programme Helpline/ })).toBeInTheDocument();
+    /* Phone and email from the AMRUT card, hours and name from the partner card, both languages where there are two. */
+    expect(cellText(row('Phone'), 2)).toBe('+91 97301 51450');
+    expect(cellText(row('Email'), 2)).toBe('info@example.org');
+    expect(within(row('Hours')).getByText('सोम ते शनि')).toBeInTheDocument();
+    expect(within(row('Hours')).getByText('Mon to Sat')).toBeInTheDocument();
+    expect(within(row('Implementation Partner')).getByText('भागीदार संस्था')).toBeInTheDocument();
+    expect(within(row('Implementation Partner')).getByText('Partner Organisation')).toBeInTheDocument();
+
+    await userEvent.click(within(panel()).getByRole('button', { name: 'Edit phone & email' }));
+    expect(location()).toHaveTextContent('/cms/contact/amrut/edit');
+  });
+
+  it('opens the partner card’s Edit page for the Helpline hours and partner name', async () => {
+    permissions.add('updateContactPage');
+    renderAt('/cms/contact?tab=helpline');
+
+    await userEvent.click(await within(await openPanel()).findByRole('button', { name: 'Edit hours & partner' }));
+    expect(location()).toHaveTextContent('/cms/contact/partner/edit');
+  });
+
+  it('says when a hidden card leaves the Helpline popup on the built-in values', async () => {
+    svc.get.mockResolvedValue(contactPage({ organizations: [{ ...AMRUT, isActive: false }, PARTNER] }));
+    renderAt('/cms/contact?tab=helpline');
+
+    await within(await openPanel()).findByRole('heading', { name: /Programme Helpline/ });
+    expect(within(panel()).getByText(/The AMRUT contact details card is hidden/)).toBeInTheDocument();
+    expect(cellText(row('Phone'), 2)).toBe('Not set: the website’s built-in phone number is used.');
+    expect(within(row('Hours')).getByText('Mon to Sat')).toBeInTheDocument();
   });
 
   it('shows a saved WhatsApp number and message, Marathi first', async () => {
@@ -233,11 +274,11 @@ describe('<ContactView> tabs', () => {
 
   it('lists the coordinators on their tab, FAQ-style, in website order with their districts in the order saved', async () => {
     renderAt();
-    await userEvent.click(await screen.findByRole('tab', { name: 'District / cluster coordinators' }));
+    await userEvent.click(await screen.findByRole('tab', { name: 'Division / cluster coordinators' }));
 
-    expect(tab('District / cluster coordinators')).toHaveAttribute('aria-selected', 'true');
+    expect(tab('Division / cluster coordinators')).toHaveAttribute('aria-selected', 'true');
     expect(location()).toHaveTextContent('/cms/contact?tab=coordinators');
-    expect(within(panel()).getByRole('heading', { name: /District \/ cluster coordinators/ })).toHaveTextContent('live from the backend');
+    expect(within(panel()).getByRole('heading', { name: /Division \/ cluster coordinators/ })).toHaveTextContent('live from the backend');
     expect(await within(await openPanel()).findByText('Anita Patil')).toBeInTheDocument();
     expect(svc.listCoordinators).toHaveBeenCalledWith(
       expect.objectContaining({ page: 1, limit: 15, search: '', sortBy: 'displayOrder', sortOrder: 'asc' }),
@@ -523,6 +564,59 @@ describe('<ContactView> tabs', () => {
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
     await userEvent.click(tab('AMRUT contact details'));
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+  });
+
+  it('hides the District offices section after asking, from its tab, and reloads the page', async () => {
+    permissions.add('updateContactPage');
+    renderAt('/cms/contact?tab=offices');
+
+    const bar = within(await openPanel());
+    const toggle = await bar.findByRole('switch', { name: 'Show on website' });
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    expect(bar.getByText('Shown on the website')).toBeInTheDocument();
+
+    await userEvent.click(toggle);
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('Hide District offices from the website?');
+    expect(svc.setDistrictOfficesSection).not.toHaveBeenCalled();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Yes, hide' }));
+
+    expect(svc.setDistrictOfficesSection).toHaveBeenCalledWith(false);
+    await waitFor(() => expect(toasts()).toHaveTextContent('District offices are now hidden on the website'));
+    await waitFor(() => expect(svc.get).toHaveBeenCalledTimes(2));
+    /* The page's publication is a different switch, untouched. */
+    expect(svc.setPublished).not.toHaveBeenCalled();
+  });
+
+  it('shows a hidden District offices section again without asking', async () => {
+    permissions.add('updateContactPage');
+    svc.get.mockResolvedValue(contactPage({ showDistrictOffices: false }));
+    renderAt('/cms/contact?tab=offices');
+
+    const toggle = await within(await openPanel()).findByRole('switch', { name: 'Show on website' });
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+    expect(within(panel()).getByText('Hidden from the website')).toBeInTheDocument();
+    await userEvent.click(toggle);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(svc.setDistrictOfficesSection).toHaveBeenCalledWith(true);
+    await waitFor(() => expect(toasts()).toHaveTextContent('District offices are now shown on the website'));
+  });
+
+  it('gives a view-only user the District offices state, not the switch', async () => {
+    svc.get.mockResolvedValue(contactPage({ showDistrictOffices: false }));
+    renderAt('/cms/contact?tab=offices');
+
+    const open = within(await openPanel());
+    expect(await open.findByText('Hidden')).toBeInTheDocument();
+    expect(open.queryByRole('switch', { name: 'Show on website' })).not.toBeInTheDocument();
+  });
+
+  it('says the District offices switch waits for publishing while the page is unpublished', async () => {
+    permissions.add('updateContactPage');
+    svc.get.mockResolvedValue(contactPage({ isPublished: false }));
+    renderAt('/cms/contact?tab=offices');
+
+    expect(await within(await openPanel()).findByText(/This switch applies once it is published/)).toBeInTheDocument();
   });
 
   it('shows a load error with a retry, and no tabs until the page loads', async () => {

@@ -23,7 +23,7 @@ export default function StudentAppPage() {
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'Student app' }]}
         title={cfg.appName + ' Management'}
-        badge={<Badge tone="amber">DEMO / MOCK</Badge>}
+        badge={<Badge tone="amber">INTEGRATION READY</Badge>}
         sub="Study material, daily MCQs, assignments, notifications and continuous learning support for enrolled candidates."
         actions={
           <>

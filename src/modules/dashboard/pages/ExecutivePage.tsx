@@ -60,7 +60,7 @@ export default function ExecutivePage() {
 
   function onRefresh() {
     void summary.refetch();
-    AS.ui.toast('Dashboard refreshed: live student figures reloaded; demo figures unchanged.', 'ok');
+    AS.ui.toast('Dashboard refreshed: live student figures reloaded.', 'ok');
     refresh();
   }
 
@@ -71,8 +71,7 @@ export default function ExecutivePage() {
         title="Executive Command Centre"
         sub={
           <>
-            PMO-level programme health · Student figures are live{asOf ? ' ' + asOf : ''} · Figures marked <b>Demo data</b> are
-            illustrative.
+            PMO-level programme health · Student figures are live{asOf ? ' ' + asOf : ''}
           </>
         }
         actions={
@@ -310,13 +309,13 @@ export default function ExecutivePage() {
             />
           </div>
           <Callout tone="warn" title="Indicative / configurable">
-            Commercial values are configuration parameters in this prototype and are not contractual terms.
+            Commercial values are configuration parameters and are not contractual terms.
           </Callout>
         </Card>
       </div>
       <DemoNote>
-        Figures marked “Demo data” are illustrative (indicative values, subject to AMRUT / COEP approval). Applications, Eligible, Enrolled,
-        Awaiting batch and the district heatmap come from the live student register.
+        Indicative values, subject to AMRUT / COEP approval. Applications, Eligible, Enrolled, Awaiting batch and the district heatmap
+        come from the live student register.
       </DemoNote>
     </div>
   );

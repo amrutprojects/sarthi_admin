@@ -391,18 +391,6 @@ svg.ico {
   padding: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
-.sb-demo {
-  font-size: 10px;
-  background: rgba(245, 130, 32, 0.14);
-  border: 1px solid rgba(245, 130, 32, 0.3);
-  color: #f9b478;
-  border-radius: 7px;
-  padding: 7px 9px;
-  line-height: 1.35;
-}
-.collapsed .sb-demo {
-  display: none;
-}
 .sb-toggle {
   width: 100%;
   background: rgba(255, 255, 255, 0.06);
@@ -411,7 +399,6 @@ svg.ico {
   border-radius: 7px;
   padding: 7px;
   cursor: pointer;
-  margin-top: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2486,8 +2473,7 @@ select.inp {
   }
   .collapsed .sb-label,
   .collapsed .sb-count,
-  .collapsed .sb-brand-txt,
-  .collapsed .sb-demo {
+  .collapsed .sb-brand-txt {
     display: revert;
   }
   .collapsed .sb-item {

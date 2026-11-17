@@ -59,11 +59,7 @@
     missionTitle: { mr: 'आमचे ध्येय, दृष्टिकोन व मूल्ये', en: 'Our Mission, Vision and Values' },
     links: { mr: 'महत्वपूर्ण दुवे', en: 'Important Links' },
     contactInfo: { mr: 'संपर्क माहिती', en: 'Contact Information' },
-    lastDate: { mr: 'अंतिम दिनांक', en: 'Last date' },
-    demoBanner: {
-      mr: 'प्रात्यक्षिक आवृत्ती - नमुना माहिती. ही वास्तविक शासकीय आकडेवारी नाही.',
-      en: 'DEMO ENVIRONMENT - SAMPLE DATA. Not actual government programme performance.'
-    }
+    lastDate: { mr: 'अंतिम दिनांक', en: 'Last date' }
   };
 
   function t(key) {

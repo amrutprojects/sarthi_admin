@@ -62,11 +62,6 @@ export default function Sidebar({ active, collapsed, open, onToggle }: SidebarPr
         })}
       </div>
       <div className="sb-foot">
-        <div className="sb-demo">
-          <b>DEMO ENVIRONMENT</b>
-          <br />
-          Sample data only. Not actual programme performance.
-        </div>
         <button type="button" className="sb-toggle" onClick={onToggle}>
           <Icon name={collapsed ? 'chevR' : 'chevL'} />
           <span className="sb-label">Collapse</span>

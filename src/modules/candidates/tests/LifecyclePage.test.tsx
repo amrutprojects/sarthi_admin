@@ -42,10 +42,9 @@ describe('LifecyclePage — live register stages', () => {
         '#/candidates?bucket=enrolled',
       ]),
     );
-    /* Live-to-live conversions carry no chip; the later stages stay demo. */
-    expect(screen.getByText(/Eligible → Enrollment/)).not.toHaveTextContent('Demo data');
-    expect(screen.getByText(/Training → Assessment/)).toHaveTextContent('Demo data');
-    expect(screen.getByText(/Candidate status engine/).closest('h3')).toHaveTextContent('Demo data');
+    /* No stage, conversion or heading carries a demo label. */
+    expect(screen.getByText(/Training → Assessment/)).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment/i);
   });
 
   it('shows "—" for a conversion from an empty stage instead of NaN', async () => {

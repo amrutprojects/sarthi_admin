@@ -79,7 +79,7 @@ export default function CampaignDetailPage() {
               <button
                 type="button"
                 className="btn primary"
-                onClick={() => AS.ui.toast('Demo action recorded — no data was persisted.', 'ok')}
+                onClick={() => AS.ui.toast('This feature will be available soon.', 'ok')}
               >
                 Edit campaign
               </button>
@@ -122,7 +122,7 @@ export default function CampaignDetailPage() {
           />
           <div className="mt10">
             <Callout tone="warn" title="Indicative">
-              Campaign budgets shown are configurable demo values, not committed spend.
+              Campaign budgets shown are configurable values, not committed spend.
             </Callout>
           </div>
         </Card>
@@ -136,7 +136,7 @@ export default function CampaignDetailPage() {
           exportName="Campaign_Leads"
           search={['id', 'name']}
           rowLink={(x) => '#/candidates/' + x.id}
-          emptyMsg="No candidate records are attributed to this channel in the demo dataset."
+          emptyMsg="No candidate records are attributed to this channel."
         />
       </Card>
       <DemoNote />

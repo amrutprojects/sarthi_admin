@@ -235,10 +235,6 @@ form .grid.g3 {
 .sb-count {
   font-size: 11px;
 }
-.sb-demo {
-  font-size: 11px;
-  line-height: 1.4;
-}
 /* The 50-item menu fades out at the bottom so it is obvious more modules sit
    below; the extra bottom padding lets the last item scroll clear of the fade. */
 .sb-scroll {

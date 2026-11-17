@@ -42,17 +42,14 @@ describe('DashboardPage — live student figures', () => {
     expect(studentApi.summary).toHaveBeenCalledWith(undefined);
   });
 
-  it('marks the remaining mock figures with a Demo data chip instead of a page-wide badge', async () => {
+  it('carries no demo labelling: no page-wide badge and no per-figure chip', async () => {
     vi.spyOn(studentApi, 'summary').mockResolvedValue(summaryFixture());
     renderPage();
     await waitFor(() => expect(within(tile('Applications')).getByText('15,000')).toBeInTheDocument());
-    expect(screen.queryByText('DEMO DATA')).not.toBeInTheDocument();
     for (const l of ['Total Target', 'Training Active', 'Completed', 'Assessed', 'Certified']) {
-      expect(within(tile(l)).getByText('Demo data')).toBeInTheDocument();
+      expect(tile(l)).toBeInTheDocument();
     }
-    for (const l of ['Applications', 'Eligible', 'Enrolled']) {
-      expect(within(tile(l)).queryByText('Demo data')).not.toBeInTheDocument();
-    }
+    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment/i);
   });
 
   it('links the tiles to the real student list with the right bucket', async () => {

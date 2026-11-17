@@ -133,7 +133,6 @@ export default function LoginPage() {
             <span>{T('मंजूर केंद्रे', 'Approved centres')}</span>
           </div>
         </div>
-        <div style={{ marginTop: 20, fontSize: 11, color: '#C4A88E' }}>{CT.bi(CT.STR.demoBanner)}</div>
       </div>
 
       <div className="auth-r">
@@ -246,7 +245,6 @@ export default function LoginPage() {
               {CT.t('verifyCert')}
             </button>
           </div>
-          <div className="disclaim mt14">{CT.bi(CT.STR.demoBanner)}</div>
         </div>
       </div>
     </div>

@@ -56,8 +56,6 @@ export default function LifecyclePage() {
     { l: 'Completion', v: k.completed, c: '#A85B08' },
     { l: 'Certification', v: k.certified, c: '#E88C2C', link: '#/certification' },
   ];
-  /* The funnel chart is SVG text, so demo stages say so in their label. */
-  const funnelStages = stages.map((s) => ({ ...s, l: s.live ? s.l : s.l + ' (demo)' }));
   const counts: Partial<Record<CandidateStatus, number>> = {};
   S.candidates().forEach((c) => {
     counts[c.status] = (counts[c.status] || 0) + 1;
@@ -71,7 +69,7 @@ export default function LifecyclePage() {
         sub={
           <>
             End-to-end conversion from awareness through certification. Click any stage to open the underlying records. Registration,
-            Verification, Eligible, Enrollment and Batch allocation are live{asOf ? ' ' + asOf : ''}; other stages are <b>Demo data</b>.
+            Verification, Eligible, Enrollment and Batch allocation are live{asOf ? ' ' + asOf : ''}.
           </>
         }
         actions={
@@ -115,9 +113,9 @@ export default function LifecyclePage() {
               Full lifecycle funnel <DemoChip />
             </>
           }
-          sub="Registration to enrollment are live; stages marked (demo) are illustrative"
+          sub="Registration to enrollment are live"
         >
-          <Funnel stages={funnelStages} />
+          <Funnel stages={stages} />
         </Card>
         <Card title="Conversion between stages" flush>
           <div className="list">
@@ -155,7 +153,7 @@ export default function LifecyclePage() {
             Candidate status engine — current distribution <DemoChip />
           </>
         }
-        sub="Illustrative statuses of the full programme; the live student list (Candidates) filters by the stages above"
+        sub="Statuses of the full programme; the live student list (Candidates) filters by the stages above"
       >
         <div className="grid g4">
           {S.statuses()
@@ -182,8 +180,8 @@ export default function LifecyclePage() {
         </div>
       </Card>
       <DemoNote>
-        Stages and figures marked “Demo data” are illustrative (indicative values, subject to AMRUT / COEP approval). Registration,
-        Verification, Eligible, Enrollment and Batch allocation come from the live student register.
+        Indicative values, subject to AMRUT / COEP approval. Registration, Verification, Eligible, Enrollment and Batch allocation
+        come from the live student register.
       </DemoNote>
     </div>
   );

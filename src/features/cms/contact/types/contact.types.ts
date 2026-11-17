@@ -34,7 +34,7 @@ export interface DistrictRef {
   code: string;
 }
 
-/* A district / cluster coordinator card and the districts it covers, in the order the website lists them. */
+/* A division / cluster coordinator card and the districts it covers, in the order the website lists them. */
 export interface ApiCoordinator {
   id: string;
   name: string;
@@ -66,6 +66,11 @@ export interface ApiContactPage {
   pageTitle: Bilingual;
   pageSubtitle: Bilingual;
   isPublished: boolean;
+  /*
+   * The "Show on website" switch of the Contact page's "District offices" section (the list of every district).
+   * Changed only through contactService.setDistrictOfficesSection, never by saving the page's form.
+   */
+  showDistrictOffices: boolean;
   /*
    * The website's floating WhatsApp button: digits with the country code ('' = the AMRUT card's phone), and the
    * message typed into the chat for the visitor (both halves '' = the website's default message). The Helpline
@@ -176,7 +181,7 @@ export const CONTACT_TABS = [
   { k: 'amrut', l: 'AMRUT contact details' },
   { k: 'partner', l: 'Implementation partner' },
   { k: 'helpline', l: 'Helpline & WhatsApp' },
-  { k: 'coordinators', l: 'District / cluster coordinators' },
+  { k: 'coordinators', l: 'Division / cluster coordinators' },
   { k: 'offices', l: 'District offices' },
 ] as const;
 export type ContactTab = (typeof CONTACT_TABS)[number]['k'];

@@ -19,7 +19,7 @@ const PROJECT_FIELDS: FieldDef[] = [
   ['plannedCentres', 'Planned offline centres', 'number'],
   ['projectStart', 'Project start date', 'date'],
   ['projectEnd', 'Project end date', 'date'],
-  ['asOf', 'Project date (demo mode)', 'date'],
+  ['asOf', 'Project date', 'date'],
 ];
 const COMMERCIAL_FIELDS: FieldDef[] = [
   ['perStudentValue', 'Value per student (₹)', 'number'],
@@ -147,8 +147,8 @@ export default function SettingsPage() {
             pairs={[
               ['Map provider', AS.map.provider],
               ['Alternate providers', 'Mapbox / Google Maps (API key required)'],
-              ['LMS', c.lmsName + ' (mock)'],
-              ['Student app', c.appName + ' (mock)'],
+              ['LMS', c.lmsName],
+              ['Student app', c.appName],
               ['Object storage', 'Configurable cloud storage'],
               ['Certificate template', 'AMRUT × SUMAGO 2026-27 v1'],
               ['Certificate numbering', 'AMRUT/SUM/YYYY/NNNNN'],
@@ -196,27 +196,20 @@ export default function SettingsPage() {
             ]}
           />
         </Card>
-        <Card title="Demo environment">
+        <Card title="Data">
           <KvList
             pairs={[
-              ['Environment', 'DEMO / SAMPLE DATA'],
               ['Data persistence', 'None — changes last for the session only'],
               [
                 'Records',
                 fmt(DB.candidates.length) + ' candidates, ' + DB.batches.length + ' batches, ' + DB.allCentres.length + ' centres',
               ],
               ['Districts', String(DB.districts.length)],
-              ['Data disclaimer', 'Illustrative only'],
             ]}
           />
-          <div className="mt10">
-            <Callout tone="warn" title="Demo mode">
-              This environment contains sample data only and must not be presented as actual government programme performance.
-            </Callout>
-          </div>
           <Can action="editSettings">
             <button type="button" className="btn block mt10" onClick={() => setResetting(true)}>
-              Reset demo data
+              Reload data
             </button>
           </Can>
         </Card>
@@ -224,7 +217,7 @@ export default function SettingsPage() {
       <DemoNote />
       {resetting && (
         <Modal
-          title="Reset demo data"
+          title="Reload data"
           onClose={() => setResetting(false)}
           footer={
             <>
@@ -237,7 +230,7 @@ export default function SettingsPage() {
             </>
           }
         >
-          <p style={{ margin: 0 }}>Reload the page to restore the original demo dataset. Any session changes will be lost.</p>
+          <p style={{ margin: 0 }}>Reload the page to restore the original dataset. Any session changes will be lost.</p>
         </Modal>
       )}
     </div>

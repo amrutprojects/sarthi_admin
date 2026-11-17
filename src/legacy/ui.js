@@ -155,7 +155,7 @@
     return '<div class="callout c-' + tone + '"><div>' + (title ? '<b>' + esc(title) + '</b>' : '') + msg + '</div></div>';
   }
   function demoNote(txt) {
-    return '<div class="disclaim mt10">' + esc(txt || 'Illustrative / demo data. Indicative values - subject to AMRUT / COEP approval.') + '</div>';
+    return '<div class="disclaim mt10">' + esc(txt || 'Indicative values - subject to AMRUT / COEP approval.') + '</div>';
   }
 
   /* =========================================================
@@ -263,10 +263,10 @@
         'td{padding:5px 7px;border-bottom:1px solid #E3E8EF}tr:nth-child(even) td{background:#F8FAFC}' +
         '.f{margin-top:18px;font-size:10px;color:#94A3B8;font-style:italic}</style></head><body>' +
         '<h1>' + esc(AS.db.config.shortName) + ' - ' + esc(name) + '</h1>' +
-        '<div class="m">Generated ' + new Date().toLocaleString('en-IN') + ' | ' + rows.length + ' records | DEMO ENVIRONMENT - SAMPLE DATA</div>' +
+        '<div class="m">Generated ' + new Date().toLocaleString('en-IN') + ' | ' + rows.length + ' records</div>' +
         '<table><thead><tr>' + head.map(function (h) { return '<th>' + esc(h) + '</th>'; }).join('') + '</tr></thead><tbody>' +
         data.map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>'; }).join('') +
-        '</tbody></table><div class="f">Illustrative / demo data. Not actual government programme performance. Use the browser print dialog to save as PDF.</div>' +
+        '</tbody></table><div class="f">Use the browser print dialog to save as PDF.</div>' +
         '<script>setTimeout(function(){window.print()},350)<\/script></body></html>');
       w.document.close();
       toast('PDF preview opened - use Print > Save as PDF.', 'ok');
@@ -279,7 +279,7 @@
     var blob = new Blob(['﻿' + csv], { type: fmtType === 'xls' ? 'application/vnd.ms-excel' : 'text/csv;charset=utf-8;' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = name.replace(/[^\w\-]+/g, '_') + '_DEMO.' + (fmtType === 'xls' ? 'xls' : 'csv');
+    a.download = name.replace(/[^\w\-]+/g, '_') + '.' + (fmtType === 'xls' ? 'xls' : 'csv');
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 800);
     toast('Exported ' + rows.length + ' records (' + (fmtType === 'xls' ? 'Excel' : 'CSV') + ').', 'ok');
