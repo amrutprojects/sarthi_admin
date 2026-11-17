@@ -34,7 +34,7 @@ const footerData = (over: Partial<ApiFooter> = {}): ApiFooter => ({
     heading: { mr: 'अमृत विषयी', en: 'About AMRUT' },
     body: { mr: 'कौशल्य विकास कार्यक्रम.', en: 'A skill development programme.' },
     partnerLabel: { mr: 'अंमलबजावणी भागीदार', en: 'Implementation partner' },
-    partnerName: 'SUMAGO Infotech',
+    partnerName: { mr: 'सुमागो इन्फोटेक', en: 'SUMAGO Infotech' },
   },
   linkColumns: [
     {
@@ -122,6 +122,7 @@ describe('<FooterView> tabs', () => {
     expect(screen.getByText('About AMRUT')).toBeInTheDocument();
     expect(screen.getByText('कौशल्य विकास कार्यक्रम.')).toHaveAttribute('lang', 'mr');
     expect(screen.getByText('SUMAGO Infotech')).toBeInTheDocument();
+    expect(screen.getByText('सुमागो इन्फोटेक')).toHaveAttribute('lang', 'mr');
     expect(screen.getByText(/Last updated/)).toBeInTheDocument();
     expect(document.querySelector('.kpi')).toBeNull();
     expect(footerService.get).toHaveBeenCalledTimes(1);

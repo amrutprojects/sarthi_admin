@@ -70,7 +70,7 @@ export interface ApiFooter {
     heading: Bilingual;
     body: Bilingual;
     partnerLabel: Bilingual;
-    partnerName: string;
+    partnerName: Bilingual;
   };
   linkColumns: ApiFooterColumn[];
   contact: {
@@ -103,7 +103,7 @@ export interface UpdateFooterInput {
     heading: Bilingual;
     body: Bilingual;
     partnerLabel: Bilingual;
-    partnerName: string;
+    partnerName: Bilingual;
   };
   linkColumns: {
     heading: Bilingual;

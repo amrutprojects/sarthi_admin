@@ -309,7 +309,7 @@ export default function FooterForm({ initial, onSave, backTo }: FooterFormProps)
               />
             </div>
 
-            <div className="grid g2 mt10">
+            <div className="mt10">
               <BilingualField
                 id="ft-partner-label"
                 label="Partner label"
@@ -325,28 +325,25 @@ export default function FooterForm({ initial, onSave, backTo }: FooterFormProps)
                 errorMr={show('about.partnerLabel.mr')}
                 errorEn={show('about.partnerLabel.en')}
               />
-              <MasterField
+            </div>
+
+            <div className="mt10">
+              <BilingualField
                 id="ft-partner-name"
                 label="Partner name"
-                required
-                error={show('about.partnerName')}
-                hint="A registered company name, so it is not translated."
-              >
-                <input
-                  className="inp"
-                  type="text"
-                  autoComplete="off"
-                  maxLength={150}
-                  {...fieldAria('ft-partner-name', show('about.partnerName'))}
-                  value={values.about.partnerName}
-                  onChange={(e) =>
-                    change({ ...values, about: { ...values.about, partnerName: e.target.value } }, [
-                      'about.partnerName',
-                    ])
-                  }
-                  onBlur={() => touch('about.partnerName')}
-                />
-              </MasterField>
+                maxLength={150}
+                value={values.about.partnerName}
+                onChange={(partnerName) =>
+                  change({ ...values, about: { ...values.about, partnerName } }, [
+                    'about.partnerName.mr',
+                    'about.partnerName.en',
+                  ])
+                }
+                onBlur={(half) => touch(`about.partnerName.${half}`)}
+                errorMr={show('about.partnerName.mr')}
+                errorEn={show('about.partnerName.en')}
+                hint="The implementation partner's name, as the website prints it in each language."
+              />
             </div>
           </div>
         </div>

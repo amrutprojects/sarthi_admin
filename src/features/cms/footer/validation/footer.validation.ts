@@ -41,7 +41,7 @@ export interface FooterFormValues {
     heading: BilingualValue;
     body: BilingualValue;
     partnerLabel: BilingualValue;
-    partnerName: string;
+    partnerName: BilingualValue;
   };
   linkColumns: ColumnFormValues[];
   contact: {
@@ -88,7 +88,7 @@ export function toFormValues(footer: ApiFooter): FooterFormValues {
       heading: pairOf(footer.about.heading),
       body: pairOf(footer.about.body),
       partnerLabel: pairOf(footer.about.partnerLabel),
-      partnerName: footer.about.partnerName,
+      partnerName: pairOf(footer.about.partnerName),
     },
     linkColumns: footer.linkColumns.map((c) => ({
       heading: pairOf(c.heading),
@@ -135,7 +135,7 @@ export function toPayload(v: FooterFormValues): UpdateFooterInput {
       heading: trimPair(v.about.heading),
       body: trimPair(v.about.body),
       partnerLabel: trimPair(v.about.partnerLabel),
-      partnerName: v.about.partnerName.trim(),
+      partnerName: trimPair(v.about.partnerName),
     },
     linkColumns: v.linkColumns.map((c, index) => ({
       heading: trimPair(c.heading),
@@ -255,7 +255,7 @@ export function validateFooterForm(v: FooterFormValues): FieldErrors<FooterField
   pairErrors(errors, 'about.heading', v.about.heading, 'About heading', 200);
   pairErrors(errors, 'about.body', v.about.body, 'About text', 2000);
   pairErrors(errors, 'about.partnerLabel', v.about.partnerLabel, 'Partner label', 120);
-  errors['about.partnerName'] = required(v.about.partnerName, 'Partner name', 150);
+  pairErrors(errors, 'about.partnerName', v.about.partnerName, 'Partner name', 150);
 
   /* The cap is the layout, not a data limit — see MAX_LINK_COLUMNS. */
   if (v.linkColumns.length < 1) {

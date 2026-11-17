@@ -89,7 +89,7 @@ function AboutTab({ footer }: { footer: ApiFooter }) {
             ['Heading', <Bi value={footer.about.heading} />],
             ['About text', <Bi value={footer.about.body} />],
             ['Partner label', <Bi value={footer.about.partnerLabel} />],
-            ['Partner name', <FieldValue value={footer.about.partnerName} />],
+            ['Partner name', <Bi value={footer.about.partnerName} />],
           ]}
         />
       </div>
