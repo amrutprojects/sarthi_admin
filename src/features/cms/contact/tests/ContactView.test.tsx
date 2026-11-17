@@ -80,10 +80,15 @@ describe('<ContactView> tabs', () => {
 
     await screen.findByRole('tab', { name: 'Page information' });
     const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(5);
-    ['Page information', 'AMRUT contact details', 'Implementation partner', 'District / cluster coordinators', 'District offices'].forEach((name, i) =>
-      expect(tabs[i]).toHaveAccessibleName(name),
-    );
+    expect(tabs).toHaveLength(6);
+    [
+      'Page information',
+      'AMRUT contact details',
+      'Implementation partner',
+      'Helpline & WhatsApp',
+      'District / cluster coordinators',
+      'District offices',
+    ].forEach((name, i) => expect(tabs[i]).toHaveAccessibleName(name));
     expect(tab('Page information')).toHaveAttribute('aria-selected', 'true');
     /* The panel's standard tab strip, as on Modules Page Management, each tab naming the panel it opens. */
     expect(screen.getByRole('tablist')).toHaveClass('tabs', 'tabs-fit');
@@ -174,10 +179,38 @@ describe('<ContactView> tabs', () => {
     expect(within(panel()).getByText('This card is not configured.')).toBeInTheDocument();
   });
 
+  it('shows the Helpline & WhatsApp details, saying what a blank number or message falls back to', async () => {
+    renderAt('/cms/contact?tab=helpline');
+
+    expect(await screen.findByRole('tab', { name: 'Helpline & WhatsApp' })).toHaveAttribute('aria-selected', 'true');
+    expect(within(panel()).getByRole('heading', { name: /Helpline & WhatsApp/ })).toBeInTheDocument();
+    expect(fields()).toEqual(['WhatsApp number', 'Pre-filled message']);
+    /* Neither set: the button uses the AMRUT card's phone and the website's own message. */
+    expect(cellText(row('WhatsApp number'), 2)).toBe('Not set: the AMRUT phone number (+91 97301 51450) is used.');
+    expect(cellText(row('Pre-filled message'), 2)).toBe('Not set: the website’s default message is used.');
+    /* The Helpline popup has no fields of its own: the card says where it reads from. */
+    expect(within(panel()).getByText(/The Helpline popup shows the AMRUT phone and email and the Implementation Partner’s helpdesk hours and name from this page\./)).toBeInTheDocument();
+    /* Saved with the banner and the cards, so it shares their time. */
+    expect(screen.getByText(/Last updated/)).toBeInTheDocument();
+  });
+
+  it('shows a saved WhatsApp number and message, Marathi first', async () => {
+    svc.get.mockResolvedValue(
+      contactPage({ whatsappNumber: '919876543210', whatsappMessage: { mr: 'नमस्कार, माहिती हवी आहे.', en: 'Hello, I would like to know more.' } }),
+    );
+    renderAt('/cms/contact?tab=helpline');
+
+    await screen.findByRole('tab', { name: 'Helpline & WhatsApp' });
+    expect(cellText(row('WhatsApp number'), 2)).toBe('919876543210');
+    expect(within(row('Pre-filled message')).getByText('नमस्कार, माहिती हवी आहे.')).toHaveAttribute('lang', 'mr');
+    expect(within(row('Pre-filled message')).getByText('Hello, I would like to know more.')).toBeInTheDocument();
+  });
+
   it.each([
     ['page', 'Page information', '/cms/contact/page/edit'],
     ['amrut', 'AMRUT contact details', '/cms/contact/amrut/edit'],
     ['partner', 'Implementation partner', '/cms/contact/partner/edit'],
+    ['helpline', 'Helpline & WhatsApp', '/cms/contact/helpline/edit'],
   ])('opens the %s section on its own Edit page from the Edit button on its tab', async (key, name, target) => {
     permissions.add('updateContactPage');
     renderAt(`/cms/contact?tab=${key}`);

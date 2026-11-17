@@ -11,6 +11,8 @@ import {
   validateCoordinatorPhone,
   validateOfficeForm,
   validatePhone,
+  validateWhatsappNumber,
+  whatsappDigits,
 } from '../validation/contact.validation';
 import { AMRUT, PARTNER, contactPage, district } from './fixtures';
 
@@ -112,6 +114,44 @@ describe('district office form', () => {
   });
 });
 
+/* Mirrors the backend: '' (the AMRUT phone) or 10–15 digits once spaces, "+" and "-" are taken out. */
+describe('WhatsApp number', () => {
+  it('keeps the digits only', () => {
+    expect(whatsappDigits(' +91 97301-51450 ')).toBe('919730151450');
+  });
+
+  it('accepts blank and 10 to 15 digits, with or without the separators people type', () => {
+    for (const n of ['', '   ', '9730151450', '919730151450', '+91 97301 51450', '+91-97301-51450', '1'.repeat(15)]) {
+      expect({ n, error: validateWhatsappNumber(n) }).toEqual({ n, error: undefined });
+    }
+  });
+
+  it('refuses too few or too many digits, and anything but digits', () => {
+    expect(validateWhatsappNumber('973015145')).toBe('WhatsApp number must have 10 to 15 digits, including the country code');
+    expect(validateWhatsappNumber('1'.repeat(16))).toBe('WhatsApp number must have 10 to 15 digits, including the country code');
+    for (const n of ['(91) 9730151450', '91973015145O', 'wa.me/919730151450', '91.9730151450']) {
+      expect(validateWhatsappNumber(n)).toBe('WhatsApp number may use digits only (spaces, + and - are ignored)');
+    }
+  });
+
+  it('checks the helpline section only: the number, and a message in both languages or neither, at most 500 characters', () => {
+    const values = toFormValues(contactPage());
+    expect(Object.keys(validateContactSection('helpline', values))).toEqual(['whatsappNumber', 'whatsappMessage.mr', 'whatsappMessage.en']);
+    expect(Object.values(validateContactSection('helpline', values)).filter(Boolean)).toEqual([]);
+
+    values.whatsappMessage = { mr: 'नमस्कार', en: '  ' };
+    expect(validateContactSection('helpline', values)['whatsappMessage.en']).toBe('Pre-filled message (English) is required when Marathi is given');
+    values.whatsappMessage = { mr: 'नमस्कार', en: 'x'.repeat(501) };
+    expect(validateContactSection('helpline', values)['whatsappMessage.en']).toBe('Pre-filled message (English) must be at most 500 characters');
+    /* Counted as stored: collapsed to one paragraph. */
+    values.whatsappMessage = { mr: 'नमस्कार', en: `${'x'.repeat(250)}\n\n\n${'x'.repeat(249)}` };
+    expect(validateContactSection('helpline', values)['whatsappMessage.en']).toBeUndefined();
+    /* The other sections never check the WhatsApp fields. */
+    values.whatsappNumber = 'nope';
+    expect(validateContactSection('page', values)).not.toHaveProperty('whatsappNumber');
+  });
+});
+
 describe('section edit payload', () => {
   it('validates only the fields of the section being edited', () => {
     /* No partner card yet: its blank fields must not block a save of the AMRUT card. */
@@ -137,6 +177,37 @@ describe('section edit payload', () => {
     expect(payload.organizations[0]).toMatchObject({ orgType: 'AMRUT', email: 'new@example.org', role: null, helpdeskHours: null });
     const { id: _id, ...partner } = PARTNER;
     expect(payload.organizations[1]).toEqual(partner);
+  });
+
+  it('sends the WhatsApp details from their own page only, as digits and one paragraph per language', () => {
+    const page = contactPage({ whatsappNumber: '919730151450', whatsappMessage: { mr: 'नमस्कार', en: 'Hello' } });
+    const values = toFormValues(page);
+    expect(values.whatsappNumber).toBe('919730151450');
+    expect(values.whatsappMessage).toEqual({ mr: 'नमस्कार', en: 'Hello' });
+    values.whatsappNumber = ' +91 98765-43210 ';
+    values.whatsappMessage = { mr: ' नमस्कार,\n\nमाहिती ', en: 'Hello,\r\n  more   please ' };
+
+    expect(toSectionPayload(page, 'helpline', values)).toMatchObject({
+      whatsappNumber: '919876543210',
+      whatsappMessage: { mr: 'नमस्कार, माहिती', en: 'Hello, more please' },
+    });
+    /* Every other section leaves them out, so the backend keeps what is saved. */
+    for (const section of ['page', 'amrut', 'partner'] as const) {
+      const payload = toSectionPayload(page, section, values);
+      expect(payload).not.toHaveProperty('whatsappNumber');
+      expect(payload).not.toHaveProperty('whatsappMessage');
+    }
+    /* And the helpline page sends the banner and both cards back exactly as loaded. */
+    const { id: _a, ...amrut } = AMRUT;
+    const { id: _p, ...partner } = PARTNER;
+    expect(toSectionPayload(page, 'helpline', values).organizations).toEqual([amrut, partner]);
+  });
+
+  it('reads a page from a backend without the WhatsApp columns as blank', () => {
+    const { whatsappNumber: _n, whatsappMessage: _m, ...older } = contactPage();
+    const values = toFormValues(older as ReturnType<typeof contactPage>);
+    expect(values.whatsappNumber).toBe('');
+    expect(values.whatsappMessage).toEqual({ mr: '', en: '' });
   });
 
   it('leaves a card that is not configured out, rather than creating it empty', () => {

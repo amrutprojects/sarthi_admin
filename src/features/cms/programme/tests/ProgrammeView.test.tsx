@@ -43,7 +43,7 @@ const programmeData = (over: Partial<ApiProgrammePage> = {}): ApiProgrammePage =
     ],
     note: pair('पद्धत केंद्रावर अवलंबून.', 'The mode depends on the centre.'),
   },
-  facts: { idealMonths: 6, validityMonths: 12, securityDeposit: 125000, applyLeadDays: 30, partnerName: 'SUMAGO INFOTECH PVT LTD' },
+  facts: { idealMonths: '6', validityMonths: '12', securityDeposit: 125000, applyLeadDays: 30, partnerName: 'SUMAGO INFOTECH PVT LTD' },
   isPublished: true,
   updatedAt: '2026-10-22T10:00:00.000Z',
   hiddenFacts: [],

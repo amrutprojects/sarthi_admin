@@ -102,13 +102,59 @@ function CardTab({ type, org }: { type: OrgType; org?: ApiContactOrganization })
 }
 
 /*
+ * Helpline & WhatsApp tab: the two floating buttons on every page of the website. The Helpline popup has nothing
+ * of its own — it shows the AMRUT and partner cards, so it can never disagree with them — and only the WhatsApp
+ * button's number and message are kept here, each falling back to the AMRUT phone / the website's own message.
+ */
+function HelplineTab({ page, amrut }: { page: ApiContactPage; amrut?: ApiContactOrganization }) {
+  const message = page.whatsappMessage;
+  return (
+    <>
+      <SectionNote>Marathi is shown first, English underneath. The WhatsApp number is the same in both languages, so it shows once.</SectionNote>
+      <div className="card">
+        <div className="card-h">
+          <h3>
+            Helpline &amp; WhatsApp <span className="sub">the floating buttons on every page of the public website</span>
+          </h3>
+          <div className="f ac gp8">
+            <EditButton to="/cms/contact/helpline/edit" />
+          </div>
+        </div>
+        <FieldTable
+          rows={[
+            [
+              'WhatsApp number',
+              page.whatsappNumber ? (
+                page.whatsappNumber
+              ) : (
+                <span className="muted">Not set: the AMRUT phone number{amrut?.phone ? ` (${amrut.phone})` : ''} is used.</span>
+              ),
+            ],
+            [
+              'Pre-filled message',
+              message?.mr || message?.en ? <Bi value={message} /> : <span className="muted">Not set: the website&rsquo;s default message is used.</span>,
+            ],
+          ]}
+        />
+        <div className="card-b">
+          <div className="hint">
+            The Helpline popup shows the AMRUT phone and email and the Implementation Partner&rsquo;s helpdesk hours and name from this page.
+            While the page is unpublished, both buttons use the website&rsquo;s built-in details.
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/*
  * Contact Page Management — the read-only view of what the public page is showing.
  *
  * This is the landing screen for the menu because cms-contact.view and cms-contact.update are
  * separate permissions: a view-only administrator gets the whole picture without an editable form,
  * and the Edit and Add buttons simply are not rendered for them. The page is shown one section per
  * tab, with the same tab strip as Modules Page Management, and the tab kept in the URL (?tab=). Page
- * information and the two cards each have an Edit page of their own; the coordinators and district
+ * information, the two cards and the Helpline & WhatsApp details each have an Edit page of their own; the coordinators and district
  * offices are listings whose rows are viewed, added, edited and deleted one at a time, as on FAQ
  * Management.
  */
@@ -180,14 +226,17 @@ export default function ContactView() {
           <SectionTabPanel tab="partner" active={tab} idPrefix="contact">
             <CardTab type="IMPLEMENTATION_PARTNER" org={partner} />
           </SectionTabPanel>
+          <SectionTabPanel tab="helpline" active={tab} idPrefix="contact">
+            <HelplineTab page={page} amrut={amrut} />
+          </SectionTabPanel>
           <SectionTabPanel tab="coordinators" active={tab} idPrefix="contact">
             <CoordinatorList />
           </SectionTabPanel>
           <SectionTabPanel tab="offices" active={tab} idPrefix="contact">
             <DistrictOfficeList />
           </SectionTabPanel>
-          {/* The banner and both cards are saved together, so their tabs share one time; each listed row shows its own. */}
-          {tab === 'page' || tab === 'amrut' || tab === 'partner' ? (
+          {/* The banner, both cards and the WhatsApp details are saved together, so their tabs share one time; each listed row shows its own. */}
+          {tab === 'page' || tab === 'amrut' || tab === 'partner' || tab === 'helpline' ? (
             <div className="fs13 t2 mt10">Last updated {fmtDateTime(page.updatedAt)}.</div>
           ) : null}
         </div>

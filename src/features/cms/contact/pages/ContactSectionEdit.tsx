@@ -31,14 +31,21 @@ const SECTION_COPY: Record<ContactSection, { title: string; crumb: string; sub: 
     saved: 'Implementation partner updated',
     confirmName: 'the implementation partner card',
   },
+  helpline: {
+    title: 'Edit Helpline & WhatsApp',
+    crumb: 'Edit helpline & WhatsApp',
+    sub: 'The WhatsApp button on every page of the public website. The Helpline popup needs nothing here: it shows the AMRUT and implementation partner cards.',
+    saved: 'Helpline & WhatsApp updated',
+    confirmName: 'the Helpline & WhatsApp details',
+  },
 };
 
 /* Which section this page edits, from its path: /cms/contact/<section>/edit. */
 const sectionOf = (pathname: string): ContactSection => CONTACT_SECTIONS.find((s) => pathname.startsWith(`/cms/contact/${s}/`)) ?? 'page';
 
 /*
- * Edit one section of the Contact page — page information, the AMRUT card or the implementation
- * partner — on a dedicated page, never a modal. Opened from the Edit button on the section's tab; Back,
+ * Edit one section of the Contact page — page information, the AMRUT card, the implementation
+ * partner or the Helpline & WhatsApp details — on a dedicated page, never a modal. Opened from the Edit button on the section's tab; Back,
  * Cancel and Save return to that tab.
  */
 export default function ContactSectionEdit() {

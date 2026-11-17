@@ -6,7 +6,7 @@ import MasterField, { fieldAria } from '../../components/MasterField';
 import MasterFormActions from '../../components/MasterFormActions';
 import { ConfirmModal, toastError } from '../../shared';
 import { isValid, type FieldErrors } from '../../validation';
-import type { ApiContactPage, ContactField, ContactSection, UpdateContactPageInput } from '../types/contact.types';
+import { WHATSAPP_MESSAGE_MAX, type ApiContactPage, type ContactField, type ContactSection, type UpdateContactPageInput } from '../types/contact.types';
 import {
   toFormValues, toSectionPayload, validateContactSection, type ContactFormValues, type OrgFormValues,
 } from '../validation/contact.validation';
@@ -25,8 +25,8 @@ interface ContactSectionFormProps {
 const FORM_ID = 'cms-contact-section-form';
 
 /*
- * One section of the Contact page — page information, the AMRUT card or the implementation partner
- * card — on its own page (no modal), with only that section's fields.
+ * One section of the Contact page — page information, the AMRUT card, the implementation partner
+ * card or the Helpline & WhatsApp details — on its own page (no modal), with only that section's fields.
  *
  * Behaviour matches the other CMS forms: validate on submit, re-validate a field once it has been
  * touched, block a second submit while one is in flight, ask before saving, keep what was typed when a
@@ -277,6 +277,47 @@ export default function ContactSectionForm({ page, section, onSave, backTo, conf
               <CardStatus id="cp-partner-active" isActive={values.partner.isActive} onChange={(isActive) => setCard('partner', { isActive }, [])} />
             </>
           ) : null}
+
+          {section === 'helpline' ? (
+            <>
+              <div className="grid g2">
+                <MasterField
+                  id="cp-wa-number"
+                  label="WhatsApp number"
+                  error={show('whatsappNumber')}
+                  hint="Digits with country code, e.g. 919730151450. Leave blank to use the AMRUT phone number above."
+                >
+                  <input
+                    className="inp"
+                    {...fieldAria('cp-wa-number', show('whatsappNumber'))}
+                    type="tel"
+                    inputMode="numeric"
+                    /* Room for the spaces, "+" and "-" people type; only the digits are saved. */
+                    maxLength={24}
+                    autoComplete="off"
+                    value={values.whatsappNumber}
+                    onChange={(e) => change({ ...values, whatsappNumber: e.target.value }, ['whatsappNumber'])}
+                    onBlur={() => touch('whatsappNumber')}
+                  />
+                </MasterField>
+              </div>
+              <div className="mt10">
+                <BilingualField
+                  id="cp-wa-message"
+                  label="Pre-filled message"
+                  required={false}
+                  multiline
+                  maxLength={WHATSAPP_MESSAGE_MAX}
+                  value={values.whatsappMessage}
+                  onChange={(whatsappMessage) => change({ ...values, whatsappMessage }, ['whatsappMessage.mr', 'whatsappMessage.en'])}
+                  onBlur={(half) => touch(`whatsappMessage.${half}` as ContactField)}
+                  errorMr={show('whatsappMessage.mr')}
+                  errorEn={show('whatsappMessage.en')}
+                  hint="Typed into the chat for the visitor; leave both blank for the default message."
+                />
+              </div>
+            </>
+          ) : null}
         </form>
       </div>
       <div className="card-f">
@@ -287,7 +328,9 @@ export default function ContactSectionForm({ page, section, onSave, backTo, conf
           title="Save changes"
           busy={busy}
           confirmLabel="Yes, save"
-          message={`Are you sure you want to save the changes to ${confirmName}? They appear on the public Contact page straight away.`}
+          message={`Are you sure you want to save the changes to ${confirmName}? They appear on the public ${
+            section === 'helpline' ? 'website' : 'Contact page'
+          } straight away.`}
           onClose={() => setConfirming(false)}
           onConfirm={() => void save()}
         />
@@ -332,6 +375,8 @@ function mapServerErrors(err: ApiError, sent: UpdateContactPageInput, fields: re
     } else {
       key = path.join('.');
     }
+    /* A message about the pair as a whole ("body.whatsappMessage") sits on its Marathi half. */
+    if (key === 'whatsappMessage') key = 'whatsappMessage.mr';
     if (fields.includes(key) && !mapped[key as ContactField]) mapped[key as ContactField] = detail.message;
   }
 

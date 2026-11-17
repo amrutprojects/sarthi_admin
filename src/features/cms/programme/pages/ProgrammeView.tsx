@@ -17,6 +17,7 @@ import {
   type ProgrammeFactKey,
   type ProgrammeFactRow,
 } from '../types/programme.types';
+import { formatMonths } from '../validation/months';
 
 /*
  * A text cell of a list table. Panel cells never wrap (styles.css: table.tbl td { white-space: nowrap }); these may.
@@ -221,8 +222,8 @@ function FactsTab({
     totalHours: calculated,
     modules: calculated,
     electives: calculated,
-    idealDuration: `${facts.idealMonths} months`,
-    validity: `${facts.validityMonths} months`,
+    idealDuration: formatMonths(facts.idealMonths),
+    validity: formatMonths(facts.validityMonths),
     securityDeposit: `₹${facts.securityDeposit.toLocaleString('en-IN')}`,
     applyBefore: `${facts.applyLeadDays} days`,
     partner: <FieldValue value={facts.partnerName} />,

@@ -62,6 +62,7 @@ export type RouteName =
   | 'cmsContactOfficeView'
   | 'cmsFooterView'
   | 'cmsFooterEdit'
+  | 'cmsPageBanners'
   | 'cmsModulesView'
   | 'cmsModulesEdit'
   | 'cmsFaqList'
@@ -89,6 +90,14 @@ export type RouteName =
   | 'cmsAnnouncementsSettings'
   | 'cmsAnnouncementsView'
   | 'cmsHeroEdit'
+  | 'cmsQuickActionCreate'
+  | 'cmsQuickActionEdit'
+  | 'cmsQuickActionView'
+  | 'cmsLiveDashboardSettings'
+  | 'cmsLiveDashboardCard'
+  | 'cmsLiveDashboardCardView'
+  | 'cmsLiveDashboardStat'
+  | 'cmsLiveDashboardStatView'
   | 'cmsHighlightEdit'
   | 'cmsBoardCreate'
   | 'cmsBoardEdit'
@@ -220,7 +229,7 @@ export type AdminRoute = [path: string, name: RouteName, navKey: string];
  * Home Page Management (/cms/home-page): one sidebar entry and one page, whose tabs are the sections of the
  * public home page in the order it shows them, starting with the Top Bar (the strip at the very top of every
  * page), the Brand Bar under it, the Navigation Menu (the menu bar under the brand bar, whose items have switches of
- * their own) and the announcements ticker. Each tab belongs to one of eleven menus (Home Hero Section has two tabs), and
+ * their own) and the announcements ticker. Each tab belongs to one of twelve menus (Home Hero Section has two tabs), and
  * those menus keep their own keys, so their permission codes, Menu Visibility rows and the Website Admin role are
  * unchanged; a tab is shown only to a user who can open its menu. Each menu's Add, Edit and Settings pages keep
  * their own paths, and their Back, Cancel and Save return to the menu's tab.
@@ -235,6 +244,8 @@ export const HOME_PAGE_TABS = [
   { k: 'announcements', l: 'Announcements', menu: 'cms-announcements' },
   { k: 'hero', l: 'AMRUT Kalash – apply online', menu: 'cms-hero' },
   { k: 'glance', l: 'Programme at a glance', menu: 'cms-hero' },
+  { k: 'quick-actions', l: 'Quick Actions', menu: 'cms-quickactions' },
+  { k: 'live-dashboard', l: 'Live Dashboard', menu: 'cms-livedashboard' },
   { k: 'diploma', l: 'Skill Development Diploma', menu: 'cms-highlight' },
   { k: 'board', l: 'Leadership & Governing Board', menu: 'cms-board' },
   { k: 'impact', l: "AMRUT's Impact", menu: 'cms-impact' },
@@ -249,8 +260,8 @@ export const homePageTabPath = (tab: HomePageTab): string => `${HOME_PAGE_PATH}?
 
 /*
  * Each home page menu's former landing page → its tab. The router redirects them, so old links and bookmarks keep
- * working. Top Bar, Brand Bar, Navigation Menu and Announcements never had a page of their own; their paths open the tab like the
- * others, beside their own pages.
+ * working. Top Bar, Brand Bar, Navigation Menu, Announcements and Quick Actions never had a page of their own; their paths open
+ * the tab like the others, beside their own pages.
  */
 export const HOME_PAGE_REDIRECTS: readonly (readonly [path: string, tab: HomePageTab])[] = [
   ['/cms/top-bar', 'top-bar'],
@@ -258,6 +269,8 @@ export const HOME_PAGE_REDIRECTS: readonly (readonly [path: string, tab: HomePag
   ['/cms/nav-menu', 'nav-menu'],
   ['/cms/announcements', 'announcements'],
   ['/cms/hero', 'hero'],
+  ['/cms/quick-actions', 'quick-actions'],
+  ['/cms/live-dashboard', 'live-dashboard'],
   ['/cms/highlight', 'diploma'],
   ['/cms/board-members', 'board'],
   ['/cms/impact', 'impact'],
@@ -315,12 +328,13 @@ export const NAV: NavEntry[] = [
   { k: 'documents', l: 'Documents', i: 'folder', r: '/documents' },
   /*
    * The website's pages in the order of its own menu (Home, About, Programme, Modules, Eligibility, Apply, FAQ,
-   * Contact; About is a tab of Home Page Management), then the footer every page shares, then the geography masters.
+   * Contact; About is a tab of Home Page Management), then the footer every page shares and the page banners, then the
+   * geography masters.
    */
   { g: 'CMS' },
   { k: HOME_PAGE_MENU, l: 'Home Page Management', i: 'home', r: HOME_PAGE_PATH },
   /*
-   * The eleven menus behind Home Page Management's tabs, in home page order. Not sidebar entries of their own
+   * The twelve menus behind Home Page Management's tabs, in home page order. Not sidebar entries of their own
    * (SIDEBAR_NAV leaves them out), but still menus with permissions and Menu Visibility rows of their own.
    */
   { k: 'cms-topbar', l: 'Top Bar', i: 'globe', r: homePageTabPath('top-bar') },
@@ -328,6 +342,8 @@ export const NAV: NavEntry[] = [
   { k: 'cms-navmenu', l: 'Navigation Menu', i: 'menu', r: homePageTabPath('nav-menu') },
   { k: 'cms-announcements', l: 'Announcements', i: 'megaphone', r: homePageTabPath('announcements') },
   { k: 'cms-hero', l: 'Home Hero Section', i: 'home', r: homePageTabPath('hero') },
+  { k: 'cms-quickactions', l: 'Quick Actions', i: 'plus', r: homePageTabPath('quick-actions') },
+  { k: 'cms-livedashboard', l: 'Live Dashboard', i: 'dashboard', r: homePageTabPath('live-dashboard') },
   { k: 'cms-highlight', l: 'Home Programme Section', i: 'doc', r: homePageTabPath('diploma') },
   { k: 'cms-board', l: 'Board Members Management', i: 'users', r: homePageTabPath('board') },
   { k: 'cms-impact', l: 'AMRUT Impact Management', i: 'chart', r: homePageTabPath('impact') },
@@ -343,6 +359,8 @@ export const NAV: NavEntry[] = [
   { k: 'cms-faqs', l: 'FAQ Management', i: 'help', r: '/cms/faqs' },
   { k: 'cms-contact', l: 'Contact Page Management', i: 'mail', r: '/cms/contact' },
   { k: 'cms-footer', l: 'Footer Management', i: 'doc', r: '/cms/footer' },
+  /* The banner title and subtitle of five pages (About, FAQs, Programme, Check Status, Verify): one screen for all of them. */
+  { k: 'cms-pagebanners', l: 'Page Banners', i: 'monitor', r: '/cms/page-banners' },
   { k: 'cms-states', l: 'State Master', i: 'globe', r: '/cms/states' },
   { k: 'cms-districts', l: 'District Master', i: 'map', r: '/cms/districts' },
   { k: 'cms-talukas', l: 'Taluka Master', i: 'pin', r: '/cms/talukas' },
@@ -447,14 +465,15 @@ export const ADMIN_ROUTES: AdminRoute[] = [
    * activeKey() (AdminLayout) is the intended one; React Router itself ranks static segments higher.
    */
   /*
-   * The Contact page: a tabbed view, one Edit page per singleton section (page information and the two
-   * cards), and Add / Edit / View pages for each coordinator and district office. Static paths before
+   * The Contact page: a tabbed view, one Edit page per singleton section (page information, the two
+   * cards and the Helpline & WhatsApp details), and Add / Edit / View pages for each coordinator and district office. Static paths before
    * the :id patterns, and /:id/edit before /:id.
    */
   ['/cms/contact', 'cmsContactView', 'cms-contact'],
   ['/cms/contact/page/edit', 'cmsContactSectionEdit', 'cms-contact'],
   ['/cms/contact/amrut/edit', 'cmsContactSectionEdit', 'cms-contact'],
   ['/cms/contact/partner/edit', 'cmsContactSectionEdit', 'cms-contact'],
+  ['/cms/contact/helpline/edit', 'cmsContactSectionEdit', 'cms-contact'],
   ['/cms/contact/coordinators/create', 'cmsContactCoordinatorCreate', 'cms-contact'],
   ['/cms/contact/coordinators/:id/edit', 'cmsContactCoordinatorEdit', 'cms-contact'],
   ['/cms/contact/coordinators/:id', 'cmsContactCoordinatorView', 'cms-contact'],
@@ -463,6 +482,8 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/contact/offices/:id', 'cmsContactOfficeView', 'cms-contact'],
   ['/cms/footer', 'cmsFooterView', 'cms-footer'],
   ['/cms/footer/edit', 'cmsFooterEdit', 'cms-footer'],
+  /* Page Banners: one list page; each banner is edited in a dialog over it. */
+  ['/cms/page-banners', 'cmsPageBanners', 'cms-pagebanners'],
   ['/cms/modules', 'cmsModulesView', 'cms-modules'],
   ['/cms/modules/edit', 'cmsModulesEdit', 'cms-modules'],
   ['/cms/faqs', 'cmsFaqList', 'cms-faqs'],
@@ -480,7 +501,7 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/apply/:id/edit', 'cmsApplyEdit', 'cms-apply'],
   ['/cms/apply/:id', 'cmsApplyView', 'cms-apply'],
   /*
-   * Home Page Management: one tabbed page for the eleven home page menus (HOME_PAGE_TABS above). Each menu's
+   * Home Page Management: one tabbed page for the twelve home page menus (HOME_PAGE_TABS above). Each menu's
    * own pages stay under its key, so their permission checks still apply; its former landing page redirects
    * to its tab (HOME_PAGE_REDIRECTS, router.tsx).
    */
@@ -498,6 +519,22 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/announcements/:id/edit', 'cmsAnnouncementsEdit', 'cms-announcements'],
   ['/cms/announcements/:id/view', 'cmsAnnouncementsView', 'cms-announcements'],
   ['/cms/hero/edit', 'cmsHeroEdit', 'cms-hero'],
+  /* Quick Actions (the tiles under the banner): the static create path before the :id patterns. */
+  ['/cms/quick-actions/create', 'cmsQuickActionCreate', 'cms-quickactions'],
+  ['/cms/quick-actions/:id/edit', 'cmsQuickActionEdit', 'cms-quickactions'],
+  ['/cms/quick-actions/:id/view', 'cmsQuickActionView', 'cms-quickactions'],
+  /*
+   * Live Dashboard (the Programme Progress section under the quick actions): settings, then the KPI cards' and the
+   * side figures' pages, each kind's static create path before its :id patterns. The districts are edited in a
+   * dialog on the tab.
+   */
+  ['/cms/live-dashboard/settings', 'cmsLiveDashboardSettings', 'cms-livedashboard'],
+  ['/cms/live-dashboard/cards/create', 'cmsLiveDashboardCard', 'cms-livedashboard'],
+  ['/cms/live-dashboard/cards/:id/edit', 'cmsLiveDashboardCard', 'cms-livedashboard'],
+  ['/cms/live-dashboard/cards/:id/view', 'cmsLiveDashboardCardView', 'cms-livedashboard'],
+  ['/cms/live-dashboard/stats/create', 'cmsLiveDashboardStat', 'cms-livedashboard'],
+  ['/cms/live-dashboard/stats/:id/edit', 'cmsLiveDashboardStat', 'cms-livedashboard'],
+  ['/cms/live-dashboard/stats/:id/view', 'cmsLiveDashboardStatView', 'cms-livedashboard'],
   ['/cms/highlight/edit', 'cmsHighlightEdit', 'cms-highlight'],
   /*
    * Board members, programmes, schemes and statistics: static paths (create, settings) before the :id patterns,

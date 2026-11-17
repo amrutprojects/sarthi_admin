@@ -23,6 +23,8 @@ export const VISIBILITY_UPDATE_ACTION: Record<SectionVisibilityKey, Action> = {
   announcements: 'updateAnnouncement',
   hero: 'updateHero',
   glance: 'updateHero',
+  'quick-actions': 'updateQuickAction',
+  'live-dashboard': 'updateLiveDashboard',
   diploma: 'updateHighlight',
   board: 'updateBoardMember',
   impact: 'updateImpactStat',

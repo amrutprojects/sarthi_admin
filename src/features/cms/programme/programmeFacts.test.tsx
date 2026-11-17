@@ -32,7 +32,7 @@ const page = (): ApiProgrammePage => ({
     modes: [{ name: pair('ऑफलाइन', 'OFFLINE'), description: pair('वर्गात', 'In class') }],
     note: pair('टीप', 'Note'),
   },
-  facts: { idealMonths: 6, validityMonths: 12, securityDeposit: 2000, applyLeadDays: 30, partnerName: 'SUMAGO INFOTECH PVT LTD' },
+  facts: { idealMonths: '6', validityMonths: '12', securityDeposit: 2000, applyLeadDays: 30, partnerName: 'SUMAGO INFOTECH PVT LTD' },
   isPublished: true,
   updatedAt: '2026-10-01T10:00:00.000Z',
   hiddenFacts: [],
@@ -80,7 +80,7 @@ describe('Programme fact sheet', () => {
     await userEvent.type(screen.getByLabelText(/Security deposit/), '2000.5');
     await save();
     expect(await screen.findByText('Ideal duration is required')).toBeInTheDocument();
-    expect(screen.getByText('Validity must be at most 240')).toBeInTheDocument();
+    expect(screen.getByText('Validity is too large')).toBeInTheDocument();
     expect(screen.getByText('Security deposit must be a whole number')).toBeInTheDocument();
     expect(onSave).not.toHaveBeenCalled();
   });
@@ -93,7 +93,7 @@ describe('Programme fact sheet', () => {
     expect(vi.mocked(Element.prototype.scrollIntoView).mock.contexts[0]).toBe(screen.getByLabelText(/Security deposit/));
   });
 
-  it('sends the figures as numbers and the partner name trimmed', async () => {
+  it('sends the month figures as text, the other figures as numbers and the partner name trimmed', async () => {
     /* Rows hidden from the fact sheet are switched on the view page, so the form neither shows nor sends them. */
     vi.mocked(programmeService.get).mockResolvedValue({ ...page(), hiddenFacts: ['validity', 'partner'] });
     vi.mocked(programmeService.update).mockResolvedValue(page());
@@ -118,12 +118,44 @@ describe('Programme fact sheet', () => {
       'trainingModes',
     ]);
     expect(body.facts).toEqual({
-      idealMonths: 6,
-      validityMonths: 12,
+      idealMonths: '6',
+      validityMonths: '12',
       securityDeposit: 2500,
       applyLeadDays: 30,
       partnerName: 'SUMAGO INFOTECH PVT LTD',
     });
+  });
+
+  it('accepts a range of months for Ideal duration and Validity, saved in its normalised form', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    renderWithProviders(<ProgrammeForm initial={page()} backTo="/cms/programme" onSave={onSave} />);
+    /* Both month fields say a range is allowed. */
+    expect(screen.getAllByText(/A number of months, or a range such as 4-6/)).toHaveLength(2);
+    await userEvent.clear(screen.getByLabelText(/Ideal duration/));
+    await userEvent.type(screen.getByLabelText(/Ideal duration/), ' 4 – 6 ');
+    await userEvent.clear(screen.getByLabelText(/Validity/));
+    await userEvent.type(screen.getByLabelText(/Validity/), '4-6');
+    await save();
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    const body = onSave.mock.calls[0]![0] as { facts: Record<string, unknown> };
+    expect(body.facts.idealMonths).toBe('4-6');
+    expect(body.facts.validityMonths).toBe('4-6');
+  });
+
+  it.each([
+    ['4-6 months', 'Ideal duration must be a number of months or a range such as 4-6'],
+    ['06', 'Ideal duration must be a number of months or a range such as 4-6'],
+    ['6-4', 'Ideal duration: enter the smaller number first, e.g. 4-6'],
+    ['4-4', 'Ideal duration: enter the smaller number first, e.g. 4-6'],
+    ['100-121', 'Ideal duration is too large'],
+  ])('refuses %j for Ideal duration', async (typed, message) => {
+    const onSave = vi.fn();
+    renderWithProviders(<ProgrammeForm initial={page()} backTo="/cms/programme" onSave={onSave} />);
+    await userEvent.clear(screen.getByLabelText(/Ideal duration/));
+    await userEvent.type(screen.getByLabelText(/Ideal duration/), typed);
+    await save();
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    expect(onSave).not.toHaveBeenCalled();
   });
 
   it("puts the server's facts.* messages on the matching field", async () => {
@@ -138,6 +170,13 @@ describe('Programme fact sheet', () => {
     await save();
     await waitFor(() => expect(screen.getByLabelText(/Security deposit/)).toHaveAttribute('aria-invalid', 'true'));
     expect(screen.getByLabelText(/Security deposit/)).toHaveAccessibleDescription('Security deposit must be at most 10000000');
+  });
+
+  it('shows a range of months on the view page with an en dash', async () => {
+    vi.mocked(programmeService.get).mockResolvedValue({ ...page(), facts: { ...page().facts, idealMonths: '4-6', validityMonths: '6-12' } });
+    renderWithProviders(<ProgrammeView />, { route: '/cms/programme?tab=facts' });
+    expect(await screen.findByText('4–6 months')).toBeInTheDocument();
+    expect(screen.getByText('6–12 months')).toBeInTheDocument();
   });
 
   it('shows the fact sheet on the view page, with the deposit in Indian grouping', async () => {

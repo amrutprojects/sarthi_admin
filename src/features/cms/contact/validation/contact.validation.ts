@@ -2,6 +2,7 @@ import { validateWholeNumber, type FieldErrors } from '../../validation';
 import {
   ORG_TYPES,
   SECTION_ORG,
+  WHATSAPP_MESSAGE_MAX,
   type ApiContactOrganization,
   type ApiContactPage,
   type ApiCoordinator,
@@ -45,13 +46,15 @@ export interface OrgFormValues {
   isActive: boolean;
 }
 
-/* The banner and both cards, flattened so inputs bind to plain strings. Each Edit page changes one part. */
+/* The banner, both cards and the WhatsApp details, flattened so inputs bind to plain strings. Each Edit page changes one part. */
 export interface ContactFormValues {
   pageTitle: BilingualValue;
   pageSubtitle: BilingualValue;
   isPublished: boolean;
   amrut: OrgFormValues;
   partner: OrgFormValues;
+  whatsappNumber: string;
+  whatsappMessage: BilingualValue;
 }
 
 const emptyPair = (): BilingualValue => ({ mr: '', en: '' });
@@ -82,8 +85,17 @@ export function toFormValues(page: ApiContactPage): ContactFormValues {
     isPublished: page.isPublished,
     amrut: card('AMRUT', 0),
     partner: card('IMPLEMENTATION_PARTNER', 1),
+    /* Blank when a backend that predates the WhatsApp columns leaves them out. */
+    whatsappNumber: page.whatsappNumber ?? '',
+    whatsappMessage: pairOf(page.whatsappMessage ?? null),
   };
 }
+
+/* What the backend stores for the WhatsApp number: the spaces, "+" and "-" people type taken out. */
+export const whatsappDigits = (raw: string): string => raw.replace(/[\s+-]/g, '');
+
+/* The pre-filled message is one paragraph: line breaks and runs of spaces become single spaces, as the server stores it. */
+const oneParagraph = (s: string): string => s.replace(/\s+/g, ' ').trim();
 
 const trimPair = (p: BilingualValue): Bilingual => ({ mr: p.mr.trim(), en: p.en.trim() });
 const blankToNull = (s: string): string | null => (s.trim() ? s.trim() : null);
@@ -145,12 +157,15 @@ const savedCard = (o: ApiContactOrganization): ContactOrganizationInput => ({
  * The PUT body for one section's Edit page: the page as it was loaded, with only that section
  * changed. A card the PUT leaves out is retired, so the other card is sent back unchanged — and a
  * card that is not configured stays absent rather than being created empty. The coordinators and
- * district offices are not sent at all, so the backend leaves them as they are.
+ * district offices are not sent at all, so the backend leaves them as they are; nor are the WhatsApp
+ * details, except from their own page (the backend leaves omitted ones unchanged too).
  */
 export function toSectionPayload(page: ApiContactPage, section: ContactSection, v: ContactFormValues): UpdateContactPageInput {
   const edited = toPayload(v);
   const card = (type: OrgType): ContactOrganizationInput | undefined => {
-    if (section !== 'page' && SECTION_ORG[section] === type) return edited.organizations.find((o) => o.orgType === type);
+    if ((section === 'amrut' || section === 'partner') && SECTION_ORG[section] === type) {
+      return edited.organizations.find((o) => o.orgType === type);
+    }
     const saved = page.organizations.find((o) => o.orgType === type);
     return saved ? savedCard(saved) : undefined;
   };
@@ -159,6 +174,12 @@ export function toSectionPayload(page: ApiContactPage, section: ContactSection, 
     pageSubtitle: section === 'page' ? edited.pageSubtitle : { mr: page.pageSubtitle.mr, en: page.pageSubtitle.en },
     isPublished: section === 'page' ? edited.isPublished : page.isPublished,
     organizations: ORG_TYPES.map(card).filter((o): o is ContactOrganizationInput => Boolean(o)),
+    ...(section === 'helpline'
+      ? {
+          whatsappNumber: whatsappDigits(v.whatsappNumber),
+          whatsappMessage: { mr: oneParagraph(v.whatsappMessage.mr), en: oneParagraph(v.whatsappMessage.en) },
+        }
+      : {}),
   };
 }
 
@@ -244,8 +265,32 @@ export function validateContactSection(section: ContactSection, v: ContactFormVa
     pairErrors(errors, 'IMPLEMENTATION_PARTNER.helpdeskHours', v.partner.helpdeskHours, 'Helpdesk hours', 120);
   }
 
+  if (section === 'helpline') {
+    errors.whatsappNumber = validateWhatsappNumber(v.whatsappNumber);
+    /* Checked as it will be stored: one paragraph, so a pasted line break does not count against the limit. */
+    const message = optionalPair(
+      { mr: oneParagraph(v.whatsappMessage.mr), en: oneParagraph(v.whatsappMessage.en) },
+      'Pre-filled message',
+      WHATSAPP_MESSAGE_MAX,
+    );
+    errors['whatsappMessage.mr'] = message.mr;
+    errors['whatsappMessage.en'] = message.en;
+  }
+
   return errors;
 }
+
+/*
+ * Optional: blank means the WhatsApp button uses the AMRUT card's phone. Otherwise 10 to 15 digits with the
+ * country code, once spaces, "+" and "-" are taken out — wa.me links take nothing else.
+ */
+export const validateWhatsappNumber = (raw: string): string | undefined => {
+  const v = whatsappDigits(raw);
+  if (!v) return undefined;
+  if (!/^[0-9]+$/.test(v)) return 'WhatsApp number may use digits only (spaces, + and - are ignored)';
+  if (v.length < 10 || v.length > 15) return 'WhatsApp number must have 10 to 15 digits, including the country code';
+  return undefined;
+};
 
 /* ---------------- coordinators & district offices ---------------- */
 

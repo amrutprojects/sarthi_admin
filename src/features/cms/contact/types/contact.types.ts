@@ -66,6 +66,13 @@ export interface ApiContactPage {
   pageTitle: Bilingual;
   pageSubtitle: Bilingual;
   isPublished: boolean;
+  /*
+   * The website's floating WhatsApp button: digits with the country code ('' = the AMRUT card's phone), and the
+   * message typed into the chat for the visitor (both halves '' = the website's default message). The Helpline
+   * popup has no fields of its own: it reads the AMRUT and implementation partner cards.
+   */
+  whatsappNumber: string;
+  whatsappMessage: Bilingual;
   createdAt: string;
   updatedAt: string;
   organizations: ApiContactOrganization[];
@@ -97,6 +104,9 @@ export interface UpdateContactPageInput {
   pageSubtitle: Bilingual;
   isPublished: boolean;
   organizations: ContactOrganizationInput[];
+  /* Optional: left out, the saved WhatsApp details stay as they are. Only the Helpline & WhatsApp page sends them. */
+  whatsappNumber?: string;
+  whatsappMessage?: Bilingual;
 }
 
 export interface CreateCoordinatorInput {
@@ -141,6 +151,7 @@ export const CONTACT_FIELDS = [
   'IMPLEMENTATION_PARTNER.role.mr', 'IMPLEMENTATION_PARTNER.role.en',
   'IMPLEMENTATION_PARTNER.email',
   'IMPLEMENTATION_PARTNER.helpdeskHours.mr', 'IMPLEMENTATION_PARTNER.helpdeskHours.en',
+  'whatsappNumber', 'whatsappMessage.mr', 'whatsappMessage.en',
 ] as const;
 
 export type ContactField = (typeof CONTACT_FIELDS)[number];
@@ -156,13 +167,15 @@ export const OFFICE_FIELDS = [
 export type OfficeField = (typeof OFFICE_FIELDS)[number];
 
 /*
- * The five tabs of Contact Page Management, one per section of the public Contact page. The active tab
- * is kept in the URL (?tab=), as on Modules Page Management.
+ * The six tabs of Contact Page Management: one per section of the public Contact page, and the Helpline &
+ * WhatsApp details every page's floating buttons take from it. The active tab is kept in the URL (?tab=), as
+ * on Modules Page Management.
  */
 export const CONTACT_TABS = [
   { k: 'page', l: 'Page information' },
   { k: 'amrut', l: 'AMRUT contact details' },
   { k: 'partner', l: 'Implementation partner' },
+  { k: 'helpline', l: 'Helpline & WhatsApp' },
   { k: 'coordinators', l: 'District / cluster coordinators' },
   { k: 'offices', l: 'District offices' },
 ] as const;
@@ -172,14 +185,18 @@ export type ContactTab = (typeof CONTACT_TABS)[number]['k'];
 export const contactListPath = (tab: ContactTab): string => `/cms/contact?tab=${tab}`;
 
 /*
- * The three sections saved with the whole-page PUT, each edited on its own page
+ * The four sections saved with the whole-page PUT, each edited on its own page
  * (/cms/contact/<section>/edit). The coordinators and district offices are records with their own pages.
  */
-export const CONTACT_SECTIONS = ['page', 'amrut', 'partner'] as const;
+export const CONTACT_SECTIONS = ['page', 'amrut', 'partner', 'helpline'] as const;
 export type ContactSection = (typeof CONTACT_SECTIONS)[number];
 
-/* The card each card section edits. */
-export const SECTION_ORG: Record<Exclude<ContactSection, 'page'>, OrgType> = { amrut: 'AMRUT', partner: 'IMPLEMENTATION_PARTNER' };
+/* The sections that edit one card, and the card each one edits. */
+export type CardSection = 'amrut' | 'partner';
+export const SECTION_ORG: Record<CardSection, OrgType> = { amrut: 'AMRUT', partner: 'IMPLEMENTATION_PARTNER' };
+
+/* The longest pre-filled WhatsApp message, in each language (the column is varchar(500)). */
+export const WHATSAPP_MESSAGE_MAX = 500;
 
 /* The order the cards are sent in, which is also the order the website shows them. */
 export const ORG_TYPES: readonly OrgType[] = ['AMRUT', 'IMPLEMENTATION_PARTNER'];

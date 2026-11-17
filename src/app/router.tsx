@@ -68,6 +68,7 @@ const PAGES: Record<RouteName, LazyExoticComponent<ComponentType>> = {
   cmsContactOfficeView: page(() => import('../features/cms/contact/pages/DistrictOfficeView')),
   cmsFooterView: page(() => import('../features/cms/footer/pages/FooterView')),
   cmsFooterEdit: page(() => import('../features/cms/footer/pages/FooterEdit')),
+  cmsPageBanners: page(() => import('../features/cms/pagebanners/pages/PageBannersPage')),
   cmsModulesView: page(() => import('../features/cms/modules/pages/ModulesView')),
   cmsModulesEdit: page(() => import('../features/cms/modules/pages/ModulesEdit')),
   cmsFaqList: page(() => import('../features/cms/faq/pages/FaqList')),
@@ -95,6 +96,14 @@ const PAGES: Record<RouteName, LazyExoticComponent<ComponentType>> = {
   cmsAnnouncementsSettings: page(() => import('../features/cms/announcements/pages/AnnouncementsSettingsEdit')),
   cmsAnnouncementsView: page(() => import('../features/cms/announcements/pages/AnnouncementView')),
   cmsHeroEdit: page(() => import('../features/cms/hero/pages/HeroEdit')),
+  cmsQuickActionCreate: page(() => import('../features/cms/quickactions/pages/QuickActionCreate')),
+  cmsQuickActionEdit: page(() => import('../features/cms/quickactions/pages/QuickActionEdit')),
+  cmsQuickActionView: page(() => import('../features/cms/quickactions/pages/QuickActionView')),
+  cmsLiveDashboardSettings: page(() => import('../features/cms/livedashboard/pages/LiveDashboardSettingsEdit')),
+  cmsLiveDashboardCard: page(() => import('../features/cms/livedashboard/pages/CardEditorPage')),
+  cmsLiveDashboardCardView: page(() => import('../features/cms/livedashboard/pages/CardView')),
+  cmsLiveDashboardStat: page(() => import('../features/cms/livedashboard/pages/StatEditorPage')),
+  cmsLiveDashboardStatView: page(() => import('../features/cms/livedashboard/pages/StatView')),
   cmsHighlightEdit: page(() => import('../features/cms/highlight/pages/HighlightEdit')),
   cmsBoardCreate: page(() => import('../features/cms/board/pages/BoardMemberCreate')),
   cmsBoardEdit: page(() => import('../features/cms/board/pages/BoardMemberEdit')),
@@ -266,7 +275,7 @@ export function AppRoutes() {
             );
           })}
           {/*
-           * The ten home page menus share Home Page Management: each one's former landing page opens its tab, and
+           * The twelve home page menus share Home Page Management: each one's former landing page opens its tab, and
            * the page applies the access rules (an unknown or forbidden tab falls back to the first one the user may open).
            */}
           {HOME_PAGE_REDIRECTS.map(([path, tab]) => (

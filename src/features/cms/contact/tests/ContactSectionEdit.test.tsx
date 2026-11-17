@@ -30,6 +30,7 @@ const renderAt = (route: string) =>
         <Route path="/cms/contact/page/edit" element={<ContactSectionEdit />} />
         <Route path="/cms/contact/amrut/edit" element={<ContactSectionEdit />} />
         <Route path="/cms/contact/partner/edit" element={<ContactSectionEdit />} />
+        <Route path="/cms/contact/helpline/edit" element={<ContactSectionEdit />} />
         <Route path="/cms/contact" element={<div>contact view</div>} />
       </Routes>
       <Location />
@@ -91,6 +92,9 @@ describe('<ContactSectionEdit>', () => {
     const sent = svc.update.mock.calls[0]![0];
     expect(sent).not.toHaveProperty('coordinators');
     expect(sent).not.toHaveProperty('districtOffices');
+    /* So are the WhatsApp details, which only their own page sends. */
+    expect(sent).not.toHaveProperty('whatsappNumber');
+    expect(sent).not.toHaveProperty('whatsappMessage');
 
     await waitFor(() => expect(toasts()).toHaveTextContent('AMRUT contact details updated'));
     expect(location()).toHaveTextContent('/cms/contact?tab=amrut');
@@ -174,6 +178,98 @@ describe('<ContactSectionEdit>', () => {
         isActive: true,
       },
     ]);
+  });
+
+  it('saves the WhatsApp number as digits and the message as one paragraph, leaving the rest of the page as loaded', async () => {
+    renderAt('/cms/contact/helpline/edit');
+
+    expect(await screen.findByRole('heading', { name: 'Edit Helpline & WhatsApp' })).toBeInTheDocument();
+    const number = await screen.findByLabelText(/^WhatsApp number/);
+    expect(number).toHaveValue('');
+    expect(screen.getByText('Digits with country code, e.g. 919730151450. Leave blank to use the AMRUT phone number above.')).toBeInTheDocument();
+    expect(screen.getByText('Typed into the chat for the visitor; leave both blank for the default message.')).toBeInTheDocument();
+    /* Nothing from the other sections. */
+    expect(screen.queryByLabelText(/^Page title/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Organisation name/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Show this card/)).not.toBeInTheDocument();
+
+    await userEvent.type(number, '+91 98765-43210');
+    await userEvent.type(screen.getByLabelText(/^Pre-filled message \(Marathi\)/), 'नमस्कार,{Enter}माहिती हवी आहे.');
+    await userEvent.type(screen.getByLabelText(/^Pre-filled message \(English\)/), '  Hello,   I would like to know more. ');
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      'Are you sure you want to save the changes to the Helpline & WhatsApp details? They appear on the public website straight away.',
+    );
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Yes, save' }));
+
+    await waitFor(() =>
+      expect(svc.update).toHaveBeenCalledWith({
+        pageTitle: { mr: 'संपर्क', en: 'Contact us' },
+        pageSubtitle: { mr: 'आमच्याशी बोला', en: 'Talk to us' },
+        isPublished: true,
+        organizations: [amrutAsSent, partnerAsSent],
+        whatsappNumber: '919876543210',
+        whatsappMessage: { mr: 'नमस्कार, माहिती हवी आहे.', en: 'Hello, I would like to know more.' },
+      }),
+    );
+    await waitFor(() => expect(toasts()).toHaveTextContent('Helpline & WhatsApp updated'));
+    expect(location()).toHaveTextContent('/cms/contact?tab=helpline');
+  });
+
+  it('saves blank WhatsApp details as "use the fallbacks"', async () => {
+    svc.get.mockResolvedValue(contactPage({ whatsappNumber: '919876543210', whatsappMessage: { mr: 'नमस्कार', en: 'Hello' } }));
+    renderAt('/cms/contact/helpline/edit');
+
+    const number = await screen.findByLabelText(/^WhatsApp number/);
+    expect(number).toHaveValue('919876543210');
+    expect(screen.getByLabelText(/^Pre-filled message \(Marathi\)/)).toHaveValue('नमस्कार');
+    await userEvent.clear(number);
+    await userEvent.clear(screen.getByLabelText(/^Pre-filled message \(Marathi\)/));
+    await userEvent.clear(screen.getByLabelText(/^Pre-filled message \(English\)/));
+    await saveAndConfirm();
+
+    await waitFor(() => expect(svc.update).toHaveBeenCalledTimes(1));
+    expect(svc.update.mock.calls[0]![0]).toMatchObject({ whatsappNumber: '', whatsappMessage: { mr: '', en: '' } });
+  });
+
+  it('checks the WhatsApp number and that the message is in both languages or neither', async () => {
+    renderAt('/cms/contact/helpline/edit');
+
+    const number = await screen.findByLabelText(/^WhatsApp number/);
+    await userEvent.type(number, '97301 5145');
+    await userEvent.type(screen.getByLabelText(/^Pre-filled message \(English\)/), 'Hello');
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(await screen.findByText('WhatsApp number must have 10 to 15 digits, including the country code')).toBeInTheDocument();
+    expect(number).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByText('Pre-filled message (Marathi) is required when English is given')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    await userEvent.clear(number);
+    await userEvent.type(number, '91 97301 5145O');
+    expect(screen.getByText('WhatsApp number may use digits only (spaces, + and - are ignored)')).toBeInTheDocument();
+    expect(svc.update).not.toHaveBeenCalled();
+  });
+
+  it("puts the server's WhatsApp messages on the inputs they name", async () => {
+    svc.update.mockRejectedValue(
+      new ApiError('Validation failed', 422, 'VALIDATION_ERROR', [
+        { field: 'body.whatsappNumber', message: 'WhatsApp number must have 10 to 15 digits' },
+        { field: 'body.whatsappMessage', message: 'Pre-filled message must be one paragraph' },
+      ]),
+    );
+    renderAt('/cms/contact/helpline/edit');
+
+    await userEvent.type(await screen.findByLabelText(/^WhatsApp number/), '919876543210');
+    await saveAndConfirm();
+
+    expect(await screen.findByText('WhatsApp number must have 10 to 15 digits')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^WhatsApp number/)).toHaveAttribute('aria-invalid', 'true');
+    /* A message about the pair as a whole sits on its Marathi half. */
+    expect(screen.getByText('Pre-filled message must be one paragraph')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Pre-filled message \(Marathi\)/)).toHaveAttribute('aria-invalid', 'true');
+    expect(toasts()).toBeEmptyDOMElement();
+    expect(location()).toHaveTextContent('/cms/contact/helpline/edit');
   });
 
   it('returns to its tab on Back and on Cancel', async () => {

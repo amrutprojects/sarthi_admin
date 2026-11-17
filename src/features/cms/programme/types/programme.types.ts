@@ -29,8 +29,10 @@ export interface TrainingModes {
  * from the modules, so they cannot contradict the Modules page.
  */
 export interface ProgrammeFacts {
-  idealMonths: number;
-  validityMonths: number;
+  /** A number of months or a range of them, normalised: "6" or "4-6" (validation/months.ts). */
+  idealMonths: string;
+  /** Same form as idealMonths: "12" or "6-12". */
+  validityMonths: string;
   securityDeposit: number;
   applyLeadDays: number;
   partnerName: string;

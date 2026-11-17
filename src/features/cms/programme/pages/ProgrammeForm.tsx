@@ -15,24 +15,30 @@ import type {
   TrainingMode,
   UpdateProgrammePageInput,
 } from '../types/programme.types';
+import { monthsError, normaliseMonths } from '../validation/months';
 
 const FORM_ID = 'programme-form';
+const MONTHS_HINT = 'A number of months, or a range such as 4-6. The site adds “months”.';
 const blank = (): Bilingual => ({ mr: '', en: '' });
 type Errors = Record<string, string>;
 
 /*
  * The fact sheet is held as typed text, so a cleared figure reads as "required" on save instead of
- * quietly becoming 0. It turns into numbers only in toInput.
+ * quietly becoming 0. In toInput the two month figures are normalised ("4 – 6" → "4-6") and the other
+ * two turn into numbers.
  */
 type FactsValues = { [K in keyof ProgrammeFacts]: string };
-type FactNumber = Exclude<keyof ProgrammeFacts, 'partnerName'>;
+/* Ideal duration and Validity: a number of months or a range ("4-6"). */
+type FactMonths = 'idealMonths' | 'validityMonths';
+/* Security deposit and Apply before: whole numbers. */
+type FactNumber = Exclude<keyof ProgrammeFacts, 'partnerName' | FactMonths>;
 type FormValues = Omit<UpdateProgrammePageInput, 'facts'> & { facts: FactsValues };
 
 const toInput = ({ facts, ...rest }: FormValues): UpdateProgrammePageInput => ({
   ...rest,
   facts: {
-    idealMonths: Number(facts.idealMonths.trim()),
-    validityMonths: Number(facts.validityMonths.trim()),
+    idealMonths: normaliseMonths(facts.idealMonths),
+    validityMonths: normaliseMonths(facts.validityMonths),
     securityDeposit: Number(facts.securityDeposit.trim()),
     applyLeadDays: Number(facts.applyLeadDays.trim()),
     partnerName: facts.partnerName.trim(),
@@ -72,7 +78,14 @@ function validate(v: FormValues): Errors {
   if (!v.trainingModes.modes.length) e['trainingModes.modes'] = 'Add at least one training mode';
   pair('trainingModes.note', v.trainingModes.note, 'Note');
 
-  /* The fact sheet: whole numbers within the backend's bounds, and the partner's registered name. */
+  /*
+   * The fact sheet: the two month figures as a number or a range (validation/months.ts), the other two as whole
+   * numbers, each within the backend's bounds, and the partner's registered name.
+   */
+  const months = (key: FactMonths, label: string, max: number) => {
+    const problem = monthsError(v.facts[key], label, max);
+    if (problem) e[`facts.${key}`] = problem;
+  };
   const whole = (key: FactNumber, label: string, max: number) => {
     const raw = v.facts[key].trim();
     const n = Number(raw);
@@ -82,8 +95,8 @@ function validate(v: FormValues): Errors {
     else if (n < 0) e[`facts.${key}`] = `${label} must be at least 0`;
     else if (n > max) e[`facts.${key}`] = `${label} must be at most ${max}`;
   };
-  whole('idealMonths', 'Ideal duration', 120);
-  whole('validityMonths', 'Validity', 240);
+  months('idealMonths', 'Ideal duration', 120);
+  months('validityMonths', 'Validity', 240);
   whole('securityDeposit', 'Security deposit', 10_000_000);
   whole('applyLeadDays', 'Apply before', 365);
   const partner = v.facts.partnerName.trim();
@@ -216,16 +229,20 @@ export default function ProgrammeForm({
   const set = <K extends keyof FormValues>(k: K, next: FormValues[K]) => setV((s) => ({ ...s, [k]: next }));
   const pairErrors = (path: string) => ({ errorMr: errors[`${path}.mr`], errorEn: errors[`${path}.en`] });
 
-  /* One fact-sheet figure: typed as text, checked as a whole number on save. */
-  const factNumber = (key: FactNumber, label: string, hint?: string) => {
+  /*
+   * One fact-sheet figure, typed as text and checked on save: a whole number, or for the two month figures a number
+   * or a range. Those get the full keyboard on phones, which a numeric one would not offer the dash on.
+   */
+  const factNumber = (key: FactNumber | FactMonths, label: string, hint?: string) => {
     const id = `pf-facts-${key}`;
     const error = errors[`facts.${key}`];
+    const isMonths = key === 'idealMonths' || key === 'validityMonths';
     return (
       <MasterField id={id} label={label} required error={error} hint={hint}>
         <input
           className="inp mono"
           type="text"
-          inputMode="numeric"
+          inputMode={isMonths ? 'text' : 'numeric'}
           autoComplete="off"
           {...fieldAria(id, error)}
           value={v.facts[key]}
@@ -424,8 +441,8 @@ export default function ProgrammeForm({
             </Callout>
 
             <div className="grid g2 mt14">
-              {factNumber('idealMonths', 'Ideal duration (months)')}
-              {factNumber('validityMonths', 'Validity (months)')}
+              {factNumber('idealMonths', 'Ideal duration (months)', MONTHS_HINT)}
+              {factNumber('validityMonths', 'Validity (months)', MONTHS_HINT)}
               {factNumber(
                 'securityDeposit',
                 'Security deposit (₹)',

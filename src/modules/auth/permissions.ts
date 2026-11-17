@@ -54,6 +54,7 @@ const MENU_KEYS = [
   'app',
   'cms-contact',
   'cms-footer',
+  'cms-pagebanners',
   'cms-modules',
   'cms-faqs',
   'cms-eligibility',
@@ -63,6 +64,8 @@ const MENU_KEYS = [
   'cms-navmenu',
   'cms-announcements',
   'cms-hero',
+  'cms-quickactions',
+  'cms-livedashboard',
   'cms-highlight',
   'cms-board',
   'cms-ecosystem',
@@ -98,7 +101,7 @@ const MENU_KEYS = [
   'settings',
 ];
 /*
- * Sidebar entries that gather other menus on one page: Home Page Management, whose tabs are the eleven home page
+ * Sidebar entries that gather other menus on one page: Home Page Management, whose tabs are the twelve home page
  * menus (constants/navigation.ts: HOME_PAGE_TABS). Such an entry has no permission codes or Menu Visibility row
  * of its own; it opens when any of its menus opens (canOpen below), and each tab and each menu's own pages still
  * check their own menu.
@@ -110,6 +113,8 @@ export const MENU_GROUPS: Readonly<Record<string, readonly string[]>> = {
     'cms-navmenu',
     'cms-announcements',
     'cms-hero',
+    'cms-quickactions',
+    'cms-livedashboard',
     'cms-highlight',
     'cms-board',
     'cms-impact',
@@ -175,6 +180,8 @@ export const ACTION_ACCESS = {
   updateContactPage: ['cms-contact.update'],
   viewFooter: ['cms-footer.view'],
   updateFooter: ['cms-footer.update'],
+  viewPageBanners: ['cms-pagebanners.view'],
+  updatePageBanners: ['cms-pagebanners.update'],
   viewModulesPage: ['cms-modules.view'],
   updateModulesPage: ['cms-modules.update'],
   viewFaqs: ['cms-faqs.view'],
@@ -203,6 +210,14 @@ export const ACTION_ACCESS = {
   deleteAnnouncement: ['cms-announcements.delete'],
   viewHero: ['cms-hero.view'],
   updateHero: ['cms-hero.update'],
+  viewQuickActions: ['cms-quickactions.view'],
+  createQuickAction: ['cms-quickactions.create'],
+  updateQuickAction: ['cms-quickactions.update'],
+  deleteQuickAction: ['cms-quickactions.delete'],
+  viewLiveDashboard: ['cms-livedashboard.view'],
+  createLiveDashboardItem: ['cms-livedashboard.create'],
+  updateLiveDashboard: ['cms-livedashboard.update'],
+  deleteLiveDashboardItem: ['cms-livedashboard.delete'],
   viewHighlight: ['cms-highlight.view'],
   updateHighlight: ['cms-highlight.update'],
   viewBoardMembers: ['cms-board.view'],
@@ -332,6 +347,8 @@ export const WEBSITE_MENUS: readonly string[] = [
   'cms-navmenu',
   'cms-announcements',
   'cms-hero',
+  'cms-quickactions',
+  'cms-livedashboard',
   'cms-highlight',
   'cms-board',
   'cms-impact',
@@ -346,6 +363,7 @@ export const WEBSITE_MENUS: readonly string[] = [
   'cms-faqs',
   'cms-contact',
   'cms-footer',
+  'cms-pagebanners',
   'cms-states',
   'cms-districts',
   'cms-talukas',

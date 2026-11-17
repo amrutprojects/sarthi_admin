@@ -23,8 +23,14 @@ import { ecosystemService } from '../../ecosystem/services/ecosystemService';
 import { heroService } from '../../hero/services/heroService';
 import { highlightService } from '../../highlight/services/highlightService';
 import { impactService } from '../../impact/services/impactService';
+import {
+  liveDashboardCardsService,
+  liveDashboardService,
+  liveDashboardStatsService,
+} from '../../livedashboard/services/liveDashboardService';
 import { NAV_MENU_ITEMS } from '../../navmenu/constants';
 import { navMenuService } from '../../navmenu/services/navMenuService';
+import { quickActionsService } from '../../quickactions/services/quickActionsService';
 import { schemesService } from '../../schemes/services/schemesService';
 import { fmtDateTime } from '../../shared';
 import { topBarService } from '../../topbar/services/topBarService';
@@ -77,6 +83,12 @@ vi.mock('../../brandbar/services/brandBarService', () => ({ brandBarService: { g
 vi.mock('../../navmenu/services/navMenuService', () => ({ navMenuService: { list: vi.fn(), set: vi.fn() } }));
 vi.mock('../../announcements/services/announcementsService', () => ({ announcementsService: listService() }));
 vi.mock('../../hero/services/heroService', () => ({ heroService: { get: vi.fn(), update: vi.fn() } }));
+vi.mock('../../quickactions/services/quickActionsService', () => ({ quickActionsService: listService() }));
+vi.mock('../../livedashboard/services/liveDashboardService', () => ({
+  liveDashboardCardsService: listService(),
+  liveDashboardStatsService: listService(),
+  liveDashboardService: { getSettings: vi.fn(), updateSettings: vi.fn(), listDistricts: vi.fn(), updateDistrict: vi.fn() },
+}));
 vi.mock('../../highlight/services/highlightService', () => ({ highlightService: { get: vi.fn(), update: vi.fn() } }));
 /* Each tab's "Show on website" switch (features/cms/visibility has its own tests). */
 vi.mock('../../visibility/visibilityService', () => ({ visibilityService: { list: vi.fn(), set: vi.fn() } }));
@@ -157,6 +169,45 @@ const hero = () => ({
   glance: { totalHours: 480, modules: 4, domains: 10, districtCount: 36, modulesLabel: '4 × 120 hours', hiddenModules: 0 },
   ...T,
 });
+const quickAction = {
+  id: 'qa1',
+  title: pair('अर्ज करा', 'Apply Now'),
+  subtitle: pair('नवीन नोंदणी करा', 'Register as a new candidate'),
+  icon: 'plus',
+  link: '/apply',
+  displayOrder: 1,
+  isActive: true,
+  ...T,
+};
+const dashboardSettings = {
+  id: 'ld',
+  heading: pair('थेट डॅशबोर्ड', 'Live dashboard heading'),
+  subtitle: BLANK,
+  showSection: true,
+  disclaimer: BLANK,
+  showDisclaimer: false,
+  mapTitle: pair('नकाशा', 'Map'),
+  showMap: true,
+  modesTitle: pair('पद्धती', 'Modes'),
+  showModes: true,
+  offlineLabel: pair('ऑफलाइन', 'Offline'),
+  onlineLabel: pair('ऑनलाइन', 'Online'),
+  offlineCount: 800,
+  onlineCount: 200,
+  donutCenterLabel: pair('प्रवेशित', 'enrolled'),
+  ...T,
+};
+const dashboardCard = {
+  id: 'kc1',
+  label: pair('एकूण लक्ष्य', 'Dashboard total target'),
+  value: '2,000',
+  detail: BLANK,
+  link: '/programme',
+  tone: 'blue' as const,
+  displayOrder: 1,
+  isActive: true,
+  ...T,
+};
 const highlight = () => ({
   id: 'p1',
   heading: pair('कौशल्य विकास पदविका', 'Diploma band heading'),
@@ -251,6 +302,8 @@ const HOME_PAGE_MENUS = [
   'cms-navmenu',
   'cms-announcements',
   'cms-hero',
+  'cms-quickactions',
+  'cms-livedashboard',
   'cms-highlight',
   'cms-board',
   'cms-impact',
@@ -265,6 +318,8 @@ const LABELS = [
   'Announcements',
   'AMRUT Kalash – apply online',
   'Programme at a glance',
+  'Quick Actions',
+  'Live Dashboard',
   'Skill Development Diploma',
   'Leadership & Governing Board',
   "AMRUT's Impact",
@@ -280,6 +335,9 @@ const CONTENT: Record<string, string> = {
   Announcements: 'Announcement title',
   'AMRUT Kalash – apply online': 'Hero slide heading',
   'Programme at a glance': '36 (entered)',
+  /* The tile's title is in the table and in the preview under it; the count tag is the tab's alone. */
+  'Quick Actions': '1 listed, 1 shown on the website',
+  'Live Dashboard': 'Live dashboard heading',
   'Skill Development Diploma': 'Diploma band heading',
   'Leadership & Governing Board': 'Board Member One',
   "AMRUT's Impact": 'Impact districts',
@@ -325,6 +383,11 @@ beforeEach(() => {
   vi.mocked(announcementsService.list).mockResolvedValue([announcement]);
   vi.mocked(announcementsService.getSection).mockResolvedValue(announcementsSection);
   vi.mocked(heroService.get).mockResolvedValue(hero());
+  vi.mocked(quickActionsService.list).mockResolvedValue([quickAction]);
+  vi.mocked(liveDashboardService.getSettings).mockResolvedValue(dashboardSettings);
+  vi.mocked(liveDashboardCardsService.list).mockResolvedValue([dashboardCard]);
+  vi.mocked(liveDashboardStatsService.list).mockResolvedValue([]);
+  vi.mocked(liveDashboardService.listDistricts).mockResolvedValue([]);
   vi.mocked(highlightService.get).mockResolvedValue(highlight());
   vi.mocked(boardService.list).mockResolvedValue([member]);
   vi.mocked(boardService.getSection).mockResolvedValue(boardSection);
@@ -397,7 +460,7 @@ describe('Home Page Management', () => {
     /* The section actions a Website Admin's update rights allow, in the tab's own head. */
     await userEvent.click(screen.getByRole('tab', { name: 'Skill Development Diploma' }));
     expect(await within(screen.getByRole('tabpanel')).findByRole('button', { name: 'Edit content' })).toBeInTheDocument();
-    /* Opens every one of the twelve tabs in turn, so it needs more than the default 5 s on a busy run. */
+    /* Opens every one of the fourteen tabs in turn, so it needs more than the default 5 s on a busy run. */
   }, 15_000);
 
   it('opens the tab named in ?tab=', async () => {
@@ -433,7 +496,18 @@ describe('Home Page Management', () => {
   it('hides the tabs of the menus that Menu Visibility hides', async () => {
     signInAs(
       HOME_PAGE_MENUS.map((m) => `${m}.view`),
-      { hidden: ['cms-topbar', 'cms-brandbar', 'cms-navmenu', 'cms-announcements', 'cms-hero', 'cms-schemes'] },
+      {
+        hidden: [
+          'cms-topbar',
+          'cms-brandbar',
+          'cms-navmenu',
+          'cms-announcements',
+          'cms-hero',
+          'cms-quickactions',
+          'cms-livedashboard',
+          'cms-schemes',
+        ],
+      },
     );
     renderApp('/cms/home-page');
 
@@ -448,6 +522,8 @@ describe('Home Page Management', () => {
             'Announcements',
             'AMRUT Kalash – apply online',
             'Programme at a glance',
+            'Quick Actions',
+            'Live Dashboard',
             'AMRUT Schemes',
           ].includes(l),
       ),
@@ -456,6 +532,8 @@ describe('Home Page Management', () => {
     expect(brandBarService.get).not.toHaveBeenCalled();
     expect(navMenuService.list).not.toHaveBeenCalled();
     expect(announcementsService.list).not.toHaveBeenCalled();
+    expect(quickActionsService.list).not.toHaveBeenCalled();
+    expect(liveDashboardService.getSettings).not.toHaveBeenCalled();
   });
 
   it('applies the same rules in the website portal', async () => {
@@ -481,6 +559,8 @@ describe('Home Page Management', () => {
       ['/cms/nav-menu', 'Navigation Menu'],
       ['/cms/announcements', 'Announcements'],
       ['/cms/hero', 'AMRUT Kalash – apply online'],
+      ['/cms/quick-actions', 'Quick Actions'],
+      ['/cms/live-dashboard', 'Live Dashboard'],
       ['/cms/highlight', 'Skill Development Diploma'],
       ['/cms/board-members', 'Leadership & Governing Board'],
       ['/cms/impact', "AMRUT's Impact"],
@@ -505,6 +585,9 @@ describe('a home page section’s own pages', () => {
     ['/cms/brand-bar/edit', 'Edit', 'Cancel', 'Brand Bar'],
     ['/cms/announcements/create', 'Add announcement', 'Back', 'Announcements'],
     ['/cms/announcements/settings', 'Ticker settings', 'Cancel', 'Announcements'],
+    ['/cms/quick-actions/create', 'Add quick action', 'Back', 'Quick Actions'],
+    ['/cms/live-dashboard/settings', 'Section settings', 'Cancel', 'Live Dashboard'],
+    ['/cms/live-dashboard/cards/create', 'Add KPI card', 'Back', 'Live Dashboard'],
     ['/cms/highlight/edit', 'Edit', 'Back', 'Skill Development Diploma'],
     ['/cms/board-members/settings', 'Section settings', 'Back', 'Leadership & Governing Board'],
     ['/cms/board-members/create', 'Add Member', 'Cancel', 'Leadership & Governing Board'],
@@ -557,6 +640,8 @@ describe('a home page table’s View pages', () => {
   beforeEach(() => {
     vi.mocked(topBarService.get).mockResolvedValue(topBarLink);
     vi.mocked(announcementsService.get).mockResolvedValue(announcement);
+    vi.mocked(quickActionsService.get).mockResolvedValue(quickAction);
+    vi.mocked(liveDashboardCardsService.get).mockResolvedValue(dashboardCard);
     vi.mocked(boardService.get).mockResolvedValue(member);
     vi.mocked(impactService.get).mockResolvedValue(stat);
     vi.mocked(ecosystemService.get).mockResolvedValue(programme);
@@ -569,6 +654,8 @@ describe('a home page table’s View pages', () => {
   const rows: [HomePageTab, string, string, string][] = [
     ['top-bar', 'Verify Certificate', '/cms/top-bar/tb1/view', 'cmsTopBarView'],
     ['announcements', 'Announcement title', '/cms/announcements/an1/view', 'cmsAnnouncementsView'],
+    ['quick-actions', 'Apply Now', '/cms/quick-actions/qa1/view', 'cmsQuickActionView'],
+    ['live-dashboard', 'Dashboard total target', '/cms/live-dashboard/cards/kc1/view', 'cmsLiveDashboardCardView'],
     ['board', 'Board Member One', `/cms/board-members/${member.id}/view`, 'cmsBoardView'],
     ['impact', 'Impact districts', '/cms/impact/i1/view', 'cmsImpactView'],
     ['ecosystem', 'Ecosystem programme', '/cms/amrut-ecosystem/e1/view', 'cmsEcosystemView'],
