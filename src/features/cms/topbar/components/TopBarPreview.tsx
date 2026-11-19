@@ -1,3 +1,4 @@
+import { localiseDigits } from '../numerals';
 import type { Bilingual } from '../types/topbar.types';
 
 /*
@@ -44,16 +45,20 @@ function LanguageSwitchPreview({ active }: { active: 'mr' | 'en' }) {
 /*
  * The strip at the very top of the website (.gov-strip in amrut-public.css): the government name in bold on the
  * left, the link buttons, and the language switch on the right when it is enabled. In Marathi and English, one
- * strip each. Text is rendered as text, exactly as the site does.
+ * strip each. Text is rendered as text, exactly as the site does — including the Marathi strip's figures in
+ * Devanagari digits while the Marathi numerals setting is on.
  */
 export default function TopBarPreview({
   governmentName,
   showLanguageToggle,
+  marathiNumerals = true,
   buttons,
 }: {
   /* Null (or blank in both languages): the bold text is left out. */
   governmentName: Bilingual | null;
   showLanguageToggle: boolean;
+  /* The "Show numbers in Marathi digits" setting; on (the website's default) unless given. */
+  marathiNumerals?: boolean;
   /*
    * The link buttons, left to right. A blank label draws a placeholder; a link that is not a page of the site
    * (typed so far or saved) gets an arrow, as in the announcements preview.
@@ -61,7 +66,9 @@ export default function TopBarPreview({
   buttons: { label: Bilingual; link: string }[];
 }) {
   const strip = (lang: 'mr' | 'en') => {
-    const name = governmentName?.[lang].trim();
+    /* What the website's bi() prints for this side of a pair. */
+    const shown = (text: string) => (lang === 'mr' && marathiNumerals ? localiseDigits(text) : text);
+    const name = shown(governmentName?.[lang].trim() ?? '');
     return (
       <div
         lang={lang}
@@ -99,7 +106,7 @@ export default function TopBarPreview({
               whiteSpace: 'nowrap',
             }}
           >
-            {b.label[lang].trim() || <span style={{ opacity: 0.6 }}>{lang === 'mr' ? 'बटणाचा मजकूर' : 'Button label'}</span>}
+            {shown(b.label[lang].trim()) || <span style={{ opacity: 0.6 }}>{lang === 'mr' ? 'बटणाचा मजकूर' : 'Button label'}</span>}
             {b.link.trim() && !b.link.trim().startsWith('/') ? <span aria-label="opens another site"> ↗</span> : null}
           </span>
         ))}

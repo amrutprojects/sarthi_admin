@@ -13,7 +13,9 @@ import TopBarLinkView from './pages/TopBarLinkView';
 import TopBarSettingsEdit from './pages/TopBarSettingsEdit';
 import { topBarService } from './services/topBarService';
 import type { ApiTopBarLink, ApiTopBarSettings, Bilingual } from './types/topbar.types';
+import { localiseDigits } from './numerals';
 import {
+  marathiNumeralsOf,
   settingsPayload,
   settingsToForm,
   topBarLinkChanges,
@@ -64,10 +66,17 @@ const settings = (extra: Partial<ApiTopBarSettings> = {}): ApiTopBarSettings => 
   id: 's1',
   governmentName: GOVERNMENT,
   showLanguageToggle: true,
+  marathiNumerals: true,
   createdAt: '2026-10-01T10:00:00.000Z',
   updatedAt: '2026-10-02T10:00:00.000Z',
   ...extra,
 });
+
+/* Settings as an API from before the Marathi numerals switch returns them: no marathiNumerals key at all. */
+const olderSettings = (): ApiTopBarSettings => {
+  const { marathiNumerals: _dropped, ...rest } = settings();
+  return rest as ApiTopBarSettings;
+};
 
 const toasts = () => document.getElementById('toast-root')!;
 
@@ -103,6 +112,9 @@ const SEARCH = 'Search label or link...';
 const search = (text: string) => userEvent.type(screen.getByPlaceholderText(SEARCH), text);
 const info = () => screen.getByText(/^Showing/).closest('.info');
 const strip = (lang: 'Marathi' | 'English') => screen.getByRole('figure', { name: `${lang} preview` });
+/* One line of the Top bar settings summary on the tab: its name and its value. */
+const summaryRow = (summary: HTMLElement, name: string) =>
+  within(summary).getByText(name, { selector: '.kv > span' }).closest('.kv') as HTMLElement;
 
 const fillLabel = async () => {
   await userEvent.type(screen.getByLabelText('Label (Marathi) *'), VERIFY.mr);
@@ -148,14 +160,26 @@ describe('Top Bar list', () => {
     expect(await within(summary).findByText(GOVERNMENT.mr)).toBeInTheDocument();
     expect(within(summary).getByText(GOVERNMENT.en)).toBeInTheDocument();
     expect(within(summary).getByText('Shown')).toBeInTheDocument();
+    expect(summaryRow(summary, 'Marathi digits')).toHaveTextContent('Marathi digitsOn');
   });
 
-  it('says so when the government name is blank and the language switch is hidden', async () => {
-    vi.mocked(topBarService.getSettings).mockResolvedValue(settings({ governmentName: null, showLanguageToggle: false }));
+  it('says so when the government name is blank, the language switch is hidden and Marathi digits are off', async () => {
+    vi.mocked(topBarService.getSettings).mockResolvedValue(
+      settings({ governmentName: null, showLanguageToggle: false, marathiNumerals: false }),
+    );
     renderAt(TAB);
     const summary = screen.getByRole('heading', { name: 'Top bar settings' }).closest('.card') as HTMLElement;
     expect(await within(summary).findByText('None — no bold text is shown')).toBeInTheDocument();
     expect(within(summary).getByText('Hidden')).toBeInTheDocument();
+    expect(summaryRow(summary, 'Marathi digits')).toHaveTextContent('Marathi digitsOff');
+  });
+
+  it('shows Marathi digits as On for settings from an API that does not send the switch yet', async () => {
+    vi.mocked(topBarService.getSettings).mockResolvedValue(olderSettings());
+    renderAt(TAB);
+    const summary = screen.getByRole('heading', { name: 'Top bar settings' }).closest('.card') as HTMLElement;
+    await within(summary).findByText(GOVERNMENT.en);
+    expect(summaryRow(summary, 'Marathi digits')).toHaveTextContent('Marathi digitsOn');
   });
 
   it('shows No records found when there are no links, and a retryable error', async () => {
@@ -363,10 +387,21 @@ describe('View Top Bar link', () => {
     renderAt(topBarLinkViewPath(link(8).id));
     await screen.findByRole('heading', { name: /Link 8/ });
     await waitFor(() => expect(strip('Marathi')).not.toHaveTextContent(GOVERNMENT.mr));
-    expect(strip('Marathi')).toHaveTextContent('दुवा 8');
+    /* Marathi digits are on, so the Marathi strip reads the label's figure as the website does. */
+    expect(strip('Marathi')).toHaveTextContent('दुवा ८');
+    expect(strip('English')).toHaveTextContent('Link 8');
     expect(strip('Marathi')).not.toHaveTextContent('मराठी');
     expect(strip('English')).not.toHaveTextContent('English');
     expect(field('Link')).toHaveTextContent('A page of the public website');
+  });
+
+  it('draws the label’s figures as typed when Marathi digits are off', async () => {
+    vi.mocked(topBarService.get).mockResolvedValue(link(8));
+    vi.mocked(topBarService.getSettings).mockResolvedValue(settings({ marathiNumerals: false }));
+    renderAt(topBarLinkViewPath(link(8).id));
+    await screen.findByRole('heading', { name: /Link 8/ });
+    await waitFor(() => expect(strip('Marathi')).toHaveTextContent('दुवा 8'));
+    expect(strip('Marathi')).not.toHaveTextContent('८');
   });
 
   it('marks an inactive link', async () => {
@@ -615,6 +650,8 @@ describe('Top bar settings', () => {
       expect(topBarService.updateSettings).toHaveBeenCalledWith({
         governmentName: pair(GOVERNMENT.mr, 'Maharashtra Government'),
         showLanguageToggle: false,
+        /* Untouched, the Marathi digits setting is sent as loaded. */
+        marathiNumerals: true,
         expectedUpdatedAt: settings().updatedAt,
       }),
     );
@@ -632,9 +669,89 @@ describe('Top bar settings', () => {
       expect(topBarService.updateSettings).toHaveBeenCalledWith({
         governmentName: pair('', ''),
         showLanguageToggle: true,
+        marathiNumerals: true,
         expectedUpdatedAt: settings().updatedAt,
       }),
     );
+  });
+
+  describe('Show numbers in Marathi digits', () => {
+    const DIGITS = 'Show numbers in Marathi digits (०१२३)';
+
+    it('sits under the language switch and opens as saved: on', async () => {
+      renderAt('/cms/top-bar/settings');
+      const box = await screen.findByRole('checkbox', { name: DIGITS });
+      expect(box).toBeChecked();
+      expect(screen.getByText(/On the Marathi site, figures print as ५०० तास and \+९१ ९७३०१ ५१४५०/)).toBeInTheDocument();
+      expect(screen.getByText(/Email and web addresses are never changed/)).toBeInTheDocument();
+      /* Right under the language switch. */
+      const boxes = screen.getAllByRole('checkbox').map((c) => c.closest('label')!.textContent);
+      expect(boxes).toEqual(['Show the language switch', DIGITS]);
+    });
+
+    it('opens as saved: off', async () => {
+      vi.mocked(topBarService.getSettings).mockResolvedValue(settings({ marathiNumerals: false }));
+      renderAt('/cms/top-bar/settings');
+      expect(await screen.findByRole('checkbox', { name: DIGITS })).not.toBeChecked();
+      expect(screen.getByText('Figures print exactly as typed (500 तास), on both sites.')).toBeInTheDocument();
+    });
+
+    it('opens checked for settings from an API that does not send the switch yet, without marking the form changed', async () => {
+      vi.mocked(topBarService.getSettings).mockResolvedValue(olderSettings());
+      vi.mocked(topBarService.updateSettings).mockResolvedValue(settings());
+      renderAt('/cms/top-bar/settings');
+      expect(await screen.findByRole('checkbox', { name: DIGITS })).toBeChecked();
+      /* Nothing changed: Cancel leaves without asking. */
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(currentPath()).toBe(TAB);
+    });
+
+    it('marks the form changed when switched off, and saves it with the loaded version', async () => {
+      vi.mocked(topBarService.updateSettings).mockResolvedValue(settings({ marathiNumerals: false }));
+      renderAt('/cms/top-bar/settings');
+      await userEvent.click(await screen.findByRole('checkbox', { name: DIGITS }));
+      expect(screen.getByRole('checkbox', { name: DIGITS })).not.toBeChecked();
+      expect(screen.getByText('Figures print exactly as typed (500 तास), on both sites.')).toBeInTheDocument();
+
+      /* An unsaved change: Cancel asks before discarding it. */
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      const dialog = screen.getByRole('dialog');
+      expect(dialog).toHaveTextContent('This form has unsaved changes');
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+      expect(currentPath()).toBe('/cms/top-bar/settings');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+      await waitFor(() =>
+        expect(topBarService.updateSettings).toHaveBeenCalledWith({
+          governmentName: GOVERNMENT,
+          showLanguageToggle: true,
+          marathiNumerals: false,
+          expectedUpdatedAt: settings().updatedAt,
+        }),
+      );
+      await waitFor(() => expect(currentPath()).toBe(TAB));
+    });
+
+    it('saves it switched back on', async () => {
+      vi.mocked(topBarService.getSettings).mockResolvedValue(settings({ marathiNumerals: false }));
+      vi.mocked(topBarService.updateSettings).mockResolvedValue(settings());
+      renderAt('/cms/top-bar/settings');
+      await userEvent.click(await screen.findByRole('checkbox', { name: DIGITS }));
+      await userEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+      await waitFor(() => expect(topBarService.updateSettings).toHaveBeenCalledWith(expect.objectContaining({ marathiNumerals: true })));
+    });
+
+    it('previews the Marathi strip’s figures in Marathi digits while on, and as typed while off', async () => {
+      vi.mocked(topBarService.list).mockResolvedValue([link(1, { label: pair('हेल्पलाइन 1800', 'Helpline 1800') })]);
+      renderAt('/cms/top-bar/settings');
+      await waitFor(() => expect(strip('Marathi')).toHaveTextContent('हेल्पलाइन १८००'));
+      /* English always reads ASCII digits. */
+      expect(strip('English')).toHaveTextContent('Helpline 1800');
+      await userEvent.click(screen.getByRole('checkbox', { name: DIGITS }));
+      expect(strip('Marathi')).toHaveTextContent('हेल्पलाइन 1800');
+      expect(strip('English')).toHaveTextContent('Helpline 1800');
+    });
   });
 
   it('starts from a blank government name when none is stored', async () => {
@@ -682,6 +799,22 @@ describe('Top bar settings', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save settings' }));
     expect(await screen.findByText('Government name (English) must be at most 80 characters')).toBeInTheDocument();
     expect(currentPath()).toBe('/cms/top-bar/settings');
+  });
+
+  it.each([
+    ['the Marathi digits switch', 'body.marathiNumerals', 'marathiNumerals must be true or false'],
+    /* A strict API from before the switch refuses the key at the body level. */
+    ['an API that does not know the switch yet', 'body', "Unrecognized key(s) in object: 'marathiNumerals'"],
+  ])('reports a refusal of %s in a toast instead of failing silently', async (_case, field, message) => {
+    vi.mocked(topBarService.updateSettings).mockRejectedValueOnce(
+      new ApiError('Validation failed', 422, 'VALIDATION_ERROR', [{ field, message }]),
+    );
+    renderAt('/cms/top-bar/settings');
+    await screen.findByLabelText('Government name (English)');
+    await userEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+    await waitFor(() => expect(toasts()).toHaveTextContent(`Validation failed: ${message}`));
+    expect(currentPath()).toBe('/cms/top-bar/settings');
+    expect(screen.getByRole('button', { name: 'Save settings' })).toBeEnabled();
   });
 
   it('gives a view-only administrator no form', async () => {
@@ -739,6 +872,19 @@ describe('<TopBarPreview>', () => {
     expect(strip('Marathi')).toHaveTextContent('बटणाचा मजकूर');
     expect(strip('English')).toHaveTextContent('Button label');
   });
+
+  it('prints the Marathi strip’s figures in Marathi digits unless the setting is off; English always as typed', () => {
+    const numbered = [{ label: pair('हेल्पलाइन 1800', 'Helpline 1800'), link: '/contact' }];
+    const name = pair('शासन 2026', 'Government 2026');
+    const { unmount } = renderWithProviders(<TopBarPreview governmentName={name} showLanguageToggle buttons={numbered} />);
+    expect(strip('Marathi')).toHaveTextContent('शासन २०२६हेल्पलाइन १८००');
+    expect(strip('English')).toHaveTextContent('Government 2026Helpline 1800');
+    unmount();
+
+    renderWithProviders(<TopBarPreview governmentName={name} showLanguageToggle marathiNumerals={false} buttons={numbered} />);
+    expect(strip('Marathi')).toHaveTextContent('शासन 2026हेल्पलाइन 1800');
+    expect(strip('English')).toHaveTextContent('Government 2026Helpline 1800');
+  });
 });
 
 describe('top bar payloads', () => {
@@ -780,18 +926,49 @@ describe('top bar payloads', () => {
   });
 
   it('send the settings with the version, and a blank government name as a blank pair', () => {
-    expect(settingsPayload({ governmentName: pair(' महाराष्ट्र  शासन ', ' Government  of Maharashtra '), showLanguageToggle: false }, 'v1')).toEqual({
+    expect(
+      settingsPayload(
+        { governmentName: pair(' महाराष्ट्र  शासन ', ' Government  of Maharashtra '), showLanguageToggle: false, marathiNumerals: false },
+        'v1',
+      ),
+    ).toEqual({
       governmentName: GOVERNMENT,
       showLanguageToggle: false,
+      marathiNumerals: false,
       expectedUpdatedAt: 'v1',
     });
-    expect(settingsPayload({ governmentName: pair('  ', ''), showLanguageToggle: true }, 'v1')).toMatchObject({
+    expect(settingsPayload({ governmentName: pair('  ', ''), showLanguageToggle: true, marathiNumerals: true }, 'v1')).toMatchObject({
       governmentName: pair('', ''),
+      marathiNumerals: true,
     });
     /* A stored null and a stored blank pair both open as an empty form. */
     expect(settingsToForm(settings({ governmentName: null })).governmentName).toEqual(pair('', ''));
     expect(settingsToForm(settings({ governmentName: pair('', '') })).governmentName).toEqual(pair('', ''));
     expect(settingsToForm(settings()).governmentName).toEqual(GOVERNMENT);
+  });
+
+  it('open the Marathi digits setting as saved, and as on when an older API does not send it', () => {
+    expect(settingsToForm(settings()).marathiNumerals).toBe(true);
+    expect(settingsToForm(settings({ marathiNumerals: false })).marathiNumerals).toBe(false);
+    expect(settingsToForm(olderSettings()).marathiNumerals).toBe(true);
+    expect(marathiNumeralsOf(null)).toBe(true);
+    expect(marathiNumeralsOf(olderSettings())).toBe(true);
+    expect(marathiNumeralsOf(settings({ marathiNumerals: false }))).toBe(false);
+  });
+});
+
+describe('Marathi digits in the preview (localiseDigits)', () => {
+  it('converts every run of digits, as the website does', () => {
+    expect(localiseDigits('500 तास')).toBe('५०० तास');
+    expect(localiseDigits('+91 97301 51450')).toBe('+९१ ९७३०१ ५१४५०');
+    expect(localiseDigits('हेल्पलाइन 1800-233')).toBe('हेल्पलाइन १८००-२३३');
+  });
+
+  it('keeps email and web addresses as written, and is safe to apply twice', () => {
+    expect(localiseDigits('लिहा info2@amrut.gov.in, 24 तास')).toBe('लिहा info2@amrut.gov.in, २४ तास');
+    expect(localiseDigits('https://example.gov.in/page2 व www.site2.in')).toBe('https://example.gov.in/page2 व www.site2.in');
+    expect(localiseDigits(localiseDigits('2026'))).toBe('२०२६');
+    expect(localiseDigits('प्रमाणपत्र पडताळणी')).toBe('प्रमाणपत्र पडताळणी');
   });
 });
 
@@ -830,7 +1007,7 @@ describe('top bar validation', () => {
   });
 
   it('takes a government name in both languages or in neither, at most 80 characters each', () => {
-    const run = (name: Bilingual) => validateSettingsForm({ governmentName: name, showLanguageToggle: true });
+    const run = (name: Bilingual) => validateSettingsForm({ governmentName: name, showLanguageToggle: true, marathiNumerals: true });
     expect(Object.values(run(pair('', ''))).filter(Boolean)).toEqual([]);
     expect(Object.values(run(GOVERNMENT)).filter(Boolean)).toEqual([]);
     expect(run(pair('महाराष्ट्र शासन', ''))['governmentName.en']).toBe('Government name (English) is required when the Marathi text is filled in');

@@ -37,22 +37,28 @@ const FORM_ID = 'cms-contact-office-form';
 
 /*
  * The backend reports "body.address.mr" on a 422 and "districtId" on the 409 / 400 of the district
- * rules. A message about a whole pair ("body.address") lands on its Marathi half, which is shown first.
+ * rules. A message about a whole pair ("body.address", "body.collectorName") lands on its Marathi half,
+ * which is shown first.
  */
+const PAIR_FIELDS = ['collectorName', 'address', 'officeHours'];
+
 function mapServerErrors(err: ApiError): FieldErrors<OfficeField> {
   const mapped: FieldErrors<OfficeField> = {};
   for (const detail of err.details) {
     let key = (detail.field ?? '').replace(/^body\./, '');
-    if (key === 'address' || key === 'officeHours') key = `${key}.mr`;
+    if (PAIR_FIELDS.includes(key)) key = `${key}.mr`;
     if ((OFFICE_FIELDS as readonly string[]).includes(key) && !mapped[key as OfficeField]) mapped[key as OfficeField] = detail.message;
   }
   return mapped;
 }
 
 /*
- * The district office create and edit form, on its own page (no modal): the Collectorate details shown
- * on one district's page. Every field but the district is optional — the website leaves out
- * whatever is left blank.
+ * The district office create and edit form, on its own page (no modal): the details shown in the
+ * "District Office Coordinator" card on one district's page. Every field but the district is
+ * optional — the website leaves out whatever is left blank.
+ *
+ * The District Coordinator's name is a Marathi/English pair, like the address and office hours; it is
+ * still called `collectorName` in the API.
  *
  * Same behaviour as the other CMS master forms: validates on submit and re-validates a field once it
  * has been touched, blocks a double submit, keeps the entered values when a save fails, and shows the
@@ -185,18 +191,20 @@ export default function DistrictOfficeForm({
                 ))}
               </select>
             </MasterField>
-            <MasterField id="of-collector" label="District Collector" error={show('collectorName')} hint="Optional.">
-              <input
-                className="inp"
-                {...fieldAria('of-collector', show('collectorName'))}
-                maxLength={COLLECTOR_NAME_MAX}
-                autoComplete="off"
-                value={values.collectorName}
-                onChange={(e) => set('collectorName', e.target.value)}
-                onBlur={() => touch('collectorName')}
-              />
-            </MasterField>
           </div>
+
+          <BilingualField
+            id="of-collector"
+            label="District Coordinator"
+            required={false}
+            maxLength={COLLECTOR_NAME_MAX}
+            value={values.collectorName}
+            onChange={(next) => set('collectorName', next)}
+            onBlur={(half) => touch(`collectorName.${half}`)}
+            errorMr={show('collectorName.mr')}
+            errorEn={show('collectorName.en')}
+            hint="Optional, but both languages or neither."
+          />
 
           <BilingualField
             id="of-address"
@@ -213,7 +221,7 @@ export default function DistrictOfficeForm({
           />
 
           <div className="grid g2">
-            <MasterField id="of-phone" label="Official phone" error={show('phone')} hint="Optional. For example 020 2612 3456.">
+            <MasterField id="of-phone" label="Official contact number" error={show('phone')} hint="Optional.">
               <input
                 className="inp"
                 {...fieldAria('of-phone', show('phone'))}

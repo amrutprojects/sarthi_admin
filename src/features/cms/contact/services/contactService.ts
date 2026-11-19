@@ -51,6 +51,19 @@ const COORDINATORS = '/cms/contact/coordinators';
 const OFFICES = '/cms/contact/district-offices';
 
 /*
+ * A district office as the screens expect it. The District Coordinator's name is a Marathi/English pair;
+ * a backend that has not yet run the 1798400000000 migration still sends it as one string, which is read
+ * as the same name in both languages (exactly what the website printed for it), so the pages keep working
+ * in either deploy order.
+ */
+export const toDistrictOffice = (o: ApiDistrictOffice): ApiDistrictOffice => {
+  const name: unknown = o.collectorName;
+  if (typeof name !== 'string') return o;
+  const trimmed = name.trim();
+  return { ...o, collectorName: trimmed ? { mr: trimmed, en: trimmed } : null };
+};
+
+/*
  * The banner and the two cards are a singleton, so there is no list, no id in the path and no create
  * for them: the row is written once by the database seed and edited from then on. PUT replaces the
  * banner and both cards in one backend transaction. The coordinators and the district offices are
@@ -93,20 +106,24 @@ export const contactService = {
 
   /* ---------------- District offices ---------------- */
 
-  listDistrictOffices: (q: MasterQuery) => list<ApiDistrictOffice>(OFFICES, q),
+  listDistrictOffices: async (q: MasterQuery): Promise<ContactListPage<ApiDistrictOffice>> => {
+    const page = await list<ApiDistrictOffice>(OFFICES, q);
+    return { ...page, items: page.items.map(toDistrictOffice) };
+  },
 
-  allDistrictOffices: () => all<ApiDistrictOffice>(OFFICES, 'district'),
+  allDistrictOffices: async (): Promise<ApiDistrictOffice[]> => (await all<ApiDistrictOffice>(OFFICES, 'district')).map(toDistrictOffice),
 
-  getDistrictOffice: async (id: string): Promise<ApiDistrictOffice> => (await request<ApiDistrictOffice>(`${OFFICES}/${enc(id)}`)).data,
+  getDistrictOffice: async (id: string): Promise<ApiDistrictOffice> =>
+    toDistrictOffice((await request<ApiDistrictOffice>(`${OFFICES}/${enc(id)}`)).data),
 
   createDistrictOffice: async (input: CreateDistrictOfficeInput): Promise<ApiDistrictOffice> =>
-    (await request<ApiDistrictOffice>(OFFICES, { method: 'POST', body: input })).data,
+    toDistrictOffice((await request<ApiDistrictOffice>(OFFICES, { method: 'POST', body: input })).data),
 
   updateDistrictOffice: async (id: string, input: UpdateDistrictOfficeInput): Promise<ApiDistrictOffice> =>
-    (await request<ApiDistrictOffice>(`${OFFICES}/${enc(id)}`, { method: 'PATCH', body: input })).data,
+    toDistrictOffice((await request<ApiDistrictOffice>(`${OFFICES}/${enc(id)}`, { method: 'PATCH', body: input })).data),
 
   setDistrictOfficeStatus: async (id: string, isActive: boolean): Promise<ApiDistrictOffice> =>
-    (await request<ApiDistrictOffice>(`${OFFICES}/${enc(id)}/status`, { method: 'PATCH', body: { isActive } })).data,
+    toDistrictOffice((await request<ApiDistrictOffice>(`${OFFICES}/${enc(id)}/status`, { method: 'PATCH', body: { isActive } })).data),
 
   removeDistrictOffice: async (id: string): Promise<void> => {
     await request<null>(`${OFFICES}/${enc(id)}`, { method: 'DELETE' });

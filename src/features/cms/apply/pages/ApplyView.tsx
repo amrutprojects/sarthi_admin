@@ -27,7 +27,7 @@ function ItemCard({ title, lang, item }: { title: string; lang: keyof Bilingual;
   );
 }
 
-/* View step / at-a-glance row — read-only detail page, reached from the View action on the listing. */
+/* View step / information row — read-only detail page, reached from the View action on the listing. */
 export default function ApplyView() {
   const { id = '' } = useParams();
   const go = useGo();
@@ -39,7 +39,7 @@ export default function ApplyView() {
   const item = detail.data;
   const itemName = item ? ITEM_NAME[item.kind] : 'Item';
   /* Where the item appears on the public page, for the details and the confirmations. */
-  const listName = item?.kind === 'FACT' ? '"At a glance" card' : 'application steps';
+  const listName = item?.kind === 'FACT' ? '"For Your Information" card' : 'application steps';
   usePageTitle(item ? item.label.en : 'Apply page item');
   /* The listing tab this item is on: Back, the breadcrumb and a delete all return there. */
   const listPath = item ? applyListPath(KIND_TAB[item.kind]) : '/cms/apply';
@@ -113,7 +113,7 @@ export default function ApplyView() {
             <div className="card-b">
               <KvList
                 pairs={[
-                  ['Type', item.kind === 'STEP' ? 'Application step' : 'At-a-glance row'],
+                  ['Type', item.kind === 'STEP' ? 'Application step' : 'Information row'],
                   ['Display order', String(item.displayOrder)],
                   ['Status', <MasterStatusBadge isActive={item.isActive} />],
                   ['On the website', item.isActive ? `Shown in the ${listName}` : `Hidden from the ${listName}`],

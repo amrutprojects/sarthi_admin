@@ -47,11 +47,14 @@ export interface ApiCoordinator {
   updatedAt: string;
 }
 
-/* Collectorate / District Office details for one district. Every field is optional. */
+/*
+ * District Office Coordinator details for one district. Every field is optional. The coordinator's name is
+ * still called collectorName in the API, and is a Marathi/English pair like the address and office hours.
+ */
 export interface ApiDistrictOffice {
   id: string;
   district: DistrictRef;
-  collectorName: string | null;
+  collectorName: Bilingual | null;
   address: Bilingual | null;
   phone: string | null;
   email: string | null;
@@ -71,6 +74,9 @@ export interface ApiContactPage {
    * Changed only through contactService.setDistrictOfficesSection, never by saving the page's form.
    */
   showDistrictOffices: boolean;
+  /* The "Show on website" switch of the District Office pages' "Approved training centres" card; changed only
+     through trainingCentreService.setSection. Optional: an older backend does not send it (the card is shown). */
+  showTrainingCentres?: boolean;
   /*
    * The website's floating WhatsApp button: digits with the country code ('' = the AMRUT card's phone), and the
    * message typed into the chat for the visitor (both halves '' = the website's default message). The Helpline
@@ -132,7 +138,8 @@ export type UpdateCoordinatorInput = Partial<Omit<CreateCoordinatorInput, 'isAct
 
 export interface CreateDistrictOfficeInput {
   districtId: string;
-  collectorName: string | null;
+  /* Both halves or null: the API refuses a plain string or one language on its own. */
+  collectorName: Bilingual | null;
   address: Bilingual | null;
   phone: string | null;
   email: string | null;
@@ -167,13 +174,14 @@ export type CoordinatorField = (typeof COORDINATOR_FIELDS)[number];
 
 /* Field names of the district office form, as the API reports them ("body.address.mr", "districtId"). */
 export const OFFICE_FIELDS = [
-  'districtId', 'collectorName', 'address.mr', 'address.en', 'phone', 'email', 'officeHours.mr', 'officeHours.en',
+  'districtId', 'collectorName.mr', 'collectorName.en', 'address.mr', 'address.en', 'phone', 'email', 'officeHours.mr', 'officeHours.en',
 ] as const;
 export type OfficeField = (typeof OFFICE_FIELDS)[number];
 
 /*
- * The six tabs of Contact Page Management: one per section of the public Contact page, and the Helpline &
- * WhatsApp details every page's floating buttons take from it. The active tab is kept in the URL (?tab=), as
+ * The tabs of Contact Page Management: one per section of the public Contact page, the Helpline & WhatsApp
+ * details every page's floating buttons take from it, and the training centres listed on each district's page.
+ * The active tab is kept in the URL (?tab=), as
  * on Modules Page Management.
  */
 export const CONTACT_TABS = [
@@ -183,6 +191,7 @@ export const CONTACT_TABS = [
   { k: 'helpline', l: 'Helpline & WhatsApp' },
   { k: 'coordinators', l: 'Division / cluster coordinators' },
   { k: 'offices', l: 'District offices' },
+  { k: 'centres', l: 'Training centres' },
 ] as const;
 export type ContactTab = (typeof CONTACT_TABS)[number]['k'];
 

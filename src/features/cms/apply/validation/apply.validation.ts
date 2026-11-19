@@ -23,7 +23,7 @@ import {
  * portal link is an https link.
  */
 
-/* ---------------- items (steps and at-a-glance rows) ---------------- */
+/* ---------------- items (steps and information rows) ---------------- */
 
 export interface ApplyItemFormValues {
   kind: ApplyKind;
@@ -37,7 +37,7 @@ export interface ApplyItemFormValues {
 export const LABEL_MAX = 300;
 export const VALUE_MAX = 2000;
 
-/* What the two halves are called on the form, so an at-a-glance row is not asked for its "step title". */
+/* What the two halves are called on the form, so an information row is not asked for its "step title". */
 export const labelName = (kind: ApplyKind): string => (kind === 'STEP' ? 'Step title' : 'Label');
 export const valueName = (kind: ApplyKind): string => (kind === 'STEP' ? 'Step description' : 'Value');
 

@@ -86,7 +86,7 @@ describe('<ContactView> tabs', () => {
 
     await screen.findByRole('tab', { name: 'Page information' });
     const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(6);
+    expect(tabs).toHaveLength(7);
     [
       'Page information',
       'AMRUT contact details',
@@ -94,6 +94,7 @@ describe('<ContactView> tabs', () => {
       'Helpline & WhatsApp',
       'Division / cluster coordinators',
       'District offices',
+      'Training centres',
     ].forEach((name, i) => expect(tabs[i]).toHaveAccessibleName(name));
     expect(tab('Page information')).toHaveAttribute('aria-selected', 'true');
     /* The panel's standard tab strip, as on Modules Page Management, each tab naming the panel it opens. */
@@ -398,13 +399,16 @@ describe('<ContactView> tabs', () => {
     expect(await within(await openPanel()).findByText('Dr. S. Deshmukh')).toBeInTheDocument();
     expect(svc.listDistrictOffices).toHaveBeenCalledWith(expect.objectContaining({ page: 1, sortBy: 'district', sortOrder: 'asc' }));
 
-    expect(headings()).toEqual(['Sr. No.', 'District', 'District Collector', 'Phone / Email', 'Office hours', 'Status', 'Updated', 'Action']);
+    expect(headings()).toEqual(['Sr. No.', 'District', 'District Coordinator', 'Phone / Email', 'Office hours', 'Status', 'Updated', 'Action']);
     expect(bodyRows().map((r) => cellText(r, 0))).toEqual(['1', '2']);
 
     const [pune, kolhapur] = bodyRows();
     expect(within(pune!).getByText('Pune')).toHaveClass('lnk');
     expect(within(pune!).getByText('D1')).toBeInTheDocument();
-    expect(cellText(pune!, 2)).toBe('Dr. S. Deshmukh');
+    /* The District Coordinator in both languages, Marathi first. */
+    expect(cellText(pune!, 2)).toBe('डॉ. एस. देशमुखDr. S. Deshmukh');
+    expect(within(pune!).getByText('डॉ. एस. देशमुख')).toHaveAttribute('lang', 'mr');
+    expect(within(pune!).getByText('Dr. S. Deshmukh')).toHaveAttribute('lang', 'en');
     expect(within(pune!).getByText('020 2612 3456')).toBeInTheDocument();
     expect(within(pune!).getByText('collector.pune@example.org')).toBeInTheDocument();
     /* Bilingual hours Marathi first, English underneath. */
@@ -453,11 +457,11 @@ describe('<ContactView> tabs', () => {
     renderAt('/cms/contact?tab=offices');
     await within(await openPanel()).findByText('Dr. S. Deshmukh');
 
-    await userEvent.click(within(panel()).getByRole('columnheader', { name: /District Collector/ }));
+    await userEvent.click(within(panel()).getByRole('columnheader', { name: /District Coordinator/ }));
     await waitFor(() =>
       expect(svc.listDistrictOffices).toHaveBeenLastCalledWith(expect.objectContaining({ sortBy: 'collectorName', sortOrder: 'asc' })),
     );
-    await userEvent.type(within(panel()).getByPlaceholderText('Search district, collector, phone or email...'), 'pune');
+    await userEvent.type(within(panel()).getByPlaceholderText('Search district, coordinator, phone or email...'), 'pune');
     await waitFor(() => expect(svc.listDistrictOffices).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'pune', page: 1 })));
   });
 
@@ -472,7 +476,7 @@ describe('<ContactView> tabs', () => {
     await userEvent.click(tab('District offices'));
     expect(location()).toHaveTextContent('/cms/contact?tab=offices');
     expect(
-      await within(await openPanel()).findByText(/No district offices have been added yet, so each district page shows no Collectorate details/),
+      await within(await openPanel()).findByText(/No district offices have been added yet, so each district page shows no District Office Coordinator details/),
     ).toBeInTheDocument();
   });
 
@@ -516,11 +520,11 @@ describe('<ContactView> tabs', () => {
     expect(location()).toHaveTextContent('/cms/contact?tab=amrut');
 
     await userEvent.keyboard('{End}');
-    expect(tab('District offices')).toHaveAttribute('aria-selected', 'true');
+    expect(tab('Training centres')).toHaveAttribute('aria-selected', 'true');
     await userEvent.keyboard('{ArrowRight}');
     expect(tab('Page information')).toHaveAttribute('aria-selected', 'true');
     await userEvent.keyboard('{ArrowLeft}');
-    expect(tab('District offices')).toHaveAttribute('aria-selected', 'true');
+    expect(tab('Training centres')).toHaveAttribute('aria-selected', 'true');
     await userEvent.keyboard('{Home}');
     expect(tab('Page information')).toHaveAttribute('aria-selected', 'true');
     expect(fields()).toEqual(['Page title', 'Page subtitle']);

@@ -60,6 +60,9 @@ export type RouteName =
   | 'cmsContactOfficeCreate'
   | 'cmsContactOfficeEdit'
   | 'cmsContactOfficeView'
+  | 'cmsContactCentreCreate'
+  | 'cmsContactCentreEdit'
+  | 'cmsContactCentreView'
   | 'cmsFooterView'
   | 'cmsFooterEdit'
   | 'cmsPageBanners'
@@ -480,6 +483,9 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/contact/offices/create', 'cmsContactOfficeCreate', 'cms-contact'],
   ['/cms/contact/offices/:id/edit', 'cmsContactOfficeEdit', 'cms-contact'],
   ['/cms/contact/offices/:id', 'cmsContactOfficeView', 'cms-contact'],
+  ['/cms/contact/centres/create', 'cmsContactCentreCreate', 'cms-contact'],
+  ['/cms/contact/centres/:id/edit', 'cmsContactCentreEdit', 'cms-contact'],
+  ['/cms/contact/centres/:id', 'cmsContactCentreView', 'cms-contact'],
   ['/cms/footer', 'cmsFooterView', 'cms-footer'],
   ['/cms/footer/edit', 'cmsFooterEdit', 'cms-footer'],
   /* Page Banners: one list page; each banner is edited in a dialog over it. */

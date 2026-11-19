@@ -25,7 +25,7 @@ const settings: ApiApplySettings = {
   pageSubtitle: { mr: 'नोंदणीपासून प्रवेशापर्यंतची संपूर्ण प्रक्रिया.', en: 'The complete process from registration to admission.' },
   noteTitle: { mr: 'महत्त्वाचे', en: 'Important' },
   noteBody: { mr: 'किमान 30 दिवस आधी अर्ज करावा.', en: 'Apply at least 30 days before.' },
-  glanceHeading: { mr: 'लक्षात ठेवा', en: 'At a glance' },
+  glanceHeading: { mr: 'तुमच्या माहितीसाठी', en: 'For Your Information' },
   documentsHeading: { mr: 'आवश्यक कागदपत्रे', en: 'Documents to keep ready' },
   ctaText: { mr: 'अर्ज अधिकृत पोर्टलवर स्वीकारले जातात.', en: 'Applications are accepted on the portal.' },
   ctaLabel: { mr: 'Apply Now', en: 'Apply Now' },
@@ -76,7 +76,7 @@ const renderAt = (route = '/cms/apply') =>
     { route },
   );
 
-const TAB_NAMES = ['Page text', 'Application steps', 'At a glance', 'Documents to keep ready'];
+const TAB_NAMES = ['Page text', 'Application steps', 'For Your Information', 'Documents to keep ready'];
 
 const tab = (name: string) => screen.getByRole('tab', { name });
 const panel = () => screen.getByRole('tabpanel');
@@ -127,7 +127,7 @@ describe('<ApplyList> tabs', () => {
       ['Page heading', ['Page title', 'Page subtitle']],
       ['Important note', ['Note title', 'Note text']],
       ['Apply box', ['Apply box text', 'Apply button label', 'Portal link', 'Apply button hint']],
-      ['Card headings', ['At-a-glance heading', 'Documents heading']],
+      ['Card headings', ['For Your Information heading', 'Documents heading']],
     ];
     for (const [title, fields] of expected) {
       const table = within(await card(title)).getByRole('table');
@@ -162,21 +162,21 @@ describe('<ApplyList> tabs', () => {
 
     /* The header action follows the tab. */
     expect(screen.getByRole('button', { name: /Add Step/ })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Add At-a-glance Row/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Add Information Row/ })).not.toBeInTheDocument();
   });
 
-  it('opens At a glance from the URL, with its card heading and its own Add button', async () => {
+  it('opens For Your Information from the URL, with its card heading and its own Add button', async () => {
     permissions.add('createApplyItem');
     renderAt('/cms/apply?tab=facts');
 
-    expect(tab('At a glance')).toHaveAttribute('aria-selected', 'true');
+    expect(tab('For Your Information')).toHaveAttribute('aria-selected', 'true');
     expect(await within(panel()).findByText('Security deposit')).toBeInTheDocument();
     expect(screen.queryByText('Online application')).not.toBeInTheDocument();
     expect(applyService.list).toHaveBeenLastCalledWith(expect.objectContaining({ kind: 'FACT', sortBy: 'displayOrder' }));
-    expect(await within(panel()).findByText('लक्षात ठेवा')).toBeInTheDocument();
+    expect(await within(panel()).findByText('तुमच्या माहितीसाठी')).toBeInTheDocument();
     expect(within(panel()).getByText(/Card heading on the website/)).toHaveTextContent('change it on the Page text tab.');
 
-    await userEvent.click(screen.getByRole('button', { name: /Add At-a-glance Row/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Add Information Row/ }));
     expect(screen.getByTestId('location')).toHaveTextContent('/cms/apply/create?kind=FACT');
   });
 
@@ -214,9 +214,9 @@ describe('<ApplyList> tabs', () => {
 
   it('opens a tab from its KPI tile', async () => {
     renderAt();
-    await userEvent.click(await screen.findByText('At-a-glance rows', { selector: '.kpi-t' }));
+    await userEvent.click(await screen.findByText('Information rows', { selector: '.kpi-t' }));
 
-    expect(tab('At a glance')).toHaveAttribute('aria-selected', 'true');
+    expect(tab('For Your Information')).toHaveAttribute('aria-selected', 'true');
     expect(await within(panel()).findByText('Security deposit')).toBeInTheDocument();
   });
 

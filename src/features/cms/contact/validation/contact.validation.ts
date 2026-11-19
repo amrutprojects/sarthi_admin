@@ -374,7 +374,8 @@ export function validateCoordinatorForm(v: CoordinatorFormValues, { orderRequire
 
 export interface OfficeFormValues {
   districtId: string;
-  collectorName: string;
+  /* The District Coordinator's name, in both languages. */
+  collectorName: BilingualValue;
   address: BilingualValue;
   phone: string;
   email: string;
@@ -384,7 +385,7 @@ export interface OfficeFormValues {
 
 export const emptyOfficeForm = (): OfficeFormValues => ({
   districtId: '',
-  collectorName: '',
+  collectorName: emptyPair(),
   address: emptyPair(),
   phone: '',
   email: '',
@@ -394,7 +395,7 @@ export const emptyOfficeForm = (): OfficeFormValues => ({
 
 export const toOfficeFormValues = (o: ApiDistrictOffice): OfficeFormValues => ({
   districtId: o.district.id,
-  collectorName: o.collectorName ?? '',
+  collectorName: pairOf(o.collectorName),
   address: pairOf(o.address),
   phone: o.phone ?? '',
   email: o.email ?? '',
@@ -402,10 +403,10 @@ export const toOfficeFormValues = (o: ApiDistrictOffice): OfficeFormValues => ({
   isActive: o.isActive,
 });
 
-/* Every Collectorate field is optional: a blank one is sent as null and the website leaves it out. */
+/* Every district office field is optional: a blank one is sent as null and the website leaves it out. */
 export const normalizeOfficeForm = (v: OfficeFormValues): CreateDistrictOfficeInput => ({
   districtId: v.districtId,
-  collectorName: blankToNull(v.collectorName),
+  collectorName: pairToNull(v.collectorName),
   address: pairToNull(v.address),
   phone: blankToNull(v.phone),
   email: blankToNull(v.email),
@@ -414,15 +415,16 @@ export const normalizeOfficeForm = (v: OfficeFormValues): CreateDistrictOfficeIn
 });
 
 export function validateOfficeForm(v: OfficeFormValues): FieldErrors<OfficeField> {
+  const coordinator = optionalPair(v.collectorName, 'District Coordinator', COLLECTOR_NAME_MAX);
   const address = optionalPair(v.address, 'Office address', OFFICE_ADDRESS_MAX);
   const hours = optionalPair(v.officeHours, 'Office hours', OFFICE_HOURS_MAX);
   return {
     districtId: v.districtId ? undefined : 'District is required',
-    collectorName:
-      v.collectorName.trim().length > COLLECTOR_NAME_MAX ? `Collector name must be at most ${COLLECTOR_NAME_MAX} characters` : undefined,
+    'collectorName.mr': coordinator.mr,
+    'collectorName.en': coordinator.en,
     'address.mr': address.mr,
     'address.en': address.en,
-    phone: optional(validatePhone)(v.phone, 'Official phone'),
+    phone: optional(validatePhone)(v.phone, 'Official contact number'),
     email: optional(validateEmail)(v.email, 'Official email'),
     'officeHours.mr': hours.mr,
     'officeHours.en': hours.en,

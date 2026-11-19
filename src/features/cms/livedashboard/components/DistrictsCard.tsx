@@ -88,7 +88,7 @@ export default function DistrictsCard() {
     <div className="card mb14">
       <div className="card-h">
         <h3>
-          Districts <span className="sub">the map&rsquo;s tiles and tooltips, and each district office page&rsquo;s figures</span>
+          Districts <span className="sub">the home page map&rsquo;s tiles and tooltips</span>
         </h3>
         <div className="f ac gp8 wrap">
           {query.search ? <span className="tag">filtered</span> : null}

@@ -13,6 +13,8 @@ import { CARD_FIELDS, CONTACT_TABS, type ApiContactOrganization, type ApiContact
 import CoordinatorList from './CoordinatorList';
 import DistrictOfficeList from './DistrictOfficeList';
 import DistrictOfficesSectionBar from './DistrictOfficesSectionBar';
+import TrainingCentreList from './TrainingCentreList';
+import TrainingCentresSectionBar from './TrainingCentresSectionBar';
 
 /* The wording of the two card tabs, and the page each one's Edit button opens. */
 const CARD_COPY: Record<OrgType, { title: string; sub: string; note: string; edit: string }> = {
@@ -286,6 +288,11 @@ export default function ContactView() {
             {/* Whether the Contact page shows its District offices list at all; the list below is each district's own details. */}
             <DistrictOfficesSectionBar page={page} onSaved={() => void detail.reload()} />
             <DistrictOfficeList />
+          </SectionTabPanel>
+          <SectionTabPanel tab="centres" active={tab} idPrefix="contact">
+            {/* Whether the district pages show their Approved training centres card at all; the list below is the centres. */}
+            <TrainingCentresSectionBar page={page} onSaved={() => void detail.reload()} />
+            <TrainingCentreList />
           </SectionTabPanel>
           {/* The banner, both cards and the WhatsApp details are saved together, so their tabs share one time; each listed row shows its own. */}
           {tab === 'page' || tab === 'amrut' || tab === 'partner' || tab === 'helpline' ? (

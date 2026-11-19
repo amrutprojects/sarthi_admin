@@ -10,6 +10,7 @@ import { usePageTitle } from '../../useMasterQuery';
 import TopBarPreview from '../components/TopBarPreview';
 import { FALLBACK_GOVERNMENT_NAME, TOPBAR_CRUMBS, TOPBAR_TAB_PATH, topBarLinkEditPath, topBarLinkName } from '../constants';
 import { topBarService } from '../services/topBarService';
+import { marathiNumeralsOf } from '../validation/topbar.validation';
 
 /* Where a click on the button leads, said in words: a page of this website or another site. */
 function Destination({ link }: { link: string }) {
@@ -31,7 +32,7 @@ export default function TopBarLinkView() {
   const go = useGo();
   const navigate = useNavigate();
   const detail = useApiData(() => topBarService.get(id), [id]);
-  /* Only for the government name and language switch the strip draws around the button. */
+  /* Only for the government name and language switch the strip draws around the button, and its digits. */
   const settings = useApiData(() => topBarService.getSettings(), []);
   const { busy, run } = useAction();
   const [deleting, setDeleting] = useState(false);
@@ -97,6 +98,7 @@ export default function TopBarLinkView() {
               <TopBarPreview
                 governmentName={strip ? strip.governmentName : FALLBACK_GOVERNMENT_NAME}
                 showLanguageToggle={strip?.showLanguageToggle ?? true}
+                marathiNumerals={marathiNumeralsOf(strip)}
                 buttons={[{ label: item.label, link: item.link }]}
               />
             </div>

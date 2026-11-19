@@ -31,6 +31,8 @@ export interface SettingsFormValues {
   /* Blank in both languages: the bold text is left out of the strip. */
   governmentName: Bilingual;
   showLanguageToggle: boolean;
+  /* Devanagari digits (०१२३) on the Marathi site; off, figures print exactly as typed on both sites. */
+  marathiNumerals: boolean;
 }
 
 export const LABEL_MAX = 40;
@@ -52,9 +54,17 @@ export const topBarLinkToForm = (l: ApiTopBarLink): TopBarLinkFormValues => ({
   isActive: l.isActive,
 });
 
+/*
+ * Whether the website prints Marathi digits. An older API that does not send the key means on — the default, and
+ * what the website itself assumes — so only an explicit false reads as off.
+ */
+export const marathiNumeralsOf = (s: Pick<ApiTopBarSettings, 'marathiNumerals'> | null | undefined): boolean =>
+  s?.marathiNumerals !== false;
+
 export const settingsToForm = (s: ApiTopBarSettings): SettingsFormValues => ({
   governmentName: s.governmentName ? { ...s.governmentName } : blank(),
   showLanguageToggle: s.showLanguageToggle,
+  marathiNumerals: marathiNumeralsOf(s),
 });
 
 /* The same normalisation the server applies, so what is compared and sent is what will be stored. */
@@ -95,6 +105,7 @@ export function settingsPayload(v: SettingsFormValues, expectedUpdatedAt: string
   return {
     governmentName: pairOf(v.governmentName),
     showLanguageToggle: v.showLanguageToggle,
+    marathiNumerals: v.marathiNumerals,
     expectedUpdatedAt,
   };
 }

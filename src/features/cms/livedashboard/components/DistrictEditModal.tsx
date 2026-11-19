@@ -17,7 +17,7 @@ const FORM_ID = 'cms-livedashboard-district-form';
 
 /*
  * Edit one district of the map, in a dialog over the tab: its status (the tile's colour) and its figures (the
- * tooltip's "<enrolled> of <target> enrolled", and the district office page's figures). Only what changed is sent,
+ * tooltip's "<enrolled> of <target> enrolled"). Only what changed is sent,
  * with the version the dialog was opened at, so a save over someone else's newer edit is refused. The dialog stays
  * open on any failure, with what was typed.
  */

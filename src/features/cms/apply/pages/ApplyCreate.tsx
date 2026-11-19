@@ -9,7 +9,7 @@ import { parseKind } from '../validation/apply.validation';
 import ApplyForm from './ApplyForm';
 
 /*
- * Add Application Step / Add At-a-glance Row — a dedicated page, reached from the two Add buttons on the
+ * Add Application Step / Add Information Row — a dedicated page, reached from the two Add buttons on the
  * listing. ?kind= picks the type the form opens with; switching it in the form updates the URL, so the
  * title, and a reload, follow what is being added.
  */
@@ -17,7 +17,7 @@ export default function ApplyCreate() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const kind = parseKind(params.get('kind'));
-  const title = kind === 'STEP' ? 'Add Application Step' : 'Add At-a-glance Row';
+  const title = kind === 'STEP' ? 'Add Application Step' : 'Add Information Row';
   usePageTitle(title);
   /* Back and Cancel return to the listing tab of the type being added. */
   const listPath = applyListPath(KIND_TAB[kind]);
@@ -30,7 +30,7 @@ export default function ApplyCreate() {
         sub={
           kind === 'STEP'
             ? 'Adds a step to the numbered application steps on the public Apply page, in Marathi and English.'
-            : 'Adds a row to the "At a glance" card on the public Apply page, in Marathi and English.'
+            : 'Adds a row to the "For Your Information" card on the public Apply page, in Marathi and English.'
         }
         back={<BackButton to={listPath} />}
       />
@@ -41,7 +41,7 @@ export default function ApplyCreate() {
         backTo={listPath}
         onSave={async (values) => {
           const created = await applyService.create(values);
-          toastOk(created.kind === 'STEP' ? 'Application step created' : 'At-a-glance row created');
+          toastOk(created.kind === 'STEP' ? 'Application step created' : 'Information row created');
           navigate(`/cms/apply/${created.id}`);
         }}
       />

@@ -13,7 +13,7 @@ import { contactService } from '../services/contactService';
 import type { ApiDistrictOffice } from '../types/contact.types';
 
 /*
- * District offices tab: the Collectorate details shown on each district's page, as a listing with
+ * District offices tab: the District Office Coordinator details shown on each district's page, as a listing with
  * search, sorting and paging, all served by the backend, A to Z by district by default. Each row is
  * viewed, edited, switched on or off and deleted on its own, as on FAQ Management.
  */
@@ -39,7 +39,7 @@ export default function DistrictOfficeList() {
         </div>
       ),
     },
-    { k: 'collectorName', l: 'District Collector', render: (r) => <FieldValue value={r.collectorName} /> },
+    { k: 'collectorName', l: 'District Coordinator', render: (r) => <FieldValue value={r.collectorName} /> },
     {
       k: 'contact',
       l: 'Phone / Email',
@@ -132,11 +132,11 @@ export default function DistrictOfficeList() {
           query={query}
           onQuery={patch}
           onRetry={() => void page.reload()}
-          searchLabel="district, collector, phone or email"
+          searchLabel="district, coordinator, phone or email"
           emptyMsg={
             filtered
               ? 'No district office matches the current search.'
-              : 'No district offices have been added yet, so each district page shows no Collectorate details. Use Add district office to create the first one.'
+              : 'No district offices have been added yet, so each district page shows no District Office Coordinator details. Use Add district office to create the first one.'
           }
           rowLink={can('viewContactPage') ? (r) => `/cms/contact/offices/${r.id}` : undefined}
         />
@@ -172,7 +172,7 @@ export default function DistrictOfficeList() {
           danger
           busy={busy}
           confirmLabel="Delete"
-          message={`Delete the ${deleting.district.name} district office? The district's page then shows no Collectorate details. It is soft-deleted, kept for audit history.`}
+          message={`Delete the ${deleting.district.name} district office? The district's page then shows no District Office Coordinator details. It is soft-deleted, kept for audit history.`}
           onClose={() => setDeleting(null)}
           onConfirm={() =>
             run(

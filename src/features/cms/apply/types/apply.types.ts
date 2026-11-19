@@ -8,7 +8,7 @@ export interface Bilingual {
 /*
  * The two lists on the public Apply ("How to Apply") page. A STEP is one rung of the numbered
  * application ladder — a title and its description, numbered by position on the website; a FACT is a
- * label / value row of the "At a glance" card ("Security deposit" — "₹2,000 (refundable)"). The
+ * label / value row of the "For Your Information" card ("Security deposit" — "₹2,000 (refundable)"). The
  * "Documents to keep ready" list is not stored here: it is the Eligibility page's required documents.
  */
 export type ApplyKind = 'STEP' | 'FACT';
@@ -18,13 +18,13 @@ export const APPLY_KINDS: readonly ApplyKind[] = ['STEP', 'FACT'];
 /* The Type tag on the listing. */
 export const KIND_LABEL: Record<ApplyKind, string> = {
   STEP: 'Step',
-  FACT: 'At a glance',
+  FACT: 'For Your Information',
 };
 
-/* What one item is called in titles, toasts and confirmations ("At-a-glance row deleted"). */
+/* What one item is called in titles, toasts and confirmations ("Information row deleted"). */
 export const ITEM_NAME: Record<ApplyKind, string> = {
   STEP: 'Step',
-  FACT: 'At-a-glance row',
+  FACT: 'Information row',
 };
 
 export interface ApiApplyItem {
@@ -100,7 +100,7 @@ export const SETTINGS_LABEL: Record<SettingsKey, string> = {
   pageSubtitle: 'Page subtitle',
   noteTitle: 'Note title',
   noteBody: 'Note text',
-  glanceHeading: 'At-a-glance heading',
+  glanceHeading: 'For Your Information heading',
   documentsHeading: 'Documents heading',
   ctaText: 'Apply box text',
   ctaLabel: 'Apply button label',
@@ -127,7 +127,7 @@ export const SETTINGS_GROUPS: { title: string; sub: string; keys: readonly (Sett
 export const APPLY_TABS = [
   { k: 'page', l: 'Page text' },
   { k: 'steps', l: 'Application steps' },
-  { k: 'facts', l: 'At a glance' },
+  { k: 'facts', l: 'For Your Information' },
   { k: 'documents', l: 'Documents to keep ready' },
 ] as const;
 export type ApplyTab = (typeof APPLY_TABS)[number]['k'];

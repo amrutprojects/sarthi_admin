@@ -50,7 +50,7 @@ const HINTS: Record<SettingsKey, string> = {
   pageSubtitle: 'The line under the heading.',
   noteTitle: 'The title of the note under the application steps.',
   noteBody: 'The text of the note under the application steps. Line breaks are kept.',
-  glanceHeading: 'The title of the "At a glance" card.',
+  glanceHeading: 'The title of the "For Your Information" card.',
   documentsHeading: "The title of the documents card. Its list is the Eligibility page's required documents.",
   ctaText: 'The text of the Apply box, above the Apply button. Line breaks are kept.',
   ctaLabel: 'The text on the Apply button.',

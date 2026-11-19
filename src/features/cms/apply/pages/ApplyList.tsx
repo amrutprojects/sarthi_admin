@@ -58,14 +58,14 @@ const LIST_COPY: Record<
     where: 'application steps',
   },
   FACT: {
-    title: 'At a glance rows',
-    sub: 'the label and value rows of the "At a glance" card',
+    title: 'For Your Information rows',
+    sub: 'the label and value rows of the "For Your Information" card',
     labelCol: 'Label',
     valueCol: 'Value',
     search: 'label or value',
-    empty: 'No rows have been added yet. Use Add At-a-glance Row to create the first one.',
+    empty: 'No rows have been added yet. Use Add Information Row to create the first one.',
     emptyFiltered: 'No row matches the current search and filters.',
-    where: '"At a glance" card',
+    where: '"For Your Information" card',
   },
 };
 
@@ -111,7 +111,7 @@ function PageTextTab({
 }
 
 /*
- * Application steps / At a glance tab: one of the two lists, with its own search, status filter,
+ * Application steps / For Your Information tab: one of the two lists, with its own search, status filter,
  * sorting and paging, all served by the backend. Each tab has its own panel, which renders only while
  * open, so each tab starts from its own clean query.
  */
@@ -362,7 +362,7 @@ function DocumentsTab({
 
 /*
  * Apply Page Management: the public Apply ("How to Apply") page, one tab per section of that page — its
- * page text (heading, Important note and Apply box), the application steps, the "At a glance" rows and
+ * page text (heading, Important note and Apply box), the application steps, the "For Your Information" rows and
  * the documents list — with the same tab strip as Modules Page Management. The active tab is kept in the
  * URL (?tab=), so Back from a step, a row or the page-text form returns to it.
  */
@@ -412,7 +412,7 @@ export default function ApplyList() {
       <Can action="createApplyItem">
         <button type="button" className="btn primary" onClick={() => go('/cms/apply/create?kind=FACT')}>
           <Icon name="plus" />
-          Add At-a-glance Row
+          Add Information Row
         </button>
       </Can>
     ) : can('viewEligibility') ? (
@@ -427,7 +427,7 @@ export default function ApplyList() {
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'CMS' }, { l: 'Apply Page Management' }]}
         title="Apply Page Management"
-        sub={`The public website's Apply page, section by section: its page text, the application steps, the "At a glance" card and the documents list, in Marathi and English.`}
+        sub={`The public website's Apply page, section by section: its page text, the application steps, the "For Your Information" card and the documents list, in Marathi and English.`}
         back={<BackButton to="/dashboard" />}
         actions={<div className="f ac gp8 wrap">{action}</div>}
       />
@@ -443,7 +443,7 @@ export default function ApplyList() {
             link: applyListPath('steps'),
           },
           {
-            label: 'At-a-glance rows',
+            label: 'Information rows',
             value: s?.facts,
             sub: s ? `${s.factsActive} on the website` : undefined,
             tone: 'v',

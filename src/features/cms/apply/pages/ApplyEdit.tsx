@@ -11,7 +11,7 @@ import { ITEM_NAME, KIND_TAB, applyListPath } from '../types/apply.types';
 import { toApplyItemFormValues } from '../validation/apply.validation';
 import ApplyForm from './ApplyForm';
 
-/* Edit step / at-a-glance row — a dedicated page. Status is not part of the form: it has its own endpoint. */
+/* Edit step / information row — a dedicated page. Status is not part of the form: it has its own endpoint. */
 export default function ApplyEdit() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ export default function ApplyEdit() {
 
   const item = detail.data;
   const itemName = item ? ITEM_NAME[item.kind] : 'Item';
-  const title = !item ? 'Edit Apply Page Item' : item.kind === 'STEP' ? 'Edit Application Step' : 'Edit At-a-glance Row';
+  const title = !item ? 'Edit Apply Page Item' : item.kind === 'STEP' ? 'Edit Application Step' : 'Edit Information Row';
   usePageTitle(title);
   /* The listing tab this item is on. */
   const listPath = item ? applyListPath(KIND_TAB[item.kind]) : '/cms/apply';

@@ -5,6 +5,7 @@ import {
   normalizeCoordinatorForm,
   normalizeOfficeForm,
   toFormValues,
+  toOfficeFormValues,
   toSectionPayload,
   validateContactSection,
   validateCoordinatorForm,
@@ -14,7 +15,7 @@ import {
   validateWhatsappNumber,
   whatsappDigits,
 } from '../validation/contact.validation';
-import { AMRUT, PARTNER, contactPage, district } from './fixtures';
+import { AMRUT, OFFICES, PARTNER, contactPage, district } from './fixtures';
 
 /*
  * Phone rules, mirroring backend contact.validator.ts: a coordinator's phone may keep digits masked
@@ -57,7 +58,7 @@ describe('organisation and district office phones', () => {
     const office = { ...emptyOfficeForm(), districtId: 'd1', phone: '+91 20XXX 12345' };
 
     expect(validateCoordinatorForm(coordinator).phone).toBeUndefined();
-    expect(validateOfficeForm(office).phone).toMatch(/Official phone may use digits, spaces, brackets and hyphens/);
+    expect(validateOfficeForm(office).phone).toMatch(/Official contact number may use digits, spaces, brackets and hyphens/);
   });
 });
 
@@ -101,8 +102,45 @@ describe('district office form', () => {
     expect(errors['officeHours.mr']).toBe('Office hours (Marathi) is required when English is given');
   });
 
+  it('keeps the District Coordinator to both languages or neither', () => {
+    const at = (collectorName: { mr: string; en: string }) => {
+      const errors = validateOfficeForm({ ...emptyOfficeForm(), districtId: 'd1', collectorName });
+      return { mr: errors['collectorName.mr'], en: errors['collectorName.en'] };
+    };
+    expect(at({ mr: '', en: '' })).toEqual({ mr: undefined, en: undefined });
+    expect(at({ mr: '  ', en: ' ' })).toEqual({ mr: undefined, en: undefined });
+    expect(at({ mr: 'डॉ. एस. देशमुख', en: 'Dr. S. Deshmukh' })).toEqual({ mr: undefined, en: undefined });
+    expect(at({ mr: 'डॉ. एस. देशमुख', en: ' ' })).toEqual({
+      mr: undefined,
+      en: 'District Coordinator (English) is required when Marathi is given',
+    });
+    expect(at({ mr: '', en: 'Dr. S. Deshmukh' })).toEqual({
+      mr: 'District Coordinator (Marathi) is required when English is given',
+      en: undefined,
+    });
+  });
+
+  it('names each District Coordinator language in its length message', () => {
+    const at = (n: number) =>
+      validateOfficeForm({ ...emptyOfficeForm(), districtId: 'd1', collectorName: { mr: 'अ'.repeat(n), en: 'A'.repeat(n) } });
+    expect(at(150)['collectorName.mr']).toBeUndefined();
+    expect(at(150)['collectorName.en']).toBeUndefined();
+    expect(at(151)['collectorName.mr']).toBe('District Coordinator (Marathi) must be at most 150 characters');
+    expect(at(151)['collectorName.en']).toBe('District Coordinator (English) must be at most 150 characters');
+  });
+
+  it('sends the District Coordinator as a trimmed pair', () => {
+    const values = { ...emptyOfficeForm(), districtId: 'd1', collectorName: { mr: ' डॉ. एस. देशमुख ', en: ' Dr. S. Deshmukh ' } };
+    expect(normalizeOfficeForm(values).collectorName).toEqual({ mr: 'डॉ. एस. देशमुख', en: 'Dr. S. Deshmukh' });
+  });
+
+  it('fills the District Coordinator pair from a saved office, and leaves it blank when there is none', () => {
+    expect(toOfficeFormValues(OFFICES[0]!).collectorName).toEqual({ mr: 'डॉ. एस. देशमुख', en: 'Dr. S. Deshmukh' });
+    expect(toOfficeFormValues(OFFICES[1]!).collectorName).toEqual({ mr: '', en: '' });
+  });
+
   it('sends every blank field as null', () => {
-    expect(normalizeOfficeForm({ ...emptyOfficeForm(), districtId: 'd1', collectorName: '  ' })).toEqual({
+    expect(normalizeOfficeForm({ ...emptyOfficeForm(), districtId: 'd1', collectorName: { mr: '  ', en: ' ' } })).toEqual({
       districtId: 'd1',
       collectorName: null,
       address: null,

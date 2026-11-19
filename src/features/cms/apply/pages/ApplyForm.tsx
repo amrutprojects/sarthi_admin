@@ -53,7 +53,7 @@ function mapServerErrors(err: ApiError): FieldErrors<ApplyItemField> {
 }
 
 /*
- * The application step / at-a-glance row create and edit form, on its own page (no modal).
+ * The application step / information row create and edit form, on its own page (no modal).
  *
  * Same behaviour as the other CMS master forms: validates on submit and re-validates a field once it
  * has been touched, blocks a double submit, keeps the entered values when a save fails, and shows the
@@ -167,7 +167,7 @@ export default function ApplyForm({
                 required
                 error={show('kind')}
                 hint={
-                  'A step is one numbered stage of the application; an at-a-glance row is a label with a value in the "At a glance" card.'
+                  'A step is one numbered stage of the application; a "For Your Information" row is a label with a value in the "For Your Information" card.'
                 }
               >
                 <select
@@ -177,7 +177,7 @@ export default function ApplyForm({
                   onChange={(e) => changeKind(e.target.value as ApplyKind)}
                 >
                   <option value="STEP">Application step</option>
-                  <option value="FACT">At-a-glance row</option>
+                  <option value="FACT">Information row</option>
                 </select>
               </MasterField>
             )}
@@ -195,7 +195,7 @@ export default function ApplyForm({
             hint={
               isStep
                 ? `The heading of the step, e.g. "Online application". Up to ${LABEL_MAX} characters in each language.`
-                : `The label of the row in the "At a glance" card, e.g. "Security deposit". Up to ${LABEL_MAX} characters in each language.`
+                : `The label of the row in the "For Your Information" card, e.g. "Security deposit". Up to ${LABEL_MAX} characters in each language.`
             }
           />
 
@@ -224,7 +224,7 @@ export default function ApplyForm({
               error={show('displayOrder')}
               hint={
                 editing
-                  ? `Lower numbers are listed first among the ${isStep ? 'steps' : 'at-a-glance rows'}.`
+                  ? `Lower numbers are listed first among the ${isStep ? 'steps' : 'information rows'}.`
                   : 'Lower numbers are listed first. Leave empty to add it at the end of its list.'
               }
             >

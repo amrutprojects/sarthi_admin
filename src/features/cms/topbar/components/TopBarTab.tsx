@@ -12,6 +12,7 @@ import { useMasterQuery } from '../../useMasterQuery';
 import { topBarLinkEditPath, topBarLinkName, topBarLinkViewPath } from '../constants';
 import { topBarService } from '../services/topBarService';
 import type { ApiTopBarLink, Bilingual } from '../types/topbar.types';
+import { marathiNumeralsOf } from '../validation/topbar.validation';
 
 /* Marathi first, as on the public site; English underneath. */
 const Pair = ({ value }: { value: Bilingual | null }) =>
@@ -282,6 +283,13 @@ export default function TopBarTab() {
                   'Language switch',
                   <Badge key="v" tone={cfg.showLanguageToggle ? 'green' : 'grey'}>
                     {cfg.showLanguageToggle ? 'Shown' : 'Hidden'}
+                  </Badge>,
+                ],
+                [
+                  'Marathi digits',
+                  /* Site-wide: every figure on the Marathi site, not only the strip's. */
+                  <Badge key="d" tone={marathiNumeralsOf(cfg) ? 'green' : 'grey'}>
+                    {marathiNumeralsOf(cfg) ? 'On' : 'Off'}
                   </Badge>,
                 ],
                 ['Last updated', fmtDateTime(cfg.updatedAt)],

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Dash, KvList, PageHead, useGo } from '../../../../components/ui';
 import { Can } from '../../../../modules/auth/components/Can';
 import BackButton from '../../components/BackButton';
+import { FieldValue } from '../../components/FieldTable';
 import MasterStatusBadge from '../../components/MasterStatusBadge';
 import { ConfirmModal, LoadState, fmtDateTime, useAction, useApiData } from '../../shared';
 import { usePageTitle } from '../../useMasterQuery';
@@ -12,7 +13,7 @@ import { contactListPath, type ApiDistrictOffice, type Bilingual } from '../type
 /* The website's wording for a field that has not been filled in. */
 const NOT_SUPPLIED = 'To be supplied from official records';
 
-/* One language's address and office hours, as the district's page shows them. */
+/* One language's District Coordinator, address and office hours, as the district's page shows them. */
 function LanguageCard({ title, lang, office }: { title: string; lang: keyof Bilingual; office: ApiDistrictOffice }) {
   return (
     <div className="card">
@@ -20,6 +21,10 @@ function LanguageCard({ title, lang, office }: { title: string; lang: keyof Bili
         <h3>{title}</h3>
       </div>
       <div className="card-b" lang={lang}>
+        <div className="hint">District Coordinator</div>
+        <p style={{ margin: '0 0 12px' }}>
+          {office.collectorName ? office.collectorName[lang] : <span className="muted">{NOT_SUPPLIED}</span>}
+        </p>
         <div className="hint">Office address</div>
         <p style={{ margin: '0 0 12px', whiteSpace: 'pre-line', lineHeight: 1.6 }}>
           {office.address ? office.address[lang] : <span className="muted">{NOT_SUPPLIED}</span>}
@@ -106,8 +111,9 @@ export default function DistrictOfficeView() {
                 pairs={[
                   ['District', office.district.name],
                   ['District code', office.district.code],
-                  ['District Collector', office.collectorName ?? <Dash />],
-                  ['Official phone', office.phone ?? <Dash />],
+                  /* Marathi first, English underneath, as in the listing. */
+                  ['District Coordinator', <FieldValue value={office.collectorName} />],
+                  ['Official contact number', office.phone ?? <Dash />],
                   ['Official email', office.email ?? <Dash />],
                   ['Status', <MasterStatusBadge isActive={office.isActive} />],
                   ['On the website', office.isActive ? "Shown on the district's page" : "Hidden from the district's page"],
@@ -126,7 +132,7 @@ export default function DistrictOfficeView() {
           danger
           busy={busy}
           confirmLabel="Delete"
-          message={`Delete the ${office.district.name} district office? The district's page then shows no Collectorate details. It is soft-deleted, kept for audit history.`}
+          message={`Delete the ${office.district.name} district office? The district's page then shows no District Office Coordinator details. It is soft-deleted, kept for audit history.`}
           onClose={() => setDeleting(false)}
           onConfirm={() =>
             run(

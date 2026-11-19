@@ -25,6 +25,11 @@ export interface ApiTopBarSettings {
   governmentName: Bilingual | null;
   /** Whether the website shows the Marathi / English language switch. */
   showLanguageToggle: boolean;
+  /**
+   * Whether the website prints every figure in Devanagari digits (०१२३) while it is in Marathi. On by default; an
+   * older API that does not send it means on (settingsToForm reads it that way).
+   */
+  marathiNumerals: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -43,6 +48,8 @@ export interface UpdateTopBarSettingsInput {
   /** Blank in both languages leaves the bold text out. */
   governmentName: Bilingual;
   showLanguageToggle: boolean;
+  /** Devanagari digits on the Marathi site; off prints figures exactly as typed. */
+  marathiNumerals: boolean;
   expectedUpdatedAt: string;
 }
 

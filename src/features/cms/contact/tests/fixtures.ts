@@ -65,7 +65,7 @@ export const OFFICES: ApiDistrictOffice[] = [
   {
     id: 'f1',
     district: district('d1', 'Pune'),
-    collectorName: 'Dr. S. Deshmukh',
+    collectorName: { mr: 'डॉ. एस. देशमुख', en: 'Dr. S. Deshmukh' },
     address: { mr: 'जिल्हाधिकारी कार्यालय, पुणे', en: 'Collectorate, Pune' },
     phone: '020 2612 3456',
     email: 'collector.pune@example.org',

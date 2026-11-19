@@ -10,7 +10,7 @@ import { toApplySettingsFormValues } from '../validation/apply.validation';
 import ApplyPageForm from './ApplyPageForm';
 
 /*
- * Edit the Apply page text — a dedicated page, never a modal. The steps and at-a-glance rows are
+ * Edit the Apply page text — a dedicated page, never a modal. The steps and information rows are
  * managed one by one from the listing; this edits the words around them and the Apply box.
  */
 export default function ApplyPageEdit() {

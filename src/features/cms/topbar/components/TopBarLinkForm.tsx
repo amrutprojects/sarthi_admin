@@ -11,6 +11,7 @@ import { FALLBACK_GOVERNMENT_NAME } from '../constants';
 import type { ApiTopBarSettings, TopBarField } from '../types/topbar.types';
 import {
   LABEL_MAX,
+  marathiNumeralsOf,
   serverErrors,
   validateTopBarLinkForm,
   type TopBarLinkFormValues,
@@ -37,7 +38,10 @@ export default function TopBarLinkForm({
   submitLabel: string;
   backTo: string;
   isCreate: boolean;
-  /* The strip's government name and language switch, drawn around the button; null until they have loaded. */
+  /*
+   * The strip's government name and language switch, drawn around the button, and whether its Marathi side prints
+   * Marathi digits; null until they have loaded.
+   */
   settings: ApiTopBarSettings | null;
   onSave: (values: TopBarLinkFormValues) => Promise<void>;
 }) {
@@ -104,6 +108,7 @@ export default function TopBarLinkForm({
             <TopBarPreview
               governmentName={settings ? settings.governmentName : FALLBACK_GOVERNMENT_NAME}
               showLanguageToggle={settings?.showLanguageToggle ?? true}
+              marathiNumerals={marathiNumeralsOf(settings)}
               buttons={[{ label: values.label, link: linkError ? '' : values.link }]}
             />
           </div>

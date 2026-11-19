@@ -129,7 +129,13 @@ const topBarLink = {
   isActive: true,
   ...T,
 };
-const topBarSettings = { id: 'ts', governmentName: pair('महाराष्ट्र शासन', 'Government of Maharashtra'), showLanguageToggle: true, ...T };
+const topBarSettings = {
+  id: 'ts',
+  governmentName: pair('महाराष्ट्र शासन', 'Government of Maharashtra'),
+  showLanguageToggle: true,
+  marathiNumerals: true,
+  ...T,
+};
 const brandBar = {
   id: 'bb',
   title: 'AMRUT KALASH',
@@ -422,6 +428,9 @@ describe('Home Page Management', () => {
     expect(await openTab()).toBe('Top Bar');
     expect(screen.getByRole('tab', { name: 'Top Bar' })).toHaveAttribute('aria-controls', screen.getByRole('tabpanel').id);
     expect(await screen.findByText('Verify Certificate')).toBeInTheDocument();
+    /* Its settings summary carries the site-wide Marathi digits switch. */
+    const digits = (await within(screen.getByRole('tabpanel')).findByText('Marathi digits')).closest('.kv');
+    expect(digits).toHaveTextContent('Marathi digitsOn');
     /* Only the open tab loads its section. */
     expect(brandBarService.get).not.toHaveBeenCalled();
     expect(navMenuService.list).not.toHaveBeenCalled();

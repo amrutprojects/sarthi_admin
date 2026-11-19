@@ -27,8 +27,9 @@ const FORM_ID = 'cms-top-bar-settings-form';
 
 /*
  * Top bar settings — the bold government name at the left of the strip (Government of Maharashtra by default; left
- * blank it is not shown) and whether the Marathi / English language switch is shown. Kept apart from the link
- * buttons, and independent of this module's own name in the admin panel.
+ * blank it is not shown), whether the Marathi / English language switch is shown, and whether the Marathi site prints
+ * figures in Devanagari digits (site-wide, not only in the strip). Kept apart from the link buttons, and independent
+ * of this module's own name in the admin panel.
  */
 export default function TopBarSettingsEdit() {
   usePageTitle('Top Bar Settings — Top Bar');
@@ -42,7 +43,7 @@ export default function TopBarSettingsEdit() {
       <PageHead
         crumbs={[...TOPBAR_CRUMBS, { l: 'Top bar settings' }]}
         title="Top Bar Settings"
-        sub="The bold text at the left of the strip at the top of the public website, and whether visitors get the language switch."
+        sub="The bold text at the left of the strip at the top of the public website, whether visitors get the language switch, and whether the Marathi site shows numbers in Marathi digits."
         back={<BackButton to={TOPBAR_TAB_PATH} />}
       />
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
@@ -92,7 +93,12 @@ function SettingsForm({ settings, links }: { settings: ApiTopBarSettings; links:
       if (err instanceof ApiError && err.status === 422 && err.details.length) {
         const mapped = serverErrors(err.details);
         setServer(mapped);
-        if (!isValid(mapped)) return;
+        /*
+         * Only the government name has boxes to show a message under. Any other refusal — the two switches, or a
+         * key an older API does not know yet ("Unrecognized key(s) in object: 'marathiNumerals'") — goes to the
+         * toast, so Save never fails silently.
+         */
+        if (mapped['governmentName.mr'] || mapped['governmentName.en']) return;
       }
       toastError(err);
     } finally {
@@ -112,6 +118,7 @@ function SettingsForm({ settings, links }: { settings: ApiTopBarSettings; links:
             <TopBarPreview
               governmentName={values.governmentName}
               showLanguageToggle={values.showLanguageToggle}
+              marathiNumerals={values.marathiNumerals}
               buttons={links.map((l) => ({ label: l.label, link: l.link }))}
             />
           </div>
@@ -142,6 +149,15 @@ function SettingsForm({ settings, links }: { settings: ApiTopBarSettings; links:
               {values.showLanguageToggle
                 ? 'Visitors get one Marathi / English switch at the right of the strip.'
                 : 'While hidden, visitors cannot change the language from the strip; the website stays in the language it opened in.'}
+            </p>
+            <label className="f ac gp8 fs13 mt10">
+              <input type="checkbox" checked={values.marathiNumerals} onChange={(e) => set('marathiNumerals', e.target.checked)} />
+              Show numbers in Marathi digits (०१२३)
+            </label>
+            <p className="muted fs12 mt10">
+              {values.marathiNumerals
+                ? 'On the Marathi site, figures print as ५०० तास and +९१ ९७३०१ ५१४५०. Email and web addresses are never changed.'
+                : 'Figures print exactly as typed (500 तास), on both sites.'}
             </p>
           </div>
         </div>
