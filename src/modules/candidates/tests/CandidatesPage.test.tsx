@@ -7,6 +7,9 @@ import { summaryFixture } from '../../../../tests/fixtures/studentSummary';
 import { studentApi, type StudentListItem } from '../../students';
 import CandidatesPage from '../pages/CandidatesPage';
 
+/* No lms-sync.view: the register is exactly as before M1 (the sync column and filter have their own tests in modules/lms-sync). */
+vi.mock('../../auth', () => ({ useCan: () => () => false }));
+
 const row = (over: Partial<StudentListItem> = {}): StudentListItem => ({
   id: 's1',
   code: 'STU-000001',

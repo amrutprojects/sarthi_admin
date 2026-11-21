@@ -26,5 +26,5 @@ export {
   topCentres,
   trackItems,
 } from './services/studentFigures';
-export { ServerTable, fmtDate, type ServerColumn } from './components/importUi';
+export { ReasonModal, ServerTable, fmtDate, type ServerColumn } from './components/importUi';
 export { profileGroups, scoreLabel, studentStatusLabel, type ProfileGroups, type ProfilePair } from './services/studentProfile';

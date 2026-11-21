@@ -216,6 +216,7 @@ const PAGES: Record<RouteName, LazyExoticComponent<ComponentType>> = {
   lmsTrackVariantEdit: page(() => import('../features/lms/trackVariant/pages/TrackVariantEdit')),
   lmsTrackVariantView: page(() => import('../features/lms/trackVariant/pages/TrackVariantView')),
   lmsLearningConfig: page(() => import('../features/lms/calendar/pages/LearningConfig')),
+  lmsApiKeys: page(() => import('../modules/lms-sync/pages/ApiKeysPage')),
   lms: page(() => import('../modules/platform/pages/LmsPage')),
   studentApp: page(() => import('../modules/platform/pages/StudentAppPage')),
   administration: page(() => import('../modules/platform/pages/AdministrationPage')),

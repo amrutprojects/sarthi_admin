@@ -8,7 +8,8 @@ import { studentApi, type StudentDetail, type StudentDocument } from '../../stud
 import CandidateDetailPage from '../pages/CandidateDetailPage';
 
 let permissions = new Set<string>();
-vi.mock('../../auth', () => ({ useAuth: () => ({ user: { id: 'me' }, permissions }) }));
+/* useCan: the M1 LMS sync card stays hidden (its own tests are in modules/lms-sync). */
+vi.mock('../../auth', () => ({ useAuth: () => ({ user: { id: 'me' }, permissions }), useCan: () => () => false }));
 
 const detail = (over: Partial<StudentDetail> = {}): StudentDetail => ({
   id: 's1',

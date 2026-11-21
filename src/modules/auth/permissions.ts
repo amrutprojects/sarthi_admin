@@ -96,6 +96,7 @@ const MENU_KEYS = [
   'lms-courses',
   'lms-course-modules',
   'lms-track-variants',
+  'lms-api-keys',
   'admin',
   'audit',
   'settings',
@@ -332,6 +333,13 @@ export const ACTION_ACCESS = {
   createLmsTrackVariant: ['lms-track-variants.create'],
   updateLmsTrackVariant: ['lms-track-variants.update'],
   deleteLmsTrackVariant: ['lms-track-variants.delete'],
+  /* M1: Amrut students synchronised to the LMS (flag column, sync detail, Push to LMS / Retry) and the API keys Amrut issues to the LMS. */
+  viewLmsSync: ['lms-sync.view'],
+  pushLmsSync: ['lms-sync.update'],
+  viewLmsApiKeys: ['lms-api-keys.view'],
+  createLmsApiKey: ['lms-api-keys.create'],
+  rotateLmsApiKey: ['lms-api-keys.update'],
+  revokeLmsApiKey: ['lms-api-keys.delete'],
 } satisfies Record<string, string[]>;
 
 export type Action = keyof typeof ACTION_ACCESS;

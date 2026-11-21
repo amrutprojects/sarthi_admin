@@ -5,6 +5,7 @@ import { Badge, Callout, Card, EmptyState, KvList, LinkButton, PageHead } from '
 import { toastError } from '../../../components/feedback/apiFeedback';
 import { ApiError } from '../../../services/api-client';
 import { useAuth } from '../../auth';
+import { LmsSyncCard } from '../../lms-sync';
 import {
   fmtDate,
   profileGroups,
@@ -183,9 +184,20 @@ export default function CandidateDetailPage() {
         </div>
       ) : null}
 
+      {/* M1: renders only when the server has the LMS sync and the user holds lms-sync.view. */}
+      <LmsSyncSection studentId={s.id} />
+
       <Card title="Documents" sub="declared by the source, and the files stored for this student">
         <Documents s={s} files={files} canDownload={permissions.has('imports.view')} />
       </Card>
+    </div>
+  );
+}
+
+function LmsSyncSection({ studentId }: { studentId: string }) {
+  return (
+    <div className="mb14">
+      <LmsSyncCard studentId={studentId} />
     </div>
   );
 }

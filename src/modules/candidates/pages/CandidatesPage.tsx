@@ -12,6 +12,15 @@ import {
   type StudentSource,
   type StudentSummary,
 } from '../../students';
+import {
+  BulkPushBar,
+  isSyncFlag,
+  selectColumn,
+  syncFilterOptions,
+  syncFlagColumn,
+  useLmsSyncFeature,
+  useRowSelection,
+} from '../../lms-sync';
 
 const PAGE_SIZE = 25;
 
@@ -24,12 +33,13 @@ const BUCKETS: { k: StudentBucket; l: string; count: (t: StudentSummary['totals'
 ];
 
 /* Filters live in the URL (shareable, and the dashboard links straight to them): bucket, centre, track, source, caste, education, q, page. */
-type Filter = { centre: string; track: string; source: string; caste: string; education: string };
-const FILTER_KEYS: (keyof Filter)[] = ['centre', 'track', 'source', 'caste', 'education'];
-const EMPTY: Filter = { centre: '', track: '', source: '', caste: '', education: '' };
+/* `sync` (M1 LMS sync flag) is read only when the server reports the LMS sync; otherwise it is ignored. */
+type Filter = { centre: string; track: string; source: string; caste: string; education: string; sync: string };
+const FILTER_KEYS: (keyof Filter)[] = ['centre', 'track', 'source', 'caste', 'education', 'sync'];
+const EMPTY: Filter = { centre: '', track: '', source: '', caste: '', education: '', sync: '' };
 const isUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
-function useListParams() {
+function useListParams(syncVisible: boolean) {
   const [params, setParams] = useSearchParams();
   const raw = (k: string) => params.get(k) ?? '';
   const bucket = BUCKETS.find((b) => b.k === params.get('bucket'))?.k ?? 'applications';
@@ -42,6 +52,7 @@ function useListParams() {
     source: raw('source') in SOURCES ? raw('source') : '',
     caste: isUuid(raw('caste')) ? raw('caste') : '',
     education: isUuid(raw('education')) ? raw('education') : '',
+    sync: syncVisible && isSyncFlag(raw('sync')) ? raw('sync') : '',
   };
   const page = Math.max(1, Number(params.get('page')) || 1);
   /* Any change except paging goes back to page 1. */
@@ -65,7 +76,10 @@ function useListParams() {
  */
 export default function CandidatesPage() {
   const navigate = useNavigate();
-  const { bucket, f, search, page, update } = useListParams();
+  /* M1: the flag column, filter and bulk push appear only when the server reports the LMS sync and the user may see it. */
+  const sync = useLmsSyncFeature();
+  const selection = useRowSelection();
+  const { bucket, f, search, page, update } = useListParams(sync.visible);
   const [searchInput, setSearchInput] = useState(search);
   useEffect(() => {
     document.title = 'Candidates — AMRUT × SUMAGO Admin';
@@ -95,6 +109,7 @@ export default function CandidatesPage() {
     source: (f.source || undefined) as StudentSource | undefined,
     casteId: f.caste || undefined,
     educationId: f.education || undefined,
+    lmsSyncStatus: f.sync || undefined,
   });
 
   const opt = (v: string, l: string) => ({ v, l });
@@ -133,7 +148,9 @@ export default function CandidatesPage() {
       l: 'Education',
       options: keepSelected([opt('', 'All'), ...(s?.byEducation ?? []).flatMap((e) => (e.id ? [opt(e.id, e.name)] : []))], f.education),
     },
+    ...(sync.visible ? [{ k: 'sync' as const, l: 'LMS sync', options: syncFilterOptions(sync.status) }] : []),
   ];
+  const tableColumns = sync.visible ? [...(sync.canPush ? [selectColumn(selection)] : []), ...columns, syncFlagColumn] : columns;
 
   const filtered = !!search || FILTER_KEYS.some((k) => f[k]);
   const registerEmpty = all.data?.totals.applications === 0;
@@ -226,10 +243,12 @@ export default function CandidatesPage() {
         </div>
       ) : null}
 
+      {sync.canPush ? <BulkPushBar sel={selection} pageIds={(list.data?.items ?? []).map((r) => r.id)} /> : null}
+
       <div className="card">
         <ServerTable
           rows={list.data?.items ?? []}
-          columns={columns}
+          columns={tableColumns}
           meta={list.data?.meta}
           page={page}
           onPage={(p) => update({ page: String(p) })}
