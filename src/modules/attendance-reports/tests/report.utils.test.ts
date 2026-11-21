@@ -22,7 +22,7 @@ describe('report utils', () => {
 
   it('unavailableFrom maps the API codes to the screen states', () => {
     const e = (status: number, code: string) => new ApiError('x', status, code);
-    expect(unavailableFrom(e(404, 'LMS_READS_DISABLED'))).toBe('off');
+    expect(unavailableFrom(e(404, 'LMS_READS_DISABLED'))).toBe('serverOff');
     expect(unavailableFrom(e(404, 'LMS_LIVE_DATA_OFF'))).toBe('off');
     expect(unavailableFrom(e(503, 'LMS_NOT_CONFIGURED'))).toBe('notConfigured');
     expect(unavailableFrom(e(503, 'LMS_TIMEOUT'))).toBe('down');

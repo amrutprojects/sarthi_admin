@@ -22,9 +22,12 @@ LMS live with Amrut's tenant key. The key never reaches the browser.
 
 ## States (no dummy numbers)
 
+Unlike the other LMS screens, this one has no local data to fall back to: while live data is off it shows the off state, never figures.
+
 | API | Screen |
 | --- | --- |
-| status `enabled:false`, or 404 `LMS_READS_DISABLED` / `LMS_LIVE_DATA_OFF` | "Live LMS data is switched off" (no report call) |
+| status `liveData:false`, or 404 `LMS_LIVE_DATA_OFF` (G-2 setting "Show live LMS data" off) | "Live LMS data is switched off", pointing to System Settings (with an Open System Settings button for users who may open it); no report call |
+| status `enabled:false`, or 404 `LMS_READS_DISABLED` (server master switch off) | "Live LMS data is switched off", saying the server switch is off; no report call |
 | status `configured:false`, or 503 `LMS_NOT_CONFIGURED` | "The LMS link is not configured" (no report call) |
 | 503 `LMS_TIMEOUT` / `LMS_UNREACHABLE` / `LMS_UNAVAILABLE` / `LMS_KEY_REJECTED` / … | "The LMS cannot be reached right now", code, Try again |
 | 200 with no rows | "No attendance in this range" |

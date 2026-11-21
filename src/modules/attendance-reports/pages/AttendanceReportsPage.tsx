@@ -1,9 +1,9 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Badge, Callout, Card, EmptyState, Kpi, PageHead, fmt } from '../../../components/ui';
+import { Badge, Callout, Card, EmptyState, Kpi, LinkButton, PageHead, fmt } from '../../../components/ui';
 import usePersistentState from '../../../hooks/usePersistentState';
 import { ApiError } from '../../../services/api-client';
-import { useCan } from '../../auth';
+import { useCan, useCanOpen } from '../../auth';
 import { LABELS, placeName, type Lang } from '../labels';
 import {
   csvFileName,
@@ -33,6 +33,7 @@ const DEFAULT_PREFS: Prefs = { lang: 'en', dateFrom: '', dateTo: '' };
 
 const UNAVAILABLE_TEXT: Record<Unavailable, (t: (typeof LABELS)['en']) => [string, string]> = {
   off: (t) => [t.offTitle, t.offMsg],
+  serverOff: (t) => [t.offTitle, t.serverOffMsg],
   notConfigured: (t) => [t.notConfiguredTitle, t.notConfiguredMsg],
   down: (t) => [t.downTitle, t.downMsg],
   noAccess: (t) => [t.noAccessTitle, t.noAccessMsg],
@@ -69,6 +70,7 @@ export default function AttendanceReportsPage() {
   const [prefs, setPrefs] = usePersistentState<Prefs>('attendance-reports', DEFAULT_PREFS);
   const [path, setPath] = useState<DrillPath>({});
   const can = useCan();
+  const canOpen = useCanOpen();
   const t = LABELS[prefs.lang];
   const level = levelFor(path);
   const badRange = rangeInvalid(prefs.dateFrom, prefs.dateTo);
@@ -86,8 +88,11 @@ export default function AttendanceReportsPage() {
     district: path.district?.code,
     centre: path.centre?.code,
   };
-  /* The status probe decides first: switched off or not configured means no LMS call at all. */
-  const statusBlocks = status.data && (!status.data.enabled || !status.data.configured);
+  /*
+   * The status probe decides first: the server master switch, the G-2 setting "Show live LMS data" or a missing LMS
+   * link means no report call at all (and no figures: this screen has no local data to fall back to).
+   */
+  const statusBlocks = status.data && (!status.data.enabled || !status.data.liveData || !status.data.configured);
   const report = useQuery({
     queryKey: ['attendance-reports', 'report', query],
     queryFn: ({ signal }) => attendanceReportsApi.report(query, signal),
@@ -98,12 +103,14 @@ export default function AttendanceReportsPage() {
 
   const unavailable: Unavailable | null = status.data
     ? !status.data.enabled
-      ? 'off'
-      : !status.data.configured
-        ? 'notConfigured'
-        : report.isError
-          ? unavailableFrom(report.error)
-          : null
+      ? 'serverOff'
+      : !status.data.liveData
+        ? 'off'
+        : !status.data.configured
+          ? 'notConfigured'
+          : report.isError
+            ? unavailableFrom(report.error)
+            : null
     : status.isError
       ? unavailableFrom(status.error)
       : null;
@@ -137,7 +144,12 @@ export default function AttendanceReportsPage() {
     body = (
       <Card>
         <EmptyState title={title} msg={msg}>
-          {err instanceof ApiError && unavailable !== 'off' && unavailable !== 'notConfigured' ? (
+          {unavailable === 'off' && canOpen('settings') ? (
+            <LinkButton to="#/settings" className="btn primary">
+              {t.openSettings}
+            </LinkButton>
+          ) : null}
+          {err instanceof ApiError && unavailable !== 'off' && unavailable !== 'serverOff' && unavailable !== 'notConfigured' ? (
             <p className="muted mono">
               {t.errorCode}: {err.code}
             </p>

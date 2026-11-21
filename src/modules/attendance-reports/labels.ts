@@ -49,6 +49,9 @@ const en = {
   emptyMsg: 'The LMS has no marked attendance for this area and these dates.',
   offTitle: 'Live LMS data is switched off',
   offMsg: 'Attendance reports read live from the LMS. An administrator can switch on "Show live LMS data" in System Settings.',
+  serverOffMsg:
+    'Attendance reports read live from the LMS, and live LMS reads are switched off on the server (LMS_READS_ENABLED). Ask whoever runs the server to switch them on.',
+  openSettings: 'Open System Settings',
   notConfiguredTitle: 'The LMS link is not configured',
   notConfiguredMsg: 'The LMS address and the Amrut tenant key have not been entered on the server, so no attendance can be shown.',
   downTitle: 'The LMS cannot be reached right now',
@@ -106,6 +109,9 @@ const mr: Labels = {
   emptyMsg: 'या क्षेत्रासाठी आणि या तारखांसाठी एलएमएसमध्ये उपस्थितीची नोंद नाही.',
   offTitle: 'थेट एलएमएस डेटा बंद आहे',
   offMsg: 'उपस्थिती अहवाल थेट एलएमएसमधून वाचले जातात. प्रशासक सिस्टम सेटिंग्जमध्ये "थेट एलएमएस डेटा दाखवा" सुरू करू शकतात.',
+  serverOffMsg:
+    'उपस्थिती अहवाल थेट एलएमएसमधून वाचले जातात, आणि सर्व्हरवर थेट एलएमएस वाचन बंद आहे (LMS_READS_ENABLED). सर्व्हर चालवणाऱ्यांना ते सुरू करण्यास सांगा.',
+  openSettings: 'सिस्टम सेटिंग्ज उघडा',
   notConfiguredTitle: 'एलएमएस जोडणी कॉन्फिगर केलेली नाही',
   notConfiguredMsg: 'सर्व्हरवर एलएमएसचा पत्ता आणि अमृत टेनंट की भरलेली नाही, त्यामुळे उपस्थिती दाखवता येत नाही.',
   downTitle: 'एलएमएसशी सध्या संपर्क होत नाही',

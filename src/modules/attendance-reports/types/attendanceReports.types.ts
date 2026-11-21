@@ -51,8 +51,13 @@ export interface AttendanceReport {
 }
 
 export interface AttendanceReportsStatus {
+  /* Server master switch LMS_READS_ENABLED. */
   enabled: boolean;
   configured: boolean;
+  /* G-2 setting "Show live LMS data" (System Settings). */
+  liveData: boolean;
+  /* enabled && liveData && configured: reports can be read now. */
+  live: boolean;
   cacheSeconds: number;
   timeoutMs: number;
 }

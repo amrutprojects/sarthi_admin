@@ -24,9 +24,9 @@ export function rangeInvalid(from: string, to: string): boolean {
 }
 
 /* Why there are no figures, from the API's error code. */
-export type Unavailable = 'off' | 'notConfigured' | 'down' | 'noAccess' | 'badRange' | 'error';
+/* off = the "Show live LMS data" setting; serverOff = the server master switch LMS_READS_ENABLED. */
+export type Unavailable = 'off' | 'serverOff' | 'notConfigured' | 'down' | 'noAccess' | 'badRange' | 'error';
 
-const OFF_CODES = new Set(['LMS_READS_DISABLED', 'LMS_LIVE_DATA_OFF']);
 const DOWN_CODES = new Set([
   'LMS_TIMEOUT',
   'LMS_UNREACHABLE',
@@ -41,7 +41,8 @@ const DOWN_CODES = new Set([
 
 export function unavailableFrom(err: unknown): Unavailable {
   if (!(err instanceof ApiError)) return 'error';
-  if (OFF_CODES.has(err.code)) return 'off';
+  if (err.code === 'LMS_LIVE_DATA_OFF') return 'off';
+  if (err.code === 'LMS_READS_DISABLED') return 'serverOff';
   if (err.code === 'LMS_NOT_CONFIGURED' || err.code === 'LMS_LIVE_DATA_UNAVAILABLE') return 'notConfigured';
   if (err.status === 403) return 'noAccess';
   if (err.status === 422 || err.code === 'LMS_QUERY_REJECTED') return 'badRange';

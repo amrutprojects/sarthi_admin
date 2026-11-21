@@ -10,14 +10,16 @@ import type { AttendanceReportQuery } from '../types/attendanceReports.types';
 import { counts, place, report, row } from './fixtures';
 
 let granted = new Set<string>();
-vi.mock('../../auth', () => ({ useCan: () => (a: string) => granted.has(a) }));
+let openable = new Set<string>();
+vi.mock('../../auth', () => ({ useCan: () => (a: string) => granted.has(a), useCanOpen: () => (k: string) => openable.has(k) }));
 
-const STATUS_OK = { enabled: true, configured: true, cacheSeconds: 30, timeoutMs: 8000 };
+const STATUS_OK = { enabled: true, configured: true, liveData: true, live: true, cacheSeconds: 30, timeoutMs: 8000 };
 
 beforeEach(() => {
   vi.restoreAllMocks();
   useUiStore.setState({ pageState: {} });
   granted = new Set(['exportAttendanceReports']);
+  openable = new Set();
   vi.spyOn(attendanceReportsApi, 'status').mockResolvedValue(STATUS_OK);
 });
 
@@ -135,11 +137,33 @@ describe('AttendanceReportsPage', () => {
     expect(await screen.findByText('No attendance in this range')).toBeInTheDocument();
   });
 
-  it('reads switched off: says so and never asks for the report', async () => {
-    vi.spyOn(attendanceReportsApi, 'status').mockResolvedValue({ ...STATUS_OK, enabled: false });
+  it('"Show live LMS data" off: the off state, no report call, no figures, a System Settings link for those who may open it', async () => {
+    vi.spyOn(attendanceReportsApi, 'status').mockResolvedValue({ ...STATUS_OK, liveData: false, live: false });
+    const spy = vi.spyOn(attendanceReportsApi, 'report');
+    openable = new Set(['settings']);
+    renderWithProviders(<AttendanceReportsPage />);
+    expect(await screen.findByText('Live LMS data is switched off')).toBeInTheDocument();
+    expect(screen.getByText(/switch on "Show live LMS data" in System Settings/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open System Settings' })).toBeInTheDocument();
+    expect(spy).not.toHaveBeenCalled();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(screen.queryByText('Present %')).not.toBeInTheDocument();
+  });
+
+  it('"Show live LMS data" off: no settings link without access to System Settings; Marathi text', async () => {
+    vi.spyOn(attendanceReportsApi, 'status').mockResolvedValue({ ...STATUS_OK, liveData: false, live: false });
+    useUiStore.setState({ pageState: { 'attendance-reports': { lang: 'mr', dateFrom: '', dateTo: '' } } });
+    renderWithProviders(<AttendanceReportsPage />);
+    expect(await screen.findByText('थेट एलएमएस डेटा बंद आहे')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'सिस्टम सेटिंग्ज उघडा' })).not.toBeInTheDocument();
+  });
+
+  it('server master switch off: says so (whatever the setting) and never asks for the report', async () => {
+    vi.spyOn(attendanceReportsApi, 'status').mockResolvedValue({ ...STATUS_OK, enabled: false, live: false });
     const spy = vi.spyOn(attendanceReportsApi, 'report');
     renderWithProviders(<AttendanceReportsPage />);
     expect(await screen.findByText('Live LMS data is switched off')).toBeInTheDocument();
+    expect(screen.getByText((text) => text.includes('switched off on the server (LMS_READS_ENABLED)'))).toBeInTheDocument();
     expect(spy).not.toHaveBeenCalled();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
