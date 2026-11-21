@@ -6,6 +6,7 @@ import { useLegacyTick, bump } from '../../../utils/legacyBus';
 import * as G from '../../../services/mock/governanceService';
 import type { ProgrammeConfig } from '../../../types/domain';
 import { Can } from '../../auth';
+import { LiveDataSettingCard } from '../../lms-live';
 
 type FieldDef = [key: keyof ProgrammeConfig, label: string, type: 'text' | 'number' | 'date'];
 const PROJECT_FIELDS: FieldDef[] = [
@@ -90,6 +91,7 @@ export default function SettingsPage() {
           </>
         }
       />
+      <LiveDataSettingCard />
       <div className="grid g2 mb14">
         <Card title="Project parameters">
           <div className="grid g2">{PROJECT_FIELDS.map(field)}</div>

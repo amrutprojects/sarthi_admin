@@ -1,3 +1,4 @@
+import { LmsDataSource, LiveBatchesPage } from '../../lms-live';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import AS from '../../../legacy';
@@ -71,7 +72,7 @@ const columns: Column<Batch>[] = [
   { k: 'status', l: 'Status', render: (b) => <GenBadge status={b.status} /> },
 ];
 
-export default function BatchesPage() {
+function LocalBatchesPage() {
   useLegacyTick();
   const { search } = useLocation();
   const [f, setF] = usePersistentState('batch', S.DEFAULT_BATCH);
@@ -253,4 +254,9 @@ function CreateBatchModal({ onClose }: { onClose: () => void }) {
       </div>
     </Modal>
   );
+}
+
+/* G-2: local data (above, unchanged) while "Show live LMS data" is off; the LMS's live data while it is on. */
+export default function BatchesPage() {
+  return <LmsDataSource local={<LocalBatchesPage />} live={<LiveBatchesPage />} />;
 }

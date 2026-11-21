@@ -1,3 +1,4 @@
+import { LmsDataSource, LiveTrainersPage } from '../../lms-live';
 import { useEffect } from 'react';
 import AS from '../../../legacy';
 import {
@@ -47,7 +48,7 @@ const columns: Column<Trainer>[] = [
   },
 ];
 
-export default function TrainersPage() {
+function LocalTrainersPage() {
   useLegacyTick();
   const [f, setF] = usePersistentState('trainer', S.DEFAULT_TRAINER);
   useEffect(() => {
@@ -75,11 +76,7 @@ export default function TrainersPage() {
               ToT management
             </LinkButton>
             <Can action="manageTrainers">
-              <button
-                type="button"
-                className="btn primary"
-                onClick={() => AS.ui.toast('This feature will be available soon.', 'ok')}
-              >
+              <button type="button" className="btn primary" onClick={() => AS.ui.toast('This feature will be available soon.', 'ok')}>
                 <Icon name="plus" />
                 Add trainer
               </button>
@@ -142,4 +139,9 @@ export default function TrainersPage() {
       <DemoNote />
     </div>
   );
+}
+
+/* G-2: local data (above, unchanged) while "Show live LMS data" is off; the LMS's live data while it is on. */
+export default function TrainersPage() {
+  return <LmsDataSource local={<LocalTrainersPage />} live={<LiveTrainersPage />} />;
 }

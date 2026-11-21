@@ -1,3 +1,4 @@
+import { LmsDataSource, LiveAttendancePage } from '../../lms-live';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import AS from '../../../legacy';
@@ -26,7 +27,7 @@ import { Can } from '../../auth';
 
 const QUERY_KEYS: string[] = ['district', 'centre', 'batch', 'mode'];
 
-export default function AttendancePage() {
+function LocalAttendancePage() {
   useLegacyTick();
   const { search } = useLocation();
   const [f, setF] = usePersistentState('att', S.DEFAULT_ATT());
@@ -221,4 +222,9 @@ export default function AttendancePage() {
       {contact && <MessageDrawer candidate={contact} onClose={() => setContact(null)} />}
     </div>
   );
+}
+
+/* G-2: local data (above, unchanged) while "Show live LMS data" is off; the LMS's live data while it is on. */
+export default function AttendancePage() {
+  return <LmsDataSource local={<LocalAttendancePage />} live={<LiveAttendancePage />} />;
 }

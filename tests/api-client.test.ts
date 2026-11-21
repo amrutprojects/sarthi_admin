@@ -22,6 +22,20 @@ describe('api-client', () => {
     expect(init.headers).not.toHaveProperty('Authorization');
   });
 
+  it('G-2: passes on source and fetched_at of live LMS reads; other endpoints get neither', async () => {
+    vi.stubGlobal(
+      'fetch',
+      respond(200, { success: true, message: 'ok', data: [], source: 'live', fetched_at: '2026-11-21T09:30:00.000Z' }),
+    );
+    expect(await request('/lms-reads/batches')).toEqual({
+      data: [],
+      message: 'ok',
+      meta: undefined,
+      source: 'live',
+      fetchedAt: '2026-11-21T09:30:00.000Z',
+    });
+  });
+
   it('adds X-CSRF-Token and Idempotency-Key on writes, never on reads', async () => {
     const fetchMock = respond(201, { success: true, message: 'created', data: {} });
     vi.stubGlobal('fetch', fetchMock);
@@ -70,7 +84,10 @@ describe('api-client', () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, blob: () => Promise.resolve(blob) } as unknown as Response);
     vi.stubGlobal('fetch', fetchMock);
     await expect(requestBlob('/lms/branding/e1/logo', { accept: 'image/png' })).resolves.toBe(blob);
-    expect(fetchMock).toHaveBeenCalledWith('/api/v1/lms/branding/e1/logo', expect.objectContaining({ credentials: 'include', headers: { Accept: 'image/png' } }));
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/v1/lms/branding/e1/logo',
+      expect.objectContaining({ credentials: 'include', headers: { Accept: 'image/png' } }),
+    );
 
     const handler = vi.fn();
     onUnauthorized(handler);

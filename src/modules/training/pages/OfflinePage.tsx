@@ -1,3 +1,4 @@
+import { LmsDataSource, LiveSessionsByModePage } from '../../lms-live';
 import { useEffect } from 'react';
 import { PageHead, Card, Kpi, KvList, LinkButton, Callout, DemoNote, Badge, GenBadge, AttendanceCell } from '../../../components/ui';
 import { HBar } from '../../../components/charts';
@@ -30,7 +31,7 @@ const columns: Column<Centre>[] = [
   { k: 'status', l: 'Status', render: (c) => <GenBadge status={c.status} /> },
 ];
 
-export default function OfflinePage() {
+function LocalOfflinePage() {
   useLegacyTick();
   useEffect(() => {
     document.title = 'Offline training — AMRUT × SUMAGO Admin';
@@ -159,4 +160,9 @@ export default function OfflinePage() {
       <DemoNote />
     </div>
   );
+}
+
+/* G-2: local data (above, unchanged) while "Show live LMS data" is off; the LMS's live data while it is on. */
+export default function OfflinePage() {
+  return <LmsDataSource local={<LocalOfflinePage />} live={<LiveSessionsByModePage deliveryMode="OFFLINE" />} />;
 }
