@@ -44,6 +44,7 @@ const PAGES: Record<RouteName, LazyExoticComponent<ComponentType>> = {
   offlineMode: page(() => import('../modules/training/pages/OfflinePage')),
   onlineMode: page(() => import('../modules/training/pages/OnlinePage')),
   attendance: page(() => import('../modules/training/pages/AttendancePage')),
+  attendanceReports: page(() => import('../modules/attendance-reports/pages/AttendanceReportsPage')),
   progress: page(() => import('../modules/training/pages/ProgressPage')),
   assessments: page(() => import('../modules/outcomes/pages/AssessmentsPage')),
   certification: page(() => import('../modules/outcomes/pages/CertificationPage')),
