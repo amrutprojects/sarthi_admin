@@ -38,6 +38,7 @@ export type RouteName =
   | 'offlineMode'
   | 'onlineMode'
   | 'attendance'
+  | 'attendanceReports'
   | 'progress'
   | 'assessments'
   | 'certification'
@@ -314,6 +315,8 @@ export const NAV: NavEntry[] = [
   { k: 'offline', l: 'Offline Training', i: 'building', r: '/offline' },
   { k: 'online', l: 'Online Training', i: 'globe', r: '/online' },
   { k: 'attendance', l: 'Attendance', i: 'calendar', r: '/attendance' },
+  /* M3: attendance read live from the LMS by division, district and centre (amrut-kalash-api /attendance-reports). */
+  { k: 'attendance-reports', l: 'Attendance reports', i: 'chart', r: '/attendance-reports' },
   { k: 'progress', l: 'Student Progress', i: 'chart', r: '/progress' },
   { g: 'Outcomes' },
   { k: 'assessments', l: 'Assessments', i: 'check', r: '/assessments' },
@@ -450,6 +453,7 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/offline', 'offlineMode', 'offline'],
   ['/online', 'onlineMode', 'online'],
   ['/attendance', 'attendance', 'attendance'],
+  ['/attendance-reports', 'attendanceReports', 'attendance-reports'],
   ['/progress', 'progress', 'progress'],
   ['/assessments', 'assessments', 'assessments'],
   ['/certification', 'certification', 'certification'],

@@ -134,6 +134,8 @@ export const SCREEN_ACCESS: Record<string, string[]> = {
   castes: ['castes.view'],
   'document-types': ['document-types.view'],
   education: ['education.view'],
+  /* M3 Attendance reports (amrut-kalash-api ATTENDANCE_REPORT_PERMISSIONS): Attendance, Reports & MIS or LMS Integration. */
+  'attendance-reports': ['attendance.view', 'reports.view', 'lms.view'],
 };
 
 /* Named actions → the action is available if the user holds ANY of these codes. */
@@ -339,6 +341,8 @@ export const ACTION_ACCESS = {
   createLmsApiKey: ['lms.create'],
   rotateLmsApiKey: ['lms.update'],
   revokeLmsApiKey: ['lms.delete'],
+  /* M3 Attendance reports: CSV export of the table on screen. */
+  exportAttendanceReports: ['reports.export'],
 } satisfies Record<string, string[]>;
 
 export type Action = keyof typeof ACTION_ACCESS;
