@@ -57,6 +57,8 @@ interface Envelope<T> {
   data: T;
   meta?: PageMeta;
   error?: { code: string; details?: ErrorDetail[] };
+  source?: 'live' | 'local';
+  fetched_at?: string;
 }
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -76,6 +78,9 @@ export interface ApiResult<T> {
   data: T;
   meta?: PageMeta;
   message: string;
+  /* Only on G-2 live LMS reads (/lms-reads/*). */
+  source?: 'live' | 'local';
+  fetchedAt?: string;
 }
 
 const queryString = (q?: RequestOptions['query']) => {
@@ -119,7 +124,11 @@ export async function request<T>(path: string, opts: RequestOptions = {}): Promi
       json?.error?.details ?? [],
     );
   }
-  return { data: json.data, meta: json.meta, message: json.message };
+  const out: ApiResult<T> = { data: json.data, meta: json.meta, message: json.message };
+  /* G-2: live LMS reads say where the answer came from; other endpoints send neither field. */
+  if (json.source) out.source = json.source;
+  if (json.fetched_at) out.fetchedAt = json.fetched_at;
+  return out;
 }
 
 /* Fetch every page of a list endpoint (admin lists are small; capped for safety). */
@@ -185,7 +194,12 @@ export async function requestBlob(path: string, opts: { signal?: AbortSignal; ac
   if (res.status === 401) unauthorizedHandler?.();
   if (!res.ok) {
     const json = (await res.json().catch(() => null)) as Envelope<unknown> | null;
-    throw new ApiError(json?.message || `Request failed (${res.status})`, res.status, json?.error?.code ?? 'ERROR', json?.error?.details ?? []);
+    throw new ApiError(
+      json?.message || `Request failed (${res.status})`,
+      res.status,
+      json?.error?.code ?? 'ERROR',
+      json?.error?.details ?? [],
+    );
   }
   return res.blob();
 }

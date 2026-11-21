@@ -1,3 +1,4 @@
+import { LmsDataSource, LiveCentresPage } from '../../lms-live';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import AS from '../../../legacy';
@@ -52,7 +53,7 @@ const columns: Column<Centre>[] = [
   { k: 'status', l: 'Status', render: (c) => <GenBadge status={c.status} /> },
 ];
 
-export default function CentresPage() {
+function LocalCentresPage() {
   useLegacyTick();
   const go = useGo();
   const { search } = useLocation();
@@ -198,4 +199,9 @@ export default function CentresPage() {
       <DemoNote />
     </div>
   );
+}
+
+/* G-2: local data (above, unchanged) while "Show live LMS data" is off; the LMS's live data while it is on. */
+export default function CentresPage() {
+  return <LmsDataSource local={<LocalCentresPage />} live={<LiveCentresPage />} />;
 }

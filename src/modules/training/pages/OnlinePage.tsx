@@ -1,3 +1,4 @@
+import { LmsDataSource, LiveSessionsByModePage } from '../../lms-live';
 import { useEffect } from 'react';
 import {
   PageHead,
@@ -39,7 +40,7 @@ const columns: Column<Candidate>[] = [
   { k: 'lastActivity', l: 'Last LMS activity', exportVal: (x) => dateFmt(x.lastActivity), render: (x) => dateFmt(x.lastActivity) },
 ];
 
-export default function OnlinePage() {
+function LocalOnlinePage() {
   useLegacyTick();
   const go = useGo();
   useEffect(() => {
@@ -218,4 +219,9 @@ export default function OnlinePage() {
       <DemoNote />
     </div>
   );
+}
+
+/* G-2: local data (above, unchanged) while "Show live LMS data" is off; the LMS's live data while it is on. */
+export default function OnlinePage() {
+  return <LmsDataSource local={<LocalOnlinePage />} live={<LiveSessionsByModePage deliveryMode="ONLINE" />} />;
 }

@@ -1,3 +1,4 @@
+import { LmsDataSource, LiveSessionsTodayPage } from '../../lms-live';
 import { useEffect, useReducer } from 'react';
 import AS from '../../../legacy';
 import { PageHead, Card, Kpi, LinkButton, DemoNote, GenBadge, ModeTag, AttendanceCell, LivePill, dateFmt } from '../../../components/ui';
@@ -47,7 +48,7 @@ const columns: Column<LiveSession>[] = [
   },
 ];
 
-export default function LivePage() {
+function LocalLivePage() {
   useLegacyTick();
   const [, refresh] = useReducer((x: number) => x + 1, 0);
   const [f, setF] = usePersistentState('live', { mode: 'ALL' });
@@ -181,4 +182,9 @@ export default function LivePage() {
       <DemoNote />
     </div>
   );
+}
+
+/* G-2: local data (above, unchanged) while "Show live LMS data" is off; the LMS's live data while it is on. */
+export default function LivePage() {
+  return <LmsDataSource local={<LocalLivePage />} live={<LiveSessionsTodayPage />} />;
 }
