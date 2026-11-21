@@ -208,8 +208,6 @@ export interface StudentListItem extends StudentView {
   batch: StudentBatchRef | null;
   caste?: string | null;
   educationQualification?: string | null;
-  /* M1 LMS sync summary (lms-sync module); absent on servers without the sync, null = never sent. */
-  lmsSync?: { status: string; lmsLearnerCode: string | null; lastSyncedAt: string | null } | null;
 }
 export interface StudentDetail extends StudentView, StudentProfileFields {
   firstName: string;
@@ -277,8 +275,6 @@ export interface StudentListQuery {
   casteId?: string;
   educationId?: string;
   regionId?: string;
-  /* M1 sync flag filter (NOT_SYNCED … REVIEW); sent only when the server reports the LMS sync. */
-  lmsSyncStatus?: string;
 }
 
 export interface ImportReference {

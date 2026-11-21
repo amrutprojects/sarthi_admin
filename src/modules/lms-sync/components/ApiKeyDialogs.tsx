@@ -6,7 +6,10 @@ import { apiKeyApi } from '../services/lmsSyncApi';
 import {
   API_KEY_SCOPES,
   API_KEY_SCOPE_LABEL,
-  ROTATE_OVERLAP_HOURS,
+  API_KEY_LABEL_MAX,
+  API_KEY_LABEL_MIN,
+  ROTATE_OVERLAP_DEFAULT,
+  ROTATE_OVERLAP_MINUTES,
   type ApiKey,
   type ApiKeyScope,
   type IssuedApiKey,
@@ -14,8 +17,9 @@ import {
 
 const errText = (e: unknown) =>
   e instanceof ApiError ? (e.status === 403 ? 'Not permitted: ' : '') + e.fullMessage : 'Something went wrong';
-export const overlapLabel = (h: number) =>
-  h === 0 ? 'None: the old key stops now' : h < 24 ? `${h} hour${h === 1 ? '' : 's'}` : `${h / 24} days`;
+/* Overlap in minutes, as the API takes it. */
+export const overlapLabel = (m: number) =>
+  m === 0 ? 'None: the old key stops now' : m < 1440 ? `${m / 60} hour${m === 60 ? '' : 's'}` : `${m / 1440} day${m === 1440 ? '' : 's'}`;
 
 /*
  * Generate a key. The call is made here, not through the query cache, so the secret in the answer lives only in
@@ -28,7 +32,9 @@ export function GenerateKeyModal({ onIssued, onClose }: { onIssued: (r: IssuedAp
   const [error, setError] = useState<string | null>(null);
   /* One key per dialog: a retried submit after a lost answer does not mint a second key. */
   const [idem] = useState(newIdempotencyKey);
-  const ok = label.trim().length >= 3 && scopes.size > 0;
+  /* Optional hard expiry; the API refuses a past one (400). */
+  const [expiry, setExpiry] = useState('');
+  const ok = label.trim().length >= API_KEY_LABEL_MIN && scopes.size > 0;
   const toggle = (s: ApiKeyScope) =>
     setScopes((prev) => {
       const next = new Set(prev);
@@ -40,7 +46,17 @@ export function GenerateKeyModal({ onIssued, onClose }: { onIssued: (r: IssuedAp
     setBusy(true);
     setError(null);
     try {
-      onIssued(await apiKeyApi.create({ label: label.trim(), scopes: API_KEY_SCOPES.filter((s) => scopes.has(s)) }, idem));
+      onIssued(
+        await apiKeyApi.create(
+          {
+            label: label.trim(),
+            scopes: API_KEY_SCOPES.filter((s) => scopes.has(s)),
+            /* datetime-local is local time; the API wants ISO 8601 with an offset. */
+            ...(expiry ? { expiresAt: new Date(expiry).toISOString() } : {}),
+          },
+          idem,
+        ),
+      );
     } catch (e) {
       setError(errText(e));
     } finally {
@@ -75,7 +91,7 @@ export function GenerateKeyModal({ onIssued, onClose }: { onIssued: (r: IssuedAp
         <input
           id="key-label"
           className="inp"
-          maxLength={80}
+          maxLength={API_KEY_LABEL_MAX}
           placeholder="e.g. LMS production"
           value={label}
           autoFocus
@@ -93,6 +109,12 @@ export function GenerateKeyModal({ onIssued, onClose }: { onIssued: (r: IssuedAp
           </label>
         ))}
       </fieldset>
+      <div className="fld">
+        <label htmlFor="key-expiry">
+          Expires <span className="muted">(optional)</span>
+        </label>
+        <input id="key-expiry" type="datetime-local" className="inp" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+      </div>
     </Modal>
   );
 }
@@ -107,7 +129,7 @@ export function RotateKeyModal({
   onIssued: (r: IssuedApiKey) => void;
   onClose: () => void;
 }) {
-  const [overlap, setOverlap] = useState<number>(24);
+  const [overlap, setOverlap] = useState<number>(ROTATE_OVERLAP_DEFAULT);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [idem] = useState(newIdempotencyKey);
@@ -124,7 +146,7 @@ export function RotateKeyModal({
   };
   return (
     <Modal
-      title={`Rotate key ${apiKey.prefix}…`}
+      title={`Rotate key ${apiKey.displayPrefix}`}
       onClose={onClose}
       footer={
         <>
@@ -148,7 +170,7 @@ export function RotateKeyModal({
       <div className="fld">
         <label htmlFor="key-overlap">Old key keeps working for</label>
         <select id="key-overlap" className="inp" value={overlap} onChange={(e) => setOverlap(Number(e.target.value))}>
-          {ROTATE_OVERLAP_HOURS.map((h) => (
+          {ROTATE_OVERLAP_MINUTES.map((h) => (
             <option key={h} value={h}>
               {overlapLabel(h)}
             </option>

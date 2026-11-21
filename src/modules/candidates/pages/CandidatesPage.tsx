@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Badge, Callout, FilterBar, LinkButton, PageHead, fmt } from '../../../components/ui';
 import { SOURCES, studentColumns as columns } from '../components/studentColumns';
@@ -12,15 +12,7 @@ import {
   type StudentSource,
   type StudentSummary,
 } from '../../students';
-import {
-  BulkPushBar,
-  isSyncFlag,
-  selectColumn,
-  syncFilterOptions,
-  syncFlagColumn,
-  useLmsSyncFeature,
-  useRowSelection,
-} from '../../lms-sync';
+import { LmsSyncRegister, useLmsSyncFeature } from '../../lms-sync';
 
 const PAGE_SIZE = 25;
 
@@ -33,13 +25,12 @@ const BUCKETS: { k: StudentBucket; l: string; count: (t: StudentSummary['totals'
 ];
 
 /* Filters live in the URL (shareable, and the dashboard links straight to them): bucket, centre, track, source, caste, education, q, page. */
-/* `sync` (M1 LMS sync flag) is read only when the server reports the LMS sync; otherwise it is ignored. */
-type Filter = { centre: string; track: string; source: string; caste: string; education: string; sync: string };
-const FILTER_KEYS: (keyof Filter)[] = ['centre', 'track', 'source', 'caste', 'education', 'sync'];
-const EMPTY: Filter = { centre: '', track: '', source: '', caste: '', education: '', sync: '' };
+type Filter = { centre: string; track: string; source: string; caste: string; education: string };
+const FILTER_KEYS: (keyof Filter)[] = ['centre', 'track', 'source', 'caste', 'education'];
+const EMPTY: Filter = { centre: '', track: '', source: '', caste: '', education: '' };
 const isUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
-function useListParams(syncVisible: boolean) {
+function useListParams() {
   const [params, setParams] = useSearchParams();
   const raw = (k: string) => params.get(k) ?? '';
   const bucket = BUCKETS.find((b) => b.k === params.get('bucket'))?.k ?? 'applications';
@@ -52,7 +43,6 @@ function useListParams(syncVisible: boolean) {
     source: raw('source') in SOURCES ? raw('source') : '',
     caste: isUuid(raw('caste')) ? raw('caste') : '',
     education: isUuid(raw('education')) ? raw('education') : '',
-    sync: syncVisible && isSyncFlag(raw('sync')) ? raw('sync') : '',
   };
   const page = Math.max(1, Number(params.get('page')) || 1);
   /* Any change except paging goes back to page 1. */
@@ -71,15 +61,43 @@ function useListParams(syncVisible: boolean) {
 }
 
 /*
- * Candidate master: the real student register (GET /students), server-paged, with bucket chips counted by
- * GET /students/summary. Contact details stay masked; a row opens the student's masked detail.
+ * Candidate master. `?view=lms` (M1) shows the register's LMS sync view (GET /lms-sync/students: flag column, flag
+ * filter, Push to LMS / Retry); it is offered only when the server reports the LMS sync and the user may read it.
+ * Otherwise, and by default, the student register below is shown unchanged.
  */
 export default function CandidatesPage() {
-  const navigate = useNavigate();
-  /* M1: the flag column, filter and bulk push appear only when the server reports the LMS sync and the user may see it. */
   const sync = useLmsSyncFeature();
-  const selection = useRowSelection();
-  const { bucket, f, search, page, update } = useListParams(sync.visible);
+  const [params, setParams] = useSearchParams();
+  const lms = sync.visible && params.get('view') === 'lms';
+  /* Switching view starts from clean filters: the two lists take different ones. */
+  const viewSwitch = sync.visible ? (
+    <div className="pills mb14" role="group" aria-label="Register view">
+      {[
+        { k: false, l: 'Register' },
+        { k: true, l: 'LMS sync' },
+      ].map((v) => (
+        <button
+          type="button"
+          key={v.l}
+          className={'chip' + (lms === v.k ? ' on' : '')}
+          aria-pressed={lms === v.k}
+          onClick={() => setParams(v.k ? { view: 'lms' } : {}, { replace: true })}
+        >
+          {v.l}
+        </button>
+      ))}
+    </div>
+  ) : null;
+  return lms ? <LmsSyncRegister feature={sync} viewSwitch={viewSwitch} /> : <StudentRegister viewSwitch={viewSwitch} />;
+}
+
+/*
+ * The real student register (GET /students), server-paged, with bucket chips counted by GET /students/summary.
+ * Contact details stay masked; a row opens the student's masked detail.
+ */
+function StudentRegister({ viewSwitch }: { viewSwitch: ReactNode }) {
+  const navigate = useNavigate();
+  const { bucket, f, search, page, update } = useListParams();
   const [searchInput, setSearchInput] = useState(search);
   useEffect(() => {
     document.title = 'Candidates — AMRUT × SUMAGO Admin';
@@ -109,7 +127,6 @@ export default function CandidatesPage() {
     source: (f.source || undefined) as StudentSource | undefined,
     casteId: f.caste || undefined,
     educationId: f.education || undefined,
-    lmsSyncStatus: f.sync || undefined,
   });
 
   const opt = (v: string, l: string) => ({ v, l });
@@ -148,9 +165,7 @@ export default function CandidatesPage() {
       l: 'Education',
       options: keepSelected([opt('', 'All'), ...(s?.byEducation ?? []).flatMap((e) => (e.id ? [opt(e.id, e.name)] : []))], f.education),
     },
-    ...(sync.visible ? [{ k: 'sync' as const, l: 'LMS sync', options: syncFilterOptions(sync.status) }] : []),
   ];
-  const tableColumns = sync.visible ? [...(sync.canPush ? [selectColumn(selection)] : []), ...columns, syncFlagColumn] : columns;
 
   const filtered = !!search || FILTER_KEYS.some((k) => f[k]);
   const registerEmpty = all.data?.totals.applications === 0;
@@ -196,6 +211,8 @@ export default function CandidatesPage() {
           </Callout>
         </div>
       ) : null}
+
+      {viewSwitch}
 
       <div className="pills mb14" role="group" aria-label="Student buckets">
         {BUCKETS.map((b) => (
@@ -243,12 +260,10 @@ export default function CandidatesPage() {
         </div>
       ) : null}
 
-      {sync.canPush ? <BulkPushBar sel={selection} pageIds={(list.data?.items ?? []).map((r) => r.id)} /> : null}
-
       <div className="card">
         <ServerTable
           rows={list.data?.items ?? []}
-          columns={tableColumns}
+          columns={columns}
           meta={list.data?.meta}
           page={page}
           onPage={(p) => update({ page: String(p) })}

@@ -1,51 +1,69 @@
+import type { ReactNode } from 'react';
 import { Callout, Card, KvList, Timeline, type TimelineItem } from '../../../components/ui';
 import { toastError, toastOk } from '../../../components/feedback/apiFeedback';
 import Icon from '../../../components/ui/Icon';
 import { ApiError } from '../../../services/api-client';
 import { fmtDate } from '../../students';
-import { useLmsSyncDetail, useLmsSyncFeature, useSyncAction } from '../hooks/useLmsSync';
-import type { LmsSyncDetail, LmsSyncEvent } from '../types/lmsSync.types';
-import { SYNC_FLAG_LABEL, SyncFlagBadge } from './SyncFlagBadge';
+import { useLmsSyncDetail, useLmsSyncFeature, useSyncActions } from '../hooks/useLmsSync';
+import { SYNC_ERROR_LABEL, type LmsSyncDetail } from '../types/lmsSync.types';
+import { SyncFlagBadge } from './SyncFlagBadge';
 
 const dash = (v: string | null | undefined) => (v ? v : '—');
-/* In flight (PENDING / SENT) or held for Amrut's same-person review: a manual push would only queue a duplicate. */
-const derivedCanPush = (d: LmsSyncDetail) => d.status === 'NOT_SYNCED' || d.status === 'SYNCED' || d.status === 'FAILED';
-const derivedCanRetry = (d: LmsSyncDetail) => d.status === 'FAILED';
-
-const eventState = (e: LmsSyncEvent): TimelineItem['state'] =>
-  e.status === 'FAILED' ? 'fail' : e.status === 'SYNCED' ? 'done' : e.status === 'PENDING' || e.status === 'SENT' ? 'cur' : '';
 
 /*
- * The student's LMS sync (GET /students/:id/lms-sync): flag, LMS learner id and code, attempts, last error and
- * the history, with "Push to LMS" and "Retry". Renders nothing unless the server has the sync and the user holds
- * lms-sync.view, so the student detail is unchanged everywhere else.
+ * The API keeps the latest timestamps of each step (no event log), so the history is built from them, oldest first.
+ */
+function history(d: LmsSyncDetail): TimelineItem[] {
+  const steps: [string, string | null, TimelineItem['state']][] = [
+    ['Linked to the LMS sync', d.linkCreatedAt, 'done'],
+    ['Queued', d.queuedAt, d.syncStatus === 'PENDING' ? 'cur' : 'done'],
+    ['Sent to the LMS', d.lastSentAt, d.syncStatus === 'SENT' ? 'cur' : 'done'],
+    ['Checked with the LMS', d.lastCheckedAt, 'done'],
+    ['Synced', d.lastSyncedAt, 'done'],
+  ];
+  const items: TimelineItem[] = steps.filter(([, at]) => at).map(([title, at, state]) => ({ title, sub: fmtDate(at), state }));
+  if (d.syncStatus === 'FAILED') items.push({ title: 'Failed', sub: dash(d.lastErrorCode), state: 'fail' });
+  if (d.nextAttemptAt) items.push({ title: 'Next attempt', sub: fmtDate(d.nextAttemptAt), state: '' });
+  return items;
+}
+
+/*
+ * The student's LMS sync (GET /lms-sync/students/:id): flag, LMS learner id and code, LMS status, attempts, last
+ * error with field codes, missing fields and the history, with "Push to LMS" and (for FAILED) "Retry". Renders
+ * nothing unless the server has the sync and the user may read it, so the student detail is unchanged otherwise.
  */
 export function LmsSyncCard({ studentId }: { studentId: string }) {
   const feature = useLmsSyncFeature();
   const detail = useLmsSyncDetail(studentId, feature.visible);
-  const action = useSyncAction(studentId);
+  const { push, retry } = useSyncActions();
   if (!feature.visible) return null;
 
-  const run = (kind: 'push' | 'retry') =>
-    action.mutate(kind, {
-      onSuccess: () => toastOk(kind === 'push' ? 'Student queued for the LMS.' : 'Retry queued.'),
+  const d = detail.data;
+  const busy = push.isPending || retry.isPending;
+  const doPush = () =>
+    push.mutate([studentId], {
+      onSuccess: (r) =>
+        r.queued.includes(studentId)
+          ? toastOk(r.syncEnabled ? 'Student queued for the LMS.' : 'Student queued; it is sent once the LMS sync is switched on.')
+          : toastError(new ApiError('Not queued: the student is not approved or not active', 409, r.skipped[0]?.reason ?? 'NOT_ELIGIBLE')),
       onError: toastError,
     });
-
-  const d = detail.data;
-  const canPush = feature.canPush && !!d && (d.canPush ?? derivedCanPush(d));
-  const canRetry = feature.canPush && !!d && (d.canRetry ?? derivedCanRetry(d));
-  const showActions = feature.status && d && (feature.canPush || feature.paused);
+  const doRetry = () =>
+    retry.mutate([studentId], {
+      onSuccess: (r) =>
+        r.queued.length ? toastOk('Retry queued.') : toastError(new ApiError('This student is no longer failed', 409, 'NOT_FAILED')),
+      onError: toastError,
+    });
 
   return (
     <Card
       title="LMS sync"
-      sub={feature.status?.lmsTenantCode ? `tenant ${feature.status.lmsTenantCode}` : 'student copy in the LMS'}
+      sub={d?.tenantCode ? `tenant ${d.tenantCode}` : 'student copy in the LMS'}
       action={
-        showActions ? (
+        feature.canPush && d ? (
           <div className="tw-flex tw-items-center tw-gap-2">
-            {canRetry ? (
-              <button type="button" className="btn sm" disabled={action.isPending} onClick={() => run('retry')}>
+            {d.syncStatus === 'FAILED' ? (
+              <button type="button" className="btn sm" disabled={busy} onClick={doRetry}>
                 <Icon name="refresh" />
                 Retry
               </button>
@@ -53,9 +71,9 @@ export function LmsSyncCard({ studentId }: { studentId: string }) {
             <button
               type="button"
               className="btn sm primary"
-              disabled={!canPush || action.isPending}
-              title={feature.paused ? 'LMS sync is switched off on the server' : undefined}
-              onClick={() => run('push')}
+              disabled={!d.eligible || busy}
+              title={d.eligible ? undefined : 'Only approved, active students are sent to the LMS'}
+              onClick={doPush}
             >
               Push to LMS
             </button>
@@ -66,45 +84,52 @@ export function LmsSyncCard({ studentId }: { studentId: string }) {
       {detail.isPending ? (
         <div className="skel" style={{ height: 120 }} aria-label="Loading LMS sync" />
       ) : detail.isError ? (
-        detail.error instanceof ApiError && detail.error.status === 404 ? (
-          <p className="muted" style={{ margin: 0 }}>
-            This student has not been sent to the LMS yet.
-          </p>
-        ) : (
-          <Callout tone="err" title="Could not load the LMS sync. ">
-            <button type="button" className="btn xs" onClick={() => void detail.refetch()}>
-              Retry
-            </button>
-          </Callout>
-        )
+        <Callout tone="err" title="Could not load the LMS sync. ">
+          {detail.error instanceof ApiError ? detail.error.message + ' ' : null}
+          <button type="button" className="btn xs" onClick={() => void detail.refetch()}>
+            Retry
+          </button>
+        </Callout>
       ) : (
-        <SyncDetailBody d={detail.data} paused={feature.paused} />
+        <SyncDetailBody d={detail.data} />
       )}
     </Card>
   );
 }
 
-function SyncDetailBody({ d, paused }: { d: LmsSyncDetail; paused: boolean }) {
+function SyncDetailBody({ d }: { d: LmsSyncDetail }) {
+  const note = (tone: 'info' | 'warn' | 'err', title: string, body: ReactNode) => (
+    <div className="mb10">
+      <Callout tone={tone} title={title}>
+        {body}
+      </Callout>
+    </div>
+  );
   return (
     <>
-      {paused ? (
-        <div className="mb10">
-          <Callout tone="warn" title="LMS sync is switched off. ">
-            Flags are shown as last recorded; pushes resume when the server&apos;s sync is switched on.
-          </Callout>
-        </div>
-      ) : null}
-      {d.status === 'REVIEW' ? (
-        <div className="mb10">
-          <Callout tone="info" title="Held for review. ">
-            The LMS matched a possible existing learner. Decide same person / different person in Amrut&apos;s duplicate review.
-          </Callout>
-        </div>
-      ) : null}
+      {!d.syncEnabled
+        ? note('warn', 'LMS sync is switched off. ', 'Queued students are sent once the server’s sync is switched on.')
+        : null}
+      {!d.eligible ? note('info', 'Not sent. ', 'Only approved, active students are sent to the LMS.') : null}
+      {d.syncStatus === 'REVIEW'
+        ? note('info', 'Held for review. ', 'The LMS suspects a duplicate learner; it waits for a same-person / different-person decision.')
+        : null}
+      {d.payload.missingRequiredFields.length
+        ? note('warn', 'Fill these in to sync: ', <span className="mono">{d.payload.missingRequiredFields.join(', ')}</span>)
+        : null}
+      {d.syncStatus === 'SYNCED' && d.payload.changedSinceLastSend
+        ? note('info', 'Changed since the last send. ', 'The edit is sent in the next cycle.')
+        : null}
       <div className="kv-grid">
         <KvList
           pairs={[
-            ['Sync flag', <SyncFlagBadge key="f" flag={d.status} />],
+            ['Sync flag', <SyncFlagBadge key="f" flag={d.syncStatus} />],
+            [
+              'LMS status',
+              <span key="s" className="mono">
+                {dash(d.lmsStatus)}
+              </span>,
+            ],
             [
               'LMS learner code',
               <span key="c" className="mono">
@@ -118,31 +143,41 @@ function SyncDetailBody({ d, paused }: { d: LmsSyncDetail; paused: boolean }) {
               </span>,
             ],
             ['Attempts', String(d.attempts)],
-            ['Last attempt', fmtDate(d.lastAttemptAt)],
+            ['Last sent', fmtDate(d.lastSentAt)],
             ['Last synced', fmtDate(d.lastSyncedAt)],
-            ...(d.nextAttemptAt ? ([['Next attempt', fmtDate(d.nextAttemptAt)]] as [string, string][]) : []),
+            ...(d.lmsReasonCodes.length
+              ? ([
+                  [
+                    'LMS reason codes',
+                    <span key="r" className="mono">
+                      {d.lmsReasonCodes.join(', ')}
+                    </span>,
+                  ],
+                ] as [string, ReactNode][])
+              : []),
           ]}
         />
       </div>
-      {d.lastErrorMessage || d.lastErrorCodes.length ? (
+      {d.lastErrorCode ? (
         <div className="mt14">
           <Callout tone="err" title="Last error: ">
-            {d.lastErrorMessage ?? ''}
-            {d.lastErrorCodes.length ? <span className="mono"> ({d.lastErrorCodes.join(', ')})</span> : null}
+            <span className="mono">{d.lastErrorCode}</span>
+            {SYNC_ERROR_LABEL[d.lastErrorCode] ? <> — {SYNC_ERROR_LABEL[d.lastErrorCode]}</> : null}
+            {d.lastErrorDetails.length ? (
+              <ul className="mt6" style={{ margin: '6px 0 0', paddingLeft: 18 }}>
+                {d.lastErrorDetails.map((e) => (
+                  <li key={e.field + e.code}>
+                    <span className="mono">{e.field}</span>: {e.code}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </Callout>
         </div>
       ) : null}
       <h4 className="mb6 mt14">History</h4>
-      {d.timeline.length ? (
-        <Timeline
-          items={d.timeline.map((e) => ({
-            title: e.status ? `${humanType(e.type)} · ${SYNC_FLAG_LABEL[e.status]?.[0] ?? e.status}` : humanType(e.type),
-            sub: [fmtDate(e.at), e.actorName ?? 'Sync worker', e.message, e.errorCodes?.length ? e.errorCodes.join(', ') : null]
-              .filter(Boolean)
-              .join(' · '),
-            state: eventState(e),
-          }))}
-        />
+      {history(d).length ? (
+        <Timeline items={history(d)} />
       ) : (
         <p className="muted" style={{ margin: 0 }}>
           No sync activity yet.
@@ -151,5 +186,3 @@ function SyncDetailBody({ d, paused }: { d: LmsSyncDetail; paused: boolean }) {
     </>
   );
 }
-
-const humanType = (t: string) => (t ? t.charAt(0) + t.slice(1).toLowerCase().replace(/_/g, ' ') : t);

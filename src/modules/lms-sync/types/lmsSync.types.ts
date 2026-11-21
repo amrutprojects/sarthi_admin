@@ -1,113 +1,154 @@
 /*
- * M1 DTOs: Amrut students synchronised to the LMS (student_lms_link) and the API keys Amrut issues to the LMS.
- *
- * PROVISIONAL: the API (amrut-kalash-api, M1) is being built in parallel. These shapes follow the master plan
- * (Stage 3 M1), three-project-integration-design.md §6 and lms-api contracts/multi-tenant/amrut-student-api.md.
- * Every field the UI relies on is listed here, and every call is in services/lmsSyncApi.ts, so aligning with the
- * final API touches these two files only.
+ * M1 DTOs, matching amrut-kalash-api:
+ * - LMS sync admin API `/api/v1/lms-sync` (docs/lms-sync/admin-api.md, src/modules/lms-sync/lms-sync.validation.ts);
+ * - API keys `/api/v1/api-keys` (docs/lms-integration-api-keys.md, src/modules/api-keys/api-key.validation.ts).
  */
 
-/* student_lms_link.sync_status */
+/* student_lms_link.syncStatus (lms-sync.constants.ts SYNC_STATUSES) */
 export const SYNC_FLAGS = ['NOT_SYNCED', 'PENDING', 'SENT', 'SYNCED', 'FAILED', 'REVIEW'] as const;
 export type SyncFlag = (typeof SYNC_FLAGS)[number];
 export const isSyncFlag = (v: string): v is SyncFlag => (SYNC_FLAGS as readonly string[]).includes(v);
 
-/* GET /lms-sync/status: whether this server has the M1 sync at all, whether the worker is switched on, and counts per flag. */
-export interface LmsSyncStatus {
-  /* LMS_SYNC_ENABLED: off means flags are shown but pushes are refused. */
-  enabled: boolean;
-  lmsTenantCode: string | null;
-  counts: Partial<Record<SyncFlag, number>>;
+/* GET /lms-sync/summary: counts over eligible students (approved, active, not deleted). */
+export interface LmsSyncSummary {
+  tenantCode: string | null;
+  /* LMS_SYNC_ENABLED. Off: show "LMS sync is switched off"; push and retry still queue. */
+  syncEnabled: boolean;
+  eligible: number;
+  byStatus: Record<SyncFlag, number>;
 }
 
-/* The sync summary a GET /students row carries (absent on servers without M1; null = never synced). */
-export interface LmsSyncRowSummary {
-  status: SyncFlag;
-  lmsLearnerCode: string | null;
-  lastSyncedAt: string | null;
+/* GET /lms-sync/students query. `syncStatus` is sent comma-separated. */
+export interface LmsSyncListQuery {
+  page?: number;
+  limit?: number;
+  syncStatus?: SyncFlag[];
+  /* eligible (default) = what the sync sends; all = every student. */
+  scope?: 'eligible' | 'all';
+  /* Student code or name. */
+  search?: string;
+  centre?: string;
+  errorCode?: string;
 }
 
-/* One entry of a student's sync history, newest first. Values carry no personal data, only codes and outcomes. */
-export interface LmsSyncEvent {
-  id: string;
-  at: string;
-  /* e.g. QUEUED, MANUAL_PUSH, RETRY, SENT, SYNCED, FAILED, REVIEW, RECONCILED */
-  type: string;
-  /* The flag after the event, when it changed one. */
-  status: SyncFlag | null;
-  message: string | null;
-  errorCodes?: string[];
-  /* The staff member who pushed or retried; null for the worker. */
-  actorName: string | null;
-}
-
-/* GET /students/:id/lms-sync */
-export interface LmsSyncDetail {
+/* A row of GET /lms-sync/students (no personal data beyond code and name). A student without a link: NOT_SYNCED, 0, nulls. */
+export interface LmsSyncRow {
   studentId: string;
-  lmsTenantCode: string | null;
-  status: SyncFlag;
-  lmsLearnerId: string | null;
+  code: string;
+  firstName: string;
+  lastName: string;
+  centreCode: string | null;
+  trackCode: string | null;
+  studentStatus: string;
+  eligible: boolean;
+  syncStatus: SyncFlag;
+  /* The LMS intake status (RECEIVED, INVALID, PROVISIONED, …). */
+  lmsStatus: string | null;
   lmsLearnerCode: string | null;
   attempts: number;
-  lastAttemptAt: string | null;
+  lastErrorCode: string | null;
+  lastSentAt: string | null;
   lastSyncedAt: string | null;
-  /* When the worker will try again after a failure (backoff). */
   nextAttemptAt: string | null;
-  lastErrorCodes: string[];
-  lastErrorMessage: string | null;
-  timeline: LmsSyncEvent[];
-  /* The server's own answer to "may this student be pushed / retried now"; derived from the flag when absent. */
-  canPush?: boolean;
-  canRetry?: boolean;
 }
 
-/* POST /lms-sync/push */
-export interface BulkPushResult {
-  queued: number;
-  skipped: { studentId: string; reason: string }[];
+/* GET /lms-sync/students/:id */
+export interface LmsSyncDetail extends Omit<LmsSyncRow, 'centreCode' | 'trackCode'> {
+  tenantCode: string | null;
+  syncEnabled: boolean;
+  lmsLearnerId: string | null;
+  lmsRequestId: string | null;
+  lmsReasonCodes: string[];
+  /* Field names and codes only, never values. */
+  lastErrorDetails: { field: string; code: string }[];
+  queuedAt: string | null;
+  lastCheckedAt: string | null;
+  linkCreatedAt: string | null;
+  payload: {
+    fields: string[];
+    /* LMS-required fields empty in Amrut: "fill these in to sync". */
+    missingRequiredFields: string[];
+    checksum: string;
+    lastSentChecksum: string | null;
+    /* With SYNCED: an edit waits for the next cycle. */
+    changedSinceLastSend: boolean;
+  };
 }
 
-/* Scopes an Amrut-issued key may carry (amrut-student-api.md §2–4). */
-export const API_KEY_SCOPES = ['students.match', 'students.create', 'students.update'] as const;
-export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
-export const API_KEY_SCOPE_LABEL: Record<ApiKeyScope, string> = {
-  'students.match': 'Match students (duplicate check)',
-  'students.create': 'Create or match students',
-  'students.update': 'Request profile corrections',
+/* POST /lms-sync/students/push (1–500 ids). */
+export type PushSkipReason = 'NOT_ELIGIBLE' | 'NOT_FOUND';
+export interface PushResult {
+  syncEnabled: boolean;
+  queued: string[];
+  skipped: { studentId: string; reason: PushSkipReason | string }[];
+}
+/* POST /lms-sync/students/retry ({} = every FAILED student); non-failed ids are ignored, not listed. */
+export interface RetryResult {
+  syncEnabled: boolean;
+  queued: string[];
+}
+export const BULK_PUSH_MAX = 500;
+
+/* Error codes in lastErrorCode besides LMS_<status> and the LMS's own (lms-sync.constants.ts SYNC_ERROR). */
+export const SYNC_ERROR_LABEL: Record<string, string> = {
+  MISSING_REQUIRED_FIELDS: 'Required fields are empty in Amrut',
+  LMS_REJECTED_FIELDS: 'The LMS rejected some fields',
+  LMS_UNAVAILABLE: 'The LMS could not be reached; it will be tried again',
+  NOT_ELIGIBLE: 'No longer approved or active',
 };
 
-/*
- * An Amrut-issued API key as listed. The secret is never returned after creation; only its prefix identifies it.
- * ROTATING = replaced by a newer key and still accepted until `expiresAt` (the overlap window).
- */
-export type ApiKeyStatus = 'ACTIVE' | 'ROTATING' | 'REVOKED' | 'EXPIRED';
+/* Scopes of an Amrut-issued key (api-key.secret.ts API_KEY_SCOPES); the LMS needs all three. */
+export const API_KEY_SCOPES = ['lms.students.match', 'lms.students.create', 'lms.students.update'] as const;
+export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
+export const API_KEY_SCOPE_LABEL: Record<ApiKeyScope, string> = {
+  'lms.students.match': 'Match students (duplicate check)',
+  'lms.students.create': 'Create or match students',
+  'lms.students.update': 'Request profile corrections',
+};
+
+/* `status` is stored (ACTIVE | REVOKED); `state` is what to show. EXPIRING = rotated, accepted until expiresAt. */
+export type ApiKeyState = 'ACTIVE' | 'EXPIRING' | 'EXPIRED' | 'REVOKED';
 export interface ApiKey {
   id: string;
-  prefix: string;
   label: string;
+  prefix: string;
+  /* e.g. "amk_3f9a1c0b7d2e_…" */
+  displayPrefix: string;
   scopes: string[];
-  status: ApiKeyStatus;
-  createdAt: string;
-  createdByName: string | null;
-  lastUsedAt: string | null;
+  status: 'ACTIVE' | 'REVOKED';
+  state: ApiKeyState;
   expiresAt: string | null;
+  createdAt: string;
+  createdById: string | null;
+  rotatedAt: string | null;
+  rotatedById: string | null;
+  replacedById: string | null;
+  rotatedFromId: string | null;
   revokedAt: string | null;
-  /* The key this one replaced (rotation). */
-  replacesId: string | null;
+  revokedById: string | null;
+  revokedReason: string | null;
+  lastUsedAt: string | null;
 }
 
+/* POST /api-keys: label 2–100; scopes default to all; optional future expiry. */
 export interface CreateApiKeyInput {
   label: string;
-  scopes: ApiKeyScope[];
+  scopes?: ApiKeyScope[];
+  expiresAt?: string | null;
 }
-/* POST /lms-api-keys → the key plus its secret, shown once. */
+export const API_KEY_LABEL_MIN = 2;
+export const API_KEY_LABEL_MAX = 100;
+/* 201 → the key plus its secret, returned once (`amk_<12 hex>_<43 base64url>`). */
 export interface IssuedApiKey {
   key: ApiKey;
   secret: string;
 }
-/* POST /lms-api-keys/:id/rotate → the new key and secret, and the old key (now ROTATING until its expiresAt). */
+/* POST /api-keys/:id/rotate → the new key and secret, and the old key (EXPIRING until its expiresAt). */
 export interface RotatedApiKey extends IssuedApiKey {
   previous: ApiKey;
 }
-/* Overlap choices for a rotation: how long the old key keeps working so the LMS can be updated. */
-export const ROTATE_OVERLAP_HOURS = [0, 1, 24, 72, 168] as const;
+/* Overlap choices in minutes (API: 0–10080, default 1440). */
+export const ROTATE_OVERLAP_MINUTES = [0, 60, 1440, 4320, 10080] as const;
+export const ROTATE_OVERLAP_DEFAULT = 1440;
+/* Revoke reason 3–300. */
+export const REVOKE_REASON_MAX = 300;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import AS from '../../../legacy';
-import { PageHead, Card, Kpi, Callout, DemoNote, Badge, GenBadge, ListRows } from '../../../components/ui';
+import { PageHead, Card, Kpi, Callout, DemoNote, Badge, GenBadge, LinkButton, ListRows } from '../../../components/ui';
 import { HBar } from '../../../components/charts';
 import { Modal, Drawer } from '../../../components/ui/Overlay';
 import Icon from '../../../components/ui/Icon';
@@ -35,6 +35,12 @@ export default function LmsPage() {
         sub="Integration-ready module. Not yet connected to a live LMS — credentials will be supplied through environment variables."
         actions={
           <>
+            {/* M1: keys Amrut issues to the LMS (GET /api-keys, lms.view). */}
+            <Can action="viewLmsApiKeys">
+              <LinkButton to="#/lms/api-keys" icon="shield">
+                API keys
+              </LinkButton>
+            </Can>
             <button type="button" className="btn" onClick={() => setDialog('logs')}>
               <Icon name="doc" />
               View logs

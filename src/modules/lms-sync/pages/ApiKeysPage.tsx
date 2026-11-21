@@ -9,15 +9,16 @@ import { ReasonModal, fmtDate } from '../../students';
 import { GenerateKeyModal, RotateKeyModal, SecretOnceModal } from '../components/ApiKeyDialogs';
 import { lmsSyncKeys, useApiKeys } from '../hooks/useLmsSync';
 import { apiKeyApi } from '../services/lmsSyncApi';
-import type { ApiKey, ApiKeyStatus, IssuedApiKey } from '../types/lmsSync.types';
+import type { ApiKey, ApiKeyState, IssuedApiKey } from '../types/lmsSync.types';
 
-const STATUS: Record<ApiKeyStatus, [string, string]> = {
+const STATE: Record<ApiKeyState, [string, string]> = {
   ACTIVE: ['Active', 'green'],
-  ROTATING: ['Rotating out', 'amber'],
+  EXPIRING: ['Expiring (rotated)', 'amber'],
   REVOKED: ['Revoked', 'red'],
   EXPIRED: ['Expired', 'grey'],
 };
-const isLive = (k: ApiKey) => k.status === 'ACTIVE' || k.status === 'ROTATING';
+/* An EXPIRING key still works until expiresAt, so it can still be revoked; only ACTIVE keys can be rotated (409 otherwise). */
+const isLive = (k: ApiKey) => k.state === 'ACTIVE' || k.state === 'EXPIRING';
 
 /*
  * API keys Amrut issues to the LMS (the LMS calls Amrut's /lms-integration endpoints with X-Api-Key). The list shows
@@ -47,7 +48,7 @@ export default function ApiKeysPage() {
       await apiKeyApi.revoke(k.id, reason);
       setDialog(null);
       refresh();
-      toastOk(`Key ${k.prefix}… revoked. The LMS can no longer use it.`);
+      toastOk(`Key ${k.displayPrefix} revoked. The LMS can no longer use it.`);
     } catch (e) {
       toastError(e);
     } finally {
@@ -104,7 +105,7 @@ export default function ApiKeysPage() {
                   <th>Key</th>
                   <th>Label</th>
                   <th>Scopes</th>
-                  <th>Status</th>
+                  <th>State</th>
                   <th>Created</th>
                   <th>Last used</th>
                   <th>Expires</th>
@@ -113,13 +114,12 @@ export default function ApiKeysPage() {
               </thead>
               <tbody>
                 {rows.map((k) => {
-                  const [label, tone] = STATUS[k.status] ?? [k.status, 'grey'];
+                  const [label, tone] = STATE[k.state] ?? [k.state, 'grey'];
                   return (
                     <tr key={k.id}>
-                      <td className="mono">{k.prefix}…</td>
+                      <td className="mono">{k.displayPrefix}</td>
                       <td>
                         <b>{k.label}</b>
-                        {k.createdByName ? <div className="muted fs12">by {k.createdByName}</div> : null}
                       </td>
                       <td>
                         <div className="tw-flex tw-flex-wrap tw-gap-1">
@@ -135,10 +135,10 @@ export default function ApiKeysPage() {
                       </td>
                       <td>{fmtDate(k.createdAt)}</td>
                       <td>{k.lastUsedAt ? fmtDate(k.lastUsedAt) : <span className="muted">Never</span>}</td>
-                      <td>{k.status === 'REVOKED' ? fmtDate(k.revokedAt) : fmtDate(k.expiresAt)}</td>
+                      <td>{k.state === 'REVOKED' ? fmtDate(k.revokedAt) : fmtDate(k.expiresAt)}</td>
                       <td>
                         <div className="tw-flex tw-justify-end tw-gap-2">
-                          {canRotate && k.status === 'ACTIVE' ? (
+                          {canRotate && k.state === 'ACTIVE' ? (
                             <button type="button" className="btn xs" onClick={() => setDialog({ kind: 'rotate', key: k })}>
                               Rotate
                             </button>
@@ -163,7 +163,7 @@ export default function ApiKeysPage() {
       {dialog?.kind === 'rotate' ? <RotateKeyModal apiKey={dialog.key} onIssued={onIssued} onClose={() => setDialog(null)} /> : null}
       {dialog?.kind === 'revoke' ? (
         <ReasonModal
-          title={`Revoke key ${dialog.key.prefix}…`}
+          title={`Revoke key ${dialog.key.displayPrefix}`}
           intro={
             <>
               <b>{dialog.key.label}</b> stops working immediately. LMS calls made with it are refused until a new key is entered in the LMS.

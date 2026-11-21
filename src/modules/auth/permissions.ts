@@ -96,7 +96,6 @@ const MENU_KEYS = [
   'lms-courses',
   'lms-course-modules',
   'lms-track-variants',
-  'lms-api-keys',
   'admin',
   'audit',
   'settings',
@@ -333,13 +332,13 @@ export const ACTION_ACCESS = {
   createLmsTrackVariant: ['lms-track-variants.create'],
   updateLmsTrackVariant: ['lms-track-variants.update'],
   deleteLmsTrackVariant: ['lms-track-variants.delete'],
-  /* M1: Amrut students synchronised to the LMS (flag column, sync detail, Push to LMS / Retry) and the API keys Amrut issues to the LMS. */
-  viewLmsSync: ['lms-sync.view'],
-  pushLmsSync: ['lms-sync.update'],
-  viewLmsApiKeys: ['lms-api-keys.view'],
-  createLmsApiKey: ['lms-api-keys.create'],
-  rotateLmsApiKey: ['lms-api-keys.update'],
-  revokeLmsApiKey: ['lms-api-keys.delete'],
+  /* M1 (amrut-kalash-api lms-sync and api-keys routes): the sync follows the student register's codes, API keys the LMS Integration menu. */
+  viewLmsSync: ['imports.view', 'candidates.view'],
+  pushLmsSync: ['imports.update'],
+  viewLmsApiKeys: ['lms.view'],
+  createLmsApiKey: ['lms.create'],
+  rotateLmsApiKey: ['lms.update'],
+  revokeLmsApiKey: ['lms.delete'],
 } satisfies Record<string, string[]>;
 
 export type Action = keyof typeof ACTION_ACCESS;
