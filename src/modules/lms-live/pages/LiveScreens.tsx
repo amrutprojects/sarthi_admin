@@ -8,9 +8,11 @@ import type {
   LmsAttendanceRow,
   LmsBatch,
   LmsCentre,
+  LmsDistrict,
   LmsLiveSession,
   LmsSession,
   LmsTrainer,
+  LmsTrack,
 } from '../types/lmsLive.types';
 import { fetchedAtLabel } from '../utils/format';
 import { LiveListPage } from '../components/LiveListPage';
@@ -69,6 +71,13 @@ export function LiveBatchesPage() {
 const centreColumns: Column<LmsCentre>[] = [
   { k: 'code', l: 'Code', render: (c) => <span className="mono">{c.code}</span> },
   { k: 'name', l: 'Centre', render: (c) => <b>{c.name}</b> },
+  { k: 'entityCode', l: 'Entity', exportVal: (c) => c.entityCode ?? '', render: (c) => dash(c.entityCode) },
+  {
+    k: 'divisionName',
+    l: 'Division',
+    exportVal: (c) => c.divisionName ?? c.divisionCode ?? '',
+    render: (c) => dash(c.divisionName ?? c.divisionCode),
+  },
   { k: 'districtName', l: 'District', render: (c) => dash(c.districtName ?? c.districtCode) },
   { k: 'centreTypeName', l: 'Type', render: (c) => dash(c.centreTypeName) },
   { k: 'status', l: 'Status', render: (c) => <GenBadge status={c.status} /> },
@@ -90,8 +99,74 @@ export function LiveCentresPage() {
       queryFn={lmsLiveApi.centres}
       rows={(d) => d}
       columns={centreColumns}
-      search={['code', 'name', 'districtName']}
+      search={['code', 'name', 'districtName', 'entityCode', 'divisionName']}
       exportName="lms-centres"
+    />
+  );
+}
+
+const activeColumn = <T extends { isActive: boolean }>(): Column<T> => ({
+  k: 'isActive',
+  l: 'Active',
+  exportVal: (r) => (r.isActive ? 'Yes' : 'No'),
+  render: (r) => <Badge tone={r.isActive ? 'green' : 'grey'}>{r.isActive ? 'Yes' : 'No'}</Badge>,
+});
+
+const trackColumns: Column<LmsTrack>[] = [
+  { k: 'code', l: 'Code', render: (t) => <span className="mono">{t.code}</span> },
+  { k: 'name', l: 'Track', render: (t) => <b>{t.name}</b> },
+  { k: 'nameMr', l: 'Name (Marathi)', exportVal: (t) => t.nameMr ?? '', render: (t) => dash(t.nameMr) },
+  { k: 'entityCode', l: 'Entity' },
+  { k: 'sortOrder', l: 'Order', align: 'right', exportVal: (t) => t.sortOrder ?? '', render: (t) => dash(t.sortOrder) },
+  { k: 'status', l: 'Status', render: (t) => <GenBadge status={t.status} /> },
+  activeColumn<LmsTrack>(),
+];
+
+/* Tracks the LMS entities own (lms-api ERD-1). Live only: there is no local version of this screen. */
+export function LiveTracksPage() {
+  return (
+    <LiveListPage
+      title="LMS Tracks"
+      crumbs={[home, { l: 'Training centres', link: '#/centres' }, { l: 'LMS tracks' }]}
+      sub="Tracks Amrut’s LMS entities own."
+      queryKey={lmsLiveKeys.read('tracks')}
+      queryFn={lmsLiveApi.tracks}
+      rows={(d) => d}
+      columns={trackColumns}
+      search={['code', 'name', 'entityCode']}
+      exportName="lms-tracks"
+    />
+  );
+}
+
+const districtColumns: Column<LmsDistrict>[] = [
+  { k: 'code', l: 'Code', render: (d) => <span className="mono">{d.code}</span> },
+  { k: 'nameEn', l: 'District', render: (d) => <b>{d.nameEn}</b> },
+  { k: 'nameMr', l: 'Name (Marathi)', exportVal: (d) => d.nameMr ?? '', render: (d) => dash(d.nameMr) },
+  {
+    k: 'divisionName',
+    l: 'Division',
+    exportVal: (d) => d.divisionName ?? d.divisionCode ?? '',
+    render: (d) => dash(d.divisionName ?? d.divisionCode),
+  },
+  { k: 'entityCode', l: 'Entity' },
+  { k: 'status', l: 'Status', render: (d) => <GenBadge status={d.status} /> },
+  activeColumn<LmsDistrict>(),
+];
+
+/* Districts (with their division) the LMS entities own (lms-api ERD-1). Live only, like the tracks. */
+export function LiveDistrictsPage() {
+  return (
+    <LiveListPage
+      title="LMS Districts"
+      crumbs={[home, { l: 'Training centres', link: '#/centres' }, { l: 'LMS districts' }]}
+      sub="Districts Amrut’s LMS entities own, with their division."
+      queryKey={lmsLiveKeys.read('districts')}
+      queryFn={lmsLiveApi.districts}
+      rows={(d) => d}
+      columns={districtColumns}
+      search={['code', 'nameEn', 'divisionName', 'entityCode']}
+      exportName="lms-districts"
     />
   );
 }

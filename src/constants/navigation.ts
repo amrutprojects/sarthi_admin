@@ -27,6 +27,8 @@ export type RouteName =
   | 'talukaDetail'
   | 'mapPage'
   | 'centres'
+  | 'lmsLiveTracks'
+  | 'lmsLiveDistricts'
   | 'centreDetail'
   | 'centreOnboarding'
   | 'batches'
@@ -306,6 +308,9 @@ export const NAV: NavEntry[] = [
   { k: 'districts', l: 'Districts', i: 'map', r: '/districts' },
   { k: 'map', l: 'District Map', i: 'pin', r: '/map' },
   { k: 'centres', l: 'Training Centres', i: 'building', r: '/centres' },
+  /* Entity-owned tracks and districts read live from the LMS (amrut-kalash-api /lms-reads, lms-api ERD-1). */
+  { k: 'lms-live-tracks', l: 'LMS Tracks', i: 'layers', r: '/lms-live/tracks' },
+  { k: 'lms-live-districts', l: 'LMS Districts', i: 'map', r: '/lms-live/districts' },
   { k: 'onboarding', l: 'Centre Onboarding', i: 'clipboard', r: '/centre-onboarding' },
   { k: 'batches', l: 'Batches', i: 'layers', r: '/batches' },
   { k: 'trainers', l: 'Trainers', i: 'teacher', r: '/trainers' },
@@ -442,6 +447,8 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/districts/:id/talukas/:t', 'talukaDetail', 'districts'],
   ['/map', 'mapPage', 'map'],
   ['/centres', 'centres', 'centres'],
+  ['/lms-live/tracks', 'lmsLiveTracks', 'lms-live-tracks'],
+  ['/lms-live/districts', 'lmsLiveDistricts', 'lms-live-districts'],
   ['/centres/:id', 'centreDetail', 'centres'],
   ['/centre-onboarding', 'centreOnboarding', 'onboarding'],
   ['/batches', 'batches', 'batches'],

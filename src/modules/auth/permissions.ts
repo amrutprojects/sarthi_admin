@@ -136,6 +136,9 @@ export const SCREEN_ACCESS: Record<string, string[]> = {
   education: ['education.view'],
   /* M3 Attendance reports (amrut-kalash-api ATTENDANCE_REPORT_PERMISSIONS): Attendance, Reports & MIS or LMS Integration. */
   'attendance-reports': ['attendance.view', 'reports.view', 'lms.view'],
+  /* Entity-owned LMS tracks and districts (amrut-kalash-api LMS_READ_PERMISSIONS tracks / districts): as Training Centres. */
+  'lms-live-tracks': ['centres.view', 'lms.view'],
+  'lms-live-districts': ['centres.view', 'lms.view'],
 };
 
 /* Named actions → the action is available if the user holds ANY of these codes. */
