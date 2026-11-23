@@ -8,6 +8,8 @@ import { ApiError } from '../src/services/api-client';
 import BatchesPage from '../src/modules/delivery/pages/BatchesPage';
 import TrainersPage from '../src/modules/delivery/pages/TrainersPage';
 import CentresPage from '../src/modules/network/pages/CentresPage';
+import LmsDistrictsPage from '../src/modules/lms-live/pages/LmsDistrictsPage';
+import LmsTracksPage from '../src/modules/lms-live/pages/LmsTracksPage';
 import AttendancePage from '../src/modules/training/pages/AttendancePage';
 import LivePage from '../src/modules/training/pages/LivePage';
 import OfflinePage from '../src/modules/training/pages/OfflinePage';
@@ -97,6 +99,49 @@ function fakeLiveReads() {
           status: 'ACTIVE',
           isActive: true,
           sourceUpdatedAt: null,
+          entityCode: 'SBX-08',
+          taluka: 'Nagpur Urban',
+          readinessStatus: 'READY',
+          maxSeating: 30,
+          computerSystems: 15,
+          tracksOffered: ['T07'],
+          divisionCode: 'NGP',
+          divisionName: 'Synthetic Division',
+        },
+      ],
+      1,
+    ),
+  );
+  vi.spyOn(lmsLiveApi, 'tracks').mockResolvedValue(
+    live(
+      [
+        {
+          entityCode: 'SBX-08',
+          code: 'LMS-T07',
+          name: 'Synthetic Track',
+          nameMr: null,
+          sortOrder: 7,
+          status: 'ACTIVE',
+          isActive: true,
+          updatedAt: null,
+        },
+      ],
+      1,
+    ),
+  );
+  vi.spyOn(lmsLiveApi, 'districts').mockResolvedValue(
+    live(
+      [
+        {
+          entityCode: 'SBX-08',
+          code: 'LMS-D-NAG',
+          nameEn: 'Synthetic District',
+          nameMr: null,
+          divisionCode: 'NGP',
+          divisionName: 'Synthetic Division',
+          status: 'ACTIVE',
+          isActive: true,
+          updatedAt: null,
         },
       ],
       1,
@@ -167,12 +212,14 @@ function fakeLiveReads() {
     }),
   );
 }
-const READS = ['batches', 'centres', 'trainers', 'sessions', 'liveSessions', 'attendance'] as const;
+const READS = ['batches', 'centres', 'tracks', 'districts', 'trainers', 'sessions', 'liveSessions', 'attendance'] as const;
 
 /* Every G-2 screen: the local page's own title, the live view's distinctive row. */
 const SCREENS: [name: string, Page: ComponentType, liveText: string][] = [
   ['Batches', BatchesPage, 'LMS-B-0001'],
   ['Training centres', CentresPage, 'Synthetic LMS Centre'],
+  ['LMS tracks', LmsTracksPage, 'Synthetic Track'],
+  ['LMS districts', LmsDistrictsPage, 'Synthetic District'],
   ['Trainers', TrainersPage, 'LMS-TR-1'],
   ['Live training monitor', LivePage, 'LMS-LIVE-1'],
   ['Offline training', OfflinePage, 'LMS-OFF-1'],
@@ -214,6 +261,13 @@ describe('off (default): every screen keeps its local data', () => {
     expect(lmsLiveApi.batches).not.toHaveBeenCalled();
   });
 
+  it('LMS tracks and districts have no local data: they say live data is off', async () => {
+    vi.spyOn(lmsLiveApi, 'state').mockResolvedValue(state());
+    renderWithProviders(<LmsTracksPage />);
+    expect(await screen.findByText('Live LMS data is switched off')).toBeInTheDocument();
+    expect(lmsLiveApi.tracks).not.toHaveBeenCalled();
+  });
+
   it('the setting on but the master switch off is still local', async () => {
     vi.spyOn(lmsLiveApi, 'state').mockResolvedValue(state({ setting: true, live: false }));
     renderWithProviders(<CentresPage />);
@@ -230,6 +284,25 @@ describe('on: live from the LMS', () => {
     expect(b).toHaveTextContent('Live from LMS');
     expect(b).toHaveTextContent(/fetched .*2026/);
     expect(screen.queryByText('Local data')).not.toBeInTheDocument();
+  });
+
+  it('Training centres: the owning entity and the division of each centre', async () => {
+    vi.spyOn(lmsLiveApi, 'state').mockResolvedValue(ON);
+    renderWithProviders(<CentresPage />);
+    const row = (await screen.findByText('Synthetic LMS Centre')).closest('tr');
+    expect(row).not.toBeNull();
+    expect(screen.getByRole('columnheader', { name: /Entity/ })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /Division/ })).toBeInTheDocument();
+    expect(row).toHaveTextContent('SBX-08');
+    expect(row).toHaveTextContent('Synthetic Division');
+  });
+
+  it('LMS districts: the division of each district', async () => {
+    vi.spyOn(lmsLiveApi, 'state').mockResolvedValue(ON);
+    renderWithProviders(<LmsDistrictsPage />);
+    const row = (await screen.findByText('Synthetic District')).closest('tr');
+    expect(row).toHaveTextContent('Synthetic Division');
+    expect(row).toHaveTextContent('SBX-08');
   });
 
   it('Batches: no mock row, and says when the LMS has more records than one page', async () => {

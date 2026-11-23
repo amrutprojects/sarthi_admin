@@ -6,9 +6,11 @@ import type {
   LmsAttendance,
   LmsBatch,
   LmsCentre,
+  LmsDistrict,
   LmsLiveSessions,
   LmsSession,
   LmsTrainer,
+  LmsTrack,
 } from '../types/lmsLive.types';
 
 /*
@@ -32,6 +34,9 @@ export const lmsLiveApi = {
   setState: async (enabled: boolean) => (await request<LiveDataState>(`${BASE}/live-data`, { method: 'PUT', body: { enabled } })).data,
 
   centres: () => live<LmsCentre[]>('/centres', { page: 1, limit: LIVE_PAGE_SIZE }),
+  /* Entity-owned tracks and districts (lms-api ERD-1), read through /lms-reads like the centres. */
+  tracks: () => live<LmsTrack[]>('/tracks', { page: 1, limit: LIVE_PAGE_SIZE }),
+  districts: () => live<LmsDistrict[]>('/districts', { page: 1, limit: LIVE_PAGE_SIZE }),
   batches: () => live<LmsBatch[]>('/batches', { page: 1, limit: LIVE_PAGE_SIZE }),
   sessions: () => live<LmsSession[]>('/sessions', { page: 1, limit: LIVE_PAGE_SIZE }),
   trainers: () => live<LmsTrainer[]>('/trainers', { page: 1, limit: LIVE_PAGE_SIZE }),

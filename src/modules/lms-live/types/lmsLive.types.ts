@@ -43,6 +43,38 @@ export interface LmsCentre {
   status: string;
   isActive: boolean;
   sourceUpdatedAt: Ts;
+  /* Entity-owned reference data (lms-api ERD-1): the owning LMS entity and the centre's details. */
+  entityCode: string | null;
+  taluka: string | null;
+  readinessStatus: string | null;
+  maxSeating: number | null;
+  computerSystems: number | null;
+  tracksOffered: string[];
+  divisionCode: string | null;
+  divisionName: string | null;
+}
+
+export interface LmsTrack {
+  entityCode: string;
+  code: string;
+  name: string;
+  nameMr: string | null;
+  sortOrder: number | null;
+  status: string;
+  isActive: boolean;
+  updatedAt: Ts;
+}
+
+export interface LmsDistrict {
+  entityCode: string;
+  code: string;
+  nameEn: string;
+  nameMr: string | null;
+  divisionCode: string | null;
+  divisionName: string | null;
+  status: string;
+  isActive: boolean;
+  updatedAt: Ts;
 }
 
 export interface LmsBatch {
