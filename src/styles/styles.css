@@ -2451,6 +2451,10 @@ select.inp {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+/* Off-canvas sidebar on phones and tablets: a tap beside it closes it (SidebarBackdrop). */
+.sb-backdrop {
+  display: none;
+}
 @media (max-width: 1024px) {
   .sidebar {
     transform: translateX(-100%);
@@ -2460,6 +2464,16 @@ select.inp {
   .sidebar.open {
     transform: none;
     box-shadow: var(--sh-3);
+  }
+  .sb-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    border: 0;
+    padding: 0;
+    background: rgba(20, 12, 6, 0.35);
+    cursor: pointer;
   }
   .main {
     margin-left: 0;
