@@ -172,6 +172,27 @@ describe('<MasterTab>', () => {
 });
 
 describe('masterFormSchema', () => {
+  it('sends a corrected create with a new Idempotency-Key after a refusal (e2e 24 Nov 2026)', async () => {
+    permissions.add('regions.create');
+    vi.mocked(masterApi.list).mockResolvedValue(page([]));
+    vi.mocked(masterApi.create)
+      .mockRejectedValueOnce(new ApiError('A region with this code already exists', 409, 'CONFLICT'))
+      .mockResolvedValueOnce(record({ id: 'r9', code: 'PUN2' }));
+    renderWithProviders(<MasterTab master={region} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Add region/ }));
+    await userEvent.type(screen.getByLabelText('Code'), 'PUN');
+    await userEvent.type(screen.getByLabelText('Name'), 'Pune');
+    await userEvent.click(screen.getByRole('button', { name: 'Create region' }));
+    await waitFor(() => expect(masterApi.create).toHaveBeenCalledTimes(1));
+    await userEvent.type(screen.getByLabelText('Code'), '2');
+    await userEvent.click(screen.getByRole('button', { name: 'Create region' }));
+    await waitFor(() => expect(masterApi.create).toHaveBeenCalledTimes(2));
+    const [[, , key1], [, input2, key2]] = vi.mocked(masterApi.create).mock.calls;
+    expect(input2).toMatchObject({ code: 'PUN2' });
+    expect(key1).toBeTruthy();
+    expect(key2).not.toBe(key1);
+  });
+
   it('upper-cases the code and enforces the per-master limits', () => {
     const schema = masterFormSchema(region);
     expect(schema.parse({ code: ' pun ', name: 'Pune', description: '', isMandatory: false }).code).toBe('PUN');

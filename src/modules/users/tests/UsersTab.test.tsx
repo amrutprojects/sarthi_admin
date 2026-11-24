@@ -81,6 +81,27 @@ describe('<UsersTab>', () => {
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
   });
 
+  it('sends a corrected new user with a new Idempotency-Key after a refusal (e2e 24 Nov 2026)', async () => {
+    permissions.add('createUser');
+    vi.mocked(userApi.list).mockResolvedValue(page([]));
+    vi.mocked(userApi.create)
+      .mockReset()
+      .mockRejectedValueOnce(new ApiError('Not permitted: You cannot assign this role', 403, 'FORBIDDEN'))
+      .mockResolvedValueOnce(user({ id: 'u9' }));
+    renderWithProviders(<UsersTab />);
+    await userEvent.click(await screen.findByRole('button', { name: /Add user/ }));
+    await userEvent.type(screen.getByLabelText('Full name'), 'Asha Patil');
+    await userEvent.type(screen.getByLabelText('Email'), 'asha@example.org');
+    await userEvent.type(screen.getByLabelText('Password'), 'Abcdefgh12');
+    await userEvent.click(screen.getByRole('button', { name: 'Create user' }));
+    await waitFor(() => expect(userApi.create).toHaveBeenCalledTimes(1));
+    await userEvent.click(screen.getByRole('button', { name: 'Create user' }));
+    await waitFor(() => expect(userApi.create).toHaveBeenCalledTimes(2));
+    const [[, key1], [, key2]] = vi.mocked(userApi.create).mock.calls as unknown as [unknown, string][];
+    expect(key1).toBeTruthy();
+    expect(key2).not.toBe(key1);
+  });
+
   it('passes search and status filters to the API', async () => {
     vi.mocked(userApi.list).mockResolvedValue(page([user()]));
     renderWithProviders(<UsersTab />);
