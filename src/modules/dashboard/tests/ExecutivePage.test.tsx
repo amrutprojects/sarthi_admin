@@ -44,6 +44,28 @@ describe('ExecutivePage — live student figures', () => {
     expect(links).toHaveLength(36);
   });
 
+  it('shows empty states, not invented figures, for everything without a live source', async () => {
+    vi.spyOn(studentApi, 'summary').mockResolvedValue(summaryFixture());
+    renderPage();
+    await waitFor(() => expect(within(kpi('Applications')).getByText('15,000')).toBeInTheDocument());
+    const emptyTiles = ['Target', 'In training', 'Completed', 'Certified'].concat(
+      ['GREEN', 'AMBER', 'RED', 'GREY'].map((r) => 'Districts ' + r),
+    );
+    for (const label of emptyTiles) {
+      expect(within(kpi(label)).getByText('—')).toBeInTheDocument();
+      expect(within(kpi(label)).getByTestId('no-data')).toHaveTextContent('No data yet');
+    }
+    const emptyCards = ['Overall programme health', 'Centre health', 'Trainer availability', 'Batch status', 'Critical alerts'];
+    for (const title of emptyCards.concat('Financial snapshot')) {
+      const card = screen.getByText(title).closest('.card') as HTMLElement;
+      expect(within(card).getByTestId('no-data')).toHaveTextContent('No data yet');
+    }
+    expect(document.body).not.toHaveTextContent(
+      /760|Programme Health Indicator|Indicative|Rate per student|Committed to centres|Released to date|due \d/,
+    );
+    expect(document.body).toHaveTextContent('अद्याप माहिती नाही');
+  });
+
   it('opens the enrolled list from the Enrolled tile', async () => {
     vi.spyOn(studentApi, 'summary').mockResolvedValue(summaryFixture());
     renderPage();

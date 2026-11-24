@@ -4,8 +4,8 @@ import type { LiveDataBlocker } from '../types/lmsLive.types';
 export const LIVE_DATA_TEXT = {
   title: { en: 'Show live LMS data', mr: 'LMS चा थेट डेटा दाखवा' },
   help: {
-    en: 'On: the LMS screens (Batches, Training centres, Trainers, Live / Offline / Online training, Attendance) read live from the LMS. Off: they show the Panel’s local data, as today.',
-    mr: 'चालू: LMS स्क्रीन (बॅच, प्रशिक्षण केंद्रे, प्रशिक्षक, थेट / ऑफलाइन / ऑनलाइन प्रशिक्षण, उपस्थिती) थेट LMS मधून डेटा दाखवतात. बंद: त्या आजच्याप्रमाणे पॅनेलचा स्थानिक डेटा दाखवतात.',
+    en: 'On: the LMS screens (Batches, Training centres, Trainers, Live / Offline / Online training, Attendance) read live from the LMS. Off: they show a message to turn this on (no sample data).',
+    mr: 'चालू: LMS स्क्रीन (बॅच, प्रशिक्षण केंद्रे, प्रशिक्षक, थेट / ऑफलाइन / ऑनलाइन प्रशिक्षण, उपस्थिती) थेट LMS मधून डेटा दाखवतात. बंद: त्या हे चालू करण्याचा संदेश दाखवतात (नमुना डेटा नाही).',
   },
   on: { en: 'On', mr: 'चालू' },
   off: { en: 'Off', mr: 'बंद' },

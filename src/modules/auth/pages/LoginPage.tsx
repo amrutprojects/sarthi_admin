@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import AS from '../../../legacy';
-import { api } from '../../../services/mock/api';
 import { useAuth } from '../auth-context';
 import { canOpenPath, homePath } from '../home';
 import { ApiError } from '../../../services/api-client';
@@ -9,9 +8,10 @@ import { publicUrl } from '../../../utils/publicSite';
 
 /*
  * The programme figures on the sign-in screen's left panel. Fixed values, not the demo dataset's: the
- * dataset's own target, hours and centre count drive the rest of the mock data and are left as they are.
+ * dataset's own target, hours and centre count drive the rest of the mock data. `districts` is Maharashtra's 36
+ * districts (real geography, also named in the panel text), not a count of sample records.
  */
-const LOGIN_FIGURES = { target: 2000, trainingHours: 500, approvedCentres: 20 };
+const LOGIN_FIGURES = { target: 2000, districts: 36, trainingHours: 500, approvedCentres: 20 };
 
 /*
  * Sign-in screen (design ported from assets/js/pages/public.js). Authenticates against the backend:
@@ -90,7 +90,9 @@ export default function LoginPage() {
       <div className="auth-l">
         <div className="f ac gp10">
           <div>
-            <b style={{ fontSize: 19, display: 'block', fontFamily: 'var(--serif)', letterSpacing: '.5px', color: '#DD792E' }}>AMRUT KALASH</b>
+            <b style={{ fontSize: 19, display: 'block', fontFamily: 'var(--serif)', letterSpacing: '.5px', color: '#DD792E' }}>
+              AMRUT KALASH
+            </b>
             <span style={{ fontSize: 12, color: '#E3CBB4' }}>
               {T('कौशल्य विकास कार्यक्रम व्यवस्थापन पोर्टल', 'Skill Development Programme Management Portal')}
             </span>
@@ -121,7 +123,7 @@ export default function LoginPage() {
             <span>{T('कार्यक्रम लक्ष्य', 'Programme target')}</span>
           </div>
           <div>
-            <b>{api.districts().length}</b>
+            <b>{LOGIN_FIGURES.districts}</b>
             <span>{T('जिल्हे', 'Districts monitored')}</span>
           </div>
           <div>

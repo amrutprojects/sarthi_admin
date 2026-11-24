@@ -1,5 +1,3 @@
-import { api } from '../services/mock/api';
-
 export interface NavGroup {
   g: string;
 }
@@ -336,7 +334,7 @@ export const NAV: NavEntry[] = [
   { k: 'finance', l: 'Finance', i: 'rupee', r: '/finance' },
   { k: 'pmo', l: 'PMO Dashboard', i: 'shield', r: '/pmo' },
   { k: 'qa', l: 'Quality Assurance', i: 'check', r: '/qa' },
-  { k: 'tasks', l: 'Tasks & Alerts', i: 'alert', r: '/tasks', count: () => api.openTaskCount(), warn: true },
+  { k: 'tasks', l: 'Tasks & Alerts', i: 'alert', r: '/tasks', warn: true },
   { k: 'documents', l: 'Documents', i: 'folder', r: '/documents' },
   /*
    * The website's pages in the order of its own menu (Home, About, Programme, Modules, Eligibility, Apply, FAQ,

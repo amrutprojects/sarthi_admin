@@ -132,18 +132,17 @@ describe('website portal layout', () => {
     expect(screen.getByText('AMRUT Public Site')).toBeInTheDocument();
   });
 
-  it('the topbar drops programme search, alerts and tours for a Website Admin', () => {
+  it('the topbar drops programme alerts and tours for a Website Admin', () => {
     signInAs('website', WEBSITE);
     const { unmount } = renderWithProviders(<Topbar onBurger={() => {}} />);
-    expect(screen.queryByPlaceholderText(/Search candidates/)).not.toBeInTheDocument();
     expect(screen.queryByTitle('Notifications')).not.toBeInTheDocument();
     expect(screen.queryByTitle('Help')).not.toBeInTheDocument();
     unmount();
 
     signInAs('admin', ['dashboard.view']);
     renderWithProviders(<Topbar onBurger={() => {}} />);
-    expect(screen.getByPlaceholderText(/Search candidates/)).toBeInTheDocument();
     expect(screen.getByTitle('Notifications')).toBeInTheDocument();
+    expect(screen.getByTitle('Help')).toBeInTheDocument();
   });
 });
 

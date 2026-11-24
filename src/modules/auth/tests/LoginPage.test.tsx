@@ -83,3 +83,15 @@ describe('<LoginPage> landing after sign-in', () => {
     expect(await signIn(viewer, '/candidates')).toBe('/candidates');
   });
 });
+
+describe('<LoginPage> programme panel', () => {
+  it('shows the fixed programme figures and Maharashtra’s 36 districts, not a count of sample records', () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/login']}>
+        <LoginPage />
+      </MemoryRouter>,
+    );
+    const stats = [...container.querySelectorAll('.auth-stat b')].map((b) => b.textContent);
+    expect(stats).toEqual(['2,000', '36', '500', '20']);
+  });
+});

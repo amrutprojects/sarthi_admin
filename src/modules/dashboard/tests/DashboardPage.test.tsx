@@ -52,6 +52,54 @@ describe('DashboardPage — live student figures', () => {
     expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment/i);
   });
 
+  it('shows the empty state for every figure with no live source and no invented values', async () => {
+    vi.spyOn(studentApi, 'summary').mockResolvedValue(summaryFixture());
+    renderPage();
+    await waitFor(() => expect(within(tile('Applications')).getByText('15,000')).toBeInTheDocument());
+    for (const l of ['Total Target', 'Training Active', 'Completed', 'Assessed', 'Certified']) {
+      expect(within(tile(l)).getByText('—')).toBeInTheDocument();
+      expect(within(tile(l)).getByTestId('no-data')).toHaveTextContent('No data yet');
+    }
+    for (const title of [
+      'Programme progress against target',
+      'Critical attention',
+      'Training mode split',
+      'Attendance trend (28 days)',
+      'Live training right now',
+    ]) {
+      const card = screen.getByText(title).closest('.card') as HTMLElement;
+      expect(within(card).getByTestId('no-data')).toHaveTextContent('This figure has no live source yet');
+    }
+    /* The map names every (real) district, so the invented "Nanded, Beed critical" alert is checked on its own card. */
+    const critical = screen.getByText('Critical attention').closest('.card') as HTMLElement;
+    expect(critical).not.toHaveTextContent(/Nanded|Beed|district/i);
+    const body = document.body;
+    expect(body).not.toHaveTextContent(/Maharashtra — all|both modes|critical district/i);
+    expect(body).not.toHaveTextContent(/sessions in progress|pass rate|completion rate|of enrolled|offline ·|Programme Health/i);
+    expect(screen.queryByLabelText('Training mode')).not.toBeInTheDocument();
+    expect(screen.getByText('All districts', { selector: 'b' })).toBeInTheDocument();
+  });
+
+  it('offers only the live map metrics and draws only the live funnel stages', async () => {
+    vi.spyOn(studentApi, 'summary').mockResolvedValue(summaryFixture());
+    const { container } = renderPage();
+    await waitFor(() => expect(within(tile('Applications')).getByText('15,000')).toBeInTheDocument());
+    const metric = screen.getByLabelText('Map metric') as HTMLSelectElement;
+    expect(Array.from(metric.options).map((o) => o.value)).toEqual(['enrolled', 'applications', 'eligible']);
+    const links = goLinks(container);
+    for (const l of ['#/lifecycle', '#/assessments', '#/certification', '#/districts?filter=critical']) {
+      expect(links).not.toContain(l);
+    }
+  });
+
+  it('falls back to a live metric when a stored filter names an old one', async () => {
+    useUiStore.setState({ pageState: { dash: { district: 'ALL', mode: 'ONLINE', metric: 'certified' } } });
+    vi.spyOn(studentApi, 'summary').mockResolvedValue(summaryFixture());
+    renderPage();
+    await waitFor(() => expect(within(tile('Applications')).getByText('15,000')).toBeInTheDocument());
+    expect((screen.getByLabelText('Map metric') as HTMLSelectElement).value).toBe('enrolled');
+  });
+
   it('links the tiles to the real student list with the right bucket', async () => {
     vi.spyOn(studentApi, 'summary').mockResolvedValue(summaryFixture());
     renderPage();
@@ -93,6 +141,7 @@ describe('DashboardPage — live student figures', () => {
     await waitFor(() => expect(spy).toHaveBeenCalled());
     await userEvent.selectOptions(screen.getByLabelText('District'), 'PUN');
     await waitFor(() => expect(spy).toHaveBeenLastCalledWith('PUN'));
+    expect(screen.getByText('Pune', { selector: 'b' })).toBeInTheDocument();
     await userEvent.click(tile('Applications'));
     expect(screen.getByTestId('where')).toHaveTextContent('/candidates?bucket=applications&centre=PUN');
   });

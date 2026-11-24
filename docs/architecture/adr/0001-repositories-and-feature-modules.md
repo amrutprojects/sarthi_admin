@@ -17,3 +17,7 @@ The brief describes one repository with `frontend/` and `backend/`. The project 
 
 - Teams can work on separate modules with few merge conflicts; the route table in `app/router.tsx` is the main shared file.
 - Sample-data screens keep working during the migration; their data access is isolated in `services/mock`, so replacing it does not touch the components' callers.
+
+## Update (24 Nov 2026)
+
+The sample-data stage is over. The product owner decided that screens never show invented figures: `services/mock` and the sample dataset in `src/legacy/data.js` were removed, and every screen or figure with no API source shows an empty state in English and Marathi until its module is connected.

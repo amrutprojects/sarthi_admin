@@ -1,6 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../../../../tests/test-utils';
@@ -11,9 +10,6 @@ import { studentApi, type StudentListItem } from '../../students';
 import DistrictsPage from '../pages/DistrictsPage';
 import DistrictDetailPage from '../pages/DistrictDetailPage';
 import MapPage from '../pages/MapPage';
-
-/* The district page shows "Create task" only with the createTask permission; the tests do not need it. */
-vi.mock('../../auth', () => ({ Can: (_: { children: ReactNode }) => null }));
 
 function Where() {
   const { pathname, search } = useLocation();
@@ -30,6 +26,7 @@ const renderAt = (route: string) =>
     { route },
   );
 const kpi = (label: string) => screen.getByText(label, { selector: '.kpi-t' }).closest('.kpi') as HTMLElement;
+const panel = (title: string) => screen.getByText(title, { selector: 'h3' }).closest('.card') as HTMLElement;
 const goLinks = (container: HTMLElement) => Array.from(container.querySelectorAll('[data-go]')).map((e) => e.getAttribute('data-go'));
 
 const student: StudentListItem = {
@@ -71,19 +68,29 @@ describe('DistrictsPage — live counts per district', () => {
     /* A district missing from the summary reads 0, not the dataset figure. */
     expect(within(screen.getByTestId('district-JAL')).getAllByText('0')).toHaveLength(3);
     expect(screen.getByText(/Applications, Eligible and Enrolled are live student figures as of/)).toBeInTheDocument();
-    for (const l of ['On track (GREEN)', 'Critical', 'State achievement']) {
-      expect(kpi(l)).toBeInTheDocument();
+    expect(within(kpi('Districts covered')).getByText('36')).toBeInTheDocument();
+    /* Status, centre and achievement KPIs have no live source: "—" and "No data yet", no sample counts. */
+    for (const l of ['Districts with centres', 'On track (GREEN)', 'Needs attention', 'Critical', 'State achievement']) {
+      expect(within(kpi(l)).getByText('—')).toBeInTheDocument();
+      expect(within(kpi(l)).getByTestId('no-data')).toBeInTheDocument();
     }
-    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment/i);
+    /* No invented status badge, target or achievement on the cards. */
+    expect(within(card).queryByText(/Target|achievement|On track|Critical|has centre/)).not.toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment|Indicative values/i);
     await userEvent.click(within(card).getByText('448'));
     expect(screen.getByTestId('where')).toHaveTextContent('/candidates?bucket=applications&centre=NAG');
   });
 
-  it('labels the table columns without a demo marker', async () => {
+  it('shows only live columns in the table and ranks the cards by enrolled, then eligible', async () => {
     vi.spyOn(studentApi, 'summary').mockResolvedValue(summaryFixture());
     renderAt('/districts');
-    expect((await screen.findAllByText('Achievement')).length).toBeGreaterThan(0);
-    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment/i);
+    await waitFor(() => expect(within(screen.getByTestId('district-NAG')).getByText('448')).toBeInTheDocument());
+    for (const l of ['Target', 'Training active', 'Certified', 'Attendance', 'Achievement', 'Status']) {
+      expect(screen.queryByRole('columnheader', { name: new RegExp('^' + l) })).not.toBeInTheDocument();
+    }
+    expect(screen.queryByLabelText('Status')).not.toBeInTheDocument();
+    /* NAG has the most eligible students in the fixture (nobody enrolled yet): it is the first card. */
+    expect(screen.getAllByTestId(/^district-/)[0]).toHaveAttribute('data-testid', 'district-NAG');
   });
 
   it('shows an error with Retry when the summary fails', async () => {
@@ -107,10 +114,17 @@ describe('DistrictDetailPage — live KPIs and student table', () => {
     expect(summary).toHaveBeenCalledWith('NAG');
     expect(list).toHaveBeenCalledWith({ centre: 'NAG', page: 1, limit: 10 });
     expect(within(kpi('Enrolled')).getByText('14,950 awaiting batch')).toBeInTheDocument();
-    expect(kpi('Target')).toBeInTheDocument();
+    for (const l of ['Target', 'Training active', 'Completed', 'Attendance', 'Certified']) {
+      expect(within(kpi(l)).getByText('—')).toBeInTheDocument();
+      expect(within(kpi(l)).getByTestId('no-data')).toBeInTheDocument();
+    }
     expect(await screen.findByText('Asha Patil')).toBeInTheDocument();
-    expect(screen.getByText('Taluka rollup')).toBeInTheDocument();
-    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment/i);
+    /* Panels with no live source keep their title and show "No data yet": no coordinator, centres, batches or tasks. */
+    for (const t of ['Taluka rollup', 'Mode split', 'District coordinator', 'Training centres in Nagpur', 'Batches', 'Top issues']) {
+      expect(within(panel(t)).getByTestId('no-data')).toBeInTheDocument();
+    }
+    expect(screen.queryByText(/Vikas Thorat|Create task|target \d+ students/)).not.toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment|Indicative values/i);
   });
 
   it('links the KPIs, "View all" and the rows to the real student list', async () => {
@@ -154,8 +168,17 @@ describe('MapPage — live tiles and Top 5', () => {
     expect(goLinks(container)).toEqual(
       expect.arrayContaining(['#/candidates?bucket=eligible&centre=NAG', '#/candidates?bucket=eligible&centre=PUN']),
     );
-    expect(screen.getByText('Lowest 5 districts')).toBeInTheDocument();
-    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment/i);
+    /* Lowest 5 ranks by achievement against target, which has no live source. */
+    expect(within(panel('Lowest 5 districts')).getByTestId('no-data')).toBeInTheDocument();
+    /* Only the live metrics can be chosen; no status shading or status filter. */
+    expect(Array.from((screen.getByLabelText('Metric') as HTMLSelectElement).options).map((o) => o.value)).toEqual([
+      'enrolled',
+      'applications',
+      'eligible',
+    ]);
+    expect(screen.queryByLabelText('Status filter')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Shading')).not.toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment|Indicative values/i);
   });
 
   it('switches the tiles to live applications', async () => {
@@ -165,5 +188,16 @@ describe('MapPage — live tiles and Top 5', () => {
     await userEvent.selectOptions(screen.getByLabelText('Metric'), 'applications');
     expect(container.querySelector('[data-district="NAG"] .mh-val')?.textContent).toBe('448');
     expect(container.querySelector('[data-district="PUN"] .mh-val')?.textContent).toBe('411');
+  });
+
+  it('shows "No data yet" for the centre and live-training views instead of sample markers', async () => {
+    vi.spyOn(studentApi, 'summary').mockResolvedValue(summaryFixture());
+    const { container } = renderAt('/map');
+    await screen.findByText(/No students enrolled yet/);
+    await userEvent.click(screen.getByText('Training centres', { selector: 'button.chip' }));
+    expect(within(panel('Training centres')).getByTestId('no-data')).toBeInTheDocument();
+    expect(container.querySelector('[data-district]')).toBeNull();
+    await userEvent.click(screen.getByText('Live training', { selector: 'button.chip' }));
+    expect(within(panel('Live training')).getByTestId('no-data')).toBeInTheDocument();
   });
 });
