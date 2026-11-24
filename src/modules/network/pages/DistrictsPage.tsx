@@ -1,31 +1,23 @@
 import { useEffect, type MouseEvent } from 'react';
-import { useLocation } from 'react-router-dom';
-import {
-  PageHead,
-  Kpi,
-  FilterBar,
-  LinkButton,
-  EmptyState,
-  DemoNote,
-  DemoChip,
-  Callout,
-  Badge,
-  ProgRow,
-  AttendanceCell,
-  fmt,
-  useGo,
-} from '../../../components/ui';
+import { PageHead, Kpi, FilterBar, LinkButton, EmptyState, Callout, NO_VALUE, NoDataLabel, fmt, useGo } from '../../../components/ui';
 import DataTable, { type Column } from '../../../components/tables/DataTable';
-import { useLegacyTick } from '../../../utils/legacyBus';
 import usePersistentState from '../../../hooks/usePersistentState';
-import * as S from '../../../services/mock/networkService';
-import type { DistrictRow } from '../../../services/mock/networkService';
+import * as S from '../../../services/geography';
+import type { District } from '../../../types/domain';
 import { asOfLabel, centreCounts, centreIndex, studentListLink, useStudentSummary, type BucketCounts } from '../../students';
 
-const achTone = (p: number) => (p >= 90 ? 'g' : p >= 70 ? '' : 'r');
+/*
+ * District names, codes and regions are Maharashtra's real geography. Applications / Eligible / Enrolled are live
+ * from the student register. Targets, training figures, attendance, achievement and district status have no live
+ * source yet (user decision 24 Nov 2026): they are shown as "No data yet", never as sample values.
+ */
+type Row = { d: District; live: BucketCounts };
 
-/* A district row with its live register counts (Applications / Eligible / Enrolled) next to the demo figures. */
-type Row = DistrictRow & { live: BucketCounts };
+interface DistrictFilter extends Record<string, string> {
+  region: string;
+  sort: string;
+}
+const DEFAULT_FILTER: DistrictFilter = { region: 'ALL', sort: 'enrolled' };
 
 /* Live count cell: links to the real student list for that district and bucket. */
 function LiveCount({ n, link, bold }: { n: number; link: string; bold?: boolean }) {
@@ -50,64 +42,37 @@ const liveCol = (k: keyof BucketCounts, l: string, bold = false): Column<Row> =>
   render: (x) => <LiveCount n={x.live[k]} bold={bold} link={studentListLink({ bucket: k, centre: x.d.code })} />,
 });
 
-/* Target, training, attendance, achievement and status have no live source yet. */
 const columns: Column<Row>[] = [
   { k: 'name', l: 'District', sortVal: (x) => x.d.name, render: (x) => <b className="lnk">{x.d.name}</b> },
   { k: 'region', l: 'Region', sortVal: (x) => x.d.region, render: (x) => x.d.region },
   liveCol('applications', 'Applications'),
   liveCol('eligible', 'Eligible'),
   liveCol('enrolled', 'Enrolled', true),
-  { k: 'target', l: 'Target', align: 'right', sortVal: (x) => x.d.target, render: (x) => x.d.target },
-  { k: 'active', l: 'Training active', align: 'right', sortVal: (x) => x.k.trainingActive, render: (x) => x.k.trainingActive },
-  { k: 'completed', l: 'Completed', align: 'right', sortVal: (x) => x.k.completed, render: (x) => x.k.completed },
-  { k: 'certified', l: 'Certified', align: 'right', sortVal: (x) => x.k.certified, render: (x) => x.k.certified },
-  {
-    k: 'att',
-    l: 'Attendance',
-    align: 'right',
-    sortVal: (x) => x.k.attendance,
-    exportVal: (x) => x.k.attendance + '%',
-    render: (x) => <AttendanceCell value={x.k.attendance} />,
-  },
-  {
-    k: 'progress',
-    l: 'Achievement',
-    align: 'right',
-    sortVal: (x) => x.k.achievementPct,
-    exportVal: (x) => x.k.achievementPct + '%',
-    render: (x) => <ProgRow pct={x.k.achievementPct} tone={achTone(x.k.achievementPct)} />,
-  },
-  { k: 'status', l: 'Status', sortVal: (x) => x.st.l, render: (x) => <Badge tone={x.st.tone}>{x.st.l}</Badge> },
 ];
 
+const byLive = (a: Row, b: Row) =>
+  b.live.enrolled - a.live.enrolled || b.live.eligible - a.live.eligible || a.d.name.localeCompare(b.d.name);
+
 export default function DistrictsPage() {
-  useLegacyTick();
   const go = useGo();
-  const { search } = useLocation();
-  const [s, setS] = usePersistentState('geo', S.DEFAULT_GEO);
+  const [s, setS] = usePersistentState('geo-live', DEFAULT_FILTER);
   useEffect(() => {
     document.title = 'Districts — AMRUT × SUMAGO Admin';
   }, []);
-  useEffect(() => {
-    const f = new URLSearchParams(search).get('filter');
-    if (f) setS((x) => ({ ...x, filter: f }));
-  }, [search, setS]);
 
   /* Live Applications / Eligible / Enrolled per district (centreCode = district code). */
   const summary = useStudentSummary();
   const idx = centreIndex(summary.data);
   const asOf = asOfLabel(summary.data?.asOf);
-  const withLive = (r: DistrictRow): Row => ({ ...r, live: centreCounts(idx, r.d.code) });
+  const withLive = (d: District): Row => ({ d, live: centreCounts(idx, d.code) });
 
   const all = S.districts();
-  let rows = S.filterDistricts(s).map(withLive);
-  /* "Most enrolled" ranks by the live register (enrolled, then eligible), not the demo figures. */
-  if (s.sort === 'enrolled') {
-    rows = rows.slice().sort((a, b) => b.live.enrolled - a.live.enrolled || b.live.eligible - a.live.eligible);
-  }
-  const totals = S.stateTotals();
-  const ragCount = (rag: string) => all.filter((d) => S.districtStatus(d).rag === rag).length;
+  const rows = all
+    .filter((d) => s.region === 'ALL' || d.region === s.region)
+    .map(withLive)
+    .sort(s.sort === 'name' ? (a, b) => a.d.name.localeCompare(b.d.name) : byLive);
   const liveText = (n: number) => (summary.isPending ? '…' : summary.isError ? '—' : fmt(n));
+  const noData = <NoDataLabel />;
 
   return (
     <div className="page">
@@ -149,47 +114,20 @@ export default function DistrictsPage() {
       ) : null}
       <div className="grid g6 mb14">
         <Kpi label="Districts covered" value={all.length} tone="b" />
-        <Kpi
-          label="Districts with centres"
-          value={all.filter((d) => d.hasCentre).length}
-          tone="b"
-          link="#/districts?filter=centres"
-          badge={<DemoChip />}
-        />
-        <Kpi label="On track (GREEN)" value={ragCount('GREEN')} tone="g" link="#/districts?filter=green" badge={<DemoChip />} />
-        <Kpi label="Needs attention" value={ragCount('AMBER')} tone="a" link="#/districts?filter=amber" badge={<DemoChip />} />
-        <Kpi label="Critical" value={ragCount('RED')} tone="r" link="#/districts?filter=critical" badge={<DemoChip />} />
-        <Kpi
-          label="State achievement"
-          value={totals.achievementPct + '%'}
-          tone="g"
-          pct={totals.achievementPct}
-          progTone="g"
-          badge={<DemoChip />}
-        />
+        <Kpi label="Districts with centres" value={NO_VALUE} sub={noData} />
+        <Kpi label="On track (GREEN)" value={NO_VALUE} sub={noData} />
+        <Kpi label="Needs attention" value={NO_VALUE} sub={noData} />
+        <Kpi label="Critical" value={NO_VALUE} sub={noData} />
+        <Kpi label="State achievement" value={NO_VALUE} sub={noData} />
       </div>
 
       <FilterBar
         fields={[
           { k: 'region', l: 'Region', options: [{ v: 'ALL', l: 'All regions' }].concat(S.regions().map((x) => ({ v: x, l: x }))) },
           {
-            k: 'filter',
-            l: 'Status',
-            options: [
-              { v: 'ALL', l: 'All districts' },
-              { v: 'green', l: 'On track (GREEN)' },
-              { v: 'amber', l: 'Needs attention (AMBER)' },
-              { v: 'critical', l: 'Critical (RED)' },
-              { v: 'grey', l: 'Not started / on hold' },
-              { v: 'centres', l: 'Has offline centre' },
-            ],
-          },
-          {
             k: 'sort',
             l: 'Sort by',
             options: [
-              { v: 'performance', l: 'Highest performance' },
-              { v: 'lowest', l: 'Lowest performance' },
               { v: 'enrolled', l: 'Most enrolled' },
               { v: 'name', l: 'District name' },
             ],
@@ -197,30 +135,23 @@ export default function DistrictsPage() {
         ]}
         value={s}
         onChange={(k, v) => setS((x) => ({ ...x, [k]: v }))}
-        onReset={() => setS(S.DEFAULT_GEO)}
+        onReset={() => setS(DEFAULT_FILTER)}
       />
 
       {rows.length ? (
         <div className="grid g4 mb14">
-          {rows.map(({ d, k, st, live }) => (
+          {rows.map(({ d, live }) => (
             <div
               key={d.code}
               className="card pad pointer"
+              style={{ minWidth: 0 }}
               data-testid={'district-' + d.code}
               onClick={() => go('#/districts/' + d.code)}
-              style={{ borderLeft: '3px solid ' + st.color }}
             >
-              <div className="f jb ac">
-                <b className="fs13 ell">{d.name}</b>
-                <span className="f ac gp4">
-                  <Badge tone={st.tone}>{st.l}</Badge>
-                  <DemoChip />
-                </span>
-              </div>
-              <div className="fs11 muted">
-                {d.region}
-                {d.hasCentre ? ' · has centre' : ''}
-              </div>
+              <b className="fs13 ell" style={{ display: 'block' }} title={d.name}>
+                {d.name}
+              </b>
+              <div className="fs11 muted">{d.region}</div>
               <div className="grid g3 mt10" style={{ gap: 6 }}>
                 {(
                   [
@@ -239,15 +170,6 @@ export default function DistrictsPage() {
                   </div>
                 ))}
               </div>
-              <div className="f jb ac mt10 fs11 muted">
-                <span>
-                  Target {d.target} · achievement {k.achievementPct}%
-                </span>
-                <DemoChip />
-              </div>
-              <div className="prog mt4">
-                <i className={achTone(k.achievementPct)} style={{ width: Math.min(100, k.achievementPct) + '%' }} />
-              </div>
             </div>
           ))}
         </div>
@@ -258,22 +180,19 @@ export default function DistrictsPage() {
       <div className="card">
         <div className="card-h">
           <h3>
-            District performance table <span className="sub">Applications, Eligible, Enrolled live{asOf ? ' ' + asOf : ''}</span>
+            District table <span className="sub">Applications, Eligible, Enrolled live{asOf ? ' ' + asOf : ''}</span>
           </h3>
         </div>
         <DataTable
-          rows={all.map(S.districtRow).map(withLive)}
+          rows={all.map(withLive)}
           columns={columns}
           pageSize={12}
-          exportName="District_Performance"
+          exportName="District_Register"
           search={[(x) => x.d.name]}
           searchLabel="district"
           rowLink={(x) => '#/districts/' + x.d.code}
         />
       </div>
-      <DemoNote>
-        Indicative values, subject to AMRUT / COEP approval. Applications, Eligible and Enrolled come from the live student register.
-      </DemoNote>
     </div>
   );
 }

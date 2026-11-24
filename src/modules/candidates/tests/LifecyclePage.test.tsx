@@ -19,7 +19,7 @@ const renderPage = () =>
     </Routes>,
     { route: '/lifecycle' },
   );
-/* A live register tile (the demo status engine below has tiles with the same names). */
+/* A live register tile. */
 const tile = (label: string) =>
   within(screen.getByText('Student register — current distribution').closest('.card') as HTMLElement)
     .getByText(label, { selector: '.kpi-t' })
@@ -42,9 +42,26 @@ describe('LifecyclePage — live register stages', () => {
         '#/candidates?bucket=enrolled',
       ]),
     );
-    /* No stage, conversion or heading carries a demo label. */
-    expect(screen.getByText(/Training → Assessment/)).toBeInTheDocument();
-    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment/i);
+    /* Conversions are only between live stages. */
+    expect(screen.getByText(/Eligible → Enrollment/)).toBeInTheDocument();
+    expect(screen.queryByText(/Training → Assessment|Lead → Registration/)).not.toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/demo data|\(demo\)|demo environment|Indicative values/i);
+  });
+
+  it('names the stages with no live source without figures, and empties the status engine', async () => {
+    vi.spyOn(studentApi, 'summary').mockResolvedValue(summaryFixture());
+    renderPage();
+    await waitFor(() => expect(within(tile('Applications')).getByText('15,000')).toBeInTheDocument());
+    const other = screen.getByTestId('no-source-stages');
+    for (const l of ['Awareness (reach)', 'Lead', 'Training', 'Assessment', 'Certification']) {
+      const row = within(other).getByText(l).closest('.list-row') as HTMLElement;
+      expect(within(row).getByText('—')).toBeInTheDocument();
+      expect(within(row).getByTestId('no-data')).toBeInTheDocument();
+    }
+    const engine = screen.getByText('Candidate status engine — current distribution').closest('.card') as HTMLElement;
+    expect(within(engine).getByTestId('no-data')).toBeInTheDocument();
+    expect(within(engine).queryByText(/\d/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/defined statuses/)).not.toBeInTheDocument();
   });
 
   it('shows "—" for a conversion from an empty stage instead of NaN', async () => {

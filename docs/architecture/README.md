@@ -13,7 +13,7 @@ main.tsx → AppProviders (QueryClient → BrowserRouter → AuthProvider) → A
 - **`components/`** holds reusable, feature-agnostic UI: `ui/` (design-system primitives that reproduce the original markup and class names), `tables/`, `feedback/` (error boundary, toasts, confirm dialogs, API load states), `charts/`.
 - **`services/api-client.ts`** is the single HTTP client. Feature services (`modules/*/services/*Api.ts`) are thin typed wrappers around it.
 - **`store/`** (Zustand) holds client-only UI state; **TanStack Query** holds all server state ([ADR-0007](adr/0007-state-management.md)).
-- **`legacy/`** is the original portal's JavaScript (sample data service, SVG chart and map generators, formatters), kept as-is and typed through `types/legacy.ts`. Screens not yet backed by the API read it via `services/mock`.
+- **`legacy/`** is the original portal's JavaScript (reference data, SVG chart and map generators, formatters), typed through `types/legacy.ts`. Its sample dataset was retired on 24 Nov 2026: `legacy/data.js` keeps only reference data (programme name, candidate status labels, the 36 districts and talukas, read through `services/geography.ts`). Screens not yet backed by the API show an empty state, never sample values.
 
 ## Data flow (live modules)
 

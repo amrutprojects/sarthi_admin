@@ -1,18 +1,18 @@
 import { useEffect } from 'react';
-import { PageHead, Card, LinkButton, DemoNote, DemoChip, Badge, Callout, fmt, useGo } from '../../../components/ui';
+import { PageHead, Card, LinkButton, Badge, Callout, NO_VALUE, NoData, NoDataLabel, fmt, useGo } from '../../../components/ui';
 import { Funnel } from '../../../components/charts';
-import { useLegacyTick } from '../../../utils/legacyBus';
-import * as S from '../../../services/mock/candidateService';
-import type { CandidateStatus } from '../../../types/domain';
 import { asOfLabel, studentListLink, useStudentSummary, type StudentSummary } from '../../students';
 
-/* A funnel stage; `live` stages come from the student register, the others are demo data. */
+/*
+ * Only the register stages (Registration to Batch allocation) have a live source. Mobilization stages before
+ * registration and training stages after enrollment have none yet (user decision 24 Nov 2026): they are named
+ * with "No data yet", never given sample counts.
+ */
 interface Stage {
   l: string;
   v: number;
   c: string;
-  link?: string;
-  live?: boolean;
+  link: string;
 }
 
 /* Register tiles (live): each opens the real student list for its bucket. */
@@ -25,41 +25,37 @@ const LIVE_TILES: { l: string; v: (t: StudentSummary['totals']) => number; bucke
   { l: 'Inactive', v: (t) => t.inactive, tone: 'grey' },
 ];
 
+/* Lifecycle stages with no live source yet. */
+const NO_SOURCE_STAGES = [
+  'Awareness (reach)',
+  'Engagement',
+  'Website visits',
+  'Enquiry',
+  'Lead',
+  'Documents submitted',
+  'Training',
+  'Assessment',
+  'Completion',
+  'Certification',
+];
+
 export default function LifecyclePage() {
-  useLegacyTick();
   const go = useGo();
   useEffect(() => {
     document.title = 'Candidate lifecycle — AMRUT × SUMAGO Admin';
   }, []);
 
-  const m = S.mobilization();
-  const k = S.stateKpis();
-  /* Registration, Verification, Eligible, Enrollment and Batch allocation are live; the rest stay demo. */
   const summary = useStudentSummary();
   const t = summary.data?.totals;
   const asOf = asOfLabel(summary.data?.asOf);
   const live = (v: number | undefined) => v ?? 0;
   const stages: Stage[] = [
-    { l: 'Awareness (reach)', v: m.awareness, c: '#DCC9B4' },
-    { l: 'Engagement', v: m.engagement, c: '#F2D3B0' },
-    { l: 'Website visits', v: m.websiteVisits, c: '#EDBE8E' },
-    { l: 'Enquiry', v: m.enquiries, c: '#E2A166' },
-    { l: 'Lead', v: m.leads, c: '#D9843A', link: '#/mobilization' },
-    { l: 'Registration', v: live(t?.applications), c: '#C8651C', link: studentListLink({ bucket: 'applications' }), live: true },
-    { l: 'Documents submitted', v: m.documents, c: '#B5551C' },
-    { l: 'Verification (pending)', v: live(t?.pending), c: '#A34D18', link: studentListLink({ bucket: 'pending' }), live: true },
-    { l: 'Eligible', v: live(t?.eligible), c: '#7A3A16', link: studentListLink({ bucket: 'eligible' }), live: true },
-    { l: 'Enrollment', v: live(t?.enrolled), c: '#5C2A0D', link: studentListLink({ bucket: 'enrolled' }), live: true },
-    { l: 'Batch allocation', v: live(t?.enrolled), c: '#1E7A46', link: studentListLink({ bucket: 'enrolled' }), live: true },
-    { l: 'Training', v: k.trainingActive, c: '#16A34A' },
-    { l: 'Assessment', v: k.assessed, c: '#6B3FA0', link: '#/assessments' },
-    { l: 'Completion', v: k.completed, c: '#A85B08' },
-    { l: 'Certification', v: k.certified, c: '#E88C2C', link: '#/certification' },
+    { l: 'Registration', v: live(t?.applications), c: '#C8651C', link: studentListLink({ bucket: 'applications' }) },
+    { l: 'Verification (pending)', v: live(t?.pending), c: '#A34D18', link: studentListLink({ bucket: 'pending' }) },
+    { l: 'Eligible', v: live(t?.eligible), c: '#7A3A16', link: studentListLink({ bucket: 'eligible' }) },
+    { l: 'Enrollment', v: live(t?.enrolled), c: '#5C2A0D', link: studentListLink({ bucket: 'enrolled' }) },
+    { l: 'Batch allocation', v: live(t?.enrolled), c: '#1E7A46', link: studentListLink({ bucket: 'enrolled' }) },
   ];
-  const counts: Partial<Record<CandidateStatus, number>> = {};
-  S.candidates().forEach((c) => {
-    counts[c.status] = (counts[c.status] || 0) + 1;
-  });
 
   return (
     <div className="page">
@@ -68,8 +64,8 @@ export default function LifecyclePage() {
         title="Candidate Lifecycle & Funnel"
         sub={
           <>
-            End-to-end conversion from awareness through certification. Click any stage to open the underlying records. Registration,
-            Verification, Eligible, Enrollment and Batch allocation are live{asOf ? ' ' + asOf : ''}.
+            Conversion through the student register. Click any stage to open the underlying records. Registration, Verification, Eligible,
+            Enrollment and Batch allocation are live{asOf ? ' ' + asOf : ''}.
           </>
         }
         actions={
@@ -107,14 +103,7 @@ export default function LifecyclePage() {
       </Card>
 
       <div className="grid g-2-1 mb14 mt14">
-        <Card
-          title={
-            <>
-              Full lifecycle funnel <DemoChip />
-            </>
-          }
-          sub="Registration to enrollment are live"
-        >
+        <Card title="Register funnel" sub={'Live' + (asOf ? ' ' + asOf : '')}>
           <Funnel stages={stages} />
         </Card>
         <Card title="Conversion between stages" flush>
@@ -122,12 +111,11 @@ export default function LifecyclePage() {
             {stages.slice(1).map((s, i) => {
               const prev = stages[i].v;
               const pct = prev > 0 ? Math.round((s.v / prev) * 1000) / 10 : null;
-              const bothLive = s.live && stages[i].live;
               return (
-                <div key={s.l} className="list-row" onClick={s.link ? () => go(s.link as string) : undefined}>
+                <div key={s.l} className="list-row" onClick={() => go(s.link)}>
                   <div className="lr-main">
                     <b>
-                      {stages[i].l} → {s.l} {bothLive ? null : <DemoChip />}
+                      {stages[i].l} → {s.l}
                     </b>
                     <span>
                       {fmt(prev)} → {fmt(s.v)}
@@ -147,42 +135,25 @@ export default function LifecyclePage() {
           </div>
         </Card>
       </div>
-      <Card
-        title={
-          <>
-            Candidate status engine — current distribution <DemoChip />
-          </>
-        }
-        sub="Statuses of the full programme; the live student list (Candidates) filters by the stages above"
-      >
-        <div className="grid g4">
-          {S.statuses()
-            .filter((s) => counts[s.k])
-            .map((s) => (
-              /* Demo statuses: not links, since the live student list has no such status to filter by. */
-              <div key={s.k} className="kpi">
-                <div className="kpi-t">{s.l}</div>
-                <div className="kpi-v" style={{ fontSize: 21 }}>
-                  {fmt(counts[s.k])}
+
+      <div className="grid g2">
+        <Card title="Other lifecycle stages" sub="Mobilization before registration; training after enrollment" flush>
+          <div className="list" data-testid="no-source-stages">
+            {NO_SOURCE_STAGES.map((l) => (
+              <div key={l} className="list-row">
+                <div className="lr-main">
+                  <b>{l}</b>
+                  <NoDataLabel />
                 </div>
-                <div className="kpi-d">
-                  <Badge tone={s.tone}>{s.l}</Badge>
-                </div>
+                <b className="fs13 muted">{NO_VALUE}</b>
               </div>
             ))}
-        </div>
-        <div className="mt14">
-          <Callout tone="info" title="Configurable state machine">
-            {'The programme uses ' +
-              S.statuses().length +
-              ' defined statuses. Transitions are recorded in each candidate timeline and in the system audit log. Statuses and permitted transitions are configurable under Administration.'}
-          </Callout>
-        </div>
-      </Card>
-      <DemoNote>
-        Indicative values, subject to AMRUT / COEP approval. Registration, Verification, Eligible, Enrollment and Batch allocation
-        come from the live student register.
-      </DemoNote>
+          </div>
+        </Card>
+        <Card title="Candidate status engine — current distribution">
+          <NoData />
+        </Card>
+      </div>
     </div>
   );
 }

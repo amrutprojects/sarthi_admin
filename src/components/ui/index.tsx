@@ -102,7 +102,7 @@ export interface KpiProps {
   pct?: number;
   progTone?: string;
   title?: string;
-  /* Shown after the label, e.g. <DemoChip />. */
+  /* Shown after the label (e.g. a small status badge). */
   badge?: ReactNode;
 }
 export function Kpi({ label, value, tone, sub, link, pct, progTone, title, badge }: KpiProps) {
@@ -247,20 +247,89 @@ export function Callout({ tone, title, children }: { tone: 'info' | 'warn' | 'er
   );
 }
 
-export function DemoNote({
-  children = 'Indicative values - subject to AMRUT / COEP approval.',
-}: {
-  children?: ReactNode;
-}) {
-  return <div className="disclaim mt10">{children}</div>;
+/*
+ * Figures, panels and screens with no live data source (user decision 24 Nov 2026: show an honest empty state,
+ * never a sample number, name, district or date). English and Marathi side by side; the admin panel has no
+ * language switch.
+ */
+export const NO_DATA_TEXT = {
+  title: { en: 'No data yet', mr: 'अद्याप माहिती नाही' },
+  figure: {
+    en: 'This figure has no live source yet. It appears here once the programme records it in the system.',
+    mr: 'या आकड्यासाठी अद्याप थेट स्रोत नाही. कार्यक्रमाची नोंद प्रणालीत झाल्यावर तो येथे दिसेल.',
+  },
+  screen: {
+    en: 'This screen has no live data source yet. It will show real records once its module is connected to the server.',
+    mr: 'या स्क्रीनसाठी अद्याप थेट डेटा स्रोत नाही. तिचे मॉड्यूल सर्व्हरशी जोडल्यावर येथे प्रत्यक्ष नोंदी दिसतील.',
+  },
+  lmsOff: {
+    en: 'This screen reads from the LMS. Turn on “Show live LMS data” in System Settings to see it.',
+    mr: 'ही स्क्रीन LMS मधून माहिती घेते. ती पाहण्यासाठी सिस्टम सेटिंग्जमध्ये “LMS चा थेट डेटा दाखवा” चालू करा.',
+  },
+} satisfies Record<string, { en: string; mr: string }>;
+
+/* Value of a KPI tile with no live source. */
+export const NO_VALUE = '—';
+
+export type BiText = { en: string; mr: string };
+
+/* "No data yet · अद्याप माहिती नाही": a KPI tile's sub-line, or any short inline marker. */
+export function NoDataLabel({ text = NO_DATA_TEXT.title }: { text?: BiText }) {
+  return (
+    <span className="muted" data-testid="no-data">
+      {text.en} · <span lang="mr">{text.mr}</span>
+    </span>
+  );
 }
 
-/*
- * Used to mark a figure with no live data source yet. It no longer prints anything: the panel
- * carries no "demo" labelling. Kept so the call sites stay put.
- */
-export function DemoChip() {
-  return null;
+/* Empty-state block for a card or a whole screen with no live source. */
+export function NoData({
+  title = NO_DATA_TEXT.title,
+  msg = NO_DATA_TEXT.figure,
+  children,
+}: {
+  title?: BiText;
+  msg?: BiText;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="empty" data-testid="no-data">
+      <b>
+        {title.en} · <span lang="mr">{title.mr}</span>
+      </b>
+      <p>{msg.en}</p>
+      <p lang="mr">{msg.mr}</p>
+      {children}
+    </div>
+  );
+}
+
+/* A whole screen that has no live data source yet: its header and one empty state, nothing invented. */
+export function NotAvailablePage({
+  title,
+  crumbs,
+  sub,
+  actions,
+  msg = NO_DATA_TEXT.screen,
+  children,
+}: {
+  title: ReactNode;
+  crumbs?: Crumb[];
+  sub?: ReactNode;
+  actions?: ReactNode;
+  msg?: BiText;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="page">
+      <PageHead crumbs={crumbs} title={title} sub={sub} actions={actions} />
+      <div className="card">
+        <div className="card-b">
+          <NoData msg={msg}>{children}</NoData>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function KvList({ pairs }: { pairs: [string, ReactNode][] }) {

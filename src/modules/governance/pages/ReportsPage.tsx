@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import AS from '../../../legacy';
-import { PageHead, Callout, DemoNote, useGo } from '../../../components/ui';
+import { PageHead, NoDataLabel, useGo } from '../../../components/ui';
 import Icon from '../../../components/ui/Icon';
-import { REPORTS } from '../../../services/mock/governanceService';
+import { REPORT_CATALOGUE } from '../reportCatalogue';
 
+/* The report catalogue. No report has a live source yet, so every card says so; no sample rows are ever shown. */
 export default function ReportsPage() {
   const go = useGo();
   useEffect(() => {
@@ -11,19 +11,9 @@ export default function ReportsPage() {
   }, []);
   return (
     <div className="page">
-      <PageHead
-        crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'Reports & MIS' }]}
-        title="Reports & MIS"
-        sub="Standard programme reports with filters and Excel / CSV / PDF export."
-        actions={
-          <button type="button" className="btn primary" onClick={() => AS.ui.toast('MIS pack generation queued.', 'ok')}>
-            <Icon name="download" />
-            Export full MIS pack
-          </button>
-        }
-      />
+      <PageHead crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'Reports & MIS' }]} title="Reports & MIS" />
       <div className="grid g3">
-        {REPORTS.map(([id, title, desc], i) => (
+        {REPORT_CATALOGUE.map(([id, title, desc], i) => (
           <div key={id} className="card pad pointer" onClick={() => go('#/reports/' + id)}>
             <div className="f ac gp10">
               <div className="icon-sq" style={{ background: 'var(--brand-100)', color: 'var(--brand-600)' }}>
@@ -32,18 +22,15 @@ export default function ReportsPage() {
               <div className="flex1">
                 <b className="fs13">{title}</b>
                 <div className="fs11 muted">{desc}</div>
+                <div className="fs11 mt4">
+                  <NoDataLabel />
+                </div>
               </div>
               <Icon name="chevR" />
             </div>
           </div>
         ))}
       </div>
-      <div className="mt14">
-        <Callout tone="info" title="Export formats">
-          CSV and Excel exports download immediately. PDF opens a print-ready preview — use the browser print dialog to save as PDF.
-        </Callout>
-      </div>
-      <DemoNote />
     </div>
   );
 }

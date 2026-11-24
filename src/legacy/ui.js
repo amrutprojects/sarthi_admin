@@ -345,12 +345,6 @@
   function districtOptions(all) {
     return [{ v: 'ALL', l: all || 'All districts' }].concat(AS.db.districts.slice().sort(function (a, b) { return a.name < b.name ? -1 : 1; }).map(function (d) { return { v: d.code, l: d.name }; }));
   }
-  function centreOptions() {
-    return [{ v: 'ALL', l: 'All centres' }].concat(AS.db.allCentres.map(function (c) { return { v: c.id, l: c.name }; }));
-  }
-  function batchOptions() {
-    return [{ v: 'ALL', l: 'All batches' }].concat(AS.db.batches.map(function (b) { return { v: b.id, l: b.id }; }));
-  }
   function modeOptions() {
     return [{ v: 'ALL', l: 'All modes' }, { v: 'OFFLINE', l: 'Offline' }, { v: 'ONLINE', l: 'Online' }];
   }
@@ -444,7 +438,7 @@
     callout: callout, demoNote: demoNote, table: table, drawTable: draw, tableState: tableState, tableRows: tableRows,
     exportRows: exportRows, modal: modal, closeModal: closeModal, confirmDialog: confirmDialog,
     drawer: drawer, closeDrawer: closeDrawer, toast: toast, filterBar: filterBar,
-    districtOptions: districtOptions, centreOptions: centreOptions, batchOptions: batchOptions,
+    districtOptions: districtOptions,
     modeOptions: modeOptions, statusOptions: statusOptions,
     tl: tl, kvList: kvList, listRows: listRows, avatar: avatar, riskBadges: riskBadges, attendanceCell: attendanceCell
   };

@@ -1,19 +1,24 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AS from '../../legacy';
 import Icon from '../../components/ui/Icon';
 import Avatar from '../../components/ui/Avatar';
 import Popover from '../../components/ui/Popover';
 import { useCanOpen } from '../../modules/auth/components/Can';
-import type { SearchResult } from '../../types/domain';
-import { api } from '../../services/mock/api';
 import { useAuth } from '../../modules/auth/auth-context';
 import { goTo } from '../../hooks/useLegacyEvents';
 
-const TONE = { red: 'var(--red)', amber: 'var(--amber)', green: 'var(--green)', blue: 'var(--brand-500)' };
+/* No live notification source exists yet, so the bell opens an honest empty list (no invented alerts, no count). */
+const NO_NOTIFICATIONS = {
+  title: { en: 'No notifications yet', mr: 'अद्याप कोणत्याही सूचना नाहीत' },
+  msg: {
+    en: 'Notifications appear here once the programme modules send them from the server.',
+    mr: 'कार्यक्रमाची मॉड्यूल्स सर्व्हरवरून सूचना पाठवू लागल्यावर त्या येथे दिसतील.',
+  },
+};
 
 const JOURNEYS = [
-  ['PMO drill-down', 'Dashboard → District map → Pune → Centre → Batch → Student', '#/dashboard'],
+  ['PMO drill-down', 'Dashboard → District map → District → Centre → Batch → Student', '#/dashboard'],
   ['District coordinator', 'District dashboard → assigned centres → attendance → issues', '#/districts'],
   ['Centre manager', 'Centre detail → batch → students → attendance', '#/centres'],
   ['Trainer', "My batches → today's session → mark attendance", '#/live'],
@@ -21,33 +26,23 @@ const JOURNEYS = [
   ['Candidate journey', 'Public site → apply → track application status', '#/track'],
 ];
 
-type PopKind = 'notif' | 'profile' | 'search';
+type PopKind = 'notif' | 'profile';
 
+/*
+ * The top bar. There is no global search: the old box searched only the sample dataset and no live search
+ * exists yet, so it was removed rather than left pretending to work.
+ */
 export default function Topbar({ onBurger }: { onBurger: () => void }) {
   const navigate = useNavigate();
   const { user, primaryRole, portal, logout } = useAuth();
-  /* Search, alerts and the guided tours cover programme data, which a Website Admin does not work with. */
+  /* Alerts and the guided tours cover programme data, which a Website Admin does not work with. */
   const programme = portal !== 'website';
   const [pop, setPop] = useState<PopKind | null>(null);
-  const [q, setQ] = useState('');
-  const searchRef = useRef<HTMLInputElement>(null);
   const notifRef = useRef<HTMLButtonElement>(null);
   const profileRef = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => setPop(null), []);
   const canOpen = useCanOpen();
   const U = AS.ui;
-
-  /* Ctrl/Cmd + K focuses global search (original shortcut). */
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
-    }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, []);
 
   const go = (href: string) => {
     close();
@@ -56,13 +51,14 @@ export default function Topbar({ onBurger }: { onBurger: () => void }) {
 
   function openHelp() {
     U.modal({
-      title: 'Help & Guided Tours',
+      title: 'Help & Guided Tours · मदत व मार्गदर्शित फेरफटका',
       size: 'wide',
       body:
         U.callout(
           'info',
-          'Help centre',
-          'Welcome to the AMRUT × SUMAGO Programme Management Portal. Every KPI on every screen is calculated from the same candidate dataset, so numbers stay consistent as you drill down.',
+          'Help centre · मदत केंद्र',
+          'Welcome to the AMRUT Kalash Programme Management Portal. Screens show only figures recorded in the system; where a module is not connected yet, the screen says so. · ' +
+            'अमृत कलश कार्यक्रम व्यवस्थापन पोर्टलमध्ये आपले स्वागत. स्क्रीनवर फक्त प्रणालीत नोंदवलेले आकडे दिसतात; एखादे मॉड्यूल अद्याप जोडलेले नसल्यास स्क्रीनवर तसे सांगितले जाते.',
         ) +
         '<h4 class="mt18 mb10">Try these guided journeys</h4><div class="grid g2">' +
         JOURNEYS.map(
@@ -80,52 +76,19 @@ export default function Topbar({ onBurger }: { onBurger: () => void }) {
         ).join('') +
         '</div>' +
         '<h4 class="mt18 mb10">Keyboard shortcuts</h4>' +
-        U.kvList([
-          ['Ctrl / Cmd + K', 'Focus global search'],
-          ['Esc', 'Close modal, drawer or popover'],
-          ['Click any KPI', 'Opens the filtered record list behind it'],
-        ]),
+        U.kvList([['Esc', 'Close modal, drawer or popover · मॉडल, ड्रॉवर किंवा पॉपओव्हर बंद करा']]),
       footer:
         '<button class="btn" data-modal-close>Close</button><button class="btn primary" data-go="#/dashboard" data-modal-close>Go to Dashboard</button>',
     });
   }
-
-  const results = q.length >= 2 ? api.search(q) : [];
-  const groups = results.reduce<Record<string, SearchResult[]>>((acc, r) => {
-    (acc[r.type] = acc[r.type] || []).push(r);
-    return acc;
-  }, {});
-  const notifications = api.notifications();
 
   return (
     <header className="topbar">
       <button type="button" className="tb-burger" onClick={onBurger}>
         <Icon name="menu" />
       </button>
-      {programme ? (
-        <div className="tb-search">
-          <span className="si">
-            <Icon name="search" />
-          </span>
-          <input
-            id="globalSearch"
-            ref={searchRef}
-            autoComplete="off"
-            value={q}
-            placeholder="Search candidates, centres, batches, districts, certificates…"
-            onChange={(e) => {
-              setQ(e.target.value);
-              setPop(e.target.value.length >= 2 ? 'search' : null);
-            }}
-            onFocus={() => {
-              if (q.length >= 2) setPop('search');
-            }}
-          />
-          <kbd>Ctrl K</kbd>
-        </div>
-      ) : null}
-      {/* The spacer normally shares the free room with the search box (refresh.css); without it, it takes it all, so the user stays right. */}
-      <div className="tb-spacer" style={programme ? undefined : { flexGrow: 1 }} />
+      {/* With no search box the spacer takes all the free room, so the actions stay right. */}
+      <div className="tb-spacer" style={{ flexGrow: 1 }} />
       <div className="tb-actions">
         {programme ? (
           <>
@@ -137,7 +100,6 @@ export default function Topbar({ onBurger }: { onBurger: () => void }) {
               onClick={() => setPop(pop === 'notif' ? null : 'notif')}
             >
               <Icon name="bell" />
-              <span className="dot">{notifications.length}</span>
             </button>
             <button type="button" className="tb-btn" title="Help" onClick={openHelp}>
               <Icon name="help" />
@@ -153,69 +115,21 @@ export default function Topbar({ onBurger }: { onBurger: () => void }) {
         </button>
       </div>
 
-      {pop === 'search' && (
-        <Popover anchor={searchRef.current} width={Math.min(460, window.innerWidth - 24)} alignLeft onClose={close}>
-          <div className="pop-h">
-            <b>Results for “{q}”</b>
-            <span className="tag">{results.length}</span>
-          </div>
-          <div className="pop-b">
-            {!results.length && (
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: U.empty('No matches', 'Try a candidate ID (AMRUT-PUN-0001), a name, a batch ID or a district.'),
-                }}
-              />
-            )}
-            {Object.keys(groups).map((g) => (
-              <div key={g}>
-                <div className="sr-group">{g}</div>
-                {groups[g].map((r, i) => (
-                  <button
-                    type="button"
-                    key={g + i + r.link}
-                    className="menu-item"
-                    onClick={() => {
-                      setQ('');
-                      go(r.link);
-                    }}
-                  >
-                    <div className="flex1">
-                      <b style={{ fontSize: 12.5 }}>{r.title}</b>
-                      <div className="fs11 muted">{r.sub}</div>
-                    </div>
-                    <Icon name="chevR" />
-                  </button>
-                ))}
-              </div>
-            ))}
-          </div>
-        </Popover>
-      )}
-
       {pop === 'notif' && (
-        <Popover anchor={notifRef.current} width={380} onClose={close}>
+        <Popover anchor={notifRef.current} width={Math.min(380, window.innerWidth - 24)} onClose={close}>
           <div className="pop-h">
-            <b>Notifications</b>
-            <span className="tag">{notifications.length} new</span>
+            <b>
+              Notifications · <span lang="mr">सूचना</span>
+            </b>
           </div>
           <div className="pop-b">
-            {notifications.map((n, i) => (
-              <div key={i} className="alert-card" onClick={() => go(n.link)}>
-                <span className="pdot" style={{ background: TONE[n.tone] }} />
-                <div className="ac-b">
-                  <b>{n.t}</b>
-                  <span>
-                    {n.s} · {n.when}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="pop-f">
-            <button type="button" className="btn sm ghost" onClick={() => go('/tasks')}>
-              View all tasks & alerts
-            </button>
+            <div className="empty" data-testid="no-notifications">
+              <b>
+                {NO_NOTIFICATIONS.title.en} · <span lang="mr">{NO_NOTIFICATIONS.title.mr}</span>
+              </b>
+              <p>{NO_NOTIFICATIONS.msg.en}</p>
+              <p lang="mr">{NO_NOTIFICATIONS.msg.mr}</p>
+            </div>
           </div>
         </Popover>
       )}

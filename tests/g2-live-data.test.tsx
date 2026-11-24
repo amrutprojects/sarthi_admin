@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import type { ComponentType, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from './test-utils';
-import AS from '../src/legacy';
 import { ApiError } from '../src/services/api-client';
 import BatchesPage from '../src/modules/delivery/pages/BatchesPage';
 import TrainersPage from '../src/modules/delivery/pages/TrainersPage';
@@ -15,6 +14,9 @@ import LivePage from '../src/modules/training/pages/LivePage';
 import OfflinePage from '../src/modules/training/pages/OfflinePage';
 import OnlinePage from '../src/modules/training/pages/OnlinePage';
 import { LiveDataSettingCard, lmsLiveApi, type LiveDataState, type LiveResult } from '../src/modules/lms-live';
+
+/* Id pattern of the retired sample batches (e.g. AMRUT-PUN-C01-B001): none may appear. */
+const SAMPLE_BATCH_ID = /AMRUT-[A-Z]{3}-Cd{2}-Bd{3}/;
 
 /*
  * G-2 "Show live LMS data" on the Panel screens. Off (default, or any error of the state call): each screen renders its
@@ -247,11 +249,12 @@ describe('off (default): every screen keeps its local data', () => {
     for (const r of READS) expect(lmsLiveApi[r]).not.toHaveBeenCalled();
   });
 
-  it('Batches off renders the same local rows as before (mock batch ids)', async () => {
+  it('Batches off shows no sample rows, only "turn on live LMS data" (no invented figures)', async () => {
     vi.spyOn(lmsLiveApi, 'state').mockResolvedValue(state());
     renderWithProviders(<BatchesPage />);
     await badge();
-    expect(screen.getAllByText(AS.db.batches[0].id).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Turn on “Show live LMS data” in System Settings/)).toBeInTheDocument();
+    expect(screen.queryByText(SAMPLE_BATCH_ID)).not.toBeInTheDocument();
   });
 
   it('a server without G-2 (404) or a refused state call keeps the local screen', async () => {
@@ -309,7 +312,7 @@ describe('on: live from the LMS', () => {
     vi.spyOn(lmsLiveApi, 'state').mockResolvedValue(ON);
     renderWithProviders(<BatchesPage />);
     await screen.findByText('LMS-B-0001');
-    expect(screen.queryByText(AS.db.batches[0].id)).not.toBeInTheDocument();
+    expect(screen.queryByText(SAMPLE_BATCH_ID)).not.toBeInTheDocument();
     expect(screen.getByText('Showing the first 1 of 250 records from the LMS.')).toBeInTheDocument();
   });
 
@@ -331,7 +334,7 @@ describe('on: live from the LMS', () => {
     expect(alert).toHaveTextContent('The LMS is temporarily unavailable.');
     expect(alert).toHaveTextContent('LMS_UNAVAILABLE');
     expect(alert).toHaveTextContent('rq-9');
-    expect(screen.queryByText(AS.db.batches[0].id)).not.toBeInTheDocument();
+    expect(screen.queryByText(SAMPLE_BATCH_ID)).not.toBeInTheDocument();
     expect(screen.queryByText('Local data')).not.toBeInTheDocument();
     await userEvent.click(within(alert).getByRole('button', { name: 'Retry' }));
     expect(await screen.findByText('LMS-B-0001')).toBeInTheDocument();

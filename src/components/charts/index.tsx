@@ -15,8 +15,6 @@ interface ItemsProps {
   opts?: ChartOpts;
 }
 
-
-
 export const LineChart = ({ series, labels, opts }: { series: ChartSeries[]; labels: string[]; opts?: ChartOpts }) => (
   <Html html={C().line(series, labels, opts)} />
 );
@@ -42,7 +40,11 @@ function useMountedMap(html: string) {
   return ref;
 }
 
-/* 36-district schematic map with hover tooltips; `live` (counts per district code) feeds the applications/eligible/enrolled tiles. */
+/*
+ * 36-district schematic map with hover tooltips. Only `live` (counts per district code) is shown, for the
+ * applications / eligible / enrolled metrics; colorMode, statusFilter, filterMode and any other metric are accepted
+ * for older callers but render the tiles neutral, with no number and no status.
+ */
 export function DistrictMap({ metric = 'enrolled', colorMode = 'status', height = 440, statusFilter, filterMode, live }: MapRenderOpts) {
   const html = AS.map.render({ metric, colorMode, height, statusFilter, filterMode, live });
   const ref = useMountedMap(html);

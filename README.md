@@ -49,12 +49,12 @@ src/
     roles-permissions/   Roles, permission matrix, menu visibility
     students/            Student data import and register
     dashboard, candidates, network, delivery, training, outcomes, outreach, governance, platform
-                         Screens still backed by sample data (services/mock)
+                         Screens with no API source yet show an empty state (no sample data)
   components/            ui/ (design-system primitives), tables/, feedback/ (errors, toasts, dialogs), charts/
-  services/              api-client.ts (the only HTTP client); mock/ (sample-data services)
+  services/              api-client.ts (the only HTTP client); geography.ts (Maharashtra districts, reference data)
   constants/             navigation.ts (sidebar, routes, menu keys)
   hooks/  store/  types/  utils/  styles/
-  legacy/                Original portal JavaScript (sample data, charts, maps, helpers), typed via types/legacy.ts
+  legacy/                Original portal JavaScript (reference data, charts, maps, helpers), typed via types/legacy.ts
 tests/                   Test setup, shared test utilities, cross-cutting tests
 docs/                    Architecture, ADRs, module guide, conventions
 ```
@@ -85,5 +85,5 @@ Variables are baked in at build time; build once per environment. `.env` and `.e
 ## Open items
 
 - **Browser end-to-end tests** (Playwright) for login, Users & Roles and the student import journey are not set up yet; component tests and the API's e2e tests cover the logic today.
-- **Sample-data screens**: dashboards, candidates, network, delivery, training, outcomes, outreach and governance still read `services/mock` (`src/legacy/data.js`). Each moves to the API as its backend module is built, following the users module pattern.
-- 22 ESLint warnings remain from `react-refresh/only-export-components` in the shared UI kit (files export components and helpers together); harmless at runtime.
+- **No sample data (24 Nov 2026)**: the panel shows only live figures from the API. Every KPI, panel or screen with no API source yet shows an empty state in English and Marathi ("No data yet · अद्याप माहिती नाही", `NoData` / `NoDataLabel` / `NotAvailablePage` in `components/ui`), never a sample number, name, district or date. The LMS screens (Batches, Trainers, Centres, Live / Offline / Online training, Attendance) show LMS data when "Show live LMS data" is on in System Settings, and otherwise a message to turn it on. The former sample dataset (`services/mock`, most of `legacy/data.js`) is retired; `legacy/data.js` keeps only reference data (programme name, candidate status labels, the 36 districts and their talukas). Screens still waiting for an API: Today's Operations, At-Risk, Centre detail and onboarding, Batch and Trainer detail, Trainer ToT, Student Progress, Assessments, Certification, Marketing, Mobilization, Communications, Reports, Finance, PMO, QA, Tasks, Documents, LMS Integration, Student App, Administration, Audit Log, and the parts of Dashboard, Executive, Districts, District detail, Map, Lifecycle and System Settings that have no live source.
+- About 29 ESLint warnings remain from `react-refresh/only-export-components` in the shared UI kit (files export components and helpers together); harmless at runtime.

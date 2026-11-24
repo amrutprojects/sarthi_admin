@@ -109,13 +109,6 @@ export interface District {
   row: number;
   region: string;
   talukas: string[];
-  hasCentre: boolean;
-  target: number;
-  coordinatorId: string;
-  status: DistrictStatusKey;
-  lat: number;
-  lng: number;
-  _k: Kpis;
 }
 
 export interface CentreInfra {
@@ -445,25 +438,6 @@ export interface ProgrammeConfig {
   shortName: string;
   implementingAgency: string;
   state: string;
-  target: number;
-  batchSize: number;
-  plannedBatches: number;
-  plannedCentres: number;
-  trainerPool: number;
-  coordinators: number;
-  perStudentValue: number;
-  coepChargePercent: number;
-  trainingWeeks: number;
-  sessionsPerBatch: number;
-  minAttendancePct: number;
-  passMarkPct: number;
-  projectStart: IsoDate;
-  projectEnd: IsoDate;
-  asOf: IsoDate;
-  mapProvider: string;
-  lmsName: string;
-  appName: string;
-  demoMode: boolean;
 }
 export interface HealthScore {
   score: number;

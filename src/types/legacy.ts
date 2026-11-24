@@ -2,42 +2,7 @@
  * Types for the shared modules kept from the original portal (src/legacy/*.js),
  * which register themselves on window.AS.
  */
-import type {
-  AttendancePoint,
-  AuditEntry,
-  Batch,
-  Campaign,
-  Candidate,
-  CandidateStatus,
-  Centre,
-  Communication,
-  Coordinator,
-  Course,
-  District,
-  DistrictStatusDef,
-  DistrictStatusKey,
-  DocumentRecord,
-  HealthScore,
-  Inspection,
-  Kpis,
-  LeadSource,
-  LiveSession,
-  Lms,
-  Mobilization,
-  MonthlyPoint,
-  Notification,
-  Payment,
-  PmoMember,
-  ProgrammeConfig,
-  Role,
-  SearchResult,
-  StatusDef,
-  StudentApp,
-  TalukaRollup,
-  Task,
-  Trainer,
-  User,
-} from './domain';
+import type { CandidateStatus, District, ProgrammeConfig, Role, StatusDef, User } from './domain';
 
 export interface Option {
   v: string;
@@ -45,66 +10,13 @@ export interface Option {
 }
 export type Bilingual = { mr: string; en: string };
 
-/* Mock data service: AS.db */
+/* Reference data: AS.db (src/legacy/data.js). The sample dataset was retired on 24 Nov 2026. */
 export interface LegacyDb {
   config: ProgrammeConfig;
   STATUS: StatusDef[];
   STATUS_MAP: Record<CandidateStatus, StatusDef>;
-  ROLES: Role[];
-  DISTRICT_STATUS: Record<DistrictStatusKey, DistrictStatusDef>;
-  ENROLLED_STATUSES: CandidateStatus[];
-  ACTIVE_STATUSES: CandidateStatus[];
-  COMPLETED_STATUSES: CandidateStatus[];
-  ASSESSED_STATUSES: CandidateStatus[];
-  PASSED_STATUSES: CandidateStatus[];
-  CERTIFIED_STATUSES: CandidateStatus[];
   districts: District[];
   districtBy: Record<string, District>;
-  centres: Centre[];
-  onlineUnit: Centre;
-  allCentres: Centre[];
-  centreBy: Record<string, Centre>;
-  trainers: Trainer[];
-  trainerBy: Record<string, Trainer>;
-  batches: Batch[];
-  batchBy: Record<string, Batch>;
-  candidates: Candidate[];
-  candidateBy: Record<string, Candidate>;
-  courses: Course[];
-  coordinators: Coordinator[];
-  campaigns: Campaign[];
-  leadSources: LeadSource[];
-  mobilization: Mobilization;
-  tasks: Task[];
-  notifications: Notification[];
-  documents: DocumentRecord[];
-  auditLog: AuditEntry[];
-  inspections: Inspection[];
-  payments: Payment[];
-  monthly: MonthlyPoint[];
-  months: string[];
-  attendanceTrend: AttendancePoint[];
-  liveSessions: LiveSession[];
-  pmoTeam: PmoMember[];
-  users: User[];
-  demoLogins: string[];
-  communications: Communication[];
-  lms: Lms;
-  studentApp: StudentApp;
-  stateKpis: Kpis;
-  sources: string[];
-  kpis(rows: Candidate[], target: number): Kpis;
-  byDistrict(code: string): Candidate[];
-  byCentre(id: string): Candidate[];
-  byBatch(id: string): Candidate[];
-  byTaluka(code: string, taluka: string): Candidate[];
-  healthScore(): HealthScore;
-  addDays(iso: string, n: number): string;
-  daysBetween(a: string, b: string): number;
-  inSet(set: CandidateStatus[], status: CandidateStatus): boolean;
-  atRiskCandidates(): Candidate[];
-  talukaRollup(code: string): TalukaRollup[];
-  search(q: string): SearchResult[];
 }
 
 /* Item shapes accepted by the SVG chart generators (AS.charts). */
@@ -202,8 +114,6 @@ export interface LegacyUi {
   closeDrawer(): void;
   toast(msg: string, kind?: string, ms?: number): void;
   districtOptions(all?: string): Option[];
-  centreOptions(): Option[];
-  batchOptions(): Option[];
   modeOptions(): Option[];
   statusOptions(): Option[];
 }
