@@ -8,7 +8,7 @@ import { Callout, KvList, PageHead } from '../../../components/ui';
 import Icon from '../../../components/ui/Icon';
 import { Modal } from '../../../components/ui/Overlay';
 import SearchableSelect, { type SelectOption } from '../../../components/ui/SearchableSelect';
-import { ApiError, newIdempotencyKey } from '../../../services/api-client';
+import { ApiError, needsNewIdempotencyKey, newIdempotencyKey } from '../../../services/api-client';
 import { MASTERS, useMasterOptions, type MasterKey } from '../../masters';
 import { BARCODES, DECLARATION, RELIGIONS, TEMPLATES, TRACKS } from '../constants';
 import {
@@ -240,6 +240,8 @@ export default function RegistrationFormPage() {
     },
     onError: (e) => {
       setPreview(false);
+      /* A refused submission is stored under its key: the corrected form needs a new one. */
+      if (needsNewIdempotencyKey(e)) key.current = newIdempotencyKey();
       if (!(e instanceof ApiError) || !e.details.length) return toastError(e);
       /* Map server field errors onto the form and go back to the first step that has one. */
       const fe: Record<string, string> = {};

@@ -1,7 +1,7 @@
 import { useMemo, useRef, type ReactNode } from 'react';
 import { toastError, toastOk } from '../../../components/feedback/apiFeedback';
 import { Modal } from '../../../components/ui/Overlay';
-import { newIdempotencyKey } from '../../../services/api-client';
+import { needsNewIdempotencyKey, newIdempotencyKey } from '../../../services/api-client';
 import { useCreateUser, useUpdateUser } from '../hooks/useUsers';
 import type { User } from '../types/user.types';
 import UserForm from './UserForm';
@@ -52,6 +52,8 @@ export function CreateUserDialog({
                 onClose();
               },
               onError: (e) => {
+                /* A refused create is stored under its key: the corrected form needs a new one. */
+                if (needsNewIdempotencyKey(e)) key.current = newIdempotencyKey();
                 if (!Object.keys(serverFieldErrors(e)).length) toastError(e);
               },
             },

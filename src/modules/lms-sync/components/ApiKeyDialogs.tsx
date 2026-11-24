@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Callout } from '../../../components/ui';
 import { Modal } from '../../../components/ui/Overlay';
-import { ApiError, newIdempotencyKey } from '../../../services/api-client';
+import { ApiError, needsNewIdempotencyKey, newIdempotencyKey } from '../../../services/api-client';
 import { apiKeyApi } from '../services/lmsSyncApi';
 import {
   API_KEY_SCOPES,
@@ -31,7 +31,7 @@ export function GenerateKeyModal({ onIssued, onClose }: { onIssued: (r: IssuedAp
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /* One key per dialog: a retried submit after a lost answer does not mint a second key. */
-  const [idem] = useState(newIdempotencyKey);
+  const idem = useRef(newIdempotencyKey());
   /* Optional hard expiry; the API refuses a past one (400). */
   const [expiry, setExpiry] = useState('');
   const ok = label.trim().length >= API_KEY_LABEL_MIN && scopes.size > 0;
@@ -54,10 +54,12 @@ export function GenerateKeyModal({ onIssued, onClose }: { onIssued: (r: IssuedAp
             /* datetime-local is local time; the API wants ISO 8601 with an offset. */
             ...(expiry ? { expiresAt: new Date(expiry).toISOString() } : {}),
           },
-          idem,
+          idem.current,
         ),
       );
     } catch (e) {
+      /* A refused request is stored under its key: the corrected one needs a new key. */
+      if (needsNewIdempotencyKey(e)) idem.current = newIdempotencyKey();
       setError(errText(e));
     } finally {
       setBusy(false);
@@ -132,13 +134,15 @@ export function RotateKeyModal({
   const [overlap, setOverlap] = useState<number>(ROTATE_OVERLAP_DEFAULT);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [idem] = useState(newIdempotencyKey);
+  const idem = useRef(newIdempotencyKey());
   const submit = async () => {
     setBusy(true);
     setError(null);
     try {
-      onIssued(await apiKeyApi.rotate(apiKey.id, overlap, idem));
+      onIssued(await apiKeyApi.rotate(apiKey.id, overlap, idem.current));
     } catch (e) {
+      /* A refused request is stored under its key: the corrected one needs a new key. */
+      if (needsNewIdempotencyKey(e)) idem.current = newIdempotencyKey();
       setError(errText(e));
     } finally {
       setBusy(false);

@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../../../../tests/test-utils';
+import { ApiError } from '../../../services/api-client';
 import ApiKeysPage from '../pages/ApiKeysPage';
 import { apiKeyApi } from '../services/lmsSyncApi';
 import type { ApiKey } from '../types/lmsSync.types';
@@ -86,6 +87,24 @@ describe('ApiKeysPage', () => {
     expect(screen.queryByDisplayValue(SECRET)).not.toBeInTheDocument();
     expect(setItem).not.toHaveBeenCalled();
     expect(document.body.innerHTML).not.toContain(SECRET);
+  });
+
+  it('generates with a new Idempotency-Key after a refused request (e2e 24 Nov 2026)', async () => {
+    vi.spyOn(apiKeyApi, 'list').mockResolvedValue([]);
+    const create = vi
+      .spyOn(apiKeyApi, 'create')
+      .mockRejectedValueOnce(new ApiError('expiresAt must be in the future', 400, 'VALIDATION_ERROR'))
+      .mockResolvedValueOnce({ key: key(), secret: SECRET });
+    renderWithProviders(<ApiKeysPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Generate key' }));
+    await userEvent.type(screen.getByLabelText('Label'), 'LMS production');
+    await userEvent.click(screen.getByRole('button', { name: 'Generate' }));
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
+    await userEvent.click(screen.getByRole('button', { name: 'Generate' }));
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(2));
+    const [[, key1], [, key2]] = create.mock.calls;
+    expect(key1).toBeTruthy();
+    expect(key2).not.toBe(key1);
   });
 
   it('rotates with the chosen overlap and shows the new secret', async () => {

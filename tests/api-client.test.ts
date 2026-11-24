@@ -99,3 +99,13 @@ describe('api-client', () => {
     await expect(requestBlob('/lms/branding/e1/logo')).rejects.toMatchObject({ status: 404, message: 'No logo uploaded' });
   });
 });
+
+describe('needsNewIdempotencyKey (e2e 24 Nov 2026)', () => {
+  it('renews the key after a 4xx refusal, keeps it after a 5xx or a network error', async () => {
+    const { ApiError: E, needsNewIdempotencyKey } = await import('../src/services/api-client');
+    expect(needsNewIdempotencyKey(new E('dup', 409, 'CONFLICT'))).toBe(true);
+    expect(needsNewIdempotencyKey(new E('bad', 422, 'VALIDATION_ERROR'))).toBe(true);
+    expect(needsNewIdempotencyKey(new E('down', 503, 'ERROR'))).toBe(false);
+    expect(needsNewIdempotencyKey(new TypeError('Failed to fetch'))).toBe(false);
+  });
+});

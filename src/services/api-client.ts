@@ -206,3 +206,11 @@ export async function requestBlob(path: string, opts: { signal?: AbortSignal; ac
 
 /* A fresh key per user action, reused if that action is retried. */
 export const newIdempotencyKey = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+/*
+ * True when a refused submission must get a new key before it is sent again. The API stores every answer
+ * below 500 under its key, so a corrected form sent with the same key is refused as "already used for a
+ * different request". Network errors and 5xx keep the key: those retries must stay replay-safe.
+ */
+export const needsNewIdempotencyKey = (err: unknown): boolean =>
+  err instanceof ApiError && err.status >= 400 && err.status < 500;

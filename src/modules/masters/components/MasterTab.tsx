@@ -4,7 +4,7 @@ import { ConfirmModal, fmtDateTime, toastError, toastOk } from '../../../compone
 import { Badge, Callout, GenBadge, KvList } from '../../../components/ui';
 import Icon from '../../../components/ui/Icon';
 import { Drawer, Modal } from '../../../components/ui/Overlay';
-import { ApiError, newIdempotencyKey } from '../../../services/api-client';
+import { ApiError, needsNewIdempotencyKey, newIdempotencyKey } from '../../../services/api-client';
 import { useAuth } from '../../auth';
 import { masterPermission, type MasterAction, type MasterConfig } from '../config';
 import { useCreateMaster, useDeleteMaster, useMasterList, useSetMasterStatus, useUpdateMaster } from '../hooks/useMasters';
@@ -345,6 +345,8 @@ function CreateDialog({ master, onClose }: { master: MasterConfig; onClose: () =
                 onClose();
               },
               onError: (e) => {
+                /* A refused create is stored under its key: the corrected form needs a new one. */
+                if (needsNewIdempotencyKey(e)) key.current = newIdempotencyKey();
                 if (!Object.keys(serverFieldErrors(e)).length) toastError(e);
               },
             },
