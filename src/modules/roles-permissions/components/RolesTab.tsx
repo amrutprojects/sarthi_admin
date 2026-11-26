@@ -204,6 +204,7 @@ export default function RolesTab() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'role', id: dialog.role.id }}
           message={`Delete the role ${dialog.role.name}? Users holding it lose its permissions immediately. The role is soft-deleted and kept for audit history.`}
           onClose={close}
           onConfirm={() =>

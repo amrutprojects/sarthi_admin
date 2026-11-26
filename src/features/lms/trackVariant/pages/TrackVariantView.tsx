@@ -267,6 +267,7 @@ export default function TrackVariantView() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'lms-track-variant', id: variant.id }}
           message={`Delete the draft track variant ${variantName(variant)}? It is archived (soft-deleted) with its curriculum and kept for audit history; it can be restored.`}
           onClose={() => setConfirm(null)}
           onConfirm={() =>

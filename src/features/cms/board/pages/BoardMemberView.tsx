@@ -143,6 +143,7 @@ export default function BoardMemberView() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'board-member', id: member.id }}
           message={
             `Delete ${memberLabel(member)}? The card is removed from the website and from this list, and its photo is deleted. ` +
             'The record itself is kept for audit history.'

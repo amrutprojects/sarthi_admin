@@ -274,6 +274,7 @@ export default function TrackVariantList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'lms-track-variant', id: deleting.id }}
           message={`Delete the draft track variant ${variantName(deleting)} of ${deleting.course.code}? It is archived (soft-deleted) with its curriculum and kept for audit history; it can be restored.`}
           onClose={() => setDeleting(null)}
           onConfirm={() => {

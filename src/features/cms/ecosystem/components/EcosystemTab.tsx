@@ -330,6 +330,7 @@ export default function EcosystemTab() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'ecosystem-programme', id: deleting.id }}
           message={`Delete ${programmeLabel(deleting)}? The card is removed from the website and from this list. The record itself is kept for audit history.`}
           onClose={() => setDeleting(null)}
           onConfirm={() => {

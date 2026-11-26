@@ -151,6 +151,7 @@ export default function StateList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'state', id: deleting.id }}
           message={
             `Delete the state ${deleting.name}? It is soft-deleted and kept for audit history. ` +
             'A state that still has districts cannot be deleted — deactivate it instead.'

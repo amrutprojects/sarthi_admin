@@ -7,6 +7,7 @@ export default function StatView() {
   return (
     <ItemViewPage
       noun="figure"
+      dependencyKind="live-dashboard-stat"
       load={liveDashboardStatsService.get}
       setStatus={liveDashboardStatsService.setStatus}
       remove={liveDashboardStatsService.remove}

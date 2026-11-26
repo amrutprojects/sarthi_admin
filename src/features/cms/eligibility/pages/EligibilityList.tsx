@@ -248,6 +248,7 @@ function ItemsTab({ kind, onChanged }: { kind: EligibilityKind; onChanged: () =>
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'eligibility-item', id: deleting.id }}
           message={`Delete "${deleting.label.en}"? It is removed from the ${listName(deleting)} on the public Eligibility page and soft-deleted, kept for audit history.`}
           onClose={() => setDeleting(null)}
           onConfirm={() =>

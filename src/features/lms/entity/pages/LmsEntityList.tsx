@@ -221,6 +221,7 @@ export default function LmsEntityList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'lms-entity', id: deleting.id }}
           message={`Delete the entity ${deleting.name}? It is archived (soft-deleted) and kept for audit history.`}
           onClose={() => setDeleting(null)}
           onConfirm={() =>

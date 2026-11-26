@@ -306,6 +306,7 @@ export default function MasterTab({ master }: { master: MasterConfig }) {
           danger
           busy={remove.isPending}
           confirmLabel="Delete"
+          dependencies={{ kind: master.key === 'documentType' ? 'document-type' : master.key, id: dialog.row.id }}
           message={`Delete ${dialog.row.name} (${dialog.row.code})? It is soft-deleted and kept for history; its code and name cannot be reused. Records in use by students cannot be deleted.`}
           onClose={close}
           onConfirm={() =>

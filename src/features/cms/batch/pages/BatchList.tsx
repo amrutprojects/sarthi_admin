@@ -288,6 +288,7 @@ export default function BatchList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'batch', id: deleting.id }}
           message={
             deleting.assignmentCount > 0
               ? `The batch ${deleting.name} (${deleting.code}) still has ${assignments(deleting.assignmentCount)} (active or inactive), ` +

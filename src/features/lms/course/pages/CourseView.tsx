@@ -287,6 +287,7 @@ export default function CourseView() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'lms-course', id: course.id }}
           message={`Delete the draft course ${course.title} (${course.code})? It is archived (soft-deleted) and kept for audit history; it can be restored. A course with programme modules cannot be deleted.`}
           onClose={() => setDeleting(false)}
           onConfirm={() =>

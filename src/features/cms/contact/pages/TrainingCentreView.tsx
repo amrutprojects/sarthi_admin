@@ -125,6 +125,7 @@ export default function TrainingCentreView() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'contact-training-centre', id: centre.id }}
           message={`Delete ${centre.name.en}? It is no longer listed on the ${centre.district.name} page. It is soft-deleted, kept for audit history.`}
           onClose={() => setDeleting(false)}
           onConfirm={() =>

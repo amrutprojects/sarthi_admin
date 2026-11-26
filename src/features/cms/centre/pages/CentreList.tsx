@@ -307,6 +307,7 @@ export default function CentreList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'centre', id: deleting.id }}
           message={
             `Delete the center ${deleting.name} (${deleting.districtName})? It is soft-deleted and kept for audit history, ` +
             'and stops being offered in any form. A center that students or EDP applications refer to cannot be deleted; deactivate it instead.'

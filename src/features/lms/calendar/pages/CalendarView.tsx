@@ -230,6 +230,7 @@ export default function CalendarView() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'lms-calendar', id: calendar.id }}
           message={`Delete the calendar ${calendar.name}? It is archived (soft-deleted) with its holidays and kept for audit history; it can be restored.`}
           onClose={() => setDeleting(false)}
           onConfirm={() =>

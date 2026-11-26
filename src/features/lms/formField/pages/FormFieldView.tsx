@@ -244,6 +244,7 @@ export default function FormFieldView() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'lms-form-field', id: field.id }}
           message={`Delete the custom field ${field.label} (${field.fieldCode})? No record holds a value for it. It is removed from the form and kept for audit history; it can be restored.`}
           onClose={() => setDeleting(false)}
           onConfirm={() =>

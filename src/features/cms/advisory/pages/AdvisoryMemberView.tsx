@@ -205,6 +205,7 @@ export default function AdvisoryMemberView() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'advisory-member', id: member.id }}
           message={
             `Delete ${memberLabel(member)}? The Advisory Committee member is removed from the website and from this list, and the photo is deleted. ` +
             'The record itself is kept for audit history.'

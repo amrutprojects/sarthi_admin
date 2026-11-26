@@ -133,6 +133,7 @@ export default function AnnouncementView() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'announcement', id: item.id }}
           message={`Delete ${announcementLabel(item)}? The announcement is removed from the website and from this list. The record itself is kept for audit history.`}
           onClose={() => setDeleting(false)}
           onConfirm={() =>

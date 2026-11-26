@@ -115,6 +115,7 @@ export default function FaqView() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'faq', id: faq.id }}
           message={`Delete "${faq.question.en}"? It is removed from the public FAQ page and soft-deleted, kept for audit history.`}
           onClose={() => setDeleting(false)}
           onConfirm={() =>

@@ -136,6 +136,7 @@ export default function EligibilityView() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'eligibility-item', id: item.id }}
           message={`Delete "${item.label.en}"? It is removed from the ${listName} on the public Eligibility page and soft-deleted, kept for audit history.`}
           onClose={() => setDeleting(false)}
           onConfirm={() =>

@@ -297,6 +297,7 @@ export default function ItemList({
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: kind === 'facts' ? 'about-fact' : 'about-card', id: deleting.id }}
           message={`Delete ${itemLabel(deleting)}? It is removed from the website and from this list. The record itself is kept for audit history.`}
           onClose={() => setDeleting(null)}
           onConfirm={() => {

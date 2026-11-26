@@ -228,10 +228,11 @@ export default function DistrictList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'district', id: deleting.id }}
           message={
             `Delete the district ${deleting.name} (${deleting.stateName})? It is soft-deleted and kept for audit history. ` +
-            'A district that still has talukas, colleges, training centres or documents cannot be deleted — deactivate it instead, ' +
-            'or move or remove those records first.'
+            'A district that other records still use (talukas, colleges, centres, students, IPP batches, officers, the contact page…) ' +
+            'cannot be deleted — deactivate it instead, or move or remove those records first.'
           }
           onClose={() => setDeleting(null)}
           onConfirm={() =>

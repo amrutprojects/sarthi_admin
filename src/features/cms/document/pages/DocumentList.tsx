@@ -331,6 +331,7 @@ export default function DocumentList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'document', id: deleting.id }}
           message={
             `Delete the document ${deleting.title}? It is soft-deleted: the record and its file are kept for audit history. ` +
             'No other record depends on a document, so nothing blocks the deletion.'

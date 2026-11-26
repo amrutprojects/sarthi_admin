@@ -132,6 +132,7 @@ export default function DistrictOfficeView() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'contact-district-office', id: office.id }}
           message={`Delete the ${office.district.name} district office? The district's page then shows no District Office Coordinator details. It is soft-deleted, kept for audit history.`}
           onClose={() => setDeleting(false)}
           onConfirm={() =>

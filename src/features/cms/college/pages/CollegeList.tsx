@@ -283,6 +283,7 @@ export default function CollegeList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'college', id: deleting.id }}
           message={
             `Delete the college ${deleting.name} (${deleting.districtName})? It is soft-deleted and kept for audit history, ` +
             'and stops being offered in any form. To keep it on record but unavailable, deactivate it instead.'

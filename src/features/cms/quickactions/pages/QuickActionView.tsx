@@ -133,6 +133,7 @@ export default function QuickActionView() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'quick-action', id: item.id }}
           message={`Delete ${quickActionName(item)}? The tile is removed from the website and from this list. The record itself is kept for audit history.`}
           onClose={() => setDeleting(false)}
           onConfirm={() =>

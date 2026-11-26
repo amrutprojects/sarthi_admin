@@ -10,12 +10,12 @@ import GroupFormModal from './GroupFormModal';
 
 const membersLabel = (n: number) => (n === 1 ? '1 Advisory Committee member' : `${n} Advisory Committee members`);
 
-/* The contract's wording; a group with nobody in it has nothing to keep. */
+/* A group with members cannot be deleted (the API refuses and the dialog's check says so): they move out first. */
 const deleteMessage = (g: ApiAdvisoryGroup) =>
   `Delete group "${g.name.en}"? ` +
   (g.memberCount === 0
     ? 'It has no Advisory Committee members.'
-    : `Its ${membersLabel(g.memberCount)} ${g.memberCount === 1 ? 'stays' : 'stay'}, shown without a group heading.`);
+    : `Its ${membersLabel(g.memberCount)} must first move to another group, or out of every group.`);
 
 /*
  * The Groups card on the Advisory Committee list: the headings the website lists Advisory Committee members under (such as the
@@ -230,6 +230,7 @@ export default function GroupsCard({
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'advisory-group', id: deleting.id }}
           message={deleteMessage(deleting)}
           onClose={() => setDeleting(null)}
           onConfirm={() => {

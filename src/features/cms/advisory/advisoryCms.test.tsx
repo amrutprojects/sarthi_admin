@@ -1141,29 +1141,34 @@ describe('Advisory groups (list page)', () => {
     expect(advisoryService.setStatus).not.toHaveBeenCalled();
   });
 
-  it('deletes a group after saying its Advisory Committee members stay, without a group heading — and Cancel deletes nothing', async () => {
-    vi.mocked(advisoryService.listGroups).mockResolvedValue([AMRUT, COEP, group(3, { name: pair('रिक्त', 'Empty') })]);
+  it('says a group with Advisory Committee members needs them moved first, deletes an empty group — and Cancel deletes nothing', async () => {
+    const EMPTY = group(3, { name: pair('रिक्त', 'Empty') });
+    vi.mocked(advisoryService.listGroups).mockResolvedValue([AMRUT, COEP, EMPTY]);
     vi.mocked(advisoryService.list).mockResolvedValue([member(1, inGroupOf(AMRUT)), member(2, inGroupOf(AMRUT))]);
-    vi.mocked(advisoryService.removeGroup).mockResolvedValue({ membersUngrouped: 2 });
+    vi.mocked(advisoryService.removeGroup).mockResolvedValue({ membersUngrouped: 0 });
     renderAt(LIST);
 
     await userEvent.click(await screen.findByRole('button', { name: 'Delete group COEP' }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('Delete group "COEP"? Its 1 Advisory Committee member stays, shown without a group heading.');
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      'Delete group "COEP"? Its 1 Advisory Committee member must first move to another group, or out of every group.',
+    );
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Delete group Empty' }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('Delete group "Empty"? It has no Advisory Committee members.');
+    await userEvent.click(screen.getByRole('button', { name: 'Delete group AMRUT' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      'Delete group "AMRUT"? Its 2 Advisory Committee members must first move to another group, or out of every group.',
+    );
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
     expect(advisoryService.removeGroup).not.toHaveBeenCalled();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Delete group AMRUT' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Delete group Empty' }));
     const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveTextContent('Delete group "AMRUT"? Its 2 Advisory Committee members stay, shown without a group heading.');
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
-    await waitFor(() => expect(advisoryService.removeGroup).toHaveBeenCalledWith(AMRUT.id));
+    expect(dialog).toHaveTextContent('Delete group "Empty"? It has no Advisory Committee members.');
+    await userEvent.click(await within(dialog).findByRole('button', { name: 'Delete' }));
+    await waitFor(() => expect(advisoryService.removeGroup).toHaveBeenCalledWith(EMPTY.id));
     await waitFor(() => expect(toasts()).toHaveTextContent('Group deleted'));
     expect(advisoryService.removeGroup).toHaveBeenCalledTimes(1);
     expect(advisoryService.remove).not.toHaveBeenCalled();
-    /* Its Advisory Committee members lose their group, so both lists are reloaded. */
+    /* Both lists are reloaded after a group is deleted. */
     expect(advisoryService.listGroups).toHaveBeenCalledTimes(2);
     expect(advisoryService.list).toHaveBeenCalledTimes(2);
   });

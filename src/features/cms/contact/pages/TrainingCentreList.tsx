@@ -203,6 +203,7 @@ export default function TrainingCentreList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'contact-training-centre', id: deleting.id }}
           message={`Delete ${deleting.name.en}? It is no longer listed on the ${deleting.district.name} page. It is soft-deleted, kept for audit history.`}
           onClose={() => setDeleting(null)}
           onConfirm={() =>

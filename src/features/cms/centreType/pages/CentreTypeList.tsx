@@ -157,6 +157,7 @@ export default function CentreTypeList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'centre-type', id: deleting.id }}
           message={
             `Delete the training centre type ${deleting.name}? It is soft-deleted and kept for audit history. ` +
             'A type that training centres still use cannot be deleted — deactivate it instead.'

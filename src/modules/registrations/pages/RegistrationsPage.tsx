@@ -244,6 +244,7 @@ export default function RegistrationsPage() {
           danger
           busy={remove.isPending}
           confirmLabel="Delete"
+          dependencies={{ kind: 'student', id: deleting.id }}
           message={`Delete ${deleting.name} (${deleting.registrationNumber ?? 'no registration number'})? The record is soft-deleted: it disappears from lists but is kept, with its documents, for history and audit.`}
           onClose={() => setDeleting(null)}
           onConfirm={() => remove.mutate(deleting.id)}

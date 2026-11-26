@@ -159,6 +159,7 @@ export default function CoordinatorList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'contact-coordinator', id: deleting.id }}
           message={`Delete "${deleting.name}"? The card is removed from the public Contact page and its districts become free for another coordinator. It is soft-deleted, kept for audit history.`}
           onClose={() => setDeleting(null)}
           onConfirm={() =>

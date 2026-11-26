@@ -125,6 +125,7 @@ export default function LiveDashboardTab() {
       <OrderedItemsCard<ApiLiveDashboardCard>
         title="KPI cards"
         noun="KPI card"
+        dependencyKind="live-dashboard-card"
         api={liveDashboardCardsService}
         addLabel="Add card"
         createPath={CARD_CREATE_PATH}
@@ -163,6 +164,7 @@ export default function LiveDashboardTab() {
       <OrderedItemsCard<ApiLiveDashboardStat>
         title="Side figures"
         noun="figure"
+        dependencyKind="live-dashboard-stat"
         api={liveDashboardStatsService}
         addLabel="Add figure"
         createPath={STAT_CREATE_PATH}

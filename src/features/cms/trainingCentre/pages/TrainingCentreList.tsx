@@ -342,6 +342,7 @@ export default function TrainingCentreList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'training-centre', id: deleting.id }}
           message={
             `Delete the training centre ${deleting.name} (${deleting.code})? It is soft-deleted and kept for audit history. ` +
             'A centre that still has location information, a capacity & infrastructure record, batches or documents cannot be ' +

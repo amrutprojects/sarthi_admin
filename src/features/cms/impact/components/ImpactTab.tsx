@@ -319,6 +319,7 @@ export default function ImpactTab() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'impact-stat', id: deleting.id }}
           message={`Delete ${statLabel(deleting)}? The card is removed from the website and from this list. The record itself is kept for audit history.`}
           onClose={() => setDeleting(null)}
           onConfirm={() => {

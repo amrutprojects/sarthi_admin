@@ -235,6 +235,7 @@ function WebsiteAdminAccounts({ role }: { role: ApiRole }) {
           danger
           busy={remove.isPending}
           confirmLabel="Delete"
+          dependencies={{ kind: 'user', id: dialog.user.id }}
           message={`Delete ${dialog.user.name} (${dialog.user.email})? The account is soft-deleted: it can no longer sign in, and it is kept for audit history.`}
           onClose={close}
           onConfirm={() =>

@@ -236,6 +236,7 @@ export default function CentreInfrastructureList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'centre-infrastructure', id: deleting.id }}
           message={
             `Delete the capacity & infrastructure details of ${deleting.centreName} (${deleting.centreCode})? It is soft-deleted and kept for audit history. ` +
             'Nothing else depends on it, and the centre can then be given a new record.'

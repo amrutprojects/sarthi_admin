@@ -173,6 +173,7 @@ export default function ProgrammeView() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'ecosystem-programme', id: p.id }}
           message={`Delete ${programmeLabel(p)}? The card is removed from the website and from this list. The record itself is kept for audit history.`}
           onClose={() => setDeleting(false)}
           onConfirm={() =>

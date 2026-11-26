@@ -281,6 +281,7 @@ export default function CalendarList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'lms-calendar', id: deleting.id }}
           message={`Delete the calendar ${deleting.name} (${fmtDate(deleting.validFrom)} to ${fmtDate(deleting.validTo)})? It is archived (soft-deleted) with its holidays and kept for audit history; it can be restored.`}
           onClose={() => setDeleting(null)}
           onConfirm={() => {

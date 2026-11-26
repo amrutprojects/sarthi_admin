@@ -261,6 +261,7 @@ export default function BatchAssignmentList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'batch-assignment', id: deleting.id }}
           message={
             `Remove ${deleting.studentName} (${deleting.studentCode}) from batch ${deleting.batchCode}? ` +
             'The assignment is soft-deleted and kept for audit history, the seat is freed, and the student can then be assigned again.'

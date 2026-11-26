@@ -343,6 +343,7 @@ export default function CourseModuleList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'lms-course-module', id: deleting.id }}
           message={`Delete ${moduleLabel(deleting.moduleNumber)}: ${deleting.title}? It is archived (soft-deleted) and kept for audit history.`}
           onClose={() => setDeleting(null)}
           onConfirm={() =>

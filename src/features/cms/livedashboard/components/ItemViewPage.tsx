@@ -25,6 +25,7 @@ interface Item {
  */
 export default function ItemViewPage<T extends Item>({
   noun,
+  dependencyKind,
   load,
   setStatus,
   remove,
@@ -34,6 +35,8 @@ export default function ItemViewPage<T extends Item>({
 }: {
   /* 'KPI card' or 'figure', as the title, buttons and messages name it. */
   noun: string;
+  /* Its kind for the delete check (GET /dependencies/:kind/:id): 'live-dashboard-card' or 'live-dashboard-stat'. */
+  dependencyKind: string;
   load: (id: string) => Promise<T>;
   setStatus: (id: string, isActive: boolean) => Promise<unknown>;
   remove: (id: string) => Promise<void>;
@@ -127,6 +130,7 @@ export default function ItemViewPage<T extends Item>({
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: dependencyKind, id: item.id }}
           message={`Delete ${itemName(item)}? It is removed from the website and from this list. The record itself is kept for audit history.`}
           onClose={() => setDeleting(false)}
           onConfirm={() =>

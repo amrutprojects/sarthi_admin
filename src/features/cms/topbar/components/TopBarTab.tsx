@@ -330,6 +330,7 @@ export default function TopBarTab() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'top-bar-link', id: deleting.id }}
           message={`Delete ${topBarLinkName(deleting)}? The button is removed from the website and from this list. The record itself is kept for audit history.`}
           onClose={() => setDeleting(null)}
           onConfirm={() => {

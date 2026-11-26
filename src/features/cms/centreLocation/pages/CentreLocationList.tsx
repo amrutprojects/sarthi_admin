@@ -258,6 +258,7 @@ export default function CentreLocationList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'centre-location', id: deleting.id }}
           message={
             `Delete the location information of ${deleting.centreName} (${deleting.centreCode})? It is soft-deleted and kept for audit history. ` +
             'Nothing else depends on it, and the centre can then be given a new location record.'

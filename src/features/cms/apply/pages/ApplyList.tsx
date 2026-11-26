@@ -266,6 +266,7 @@ function ItemsTab({ kind, context, onChanged }: { kind: ApplyKind; context?: Rea
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'apply-item', id: deleting.id }}
           message={`Delete "${deleting.label.en}"? It is removed from the ${copy.where} on the public Apply page and soft-deleted, kept for audit history.`}
           onClose={() => setDeleting(null)}
           onConfirm={() =>

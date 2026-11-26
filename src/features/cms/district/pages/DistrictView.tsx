@@ -85,8 +85,9 @@ export default function DistrictView() {
               {/* Only the taluka count comes with the record; colleges, training centres and documents block the delete too. */}
               <div className="hint mt10">
                 {district.talukaCount ? '' : 'No talukas reference this district yet. '}
-                A district that still has talukas, colleges, training centres or documents cannot be deleted. Deactivate it
-                instead if it should no longer be offered.
+                A district that other records still use (talukas, colleges, centres, students, IPP batches, officers, the
+                contact page…) cannot be deleted; the Delete dialog lists what uses it. Deactivate it instead if it should no
+                longer be offered.
               </div>
               <div className="f gp8 wrap mt10">
                 <Can action="viewTalukas">

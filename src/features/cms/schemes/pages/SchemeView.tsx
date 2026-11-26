@@ -176,6 +176,7 @@ export default function SchemeView() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'scheme', id: scheme.id }}
           message={`Delete ${schemeLabel(scheme)}? The scheme is removed from the website and from this list. The record itself is kept for audit history.`}
           onClose={() => setDeleting(false)}
           onConfirm={() =>

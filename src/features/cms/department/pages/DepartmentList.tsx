@@ -149,6 +149,7 @@ export default function DepartmentList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'department', id: deleting.id }}
           message={`Delete the department ${deleting.name}? It is soft-deleted and kept for audit history.`}
           onClose={() => setDeleting(null)}
           onConfirm={() =>

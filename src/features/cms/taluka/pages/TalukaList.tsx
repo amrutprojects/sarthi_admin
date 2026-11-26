@@ -274,9 +274,10 @@ export default function TalukaList() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'taluka', id: deleting.id }}
           message={
             `Delete the taluka ${deleting.name} (${deleting.districtName}, ${deleting.stateName})? It is soft-deleted and kept for audit history. ` +
-            'A taluka used by colleges or training centres cannot be deleted — deactivate it instead.'
+            'A taluka that other records still use (colleges, centres, students, imports) cannot be deleted — deactivate it instead.'
           }
           onClose={() => setDeleting(null)}
           onConfirm={() =>

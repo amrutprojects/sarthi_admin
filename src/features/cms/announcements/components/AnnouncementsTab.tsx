@@ -327,6 +327,7 @@ export default function AnnouncementsTab() {
           danger
           busy={busy}
           confirmLabel="Delete"
+          dependencies={{ kind: 'announcement', id: deleting.id }}
           message={`Delete ${announcementLabel(deleting)}? The announcement is removed from the website and from this list. The record itself is kept for audit history.`}
           onClose={() => setDeleting(null)}
           onConfirm={() => {

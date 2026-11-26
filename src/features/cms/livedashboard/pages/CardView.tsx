@@ -8,6 +8,7 @@ export default function CardView() {
   return (
     <ItemViewPage
       noun="KPI card"
+      dependencyKind="live-dashboard-card"
       load={liveDashboardCardsService.get}
       setStatus={liveDashboardCardsService.setStatus}
       remove={liveDashboardCardsService.remove}

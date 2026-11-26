@@ -555,6 +555,7 @@ export default function CurriculumTabs({ variant, formOptions, onChanged }: Curr
           danger
           busy={busy}
           confirmLabel={pending.kind === 'retire' ? 'Retire' : 'Delete'}
+          dependencies={pending.kind === 'delete' ? { kind: `lms-track-variant-${pending.path}`, id: pending.id } : undefined}
           message={pending.message}
           onClose={() => setPending(null)}
           onConfirm={() => void confirmPending()}
