@@ -72,11 +72,13 @@ function useIppMutation<TVars, TResult>(
   });
 }
 
-export const useApproveMany = () => useIppMutation((ids: string[]) => ippApprovalsApi.approve(ids));
-export const useApproveBatch = () => useIppMutation((batchId: string) => ippApprovalsApi.approveBatch(batchId));
+export const useApproveMany = () =>
+  useIppMutation(({ ids, reason }: { ids: string[]; reason: string | null }) => ippApprovalsApi.approve(ids, reason));
+export const useApproveBatch = () =>
+  useIppMutation(({ batchId, reason }: { batchId: string; reason: string | null }) => ippApprovalsApi.approveBatch(batchId, reason));
 export const useApproveOne = () =>
   useIppMutation(
-    (id: string) => ippApprovalsApi.approveOne(id),
+    ({ id, reason }: { id: string; reason: string | null }) => ippApprovalsApi.approveOne(id, reason),
     (detail, qc) => qc.setQueryData<ApplicationDetail>(ippKeys.application(detail.id), detail),
   );
 export const useReject = () =>

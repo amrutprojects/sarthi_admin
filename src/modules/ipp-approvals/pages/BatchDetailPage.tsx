@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ConfirmModal, fmtDateTime } from '../../../components/feedback/apiFeedback';
+import { fmtDateTime } from '../../../components/feedback/apiFeedback';
 import { Card, Callout, KvList, PageHead, fmt, titleCase } from '../../../components/ui';
 import Icon from '../../../components/ui/Icon';
 import ApplicationsPanel from '../components/ApplicationsPanel';
+import ApproveModal from '../components/ApproveModal';
 import { DecideAs, ReadOnlyNote } from '../components/DecideAs';
 import { LoadProblem, Loading, Notice, StageCounts } from '../components/common';
 import { useApprovalSummary, useBatch } from '../hooks/useIppApprovals';
@@ -73,7 +74,15 @@ export default function BatchDetailPage() {
         actions={
           <>
             {batch?.toDecide ? (
-              <button type="button" className="btn primary" disabled={decisions.busy} onClick={() => setConfirm(true)}>
+              <button
+                type="button"
+                className="btn primary"
+                disabled={decisions.busy}
+                onClick={() => {
+                  decisions.resetApprove();
+                  setConfirm(true);
+                }}
+              >
                 Approve all that wait for me ({fmt(batch.toDecide)})
               </button>
             ) : null}
@@ -110,13 +119,16 @@ export default function BatchDetailPage() {
         </>
       )}
       {confirm && batch ? (
-        <ConfirmModal
+        <ApproveModal
           title="Approve all that wait for you"
           message={`Approve all ${plural(batch.toDecide, 'application')} of batch ${batch.code} that wait for you?${to ? ` After your approval: ${STAGE_LABEL[to]}.` : ' Each goes on to its next level.'}`}
           confirmLabel={decisions.busy ? 'Approving…' : `Approve ${fmt(batch.toDecide)}`}
+          askReason={false}
+          several={batch.toDecide > 1}
           busy={decisions.busy}
+          error={decisions.approveError}
           onClose={close}
-          onConfirm={() => decisions.approveMany({ batchId: batch.id }, { onDone: close, onFailed: close })}
+          onApprove={(reason) => decisions.approveMany({ batchId: batch.id }, reason, { onDone: close, onFailed: close })}
         />
       ) : null}
     </div>

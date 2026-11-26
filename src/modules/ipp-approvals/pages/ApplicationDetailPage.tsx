@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ConfirmModal } from '../../../components/feedback/apiFeedback';
 import { Callout, PageHead } from '../../../components/ui';
 import Icon from '../../../components/ui/Icon';
 import { EditsCard, FormCards, HistoryCard, SummaryCard } from '../components/ApplicationRecord';
+import ApproveModal from '../components/ApproveModal';
 import DocumentsCard from '../components/DocumentsCard';
 import RejectModal from '../components/RejectModal';
 import { LoadProblem, Loading, Notice, StageBadge } from '../components/common';
@@ -75,7 +75,15 @@ export default function ApplicationDetailPage() {
         actions={
           <>
             {approveTo ? (
-              <button type="button" className="btn primary" disabled={decisions.busy} onClick={() => setDialog('approve')}>
+              <button
+                type="button"
+                className="btn primary"
+                disabled={decisions.busy}
+                onClick={() => {
+                  decisions.resetApprove();
+                  setDialog('approve');
+                }}
+              >
                 Approve
               </button>
             ) : null}
@@ -158,13 +166,15 @@ export default function ApplicationDetailPage() {
       )}
 
       {a && approveTo && dialog === 'approve' ? (
-        <ConfirmModal
-          title="Approve application"
+        <ApproveModal
+          title={`Approve — ${a.name}`}
           message={`Approve the application of ${a.name} (${a.registrationId})? After your approval: ${approveTo.label}.`}
-          confirmLabel={decisions.busy ? 'Approving…' : 'Approve'}
+          confirmLabel={decisions.busy ? 'Approving…' : 'Approve application'}
+          askReason={a.reasonRequired}
           busy={decisions.busy}
+          error={decisions.approveError}
           onClose={close}
-          onConfirm={() => decisions.approveOne(a.id, close)}
+          onApprove={(reason) => decisions.approveOne(a.id, reason, close)}
         />
       ) : null}
       {a && rejectTo && dialog === 'reject' ? (

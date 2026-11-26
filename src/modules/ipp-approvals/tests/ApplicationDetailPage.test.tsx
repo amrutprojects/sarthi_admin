@@ -49,7 +49,7 @@ describe('IPP application — record', () => {
   it('shows the application and the form by step, with English labels', async () => {
     renderAt();
     expect(await screen.findByRole('heading', { name: /Asha Patil/, level: 1 })).toHaveTextContent('With Divisional Officer');
-    expect(document.title).toBe('Asha Patil (IPP-000001) — AMRUT × SUMAGO Admin');
+    expect(document.title).toBe('Asha Patil (IPP-000001) — SARTHI Admin');
     const about = card('Application');
     for (const text of ['IPP-000001', '202611200001', '9876543210', 'asha@example.invalid', 'XXXX-XXXX-1234', 'OBC', 'Data Analytics']) {
       expect(within(about).getByText(text)).toBeInTheDocument();
@@ -86,7 +86,7 @@ describe('IPP application — record', () => {
       detail({
         history: [
           event({ event: 'REJECTED', from: 'COEP', to: 'DIVISION', reason: 'Photo is not clear', by: 'Meera Shah', role: 'COEP' }),
-          event({ event: 'APPROVED', from: 'DIVISION', to: 'COEP', by: 'Anil Rao', role: 'Divisional Officer' }),
+          event({ event: 'APPROVED', from: 'DIVISION', to: 'COEP', reason: 'Documents match', by: 'Anil Rao', role: 'Divisional Officer' }),
           event({ event: 'CORRECTED', from: 'DIVISION', to: 'DIVISION', by: 'Auditor One', role: 'IPP Auditor' }),
           event(),
         ],
@@ -109,7 +109,12 @@ describe('IPP application — record', () => {
       'Received from IPP · Divisional Officer',
     ];
     titles.forEach((t) => expect(history.getByText(t)).toBeInTheDocument());
-    expect(history.getByText('“Photo is not clear”')).toBeInTheDocument();
+    expect(history.getByText('“Photo is not clear”').parentElement).toHaveTextContent('Rejection reason: “Photo is not clear”');
+    expect(history.getByText('“Photo is not clear”').parentElement).toHaveClass('tw-text-danger');
+    expect(history.getByText('“Documents match”').parentElement).toHaveTextContent('Approval reason: “Documents match”');
+    expect(history.getByText('“Documents match”').parentElement).not.toHaveClass('tw-text-danger');
+    /* The IPP Auditor's reason, with the Auditor's approval. */
+    expect(within(card('Application')).getByText('Every document verified')).toBeInTheDocument();
     expect(history.getByText(/Meera Shah \(COEP\)/)).toBeInTheDocument();
     expect(history.getByText(/Anil Rao \(Divisional Officer\)/)).toBeInTheDocument();
     /* What the officer has to look at is on top. */
@@ -197,11 +202,33 @@ describe('IPP application — decision', () => {
     expect(dialog).toHaveTextContent('Approve the application of Asha Patil (IPP-000001)? After your approval: With COEP.');
     api.approveOne.mockResolvedValue(movedOn());
     api.application.mockResolvedValue(movedOn());
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Approve' }));
-    expect(api.approveOne).toHaveBeenCalledWith('app-1');
+    /* A first approval: no reason is asked. */
+    expect(within(dialog).queryByLabelText(/Approval reason/)).not.toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Approve application' }));
+    await waitFor(() => expect(api.approveOne).toHaveBeenCalledWith('app-1', null));
     await waitFor(() => expect(toasts()).toHaveTextContent('Asha Patil (IPP-000001) approved. Now: With COEP.'));
     expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
     expect(screen.getByText('This application is not waiting for your decision. Now: With COEP.')).toBeInTheDocument();
+  });
+
+  it('a second approval needs a reason of 3–500 characters, and shows a refused one in the dialog', async () => {
+    api.application.mockResolvedValue(detail({ reasonRequired: true }));
+    renderAt();
+    await userEvent.click(await screen.findByRole('button', { name: 'Approve' }));
+    const dialog = screen.getByRole('dialog');
+    const box = within(dialog).getByLabelText(/Approval reason/);
+    await userEvent.type(box, ' ab ');
+    expect(await within(dialog).findByText('Enter an approval reason of at least 3 characters')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Approve application' })).toBeDisabled();
+    await userEvent.clear(box);
+    await userEvent.type(box, 'Fine');
+    api.approveOne.mockRejectedValue(
+      new ApiError('Validation failed', 422, 'VALIDATION_ERROR', [{ field: 'body.reason', message: 'Must be at least 3 characters' }]),
+    );
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Approve application' }));
+    expect(await within(dialog).findByText('Validation failed: Must be at least 3 characters')).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(api.approveOne).toHaveBeenCalledWith('app-1', 'Fine');
   });
 
   it('rejects with a reason and says where it returns', async () => {
@@ -227,8 +254,8 @@ describe('IPP application — decision', () => {
     await userEvent.click(await screen.findByRole('button', { name: action }));
     api.application.mockResolvedValue(movedOn());
     const dialog = screen.getByRole('dialog');
-    if (action === 'Reject') await userEvent.type(within(dialog).getByLabelText(/Reason/), 'Not clear');
-    await userEvent.click(within(dialog).getByRole('button', { name: action === 'Reject' ? 'Reject application' : 'Approve' }));
+    if (action === 'Reject') await userEvent.type(within(dialog).getByLabelText(/^Reason/), 'Not clear');
+    await userEvent.click(within(dialog).getByRole('button', { name: action === 'Reject' ? 'Reject application' : 'Approve application' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'This application is not yours to decide now. The current state was loaded again.',
     );

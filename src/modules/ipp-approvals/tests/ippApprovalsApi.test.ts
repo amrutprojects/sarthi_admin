@@ -38,9 +38,31 @@ describe('ippApprovalsApi — paths and bodies of the specification', () => {
     ['districts', () => ippApprovalsApi.districts(), ['/ipp-approvals/districts']],
     ['one application', () => ippApprovalsApi.application('a'), ['/ipp-approvals/applications/a']],
     ['one batch', () => ippApprovalsApi.batch('b'), ['/ipp-approvals/batches/b']],
-    ['bulk approve', () => ippApprovalsApi.approve(['a', 'b']), ['/ipp-approvals/approve', { method: 'POST', body: { ids: ['a', 'b'] } }]],
-    ['batch approve', () => ippApprovalsApi.approveBatch('b'), ['/ipp-approvals/batches/b/approve', { method: 'POST' }]],
-    ['approve one', () => ippApprovalsApi.approveOne('a'), ['/ipp-approvals/applications/a/approve', { method: 'POST' }]],
+    [
+      'bulk approve',
+      () => ippApprovalsApi.approve(['a', 'b'], 'why'),
+      ['/ipp-approvals/approve', { method: 'POST', body: { ids: ['a', 'b'], reason: 'why' } }],
+    ],
+    [
+      'batch approve',
+      () => ippApprovalsApi.approveBatch('b', 'why'),
+      ['/ipp-approvals/batches/b/approve', { method: 'POST', body: { reason: 'why' } }],
+    ],
+    [
+      'approve one',
+      () => ippApprovalsApi.approveOne('a', 'why'),
+      ['/ipp-approvals/applications/a/approve', { method: 'POST', body: { reason: 'why' } }],
+    ],
+    [
+      'approve one, a first approval',
+      () => ippApprovalsApi.approveOne('a', null),
+      ['/ipp-approvals/applications/a/approve', { method: 'POST', body: {} }],
+    ],
+    [
+      'bulk approve, first approvals',
+      () => ippApprovalsApi.approve(['a'], null),
+      ['/ipp-approvals/approve', { method: 'POST', body: { ids: ['a'] } }],
+    ],
     [
       'reject one',
       () => ippApprovalsApi.reject('a', 'why'),

@@ -57,6 +57,7 @@ export const row = (over: Partial<ApplicationRow> = {}): ApplicationRow => ({
   documents: { uploaded: 4, verified: 3 },
   lastEvent: event(),
   canDecide: true,
+  reasonRequired: false,
   ...over,
 });
 
@@ -65,7 +66,7 @@ export const detail = (over: Partial<ApplicationDetail> = {}): ApplicationDetail
   aadhaarMasked: 'XXXX-XXXX-1234',
   formDistrict: 'Pune',
   submittedAt: '2026-11-18T05:00:00.000Z',
-  auditor: { approvedAt: '2026-11-19T05:00:00.000Z', by: 'Auditor One' },
+  auditor: { approvedAt: '2026-11-19T05:00:00.000Z', by: 'Auditor One', reason: 'Every document verified' },
   fields: [
     { key: 'father', step: 1, labelEn: 'Father name', labelMr: 'वडिलांचे नाव', type: 'TEXT', text: 'Suresh' },
     { key: 'mother', step: 1, labelEn: '', labelMr: 'आईचे नाव', type: 'TEXT', text: '' },

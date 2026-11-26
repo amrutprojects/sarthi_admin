@@ -92,7 +92,7 @@ describe('IPP applications — list', () => {
     renderAt();
     expect(await screen.findByText(/You decide as Divisional Officer for: Pune, Satara\./)).toBeInTheDocument();
     expect(screen.getByText(/12 applications to decide, 2 of them sent back to you after a rejection/)).toBeInTheDocument();
-    expect(document.title).toBe('IPP applications — AMRUT × SUMAGO Admin');
+    expect(document.title).toBe('IPP applications — SARTHI Admin');
 
     const asha = (await screen.findByRole('link', { name: 'Asha Patil' })).closest('tr') as HTMLElement;
     for (const text of [
@@ -266,8 +266,9 @@ describe('IPP applications — selection and bulk approval', () => {
     expect(dialog).toHaveTextContent('Approve 2 selected applications? After your approval: With COEP.');
     expect(api.approve).not.toHaveBeenCalled();
     const reads = api.applications.mock.calls.length;
+    expect(within(dialog).queryByLabelText(/Approval reason/)).not.toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Approve 2' }));
-    expect(api.approve).toHaveBeenCalledWith(['app-1', 'app-2']);
+    await waitFor(() => expect(api.approve).toHaveBeenCalledWith(['app-1', 'app-2'], null));
     const text = '1 application approved; 1 application skipped: not waiting for you any more.';
     await waitFor(() => expect(toasts()).toHaveTextContent(text));
     /* The notice stays on the page; the selection is gone and the list, the counts and the batches are read again. */
@@ -313,7 +314,7 @@ describe('IPP applications — selection and bulk approval', () => {
       'Approve all 7 applications of batch IPP-B-0001 that wait for you, on every page and whatever the other filters show?',
     );
     await userEvent.click(within(dialog).getByRole('button', { name: 'Approve 7' }));
-    expect(api.approveBatch).toHaveBeenCalledWith(BATCH_ID);
+    await waitFor(() => expect(api.approveBatch).toHaveBeenCalledWith(BATCH_ID, null));
     expect(api.approve).not.toHaveBeenCalled();
     await waitFor(() => expect(toasts()).toHaveTextContent('7 applications approved.'));
     expect(box(/Select Asha Patil/)).not.toBeChecked();
@@ -345,8 +346,8 @@ describe('IPP applications — one application', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Approve Asha Patil' }));
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveTextContent('Approve the application of Asha Patil (IPP-000001)? After your approval: With COEP.');
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Approve' }));
-    expect(api.approveOne).toHaveBeenCalledWith('app-1');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Approve application' }));
+    await waitFor(() => expect(api.approveOne).toHaveBeenCalledWith('app-1', null));
     await waitFor(() => expect(toasts()).toHaveTextContent('Asha Patil (IPP-000001) approved. Now: With COEP.'));
   });
 
@@ -393,12 +394,35 @@ describe('IPP applications — one application', () => {
     expect(await within(dialog).findByText('Validation failed: Reason is too short')).toBeInTheDocument();
   });
 
+  it('asks the reason of a second approval, and keeps it for the selected ones', async () => {
+    api.applications.mockResolvedValue(
+      pageOf([row({ reasonRequired: true }), row({ id: 'app-2', name: 'Ravi Pawar', registrationId: 'IPP-000002' })]),
+    );
+    api.approveOne.mockResolvedValue(movedOn());
+    renderAt();
+    await userEvent.click(await screen.findByRole('button', { name: 'Approve Asha Patil' }));
+    let dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('button', { name: 'Approve application' })).toBeDisabled();
+    await userEvent.type(within(dialog).getByLabelText(/Approval reason/), 'Marks corrected');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Approve application' }));
+    await waitFor(() => expect(api.approveOne).toHaveBeenCalledWith('app-1', 'Marks corrected'));
+
+    api.approve.mockResolvedValue({ approved: 2, skipped: 0, applications: [] });
+    await userEvent.click(await screen.findByRole('checkbox', { name: /Select Asha Patil/ }));
+    await userEvent.click(screen.getByRole('checkbox', { name: /Select Ravi Pawar/ }));
+    await userEvent.click(within(bar()).getByRole('button', { name: 'Approve selected' }));
+    dialog = screen.getByRole('dialog');
+    await userEvent.type(within(dialog).getByLabelText(/Approval reason/), 'Checked again');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Approve 2' }));
+    await waitFor(() => expect(api.approve).toHaveBeenCalledWith(['app-1', 'app-2'], 'Checked again'));
+  });
+
   it('says so and reloads when the application has moved on (409)', async () => {
     api.approveOne.mockRejectedValue(new ApiError('This application is not yours to decide now.', 409, 'NOT_YOURS_TO_DECIDE'));
     renderAt();
     await userEvent.click(await screen.findByRole('button', { name: 'Approve Asha Patil' }));
     const reads = api.applications.mock.calls.length;
-    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Approve' }));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Approve application' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'This application is not yours to decide now. The current state was loaded again.',
     );

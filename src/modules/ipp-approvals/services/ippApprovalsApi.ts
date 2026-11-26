@@ -28,6 +28,9 @@ async function list<T>(path: string, query: NonNullable<RequestOptions['query']>
   return { items: data, meta: meta ?? fallback };
 }
 
+/* The body of an approval: the reason only when there is one. */
+const withReason = (reason: string | null) => (reason ? { reason } : {});
+
 export const ippApprovalsApi = {
   summary: async () => (await request<ApprovalSummary>(`${BASE}/summary`)).data,
   districts: async () => (await request<District[]>(`${BASE}/districts`)).data,
@@ -38,10 +41,17 @@ export const ippApprovalsApi = {
   documentBlob: (id: string, code: string, signal?: AbortSignal) => requestBlob(documentPath(id, code), { signal }),
   downloadDocument: (id: string, code: string, fileName: string) => downloadFile(documentPath(id, code), fileName),
 
-  approve: async (ids: string[]) => (await request<ApproveResult>(`${BASE}/approve`, { method: 'POST', body: { ids } })).data,
-  approveBatch: async (batchId: string) => (await request<ApproveResult>(`${BASE}/batches/${batchId}/approve`, { method: 'POST' })).data,
+  /*
+   * A second approval needs its reason (3–500 characters; 422 without it), one for all the applications approved together;
+   * null = none (a first approval).
+   */
+  approve: async (ids: string[], reason: string | null) =>
+    (await request<ApproveResult>(`${BASE}/approve`, { method: 'POST', body: { ids, ...withReason(reason) } })).data,
+  approveBatch: async (batchId: string, reason: string | null) =>
+    (await request<ApproveResult>(`${BASE}/batches/${batchId}/approve`, { method: 'POST', body: withReason(reason) })).data,
   /* Both answer 409 NOT_YOURS_TO_DECIDE when the application has moved on in the meantime. */
-  approveOne: async (id: string) => (await request<ApplicationDetail>(`${BASE}/applications/${id}/approve`, { method: 'POST' })).data,
+  approveOne: async (id: string, reason: string | null) =>
+    (await request<ApplicationDetail>(`${BASE}/applications/${id}/approve`, { method: 'POST', body: withReason(reason) })).data,
   reject: async (id: string, reason: string) =>
     (await request<ApplicationDetail>(`${BASE}/applications/${id}/reject`, { method: 'POST', body: { reason } })).data,
 

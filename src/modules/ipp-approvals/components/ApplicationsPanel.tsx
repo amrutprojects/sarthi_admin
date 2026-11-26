@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ConfirmModal } from '../../../components/feedback/apiFeedback';
 import { fmt } from '../../../components/ui';
 import SearchableSelect from '../../../components/ui/SearchableSelect';
 import type { ServerSort } from '../../../components/tables/ServerTable';
@@ -19,6 +18,7 @@ import {
   type BatchRow,
 } from '../types/ippApprovals.types';
 import ApplicationsTable from './ApplicationsTable';
+import ApproveModal from './ApproveModal';
 import BulkBar from './BulkBar';
 import RejectModal from './RejectModal';
 import { LoadProblem, Loading, Notice } from './common';
@@ -227,6 +227,8 @@ export default function ApplicationsPanel({ summary, batch, defaultView }: Props
               otherFilters={otherFilters}
               goesTo={goesTo}
               busy={decisions.busy}
+              error={decisions.approveError}
+              onOpen={decisions.resetApprove}
               onApprove={decisions.approveMany}
             />
           ) : null}
@@ -243,7 +245,10 @@ export default function ApplicationsPanel({ summary, batch, defaultView }: Props
               selection={selectable ? selection : null}
               hideBatch={!!batch}
               back={location.pathname + location.search}
-              onApprove={setApproving}
+              onApprove={(row) => {
+                decisions.resetApprove();
+                setApproving(row);
+              }}
               onReject={(row) => {
                 decisions.resetReject();
                 setRejecting(row);
@@ -254,14 +259,16 @@ export default function ApplicationsPanel({ summary, batch, defaultView }: Props
       )}
 
       {approving ? (
-        <ConfirmModal
-          title="Approve application"
+        <ApproveModal
+          title={`Approve — ${approving.name}`}
           message={`Approve the application of ${approving.name} (${approving.registrationId})? After your approval: ${label(stageAfterApproval(approving.stage, summary.headOfficeEnabled)) ?? 'the next level'}.`}
-          confirmLabel={decisions.busy ? 'Approving…' : 'Approve'}
+          confirmLabel={decisions.busy ? 'Approving…' : 'Approve application'}
+          askReason={approving.reasonRequired}
           busy={decisions.busy}
+          error={decisions.approveError}
           onClose={() => setApproving(null)}
-          onConfirm={() =>
-            decisions.approveOne(approving.id, () => {
+          onApprove={(reason) =>
+            decisions.approveOne(approving.id, reason, () => {
               selection.set([approving.id], false);
               setApproving(null);
             })

@@ -65,6 +65,8 @@ export interface ApplicationRow {
   lastEvent: ApprovalEvent | null;
   /* By the signed-in user, now. */
   canDecide: boolean;
+  /* Mine to decide now and decided at my level before: approving it again needs a reason (a first approval does not). */
+  reasonRequired: boolean;
 }
 
 export interface ApplicationField {
@@ -109,7 +111,8 @@ export interface ApplicationDetail extends ApplicationRow {
   aadhaarMasked: string | null;
   formDistrict: string | null;
   submittedAt: string;
-  auditor: { approvedAt: string | null; by: string | null };
+  /* The IPP Auditor's approval, with its reason (null when approved before reasons were asked). */
+  auditor: { approvedAt: string | null; by: string | null; reason: string | null };
   fields: ApplicationField[];
   documentList: ApplicationDocument[];
   edits: ApplicationEdit[];

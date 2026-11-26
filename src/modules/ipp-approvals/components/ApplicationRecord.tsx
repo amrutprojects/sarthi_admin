@@ -29,6 +29,7 @@ export function SummaryCard({ application: a }: { application: ApplicationDetail
             'Approved by the IPP Auditor',
             a.auditor.approvedAt ? `${fmtDateTime(a.auditor.approvedAt)}${a.auditor.by ? `, ${a.auditor.by}` : ''}` : '—',
           ],
+          ["Auditor's approval reason", a.auditor.reason ?? '—'],
         ]}
       />
     </Card>
@@ -106,6 +107,17 @@ export function EditsCard({ edits }: { edits: ApplicationEdit[] }) {
 
 const STATE: Record<string, TimelineItem['state']> = { APPROVED: 'done', REJECTED: 'fail' };
 
+/* Why: a rejection's reason (in red), or an approval's (the officer's, or the IPP Auditor's when the form came from IPP). */
+function Reason({ event: e }: { event: ApprovalEvent }) {
+  if (!e.reason) return null;
+  const rejected = e.event === 'REJECTED';
+  return (
+    <span className={'tw-block' + (rejected ? ' tw-text-danger' : '')}>
+      {rejected ? 'Rejection reason' : 'Approval reason'}: <em className="tw-not-italic">“{e.reason}”</em>
+    </span>
+  );
+}
+
 /* Newest first, as the API sends it. */
 export function HistoryCard({ history }: { history: ApprovalEvent[] }) {
   return (
@@ -117,7 +129,7 @@ export function HistoryCard({ history }: { history: ApprovalEvent[] }) {
             state: STATE[e.event] ?? '',
             sub: (
               <>
-                {e.reason ? <em className="tw-block tw-not-italic tw-text-danger">“{e.reason}”</em> : null}
+                <Reason event={e} />
                 {whoLabel(e)} · {fmtDateTime(e.at)}
               </>
             ),

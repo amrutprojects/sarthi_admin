@@ -71,7 +71,7 @@ describe('IPP batches — list', () => {
     }
     expect(within(first).queryByText(/With Head Office/)).not.toBeInTheDocument();
     expect(within(first).getByRole('link', { name: 'Open batch IPP-B-0001' })).toHaveAttribute('href', ONE);
-    expect(document.title).toBe('IPP batches — AMRUT × SUMAGO Admin');
+    expect(document.title).toBe('IPP batches — SARTHI Admin');
     /* The officer's own districts, without asking for all of them. */
     expect(
       within(screen.getByLabelText('District'))
@@ -137,7 +137,7 @@ describe('IPP batches — one batch', () => {
   it('shows its data and its applications only', async () => {
     renderAt(ONE);
     expect(await screen.findByRole('heading', { name: 'Pune 1', level: 1 })).toBeInTheDocument();
-    expect(document.title).toBe('Batch IPP-B-0001 — AMRUT × SUMAGO Admin');
+    expect(document.title).toBe('Batch IPP-B-0001 — SARTHI Admin');
     const value = (label: string) => screen.getByText(label, { selector: '.kv > span' }).nextSibling?.textContent;
     expect(value('Centre')).toBe('Shivajinagar Centre (SHV)');
     expect(value('Students')).toBe('30 (batch size 30)');
@@ -166,6 +166,28 @@ describe('IPP batches — one batch', () => {
     await waitFor(() => expect(api.applications.mock.lastCall?.[0]).toEqual(expect.objectContaining({ batchId: BATCH_ID, stage: 'COEP' })));
   });
 
+  it('asks the reason when the API says some of the batch were rejected before (422), and sends it then', async () => {
+    api.approveBatch
+      .mockRejectedValueOnce(
+        new ApiError('Validation failed', 422, 'VALIDATION_ERROR', [
+          {
+            field: 'body.reason',
+            message: 'Approval reason is required: 2 of these applications were rejected before, so this is their second approval.',
+          },
+        ]),
+      )
+      .mockResolvedValueOnce({ approved: 7, skipped: 0, applications: [] });
+    renderAt(ONE);
+    await userEvent.click(await screen.findByRole('button', { name: 'Approve all that wait for me (7)' }));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).queryByLabelText(/Approval reason/)).not.toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Approve 7' }));
+    expect(await within(dialog).findByText(/2 of these applications were rejected before/)).toBeInTheDocument();
+    await userEvent.type(within(dialog).getByLabelText(/Approval reason/), 'Whole batch checked');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Approve 7' }));
+    await waitFor(() => expect(api.approveBatch).toHaveBeenLastCalledWith(BATCH_ID, 'Whole batch checked'));
+  });
+
   it('approves all that wait for me after a confirmation naming the count', async () => {
     api.approveBatch.mockResolvedValue({ approved: 6, skipped: 1, applications: [] });
     renderAt(ONE);
@@ -175,7 +197,7 @@ describe('IPP batches — one batch', () => {
     expect(api.approveBatch).not.toHaveBeenCalled();
     api.batch.mockResolvedValue(batch({ toDecide: 0 }));
     await userEvent.click(within(dialog).getByRole('button', { name: 'Approve 7' }));
-    expect(api.approveBatch).toHaveBeenCalledWith(BATCH_ID);
+    await waitFor(() => expect(api.approveBatch).toHaveBeenCalledWith(BATCH_ID, null));
     await waitFor(() =>
       expect(toasts()).toHaveTextContent('6 applications approved; 1 application skipped: not waiting for you any more.'),
     );
