@@ -18,12 +18,12 @@ import { sectionPayload, sectionToForm, serverErrors, validateSectionForm, type 
 const FORM_ID = 'cms-impact-settings-form';
 
 /*
- * Section settings — the public heading (अमृतचा प्रभाव / AMRUT's Impact by default) above the cards,
+ * Section settings — the public heading (सारथीचा प्रभाव / SARTHI's Impact by default) above the cards,
  * and whether the section is shown at all. Kept apart from the cards, and independent of this
  * module's own name in the admin panel.
  */
 export default function ImpactSettingsEdit() {
-  usePageTitle('Section Settings — AMRUT Impact Management');
+  usePageTitle('Section Settings — SARTHI Impact Management');
   const can = useCan();
   const detail = useApiData(() => impactService.getSection(), []);
 
@@ -32,13 +32,13 @@ export default function ImpactSettingsEdit() {
       <PageHead
         crumbs={[...IMPACT_CRUMBS, { l: 'Section settings' }]}
         title="Section Settings"
-        sub="The heading above the AMRUT's Impact cards on the public website, and the section's visibility."
+        sub="The heading above the SARTHI's Impact cards on the public website, and the section's visibility."
         back={<BackButton to={IMPACT_TAB_PATH} />}
       />
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
       {detail.data && !can('updateImpactStat') ? (
         <Callout tone="warn" title="You can view this section but not change it">
-          Editing the section settings needs the &ldquo;Update AMRUT Impact Management&rdquo; permission.
+          Editing the section settings needs the &ldquo;Update SARTHI Impact Management&rdquo; permission.
         </Callout>
       ) : null}
       {detail.data && can('updateImpactStat') ? <SettingsForm key={detail.data.updatedAt} section={detail.data} /> : null}

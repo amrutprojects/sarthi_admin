@@ -69,7 +69,7 @@ describe('website portal layout', () => {
     const { container } = sidebar();
     expect([...container.querySelectorAll('.sb-group')].map((g) => g.textContent)).toEqual(['CMS']);
     expect([...container.querySelectorAll('.sb-item .sb-label')].map((l) => l.textContent)).toEqual(CMS_LABELS);
-    expect(screen.getByText('Amrut Kalash Admin')).toBeInTheDocument();
+    expect(screen.getByText('Sarthi Admin')).toBeInTheDocument();
     expect(screen.queryByText('Certificate Verification')).not.toBeInTheDocument();
     expect(screen.queryByText('AMRUT Public Site')).not.toBeInTheDocument();
   });
@@ -124,7 +124,7 @@ describe('website portal layout', () => {
   it('the full panel is unchanged for other roles', () => {
     signInAs('admin', ['dashboard.view', 'cms-faqs.view']);
     sidebar();
-    expect(screen.getByText('Amrut Kalash Admin')).toBeInTheDocument();
+    expect(screen.getByText('Sarthi Admin')).toBeInTheDocument();
     expect(screen.getByAltText('AMRUT')).toBeInTheDocument();
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('FAQ Management')).toBeInTheDocument();

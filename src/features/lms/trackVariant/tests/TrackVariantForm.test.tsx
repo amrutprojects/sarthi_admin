@@ -45,7 +45,7 @@ const renderEdit = () =>
 
 /* Course → its Module 3 (chosen at once, the only one) → the tracks enabled for the course's entity. */
 async function chooseCourse() {
-  await screen.findByRole('option', { name: 'AK-DIP · Amrut Kalash Diploma' });
+  await screen.findByRole('option', { name: 'AK-DIP · Sarthi Diploma' });
   await userEvent.selectOptions(screen.getByLabelText(/^Course/), 'c1');
   await waitFor(() => expect(screen.getByLabelText(/Module 3/)).toHaveValue('m3'));
   await screen.findByRole('option', { name: 'T07 · Cyber Security' });
@@ -69,7 +69,7 @@ describe('Track variant form (Add)', () => {
 
   it('shows the field messages on submit and sends nothing while invalid', async () => {
     renderCreate();
-    await screen.findByRole('option', { name: 'AK-DIP · Amrut Kalash Diploma' });
+    await screen.findByRole('option', { name: 'AK-DIP · Sarthi Diploma' });
     await userEvent.click(screen.getByRole('button', { name: 'Create track variant' }));
     expect(await screen.findByText('Select a course.')).toBeInTheDocument();
     expect(screen.getByText('Select a Module 3 course module.')).toBeInTheDocument();

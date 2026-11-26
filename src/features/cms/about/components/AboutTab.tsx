@@ -46,7 +46,7 @@ function withSwitch(
 }
 
 /*
- * About AMRUT — the About AMRUT Management tab of Home Page Management: the "About AMRUT" (अमृत विषयी माहिती)
+ * About SARTHI — the About SARTHI Management tab of Home Page Management: the "About SARTHI" (सारथी विषयी माहिती)
  * section of the home page, whose profile and cards the About page shows too. Its four areas: section settings,
  * the description, and the information rows and the Mission / Vision / Values (and any further) cards as two
  * listings like FAQ Management's.
@@ -108,14 +108,14 @@ export default function AboutTab({ switched }: { switched?: SectionVisibility })
           </Can>
         }
       >
-        The About AMRUT section of the public home page (and the profile on the About page): its heading, description, information rows and
+        The About SARTHI section of the public home page (and the profile on the About page): its heading, description, information rows and
         cards.
       </SectionTabHead>
       <LoadState loading={data.loading && !data.data} error={data.error} onRetry={() => void data.reload()} />
       {readOnly && data.data ? (
         <div className="mb14">
           <Callout tone="info" title="View only">
-            Changing this section needs the About AMRUT Management update permission.
+            Changing this section needs the About SARTHI Management update permission.
           </Callout>
         </div>
       ) : null}

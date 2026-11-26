@@ -24,7 +24,7 @@ export default function StudentImportPage() {
   const [tab, setTab] = useState<Tab>('batches');
   const [ref, setRef] = useState<ImportReference | null>(null);
   useEffect(() => {
-    document.title = 'Student import — AMRUT × SUMAGO Admin';
+    document.title = 'Student import — SARTHI Admin';
     importApi
       .reference()
       .then(setRef)
@@ -145,7 +145,7 @@ function UploadCard({ reference, onUploaded }: { reference: ImportReference | nu
               value={sourceRef}
               maxLength={120}
               onChange={(e) => setSourceRef(e.target.value)}
-              placeholder="e.g. MahaAmrut transmittal 2026-10-19"
+              placeholder="e.g. Student transmittal 2026-10-19"
             />
           </div>
           <button type="button" className="btn primary" disabled={!file || busy} onClick={() => void submit()}>

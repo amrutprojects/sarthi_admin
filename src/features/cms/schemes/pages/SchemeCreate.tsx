@@ -13,7 +13,7 @@ import { emptySchemeForm, schemePayload } from '../validation/schemes.validation
 
 /* Add New Scheme — a dedicated page, reached from the button on the listing. */
 export default function SchemeCreate() {
-  usePageTitle('Add Scheme — AMRUT Schemes Management');
+  usePageTitle('Add Scheme — SARTHI Schemes Management');
   const navigate = useNavigate();
   const can = useCan();
   const section = useApiData(() => schemesService.getSection(), []);
@@ -29,7 +29,7 @@ export default function SchemeCreate() {
       <PageHead
         crumbs={[...SCHEMES_CRUMBS, { l: 'Add New Scheme' }]}
         title="Add New Scheme"
-        sub="Adds a card to the AMRUT Schemes section of the public home page. Text is entered in Marathi and English — the site defaults to Marathi."
+        sub="Adds a card to the SARTHI Schemes section of the public home page. Text is entered in Marathi and English — the site defaults to Marathi."
         back={<BackButton to={SCHEMES_TAB_PATH} />}
       />
       {can('createScheme') ? (
@@ -52,7 +52,7 @@ export default function SchemeCreate() {
         />
       ) : (
         <Callout tone="warn" title="You can view this section but not add schemes">
-          Adding a scheme needs the &ldquo;Add AMRUT Schemes Management&rdquo; permission.
+          Adding a scheme needs the &ldquo;Add SARTHI Schemes Management&rdquo; permission.
         </Callout>
       )}
     </div>

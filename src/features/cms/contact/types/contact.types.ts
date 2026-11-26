@@ -9,7 +9,7 @@ export interface Bilingual {
 export type OrgType = 'AMRUT' | 'IMPLEMENTATION_PARTNER';
 
 /*
- * One card on the Contact page. Which fields apply depends on orgType — the AMRUT card carries an
+ * One card on the Contact page. Which fields apply depends on orgType — the SARTHI card carries an
  * address, phone and website; the partner carries a role and helpdesk hours. Fields that do not
  * apply come back as null rather than missing, so the form can bind to a stable shape.
  */
@@ -78,9 +78,9 @@ export interface ApiContactPage {
      through trainingCentreService.setSection. Optional: an older backend does not send it (the card is shown). */
   showTrainingCentres?: boolean;
   /*
-   * The website's floating WhatsApp button: digits with the country code ('' = the AMRUT card's phone), and the
+   * The website's floating WhatsApp button: digits with the country code ('' = the SARTHI card's phone), and the
    * message typed into the chat for the visitor (both halves '' = the website's default message). The Helpline
-   * popup has no fields of its own: it reads the AMRUT and implementation partner cards.
+   * popup has no fields of its own: it reads the SARTHI and implementation partner cards.
    */
   whatsappNumber: string;
   whatsappMessage: Bilingual;
@@ -150,7 +150,7 @@ export interface CreateDistrictOfficeInput {
 export type UpdateDistrictOfficeInput = Partial<Omit<CreateDistrictOfficeInput, 'isActive'>>;
 
 export const ORG_LABEL: Record<OrgType, string> = {
-  AMRUT: 'AMRUT',
+  AMRUT: 'SARTHI',
   IMPLEMENTATION_PARTNER: 'Implementation partner',
 };
 
@@ -186,7 +186,7 @@ export type OfficeField = (typeof OFFICE_FIELDS)[number];
  */
 export const CONTACT_TABS = [
   { k: 'page', l: 'Page information' },
-  { k: 'amrut', l: 'AMRUT contact details' },
+  { k: 'amrut', l: 'SARTHI contact details' },
   { k: 'partner', l: 'Implementation partner' },
   { k: 'helpline', l: 'Helpline & WhatsApp' },
   { k: 'coordinators', l: 'Division / cluster coordinators' },

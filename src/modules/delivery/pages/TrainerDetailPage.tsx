@@ -6,7 +6,7 @@ import { NotAvailablePage } from '../../../components/ui';
 export default function TrainerDetailPage() {
   const { id = '' } = useParams();
   useEffect(() => {
-    document.title = 'Trainer — AMRUT × SUMAGO Admin';
+    document.title = 'Trainer — SARTHI Admin';
   }, []);
   return (
     <NotAvailablePage

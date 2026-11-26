@@ -25,6 +25,8 @@ export interface MultiSelectOption {
   group?: string | null;
   /* True for an inactive record: selectable only to untick it. */
   inactive?: boolean;
+  /* Unavailable for new selections; an existing selection may still be removed. */
+  disabled?: boolean;
   /* Short note shown after the label, e.g. "with Asha Patil". Informational only. */
   note?: string | null;
 }
@@ -83,14 +85,14 @@ export default function MultiSelectList({
   const visible = needle ? all.filter((o) => [o.label, o.sub ?? '', o.group ?? ''].some((t) => t.toLowerCase().includes(needle))) : all;
 
   const selected = new Set(value);
-  const selectable = (o: MultiSelectOption) => !o.inactive || selected.has(o.id);
+  const selectable = (o: MultiSelectOption) => (!o.inactive && !o.disabled) || selected.has(o.id);
 
   const toggle = (o: MultiSelectOption) => {
     if (disabled || !selectable(o)) return;
     onChange(selected.has(o.id) ? value.filter((v) => v !== o.id) : [...value, o.id]);
   };
   const selectAll = () => {
-    const add = visible.filter((o) => !o.inactive && !selected.has(o.id)).map((o) => o.id);
+    const add = visible.filter((o) => !o.inactive && !o.disabled && !selected.has(o.id)).map((o) => o.id);
     onChange([...value, ...add]);
   };
   const selectNone = () => {
@@ -105,7 +107,7 @@ export default function MultiSelectList({
 
   const labelId = `${id}-label`;
   const errorId = `${id}-error`;
-  const activeCount = all.filter((o) => !o.inactive).length;
+  const activeCount = all.filter((o) => !o.inactive && !o.disabled).length;
 
   let body: ReactNode;
   if (error) {
@@ -192,7 +194,7 @@ export default function MultiSelectList({
         <button
           type="button"
           className="btn xs"
-          disabled={disabled || loading || !!error || !visible.some((o) => !o.inactive)}
+          disabled={disabled || loading || !!error || !visible.some((o) => !o.inactive && !o.disabled)}
           onClick={selectAll}
         >
           Select all

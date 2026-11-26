@@ -251,7 +251,7 @@ describe('the "Show on website" bar of Home Page Management', () => {
       expect(within(panel()).queryByText(/Visitors see this section/)).not.toBeInTheDocument();
       expect(panel().querySelector('.vis-bar')).toHaveClass('off');
       /* Both the banner's tab and the card's are marked. */
-      expect(screen.getByRole('tab', { name: 'AMRUT Kalash – apply online (hidden from the website)' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Sarthi – apply online (hidden from the website)' })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: 'Programme at a glance (hidden from the website)' })).toBeInTheDocument();
       expect(screen.getAllByText('Hidden', { selector: '.tab-pill' })).toHaveLength(2);
     });
@@ -266,7 +266,7 @@ describe('the "Show on website" bar of Home Page Management', () => {
       expect(await findToggle()).toBeChecked();
       expect(within(panel()).getByText('Not shown: the banner is hidden')).toBeInTheDocument();
 
-      await userEvent.click(screen.getByRole('tab', { name: /^AMRUT Kalash – apply online/ }));
+      await userEvent.click(screen.getByRole('tab', { name: /^Sarthi – apply online/ }));
       await userEvent.click(await findToggle());
       await waitFor(() => expect(screen.getByRole('tab', { name: 'Programme at a glance' })).not.toHaveTextContent('Hidden'));
       await userEvent.click(screen.getByRole('tab', { name: 'Programme at a glance' }));

@@ -1,4 +1,4 @@
-/* AMRUT's Impact API (backend /api/v1/cms/impact). */
+/* SARTHI's Impact API (backend /api/v1/cms/impact). */
 import { request } from '../../../../services/api-client';
 import type { ApiImpactSection, ApiImpactStat, ImpactStatInput, UpdateImpactSectionInput } from '../types/impact.types';
 

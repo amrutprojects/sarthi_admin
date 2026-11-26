@@ -8,7 +8,7 @@ import { LinkButton, NotAvailablePage } from '../../../components/ui';
  */
 export default function CentreDetailPage() {
   useEffect(() => {
-    document.title = 'Centre — AMRUT × SUMAGO Admin';
+    document.title = 'Centre — SARTHI Admin';
   }, []);
 
   return (

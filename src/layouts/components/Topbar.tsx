@@ -57,8 +57,8 @@ export default function Topbar({ onBurger }: { onBurger: () => void }) {
         U.callout(
           'info',
           'Help centre · मदत केंद्र',
-          'Welcome to the AMRUT Kalash Programme Management Portal. Screens show only figures recorded in the system; where a module is not connected yet, the screen says so. · ' +
-            'अमृत कलश कार्यक्रम व्यवस्थापन पोर्टलमध्ये आपले स्वागत. स्क्रीनवर फक्त प्रणालीत नोंदवलेले आकडे दिसतात; एखादे मॉड्यूल अद्याप जोडलेले नसल्यास स्क्रीनवर तसे सांगितले जाते.',
+          'Welcome to the Sarthi Programme Management Portal. Screens show only figures recorded in the system; where a module is not connected yet, the screen says so. · ' +
+            'सारथी कार्यक्रम व्यवस्थापन पोर्टलमध्ये आपले स्वागत. स्क्रीनवर फक्त प्रणालीत नोंदवलेले आकडे दिसतात; एखादे मॉड्यूल अद्याप जोडलेले नसल्यास स्क्रीनवर तसे सांगितले जाते.',
         ) +
         '<h4 class="mt18 mb10">Try these guided journeys</h4><div class="grid g2">' +
         JOURNEYS.map(

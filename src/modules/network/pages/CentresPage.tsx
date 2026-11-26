@@ -5,7 +5,7 @@ import { NO_DATA_TEXT, NotAvailablePage } from '../../../components/ui';
 /* With "Show live LMS data" off there is no centre source in this panel: say so instead of showing sample centres. */
 function LocalCentresPage() {
   useEffect(() => {
-    document.title = 'Training centres — AMRUT × SUMAGO Admin';
+    document.title = 'Training centres — SARTHI Admin';
   }, []);
   return (
     <NotAvailablePage

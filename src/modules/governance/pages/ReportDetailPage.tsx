@@ -12,7 +12,7 @@ export default function ReportDetailPage() {
   const { id = '' } = useParams();
   const canOpen = useCanOpen();
   useEffect(() => {
-    document.title = 'Report — AMRUT × SUMAGO Admin';
+    document.title = 'Report — SARTHI Admin';
   }, []);
 
   const def = REPORT_CATALOGUE.find((x) => x[0] === id);

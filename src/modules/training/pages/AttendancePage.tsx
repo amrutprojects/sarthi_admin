@@ -8,7 +8,7 @@ import { NotAvailablePage, NO_DATA_TEXT } from '../../../components/ui';
  */
 function LocalAttendancePage() {
   useEffect(() => {
-    document.title = 'Attendance — AMRUT × SUMAGO Admin';
+    document.title = 'Attendance — SARTHI Admin';
   }, []);
   return (
     <NotAvailablePage

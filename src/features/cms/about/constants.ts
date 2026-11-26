@@ -1,7 +1,7 @@
 import { homePageCrumbs, homePageTabPath } from '../homePage/homePageNav';
 import type { AboutKind } from './types/about.types';
 
-/* Breadcrumb trail shared by the About AMRUT Management pages: the section is a tab of Home Page Management. */
+/* Breadcrumb trail shared by the About SARTHI Management pages: the section is a tab of Home Page Management. */
 export const ABOUT_CRUMBS = homePageCrumbs('about');
 
 /* The section's tab of Home Page Management: where Back, Cancel and Save return to. */

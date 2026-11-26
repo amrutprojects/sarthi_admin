@@ -252,16 +252,16 @@ export const HOME_PAGE_TABS = [
   { k: 'brand-bar', l: 'Brand Bar', menu: 'cms-brandbar' },
   { k: 'nav-menu', l: 'Navigation Menu', menu: 'cms-navmenu' },
   { k: 'announcements', l: 'Announcements', menu: 'cms-announcements' },
-  { k: 'hero', l: 'AMRUT Kalash – apply online', menu: 'cms-hero' },
+  { k: 'hero', l: 'Sarthi – apply online', menu: 'cms-hero' },
   { k: 'glance', l: 'Programme at a glance', menu: 'cms-hero' },
   { k: 'quick-actions', l: 'Quick Actions', menu: 'cms-quickactions' },
   { k: 'live-dashboard', l: 'Live Dashboard', menu: 'cms-livedashboard' },
   { k: 'diploma', l: 'Skill Development Diploma', menu: 'cms-highlight' },
   { k: 'board', l: 'Leadership & Governing Board', menu: 'cms-board' },
-  { k: 'impact', l: "AMRUT's Impact", menu: 'cms-impact' },
-  { k: 'ecosystem', l: 'The AMRUT Ecosystem', menu: 'cms-ecosystem' },
-  { k: 'schemes', l: 'AMRUT Schemes', menu: 'cms-schemes' },
-  { k: 'about', l: 'About AMRUT', menu: 'cms-about' },
+  { k: 'impact', l: "SARTHI's Impact", menu: 'cms-impact' },
+  { k: 'ecosystem', l: 'The SARTHI Ecosystem', menu: 'cms-ecosystem' },
+  { k: 'schemes', l: 'SARTHI Schemes', menu: 'cms-schemes' },
+  { k: 'about', l: 'About SARTHI', menu: 'cms-about' },
 ] as const;
 export type HomePageTab = (typeof HOME_PAGE_TABS)[number]['k'];
 
@@ -310,12 +310,12 @@ export const NAV: NavEntry[] = [
   /* Student forms of IPP, decided by the Divisional Officer, COEP and Head Office or the Super Admin (sarthi-api /ipp-approvals). */
   { g: 'IPP Approvals' },
   { k: 'ipp-approvals', l: 'Applications', i: 'check', r: '/ipp-approvals' },
-  { k: 'ipp-officers', l: 'Officer Districts', i: 'pin', r: '/ipp-officers' },
+  { k: 'ipp-officers', l: 'Divisional Officer Mapping', i: 'pin', r: '/ipp-officers' },
   { g: 'Delivery Network' },
   { k: 'districts', l: 'Districts', i: 'map', r: '/districts' },
   { k: 'map', l: 'District Map', i: 'pin', r: '/map' },
   { k: 'centres', l: 'Training Centres', i: 'building', r: '/centres' },
-  /* Entity-owned tracks and districts read live from the LMS (amrut-kalash-api /lms-reads, lms-api ERD-1). */
+  /* Entity-owned tracks and districts read live from the LMS (sarthi-api /lms-reads, lms-api ERD-1). */
   { k: 'lms-live-tracks', l: 'LMS Tracks', i: 'layers', r: '/lms-live/tracks' },
   { k: 'lms-live-districts', l: 'LMS Districts', i: 'map', r: '/lms-live/districts' },
   { k: 'onboarding', l: 'Centre Onboarding', i: 'clipboard', r: '/centre-onboarding' },
@@ -327,7 +327,7 @@ export const NAV: NavEntry[] = [
   { k: 'offline', l: 'Offline Training', i: 'building', r: '/offline' },
   { k: 'online', l: 'Online Training', i: 'globe', r: '/online' },
   { k: 'attendance', l: 'Attendance', i: 'calendar', r: '/attendance' },
-  /* M3: attendance read live from the LMS by division, district and centre (amrut-kalash-api /attendance-reports). */
+  /* M3: attendance read live from the LMS by division, district and centre (sarthi-api /attendance-reports). */
   { k: 'attendance-reports', l: 'Attendance reports', i: 'chart', r: '/attendance-reports' },
   { k: 'progress', l: 'Student Progress', i: 'chart', r: '/progress' },
   { g: 'Outcomes' },
@@ -365,10 +365,10 @@ export const NAV: NavEntry[] = [
   { k: 'cms-livedashboard', l: 'Live Dashboard', i: 'dashboard', r: homePageTabPath('live-dashboard') },
   { k: 'cms-highlight', l: 'Home Programme Section', i: 'doc', r: homePageTabPath('diploma') },
   { k: 'cms-board', l: 'Board Members Management', i: 'users', r: homePageTabPath('board') },
-  { k: 'cms-impact', l: 'AMRUT Impact Management', i: 'chart', r: homePageTabPath('impact') },
-  { k: 'cms-ecosystem', l: 'The AMRUT Ecosystem', i: 'layers', r: homePageTabPath('ecosystem') },
-  { k: 'cms-schemes', l: 'AMRUT Schemes Management', i: 'clipboard', r: homePageTabPath('schemes') },
-  { k: 'cms-about', l: 'About AMRUT Management', i: 'building', r: homePageTabPath('about') },
+  { k: 'cms-impact', l: 'SARTHI Impact Management', i: 'chart', r: homePageTabPath('impact') },
+  { k: 'cms-ecosystem', l: 'The SARTHI Ecosystem', i: 'layers', r: homePageTabPath('ecosystem') },
+  { k: 'cms-schemes', l: 'SARTHI Schemes Management', i: 'clipboard', r: homePageTabPath('schemes') },
+  { k: 'cms-about', l: 'About SARTHI Management', i: 'building', r: homePageTabPath('about') },
   /* The website's Advisory Committee page: a sidebar entry and list page of its own, not a Home Page Management tab. */
   { k: 'cms-advisory', l: 'Advisory Committee Management', i: 'users', r: '/cms/advisory-committee' },
   { k: 'cms-programme', l: 'Programme Page Management', i: 'award', r: '/cms/programme' },
@@ -420,8 +420,8 @@ export const NAV: NavEntry[] = [
   { k: 'audit', l: 'Audit Log', i: 'doc', r: '/audit' },
   { k: 'settings', l: 'System Settings', i: 'settings', r: '/settings' },
   { g: 'Public Site' },
-  { k: 'pubhome', l: 'AMRUT Public Site', i: 'globe', r: '/home' },
-  { k: 'pubprog', l: 'AMRUT Kalash 2.0', i: 'award', r: '/programme' },
+  { k: 'pubhome', l: 'SARTHI Public Site', i: 'globe', r: '/home' },
+  { k: 'pubprog', l: 'Sarthi 2.0', i: 'award', r: '/programme' },
 ];
 
 /* The sidebar: every menu that is an entry of its own, i.e. NAV without the menus shown as tabs of another entry's page. */
@@ -541,7 +541,7 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/top-bar/settings', 'cmsTopBarSettings', 'cms-topbar'],
   ['/cms/top-bar/:id/edit', 'cmsTopBarEdit', 'cms-topbar'],
   ['/cms/top-bar/:id/view', 'cmsTopBarView', 'cms-topbar'],
-  /* Brand Bar (the white bar under the top bar: the AMRUT Kalash name and the implementation partner): one record, one Edit page. */
+  /* Brand Bar (the white bar under the top bar: the Sarthi name and the implementation partner): one record, one Edit page. */
   ['/cms/brand-bar/edit', 'cmsBrandBarEdit', 'cms-brandbar'],
   /* Announcements (the ticker at the top of the site): static paths (create, settings) before the :id patterns. */
   ['/cms/announcements/create', 'cmsAnnouncementsCreate', 'cms-announcements'],
@@ -586,7 +586,7 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/cms/impact/settings', 'cmsImpactSettings', 'cms-impact'],
   ['/cms/impact/:id/edit', 'cmsImpactEdit', 'cms-impact'],
   ['/cms/impact/:id/view', 'cmsImpactView', 'cms-impact'],
-  /* About AMRUT: static `create` paths before the :id patterns. */
+  /* About SARTHI: static `create` paths before the :id patterns. */
   ['/cms/about-amrut/facts/create', 'cmsAboutFact', 'cms-about'],
   ['/cms/about-amrut/facts/:id/edit', 'cmsAboutFact', 'cms-about'],
   ['/cms/about-amrut/facts/:id/view', 'cmsAboutFactView', 'cms-about'],

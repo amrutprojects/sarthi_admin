@@ -247,18 +247,6 @@ svg.ico {
   flex: 0 0 auto;
   letter-spacing: 0.3px;
 }
-/* The English AMRUT logo (648×216, light-on-dark copy). Collapsed, it is cropped to just the emblem on its left. */
-.sb-logo-img {
-  display: block;
-  height: 34px;
-  width: auto;
-  flex: 0 0 auto;
-}
-.collapsed .sb-logo-img {
-  width: 22px;
-  object-fit: cover;
-  object-position: left center;
-}
 .sb-brand-txt {
   min-width: 0;
   padding-left: 10px;
@@ -2497,9 +2485,6 @@ select.inp {
   .collapsed .sb-brand {
     justify-content: flex-start;
     padding: 0 14px;
-  }
-  .collapsed .sb-logo-img {
-    width: auto;
   }
   .g4 {
     grid-template-columns: repeat(2, minmax(0, 1fr));

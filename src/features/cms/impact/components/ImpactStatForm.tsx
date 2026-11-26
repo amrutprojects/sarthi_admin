@@ -88,7 +88,7 @@ export default function ImpactStatForm({
         <div className="card mb14">
           <div className="card-h">
             <h3>Card preview</h3>
-            <span className="muted fs12">As it will appear in the AMRUT&rsquo;s Impact section</span>
+            <span className="muted fs12">As it will appear in the SARTHI&rsquo;s Impact section</span>
           </div>
           <div className="card-b">
             <ImpactStatPreview value={values.value} label={values.label} />

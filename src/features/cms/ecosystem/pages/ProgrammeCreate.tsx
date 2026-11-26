@@ -13,7 +13,7 @@ import { emptyProgrammeForm, programmePayload } from '../validation/ecosystem.va
 
 /* Add New Programme — a dedicated page, reached from the button on the listing. */
 export default function ProgrammeCreate() {
-  usePageTitle('Add Programme — The AMRUT Ecosystem');
+  usePageTitle('Add Programme — The SARTHI Ecosystem');
   const navigate = useNavigate();
   const can = useCan();
   const section = useApiData(() => ecosystemService.getSection(), []);
@@ -29,7 +29,7 @@ export default function ProgrammeCreate() {
       <PageHead
         crumbs={[...ECOSYSTEM_CRUMBS, { l: 'Add New Programme' }]}
         title="Add New Programme"
-        sub="Adds a card to the अमृत प्रणाली section of the public website. Text is entered in Marathi and English — the site defaults to Marathi."
+        sub="Adds a card to the सारथी प्रणाली section of the public website. Text is entered in Marathi and English — the site defaults to Marathi."
         back={<BackButton to={ECOSYSTEM_TAB_PATH} />}
       />
       {can('createEcosystemProgramme') ? (
@@ -52,7 +52,7 @@ export default function ProgrammeCreate() {
         />
       ) : (
         <Callout tone="warn" title="You can view this section but not add programmes">
-          Adding a programme needs the &ldquo;Add The AMRUT Ecosystem&rdquo; permission.
+          Adding a programme needs the &ldquo;Add The SARTHI Ecosystem&rdquo; permission.
         </Callout>
       )}
     </div>

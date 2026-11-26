@@ -4,7 +4,7 @@ import { LinkButton, NotAvailablePage } from '../../../components/ui';
 /* No live source for today's sessions, attendance or open items yet: an honest empty screen, nothing invented. */
 export default function TodayPage() {
   useEffect(() => {
-    document.title = "Today's Operations — AMRUT × SUMAGO Admin";
+    document.title = "Today's Operations — SARTHI Admin";
   }, []);
 
   return (

@@ -17,7 +17,7 @@ const Page = ({ itemKey, path }: { itemKey: string; path: string | null }) => {
 
 /*
  * Navigation Menu — the Navigation Menu tab of Home Page Management: the saffron menu bar under the brand bar on
- * every page of the public website (Home, About AMRUT, … Contact, and the Login / Register button), one row per item
+ * every page of the public website (Home, About SARTHI, … Contact, and the Login / Register button), one row per item
  * in menu order. Each item has a switch of its own: hidden takes it out of the menu bar and the mobile menu, while
  * its page still opens from other links. Hiding asks first, showing does not; the list is reloaded after each change.
  * Without cms-navmenu.update the rows show a Shown / Hidden badge instead.

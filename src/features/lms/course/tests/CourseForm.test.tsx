@@ -50,7 +50,7 @@ const renderEdit = () =>
   );
 
 async function chooseEntity() {
-  await screen.findByRole('option', { name: 'Amrut Kalash (AMK)' });
+  await screen.findByRole('option', { name: 'Sarthi (AMK)' });
   await userEvent.selectOptions(screen.getByLabelText(/Entity/), ENTITY_ID);
 }
 
@@ -65,7 +65,7 @@ describe('Course form (Add)', () => {
 
   it('shows the field messages on submit and sends nothing while invalid', async () => {
     renderCreate();
-    await screen.findByRole('option', { name: 'Amrut Kalash (AMK)' });
+    await screen.findByRole('option', { name: 'Sarthi (AMK)' });
     /* System-set fields are shown read-only. */
     expect(screen.getByLabelText('Latest Published Release')).toHaveAttribute('readonly');
     expect(screen.getByLabelText('Latest Published Release')).toHaveValue('None yet');
@@ -109,7 +109,7 @@ describe('Course form (Add)', () => {
     /* The code box keeps only A–Z, 0–9 and hyphen, upper-cased. */
     await userEvent.type(screen.getByLabelText(/Course Code/), 'ak-prog_1');
     expect(screen.getByLabelText(/Course Code/)).toHaveValue('AK-PROG1');
-    await userEvent.type(screen.getByLabelText(/Course Title/), '  Amrut   Kalash Programme ');
+    await userEvent.type(screen.getByLabelText(/Course Title/), '  Sarthi   Programme ');
     setText(screen.getByLabelText(/Description/), '  <p>Four <strong>modules</strong>.</p>  ');
     await save();
 
@@ -117,7 +117,7 @@ describe('Course form (Add)', () => {
       expect(courseService.create).toHaveBeenCalledWith({
         entityId: ENTITY_ID,
         code: 'AK-PROG1',
-        title: 'Amrut Kalash Programme',
+        title: 'Sarthi Programme',
         description: '<p>Four <strong>modules</strong>.</p>',
         languages: ['en', 'mr'],
         isActive: true,
@@ -173,7 +173,7 @@ describe('Course form (Add)', () => {
     /* ?entityId= pre-selects the entity. */
     expect(await screen.findByLabelText(/Marathi \(mr\)/)).toBeChecked();
     await userEvent.type(screen.getByLabelText(/Course Code/), 'AK-PROG');
-    await userEvent.type(screen.getByLabelText(/Course Title/), 'Amrut Kalash Programme');
+    await userEvent.type(screen.getByLabelText(/Course Title/), 'Sarthi Programme');
     await save();
     expect(await screen.findByText('This course code is already used.')).toBeInTheDocument();
     expect(screen.getByLabelText(/Course Code/)).toHaveAttribute('aria-invalid', 'true');
@@ -196,7 +196,7 @@ describe('Course form (Add)', () => {
     expect(await screen.findByText(/Entities unavailable/)).toBeInTheDocument();
     vi.mocked(lmsOptions.entities).mockResolvedValue(entityOptions);
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(await screen.findByRole('option', { name: 'Amrut Kalash (AMK)' })).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: 'Sarthi (AMK)' })).toBeInTheDocument();
   });
 });
 
@@ -214,7 +214,7 @@ describe('Course form (Edit)', () => {
     vi.mocked(courseService.get).mockReset().mockResolvedValue(course());
     vi.mocked(courseService.update).mockResolvedValue(course());
     renderEdit();
-    expect(await screen.findByDisplayValue('Amrut Kalash Programme')).toBeInTheDocument();
+    expect(await screen.findByDisplayValue('Sarthi Programme')).toBeInTheDocument();
     expect(screen.getByLabelText(/Entity/)).toBeDisabled();
     expect(screen.getByLabelText(/Course Code/)).toBeEnabled();
     expect(await screen.findByLabelText(/English \(en\)/)).toBeChecked();
@@ -227,7 +227,7 @@ describe('Course form (Edit)', () => {
     await waitFor(() =>
       expect(courseService.update).toHaveBeenCalledWith('co1', {
         code: 'AK-NEW',
-        title: 'Amrut Kalash Programme',
+        title: 'Sarthi Programme',
         description: '<p>Four-module <strong>skilling</strong> programme.</p>',
         languages: ['en', 'mr'],
       }),
@@ -266,7 +266,7 @@ describe('Course form (Edit)', () => {
   it('gates the status switch on lms-courses.update and asks before changing it', async () => {
     vi.mocked(courseService.get).mockReset().mockResolvedValue(course());
     const { unmount } = renderEdit();
-    await screen.findByDisplayValue('Amrut Kalash Programme');
+    await screen.findByDisplayValue('Sarthi Programme');
     expect(screen.queryByRole('button', { name: 'Deactivate' })).not.toBeInTheDocument();
     unmount();
 
@@ -274,7 +274,7 @@ describe('Course form (Edit)', () => {
     vi.mocked(courseService.setStatus).mockResolvedValue(course({ isActive: false }));
     renderEdit();
     await userEvent.click(await screen.findByRole('button', { name: 'Deactivate' }));
-    expect(screen.getByText('Are you sure you want to deactivate the course Amrut Kalash Programme (AK-PROG)?')).toBeInTheDocument();
+    expect(screen.getByText('Are you sure you want to deactivate the course Sarthi Programme (AK-PROG)?')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Yes, deactivate' }));
     await waitFor(() => expect(courseService.setStatus).toHaveBeenCalledWith('co1', false));
   });
@@ -285,6 +285,6 @@ describe('Course form (Edit)', () => {
     expect(await screen.findByText(/Course not found/)).toBeInTheDocument();
     vi.mocked(courseService.get).mockResolvedValue(course());
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(await screen.findByDisplayValue('Amrut Kalash Programme')).toBeInTheDocument();
+    expect(await screen.findByDisplayValue('Sarthi Programme')).toBeInTheDocument();
   });
 });

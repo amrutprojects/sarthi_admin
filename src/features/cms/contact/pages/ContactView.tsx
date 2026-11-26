@@ -19,7 +19,7 @@ import TrainingCentresSectionBar from './TrainingCentresSectionBar';
 /* The wording of the two card tabs, and the page each one's Edit button opens. */
 const CARD_COPY: Record<OrgType, { title: string; sub: string; note: string; edit: string }> = {
   AMRUT: {
-    title: 'AMRUT contact details',
+    title: 'SARTHI contact details',
     sub: 'the first card on the public Contact page',
     note: 'Marathi is shown first, English underneath. Email, phone and website are the same in both languages, so they show once.',
     edit: '/cms/contact/amrut/edit',
@@ -71,7 +71,7 @@ function PageInfoTab({ page }: { page: ApiContactPage }) {
   );
 }
 
-/* AMRUT Contact Details / Implementation Partner tab: one card, with only the rows that apply to its type. */
+/* SARTHI Contact Details / Implementation Partner tab: one card, with only the rows that apply to its type. */
 function CardTab({ type, org }: { type: OrgType; org?: ApiContactOrganization }) {
   const copy = CARD_COPY[type];
   return (
@@ -106,8 +106,8 @@ function CardTab({ type, org }: { type: OrgType; org?: ApiContactOrganization })
 
 /*
  * Helpline & WhatsApp tab: the two floating buttons on every page of the website. The Helpline popup has nothing
- * of its own — it shows the AMRUT and partner cards, so it can never disagree with them — and only the WhatsApp
- * button's number and message are kept here, each falling back to the AMRUT phone / the website's own message.
+ * of its own — it shows the SARTHI and partner cards, so it can never disagree with them — and only the WhatsApp
+ * button's number and message are kept here, each falling back to the SARTHI phone / the website's own message.
  */
 /* A Programme Helpline value the website falls back for: why, in muted text. */
 const notSet = (what: string) => <span className="muted">Not set: the website&rsquo;s built-in {what} is used.</span>;
@@ -144,7 +144,7 @@ function HelplineTab({
               page.whatsappNumber ? (
                 page.whatsappNumber
               ) : (
-                <span className="muted">Not set: the AMRUT phone number{amrut?.phone ? ` (${amrut.phone})` : ''} is used.</span>
+                <span className="muted">Not set: the SARTHI phone number{amrut?.phone ? ` (${amrut.phone})` : ''} is used.</span>
               ),
             ],
             [
@@ -157,7 +157,7 @@ function HelplineTab({
 
       {/*
        * The "Programme Helpline" popup (the Helpline button on every page). It has no fields of its own: it shows the
-       * AMRUT card's phone and email and the Implementation Partner card's helpdesk hours and name, so it can never
+       * SARTHI card's phone and email and the Implementation Partner card's helpdesk hours and name, so it can never
        * disagree with the Contact page. Listed here, with where each is edited, so it can be found from this tab.
        */}
       <div className="card mt14">
@@ -173,7 +173,7 @@ function HelplineTab({
         {(amrut && !amrut.isActive) || (partner && !partner.isActive) ? (
           <div className="card-b">
             <Callout tone="warn">
-              {amrut && !amrut.isActive ? 'The AMRUT contact details card is hidden, so the popup uses the website’s built-in phone and email. ' : ''}
+              {amrut && !amrut.isActive ? 'The SARTHI contact details card is hidden, so the popup uses the website’s built-in phone and email. ' : ''}
               {partner && !partner.isActive
                 ? 'The Implementation partner card is hidden, so the popup uses the website’s built-in hours and partner name.'
                 : ''}
@@ -190,7 +190,7 @@ function HelplineTab({
         />
         <div className="card-b">
           <div className="hint">
-            The Helpline popup shows the AMRUT phone and email (AMRUT contact details tab) and the Implementation Partner&rsquo;s helpdesk
+            The Helpline popup shows the SARTHI phone and email (SARTHI contact details tab) and the Implementation Partner&rsquo;s helpdesk
             hours and name (Implementation partner tab). While the page is unpublished, both buttons use the website&rsquo;s built-in details.
           </div>
         </div>
@@ -273,7 +273,7 @@ export default function ContactView() {
             <PageInfoTab page={page} />
           </SectionTabPanel>
           <SectionTabPanel tab="amrut" active={tab} idPrefix="contact">
-            <CardTab type="AMRUT" org={amrut} />
+            <CardTab type="SARTHI" org={amrut} />
           </SectionTabPanel>
           <SectionTabPanel tab="partner" active={tab} idPrefix="contact">
             <CardTab type="IMPLEMENTATION_PARTNER" org={partner} />

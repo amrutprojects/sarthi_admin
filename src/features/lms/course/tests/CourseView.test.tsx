@@ -47,7 +47,7 @@ describe('<CourseView>', () => {
 
   it('shows the details, the rendered description, the lifecycle and the module summary with the missing modules', async () => {
     renderView();
-    expect(await screen.findByText('Amrut Kalash Programme', { selector: 'h1' })).toBeInTheDocument();
+    expect(await screen.findByText('Sarthi Programme', { selector: 'h1' })).toBeInTheDocument();
     expect(await screen.findByText('English (en), Marathi (mr)')).toBeInTheDocument();
     /* Allow-listed markup is rendered, not shown as tags. */
     expect(screen.getByText('skilling', { selector: 'strong' })).toBeInTheDocument();
@@ -90,7 +90,7 @@ describe('<CourseView>', () => {
     renderView();
     await userEvent.click(await screen.findByRole('button', { name: 'Retire' }));
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
-    expect(screen.getByText(/Retire the course Amrut Kalash Programme \(AK-PROG\)\?/)).toBeInTheDocument();
+    expect(screen.getByText(/Retire the course Sarthi Programme \(AK-PROG\)\?/)).toBeInTheDocument();
     expect(courseService.retire).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole('button', { name: 'Yes, retire' }));
     await waitFor(() => expect(courseService.retire).toHaveBeenCalledWith('co1'));
@@ -139,6 +139,6 @@ describe('<CourseView>', () => {
     expect(await screen.findByText(/Course not found/)).toBeInTheDocument();
     vi.mocked(courseService.get).mockResolvedValue(course());
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(await screen.findByText('Amrut Kalash Programme', { selector: 'h1' })).toBeInTheDocument();
+    expect(await screen.findByText('Sarthi Programme', { selector: 'h1' })).toBeInTheDocument();
   });
 });

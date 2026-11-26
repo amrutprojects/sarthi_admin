@@ -1,7 +1,7 @@
 import type { PageMeta } from '../../../services/api-client';
 
 /*
- * G-2 "Show live LMS data" (amrut-kalash-api docs/mt-g2-live-data-setting.md, docs/lms-reads/README.md).
+ * G-2 "Show live LMS data" (sarthi-api docs/mt-g2-live-data-setting.md, docs/lms-reads/README.md).
  * Shapes of GET /lms-reads/live-data and of the live reads the screens use.
  */
 export type LiveDataBlocker = 'MASTER_SWITCH_OFF' | 'LMS_NOT_CONFIGURED';

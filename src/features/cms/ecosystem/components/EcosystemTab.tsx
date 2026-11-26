@@ -59,7 +59,7 @@ const LIST: ClientListOptions<ApiProgramme> = {
 };
 
 /*
- * The AMRUT Ecosystem — its tab of Home Page Management: the अमृत प्रणाली cards of the home and About pages as a
+ * The SARTHI Ecosystem — its tab of Home Page Management: the सारथी प्रणाली cards of the home and About pages as a
  * listing like FAQ Management's, and the section settings under them.
  *
  * Every action names its card by id, never by its position on screen, so a list that has moved on
@@ -236,7 +236,7 @@ export default function EcosystemTab() {
           </>
         }
       >
-        The अमृत प्रणाली cards of the public home and About pages: each programme&rsquo;s icon, name, description and destination, in
+        The सारथी प्रणाली cards of the public home and About pages: each programme&rsquo;s icon, name, description and destination, in
         display order.
       </SectionTabHead>
 

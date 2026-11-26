@@ -11,7 +11,7 @@ export default function MasterListPage() {
   const { permissions } = useAuth();
   const master = MASTERS.find((m) => pathname.replace(/\/$/, '').endsWith(`/masters/${m.path}`));
   useEffect(() => {
-    document.title = `${master?.plural ?? 'Masters'} — AMRUT × SUMAGO Admin`;
+    document.title = `${master?.plural ?? 'Masters'} — SARTHI Admin`;
   }, [master]);
 
   if (!master || !permissions.has(masterPermission(master, 'view')))

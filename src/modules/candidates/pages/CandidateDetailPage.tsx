@@ -29,7 +29,7 @@ export default function CandidateDetailPage() {
   const student = useQuery({ queryKey: ['students', id], queryFn: () => studentApi.get(id), enabled: !!id });
   const files = useQuery({ queryKey: ['students', id, 'documents'], queryFn: () => studentApi.documents(id), enabled: !!id });
   useEffect(() => {
-    document.title = 'Candidate — AMRUT × SUMAGO Admin';
+    document.title = 'Candidate — SARTHI Admin';
   }, []);
 
   const crumbs = [

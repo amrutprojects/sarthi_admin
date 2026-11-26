@@ -18,11 +18,11 @@ const SECTION_COPY: Record<ContactSection, { title: string; crumb: string; sub: 
     confirmName: 'the page information',
   },
   amrut: {
-    title: 'Edit AMRUT Contact Details',
-    crumb: 'Edit AMRUT contact details',
+    title: 'Edit SARTHI Contact Details',
+    crumb: 'Edit SARTHI contact details',
     sub: 'The first card on the public Contact page. Every text field is stored in Marathi and English — the public site defaults to Marathi.',
-    saved: 'AMRUT contact details updated',
-    confirmName: 'the AMRUT contact details',
+    saved: 'SARTHI contact details updated',
+    confirmName: 'the SARTHI contact details',
   },
   partner: {
     title: 'Edit Implementation Partner',
@@ -34,7 +34,7 @@ const SECTION_COPY: Record<ContactSection, { title: string; crumb: string; sub: 
   helpline: {
     title: 'Edit Helpline & WhatsApp',
     crumb: 'Edit helpline & WhatsApp',
-    sub: 'The WhatsApp button on every page of the public website. The Helpline popup needs nothing here: it shows the AMRUT and implementation partner cards.',
+    sub: 'The WhatsApp button on every page of the public website. The Helpline popup needs nothing here: it shows the SARTHI and implementation partner cards.',
     saved: 'Helpline & WhatsApp updated',
     confirmName: 'the Helpline & WhatsApp details',
   },
@@ -44,7 +44,7 @@ const SECTION_COPY: Record<ContactSection, { title: string; crumb: string; sub: 
 const sectionOf = (pathname: string): ContactSection => CONTACT_SECTIONS.find((s) => pathname.startsWith(`/cms/contact/${s}/`)) ?? 'page';
 
 /*
- * Edit one section of the Contact page — page information, the AMRUT card, the implementation
+ * Edit one section of the Contact page — page information, the SARTHI card, the implementation
  * partner or the Helpline & WhatsApp details — on a dedicated page, never a modal. Opened from the Edit button on the section's tab; Back,
  * Cancel and Save return to that tab.
  */

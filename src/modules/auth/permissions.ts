@@ -136,9 +136,9 @@ export const SCREEN_ACCESS: Record<string, string[]> = {
   castes: ['castes.view'],
   'document-types': ['document-types.view'],
   education: ['education.view'],
-  /* M3 Attendance reports (amrut-kalash-api ATTENDANCE_REPORT_PERMISSIONS): Attendance, Reports & MIS or LMS Integration. */
+  /* M3 Attendance reports (sarthi-api ATTENDANCE_REPORT_PERMISSIONS): Attendance, Reports & MIS or LMS Integration. */
   'attendance-reports': ['attendance.view', 'reports.view', 'lms.view'],
-  /* Entity-owned LMS tracks and districts (amrut-kalash-api LMS_READ_PERMISSIONS tracks / districts): as Training Centres. */
+  /* Entity-owned LMS tracks and districts (sarthi-api LMS_READ_PERMISSIONS tracks / districts): as Training Centres. */
   'lms-live-tracks': ['centres.view', 'lms.view'],
   'lms-live-districts': ['centres.view', 'lms.view'],
 };
@@ -339,7 +339,7 @@ export const ACTION_ACCESS = {
   createLmsTrackVariant: ['lms-track-variants.create'],
   updateLmsTrackVariant: ['lms-track-variants.update'],
   deleteLmsTrackVariant: ['lms-track-variants.delete'],
-  /* M1 (amrut-kalash-api lms-sync and api-keys routes): the sync follows the student register's codes, API keys the LMS Integration menu. */
+  /* M1 (sarthi-api lms-sync and api-keys routes): the sync follows the student register's codes, API keys the LMS Integration menu. */
   viewLmsSync: ['imports.view', 'candidates.view'],
   pushLmsSync: ['imports.update'],
   viewLmsApiKeys: ['lms.view'],

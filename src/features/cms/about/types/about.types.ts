@@ -1,4 +1,4 @@
-/* About AMRUT Management, as /api/v1/cms/about returns and accepts it. */
+/* About SARTHI Management, as /api/v1/cms/about returns and accepts it. */
 
 /** A Marathi/English pair. The subtitle is { mr: '', en: '' } when there is none. */
 export interface Bilingual {

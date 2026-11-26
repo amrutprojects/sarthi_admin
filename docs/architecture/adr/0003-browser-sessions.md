@@ -2,7 +2,7 @@
 
 - Status: Accepted (replaces the sessionStorage bearer token)
 - Date: 2026-10-19
-- Applies to: amrut-kalash-admin and amrut-kalash-api (full rationale in the API repository's ADR-0003)
+- Applies to: sarthi-admin and sarthi-api (full rationale in the API repository's ADR-0003)
 
 ## Decision (panel side)
 

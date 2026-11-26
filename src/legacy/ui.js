@@ -155,7 +155,7 @@
     return '<div class="callout c-' + tone + '"><div>' + (title ? '<b>' + esc(title) + '</b>' : '') + msg + '</div></div>';
   }
   function demoNote(txt) {
-    return '<div class="disclaim mt10">' + esc(txt || 'Indicative values - subject to AMRUT / COEP approval.') + '</div>';
+    return '<div class="disclaim mt10">' + esc(txt || 'Indicative values - subject to approval.') + '</div>';
   }
 
   /* =========================================================
@@ -306,7 +306,7 @@
   }
   function drawer(o) {
     var root = document.getElementById('drawer-root');
-    root.innerHTML = '<div class="drawer-ov" data-drawer-close></div>' +
+    root.innerHTML = '<div class="drawer-ov"></div>' +
       '<aside class="drawer ' + (o.size || '') + '">' +
       '<div class="drawer-h"><h3>' + esc(o.title) + '</h3>' + (o.headExtra || '') + '<button class="x-btn" data-drawer-close>✕</button></div>' +
       '<div class="drawer-b">' + o.body + '</div>' +

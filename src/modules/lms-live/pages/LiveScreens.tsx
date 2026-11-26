@@ -94,7 +94,7 @@ export function LiveCentresPage() {
     <LiveListPage
       title="Training Centre Master"
       crumbs={[home, { l: 'Training centres' }]}
-      sub="Centres Amrut’s LMS entities use."
+      sub="Centres Sarthi’s LMS entities use."
       queryKey={lmsLiveKeys.read('centres')}
       queryFn={lmsLiveApi.centres}
       rows={(d) => d}
@@ -128,7 +128,7 @@ export function LiveTracksPage() {
     <LiveListPage
       title="LMS Tracks"
       crumbs={[home, { l: 'Training centres', link: '#/centres' }, { l: 'LMS tracks' }]}
-      sub="Tracks Amrut’s LMS entities own."
+      sub="Tracks Sarthi’s LMS entities own."
       queryKey={lmsLiveKeys.read('tracks')}
       queryFn={lmsLiveApi.tracks}
       rows={(d) => d}
@@ -160,7 +160,7 @@ export function LiveDistrictsPage() {
     <LiveListPage
       title="LMS Districts"
       crumbs={[home, { l: 'Training centres', link: '#/centres' }, { l: 'LMS districts' }]}
-      sub="Districts Amrut’s LMS entities own, with their division."
+      sub="Districts Sarthi’s LMS entities own, with their division."
       queryKey={lmsLiveKeys.read('districts')}
       queryFn={lmsLiveApi.districts}
       rows={(d) => d}

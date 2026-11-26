@@ -6,7 +6,7 @@ import { NotAvailablePage } from '../../../components/ui';
 export default function BatchDetailPage() {
   const { id = '' } = useParams();
   useEffect(() => {
-    document.title = 'Batch — AMRUT × SUMAGO Admin';
+    document.title = 'Batch — SARTHI Admin';
   }, []);
   return (
     <NotAvailablePage

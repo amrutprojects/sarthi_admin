@@ -22,6 +22,6 @@ export function useMasterQuery<T extends MasterQuery>(initial: T) {
 /* Sets the browser tab title, as the other admin screens do. */
 export function usePageTitle(title: string): void {
   useEffect(() => {
-    document.title = `${title} — AMRUT × SUMAGO Admin`;
+    document.title = `${title} — SARTHI Admin`;
   }, [title]);
 }

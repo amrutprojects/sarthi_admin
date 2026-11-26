@@ -8,7 +8,7 @@ import { NotAvailablePage, NO_DATA_TEXT } from '../../../components/ui';
  */
 function LocalBatchesPage() {
   useEffect(() => {
-    document.title = 'Batches — AMRUT × SUMAGO Admin';
+    document.title = 'Batches — SARTHI Admin';
   }, []);
   return (
     <NotAvailablePage

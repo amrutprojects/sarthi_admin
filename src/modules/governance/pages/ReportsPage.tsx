@@ -7,7 +7,7 @@ import { REPORT_CATALOGUE } from '../reportCatalogue';
 export default function ReportsPage() {
   const go = useGo();
   useEffect(() => {
-    document.title = 'Reports & MIS — AMRUT × SUMAGO Admin';
+    document.title = 'Reports & MIS — SARTHI Admin';
   }, []);
   return (
     <div className="page">

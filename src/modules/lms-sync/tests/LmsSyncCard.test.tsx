@@ -17,7 +17,7 @@ const summary = (over: Partial<LmsSyncSummary> = {}): LmsSyncSummary => ({
   byStatus: { NOT_SYNCED: 1, PENDING: 0, SENT: 0, SYNCED: 0, FAILED: 1, REVIEW: 0 },
   ...over,
 });
-/* Shape of GET /lms-sync/students/:id (amrut-kalash-api docs/lms-sync/admin-api.md); synthetic values. */
+/* Shape of GET /lms-sync/students/:id (sarthi-api docs/lms-sync/admin-api.md); synthetic values. */
 const detail = (over: Partial<LmsSyncDetail> = {}): LmsSyncDetail => ({
   studentId: 's1',
   code: 'STU-000123',

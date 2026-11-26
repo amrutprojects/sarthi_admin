@@ -1,4 +1,4 @@
-/* M3 attendance reports: shapes of amrut-kalash-api GET /attendance-reports and /attendance-reports/status. */
+/* M3 attendance reports: shapes of sarthi-api GET /attendance-reports and /attendance-reports/status. */
 export type ReportLevel = 'division' | 'district' | 'centre' | 'batch';
 
 export interface Place {
@@ -31,7 +31,7 @@ export interface ReportRow extends ReportCounts {
   code: string;
   name: string;
   nameMr: string | null;
-  /* false: the LMS code is not in Amrut's masters (shown under the code). */
+  /* false: the LMS code is not in Sarthi's masters (shown under the code). */
   mapped: boolean;
   division: Place | null;
   district: Place | null;
@@ -46,7 +46,7 @@ export interface AttendanceReport {
   filters: { division: Place | null; district: Place | null; centre: Place | null };
   rows: ReportRow[];
   totals: ReportCounts;
-  /* LMS rows the drill-down filter could not place (unknown to Amrut's masters); not in rows or totals. */
+  /* LMS rows the drill-down filter could not place (unknown to Sarthi's masters); not in rows or totals. */
   unplaced: number;
 }
 

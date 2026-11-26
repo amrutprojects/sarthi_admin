@@ -7,7 +7,7 @@ import { NotAvailablePage } from '../../../components/ui';
  */
 export default function AtRiskPage() {
   useEffect(() => {
-    document.title = 'At-risk engine — AMRUT × SUMAGO Admin';
+    document.title = 'At-risk engine — SARTHI Admin';
   }, []);
 
   return <NotAvailablePage title="At-Risk Engine" crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'At-risk engine' }]} />;

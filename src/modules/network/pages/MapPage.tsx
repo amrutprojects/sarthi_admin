@@ -20,7 +20,7 @@ const VIEWS = [
 export default function MapPage() {
   const [s, setS] = usePersistentState('map-live', DEFAULT_MAP);
   useEffect(() => {
-    document.title = 'District map — AMRUT × SUMAGO Admin';
+    document.title = 'District map — SARTHI Admin';
   }, []);
 
   const districtCount = S.districts().length;

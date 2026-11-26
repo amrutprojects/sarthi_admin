@@ -32,7 +32,7 @@ describe('IPP approvals — menu and permissions', () => {
     const at = SIDEBAR_NAV.findIndex((n) => isNavGroup(n) && n.g === 'IPP Approvals');
     expect(SIDEBAR_NAV.slice(at + 1, at + 3)).toEqual([
       expect.objectContaining({ k: 'ipp-approvals', l: 'Applications', r: '/ipp-approvals' }),
-      expect.objectContaining({ k: 'ipp-officers', l: 'Officer Districts', r: '/ipp-officers' }),
+      expect.objectContaining({ k: 'ipp-officers', l: 'Divisional Officer Mapping', r: '/ipp-officers' }),
     ]);
     expect(isNavGroup(SIDEBAR_NAV[at + 3])).toBe(true);
   });
@@ -41,15 +41,15 @@ describe('IPP approvals — menu and permissions', () => {
     permissions = new Set(['dashboard.view']);
     const none = sidebar();
     expect(within(none).queryByText('IPP Approvals')).not.toBeInTheDocument();
-    expect(within(none).queryByText('Officer Districts')).not.toBeInTheDocument();
+    expect(within(none).queryByText('Divisional Officer Mapping')).not.toBeInTheDocument();
   });
 
-  it('shows an officer Applications but not Officer Districts', () => {
+  it('shows an officer Applications but not Divisional Officer Mapping', () => {
     permissions = new Set(OFFICER);
     const menu = sidebar();
     expect(within(menu).getByText('IPP Approvals')).toBeInTheDocument();
     expect(within(menu).getByRole('button', { name: 'Applications' })).toHaveClass('active');
-    expect(within(menu).queryByRole('button', { name: 'Officer Districts' })).not.toBeInTheDocument();
+    expect(within(menu).queryByRole('button', { name: 'Divisional Officer Mapping' })).not.toBeInTheDocument();
   });
 
   it('follows Menu Visibility and stays out of the website portal', () => {

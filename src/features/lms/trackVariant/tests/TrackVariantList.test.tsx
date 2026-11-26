@@ -44,7 +44,7 @@ describe('<TrackVariantList>', () => {
     const row = (await screen.findByText('Cyber Security')).closest('tr') as HTMLTableRowElement;
     expect(row.cells[0]).toHaveTextContent('1');
     expect(row.cells[1]).toHaveTextContent('T07 Cyber Security');
-    expect(row.cells[2]).toHaveTextContent('AK-DIP · Amrut Kalash Diploma');
+    expect(row.cells[2]).toHaveTextContent('AK-DIP · Sarthi Diploma');
     expect(row.cells[2]).toHaveTextContent('Module 3 · Track Specialisation');
     expect(within(row.cells[3]).getByText('Draft')).toBeInTheDocument();
     /* Incomplete, with the counts against the Module 3 shape. */

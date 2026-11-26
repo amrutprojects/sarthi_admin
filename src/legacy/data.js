@@ -1,5 +1,5 @@
 /* =========================================================
-   AMRUT x SUMAGO - reference data (window.AS.db)
+   SARTHI - reference data (window.AS.db)
    Only fixed reference data: the programme's name, the candidate status
    labels and Maharashtra's 36 districts (schematic map positions, region,
    talukas). The former sample dataset (invented candidates, centres,
@@ -12,8 +12,8 @@
   var AS = (window.AS = window.AS || {});
 
   var config = {
-    projectName: 'AMRUT x SUMAGO Skill Development Programme',
-    shortName: 'AMRUT x SUMAGO',
+    projectName: 'SARTHI Skill Development Programme',
+    shortName: 'SARTHI',
     implementingAgency: 'SUMAGO INFOTECH PVT LTD',
     state: 'Maharashtra'
   };

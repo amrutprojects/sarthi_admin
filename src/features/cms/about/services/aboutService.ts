@@ -1,4 +1,4 @@
-/* About AMRUT Management API (backend /api/v1/cms/about). */
+/* About SARTHI Management API (backend /api/v1/cms/about). */
 import { request } from '../../../../services/api-client';
 import { KINDS } from '../constants';
 import type {

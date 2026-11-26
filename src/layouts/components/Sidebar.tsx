@@ -4,7 +4,6 @@ import { SIDEBAR_NAV, isNavGroup, sidebarKey, type NavEntry } from '../../consta
 import { useCanOpen } from '../../modules/auth/components/Can';
 import { goTo } from '../../hooks/useLegacyEvents';
 import { useLegacyTick } from '../../utils/legacyBus';
-import amrutLogo from '../../assets/images/amrut-logo-en-dark.webp';
 
 interface SidebarProps {
   active: string;
@@ -30,10 +29,12 @@ export default function Sidebar({ active, collapsed, open, onToggle }: SidebarPr
   return (
     <aside className={'sidebar' + (open ? ' open' : '')} id="sidebar">
       <div className="sb-brand">
-        {/* The light-on-dark variant of the English logo: the sidebar is dark brown. */}
-        <img className="sb-logo-img" src={amrutLogo} alt="AMRUT" />
+        {/* Sarthi's mark (no logo image); collapsed, it is all that shows. */}
+        <span className="sb-logo" aria-hidden="true">
+          S
+        </span>
         <div className="sb-brand-txt">
-          <b>Amrut Kalash Admin</b>
+          <b>Sarthi Admin</b>
         </div>
       </div>
       <div className="sb-scroll">

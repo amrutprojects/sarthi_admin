@@ -64,7 +64,7 @@ describe('Module form (Add)', () => {
 
   it('shows the field messages on submit and sends nothing while invalid', async () => {
     renderCreate();
-    await screen.findByRole('option', { name: 'Amrut Kalash Programme (AKP)' });
+    await screen.findByRole('option', { name: 'Sarthi Programme (AKP)' });
     await save();
     expect(await screen.findByText('Select a course.')).toBeInTheDocument();
     expect(screen.getByText('Select module 1, 2, 3 or 4.')).toBeInTheDocument();

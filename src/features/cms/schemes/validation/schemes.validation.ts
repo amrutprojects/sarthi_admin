@@ -3,7 +3,7 @@ import type { FieldErrors } from '../../validation';
 import type { ApiScheme, ApiSchemesSection, Bilingual, SchemeInput, SchemesField, UpdateSchemesSectionInput } from '../types/schemes.types';
 
 /*
- * AMRUT Schemes form rules, deliberately identical to the server rules in
+ * SARTHI Schemes form rules, deliberately identical to the server rules in
  * backend/src/cms/schemes/schemes.validator.ts and to the CHECK constraints on the tables.
  *
  * This is for the person filling in the form — it names the problem next to the field instead of

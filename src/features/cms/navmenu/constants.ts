@@ -15,9 +15,9 @@ export interface NavMenuEntry {
 /* The items of the website's menu bar, in menu order, as the website labels them. */
 export const NAV_MENU_ITEMS: readonly NavMenuEntry[] = [
   { key: 'home', label: { en: 'Home', mr: 'मुख्यपृष्ठ' }, path: '/' },
-  { key: 'about', label: { en: 'About AMRUT', mr: 'अमृत विषयी' }, path: '/about' },
-  { key: 'programme', label: { en: 'AMRUT Kalash', mr: 'अमृत कलश' }, path: '/programme' },
-  { key: 'advisory', label: { en: 'AMRUT Advisory Committee', mr: 'अमृत कलश सल्लागार समिती' }, path: '/advisory-committee' },
+  { key: 'about', label: { en: 'About SARTHI', mr: 'सारथी विषयी' }, path: '/about' },
+  { key: 'programme', label: { en: 'Sarthi', mr: 'सारथी' }, path: '/programme' },
+  { key: 'advisory', label: { en: 'SARTHI Advisory Committee', mr: 'सारथी सल्लागार समिती' }, path: '/advisory-committee' },
   { key: 'modules', label: { en: 'Modules', mr: 'मॉड्यूल्स' }, path: '/modules' },
   { key: 'eligibility', label: { en: 'Eligibility', mr: 'पात्रता' }, path: '/eligibility' },
   { key: 'apply', label: { en: 'How to Apply', mr: 'अर्ज कसा करावा' }, path: '/apply' },

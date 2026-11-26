@@ -60,7 +60,7 @@ export const QUICK_ACTION_ICON_IDS = [
   'clock',
 ] as const;
 
-/* Names for the icons The AMRUT Ecosystem's picker does not offer; every other icon keeps the name it has there. */
+/* Names for the icons The SARTHI Ecosystem's picker does not offer; every other icon keeps the name it has there. */
 const OWN_LABELS: Partial<Record<(typeof QUICK_ACTION_ICON_IDS)[number], string>> = {
   plus: 'Add / apply',
   search: 'Search / track',

@@ -1,4 +1,4 @@
-/* The AMRUT Ecosystem, as /api/v1/cms/ecosystem returns and accepts it. */
+/* The SARTHI Ecosystem, as /api/v1/cms/ecosystem returns and accepts it. */
 
 /** A Marathi/English pair. An optional pair is { mr: '', en: '' } when blank. */
 export interface Bilingual {

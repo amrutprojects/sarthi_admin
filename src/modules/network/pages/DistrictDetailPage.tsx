@@ -19,7 +19,7 @@ const districtStudentColumns = studentColumns.filter((c) => c.k !== 'district');
 export default function DistrictDetailPage() {
   const { id = '' } = useParams();
   useEffect(() => {
-    document.title = 'District — AMRUT × SUMAGO Admin';
+    document.title = 'District — SARTHI Admin';
   }, []);
 
   const d = S.district(id);

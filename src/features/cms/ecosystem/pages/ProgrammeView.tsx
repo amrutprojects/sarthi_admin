@@ -40,11 +40,11 @@ const Destination = ({ link }: { link: string | null }) =>
   );
 
 /*
- * View Programme — read-only detail page of one AMRUT Ecosystem card, reached from the View action (or a click
- * on the row) in The AMRUT Ecosystem tab of Home Page Management. Loads the saved record by its id.
+ * View Programme — read-only detail page of one SARTHI Ecosystem card, reached from the View action (or a click
+ * on the row) in The SARTHI Ecosystem tab of Home Page Management. Loads the saved record by its id.
  */
 export default function ProgrammeView() {
-  usePageTitle('Programme — The AMRUT Ecosystem');
+  usePageTitle('Programme — The SARTHI Ecosystem');
   const { id = '' } = useParams();
   const go = useGo();
   const navigate = useNavigate();
@@ -145,7 +145,7 @@ export default function ProgrammeView() {
                   ['Status', <MasterStatusBadge isActive={p.isActive} />],
                   [
                     'On the website',
-                    p.isActive ? 'Shown in the अमृत प्रणाली section of the home and About pages' : 'Hidden from the website',
+                    p.isActive ? 'Shown in the सारथी प्रणाली section of the home and About pages' : 'Hidden from the website',
                   ],
                   ['Created', fmtDateTime(p.createdAt)],
                   ['Last updated', fmtDateTime(p.updatedAt)],

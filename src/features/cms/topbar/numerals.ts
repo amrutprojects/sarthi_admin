@@ -1,5 +1,5 @@
 /*
- * Marathi numerals, as the public website prints them (amrut-kalash-web, src/features/public-site/shared/numerals.ts).
+ * Marathi numerals, as the public website prints them (sarthi-web, src/features/public-site/shared/numerals.ts).
  *
  * While the website is in Marathi and the Top Bar's "Show numbers in Marathi digits" setting is on, every figure in
  * managed text reads in Devanagari digits (०१२३). Email and web addresses keep their digits, because a visitor copies

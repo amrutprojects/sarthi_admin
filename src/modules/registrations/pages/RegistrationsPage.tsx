@@ -47,7 +47,7 @@ export default function RegistrationsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   useEffect(() => {
-    document.title = 'Student registration — AMRUT × SUMAGO Admin';
+    document.title = 'Student registration — SARTHI Admin';
   }, []);
   useEffect(() => {
     const t = setTimeout(() => {

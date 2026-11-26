@@ -1,5 +1,5 @@
 /*
- * Where a CMS card may send a visitor (The AMRUT Ecosystem, AMRUT Schemes): a page of the public site
+ * Where a CMS card may send a visitor (The SARTHI Ecosystem, SARTHI Schemes): a page of the public site
  * ("/programme") or a full http(s) address. The same rule as the server
  * (backend/src/cms/cms.link.validation.ts) and the CHECK constraints on the tables.
  */
@@ -35,7 +35,7 @@ export function destinationProblem(raw: string): string | undefined {
 
 /* Pages of the public site an administrator is most likely to link to; any other path is typed in. */
 export const SITE_PAGES: { path: string; label: string }[] = [
-  { path: '/programme', label: 'Programme (AMRUT Kalash)' },
+  { path: '/programme', label: 'Programme (Sarthi)' },
   { path: '/about', label: 'About' },
   { path: '/modules', label: 'Modules' },
   { path: '/eligibility', label: 'Eligibility' },

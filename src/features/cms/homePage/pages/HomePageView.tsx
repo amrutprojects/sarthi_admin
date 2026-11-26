@@ -47,7 +47,7 @@ const TAB_CONTENT: Record<HomePageTab, ComponentType<{ switched?: SectionVisibil
 };
 
 /*
- * The tabs that edit inline (About AMRUT's section settings and description), whose unsaved edits a remount would
+ * The tabs that edit inline (About SARTHI's section settings and description), whose unsaved edits a remount would
  * throw away: they stay mounted when their section is switched and merge the switch's result instead. Every other
  * tab edits on pages of its own, so it is simply remounted, and reloads what the switch changed.
  */

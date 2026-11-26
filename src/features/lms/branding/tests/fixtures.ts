@@ -17,7 +17,7 @@ const def = (s: Omit<BrandingSetting, 'hasValue' | 'value' | 'effectiveValue' | 
   updatedAt: null,
 });
 
-/* The catalogue with nothing set for an entity named "Amrut Kalash" whose default language is Marathi. */
+/* The catalogue with nothing set for an entity named "Sarthi" whose default language is Marathi. */
 const catalogue = (): BrandingSetting[] => [
   def({ key: 'display_name', fieldId: 'F-LMS-04-01', group: 'branding', type: 'text', label: 'Display name', description: 'Name shown in the app and on notifications. 3–60 characters; the entity name while not set.', required: true, fallback: 'entity_name' }),
   def({ key: 'logo_storage_key', fieldId: 'F-LMS-04-02', group: 'branding', type: 'image', label: 'Logo', description: 'Logo for LMS Admin, app and certificate header. PNG image within the size limit; the platform default while not set.', required: false, fallback: 'platform' }),
@@ -32,7 +32,7 @@ export const LOGO = { fileName: 'amk-logo.png', mimeType: 'image/png', fileSize:
 
 /* Nothing set: the display name falls back to the entity name, languages to [default], support email missing. */
 export const unset = (over: Partial<ApiBranding['entity']> = {}): ApiBranding => {
-  const entity = { id: 'e1', name: 'Amrut Kalash', code: 'AMK', defaultLanguage: 'mr', isActive: true, ...over };
+  const entity = { id: 'e1', name: 'Sarthi', code: 'AMK', defaultLanguage: 'mr', isActive: true, ...over };
   return {
     entity,
     settings: catalogue().map((s) =>
@@ -50,7 +50,7 @@ const withValue = (s: BrandingSetting, value: unknown): BrandingSetting => ({ ..
 export const configured = (over: Partial<ApiBranding['entity']> = {}): ApiBranding => {
   const base = unset(over);
   const values: Record<string, unknown> = {
-    display_name: 'Amrut Kalash LMS',
+    display_name: 'Sarthi LMS',
     logo_storage_key: LOGO,
     colours: { primary: '#1F4E79', accent: '#C0392B' },
     support_email: 'help@amrut.org',

@@ -81,7 +81,7 @@ export function GenerateKeyModal({ onIssued, onClose }: { onIssued: (r: IssuedAp
       }
     >
       <p className="fs13 mb10" style={{ marginTop: 0 }}>
-        The LMS Super Admin enters this key in the Amrut tenant&apos;s provider settings. The secret is shown once.
+        The LMS Super Admin enters this key in the Sarthi tenant&apos;s provider settings. The secret is shown once.
       </p>
       {error ? (
         <div className="mb10">
@@ -210,7 +210,7 @@ export function SecretOnceModal({ issued, onClose }: { issued: IssuedApiKey; onC
       }
     >
       <Callout tone="warn" title="Shown once. ">
-        This secret will not be shown again. Paste it into the LMS (Amrut provider settings) or a password manager before closing.
+        This secret will not be shown again. Paste it into the LMS (Sarthi provider settings) or a password manager before closing.
       </Callout>
       <div className="fld mt14">
         <label htmlFor="key-secret">

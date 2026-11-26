@@ -22,7 +22,7 @@ export default function UsersPage() {
   ).filter(([, , ok]) => ok);
   const [tab, setTab] = useState<Tab>(tabs[0]?.[0] ?? 'users');
   useEffect(() => {
-    document.title = 'Users & roles — AMRUT × SUMAGO Admin';
+    document.title = 'Users & roles — SARTHI Admin';
   }, []);
 
   return (

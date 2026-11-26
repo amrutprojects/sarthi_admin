@@ -15,7 +15,7 @@ vi.mock('../../../modules/auth/auth-context', () => ({
 
 const ALL = ['cms-pagebanners.view', 'cms-pagebanners.update'];
 const CHANGED = '2026-11-17T10:00:00.000Z';
-const PAGES = ['About AMRUT', 'FAQs', 'AMRUT Kalash programme', 'Check Application Status', 'Verify Certificate'];
+const PAGES = ['About AMRUT', 'FAQs', 'Sarthi programme', 'Check Application Status', 'Verify Certificate'];
 const PATHS = ['/about', '/faq', '/programme', '/track', '/verify'];
 
 /* What GET /cms/page-banners lists, kept up to date by the PUTs below: all five keys in list order, every one default. */
@@ -104,7 +104,7 @@ describe('page banners API', () => {
     expect(PAGE_BANNERS.map((p) => p.title)).toEqual([
       { en: 'About AMRUT', mr: 'अमृत विषयी माहिती' },
       { en: 'FAQs', mr: 'प्रश्नोत्तरे' },
-      { en: 'AMRUT KALASH', mr: 'अमृत कलश' },
+      { en: 'SARTHI', mr: 'सारथी' },
       { en: 'Check Application Status', mr: 'अर्जाची स्थिती पहा' },
       { en: 'Verify Certificate', mr: 'प्रमाणपत्र पडताळणी' },
     ]);
@@ -260,19 +260,19 @@ describe('Page Banners screen', () => {
 
   it('puts the default banner back with "Reset to default"', async () => {
     items = items.map((i) =>
-      i.key === 'programme' ? { ...i, title: { mr: 'कलश', en: 'Kalash' }, subtitle: { mr: 'उप', en: 'Sub' }, updatedAt: CHANGED } : i,
+      i.key === 'programme' ? { ...i, title: { mr: 'सारथी', en: 'Sarthi' }, subtitle: { mr: 'उप', en: 'Sub' }, updatedAt: CHANGED } : i,
     );
     renderPage();
     await findTable();
 
-    const dialog = await openEdit('AMRUT Kalash programme');
-    expect(inputs(dialog).titleEn).toHaveValue('Kalash');
+    const dialog = await openEdit('Sarthi programme');
+    expect(inputs(dialog).titleEn).toHaveValue('Sarthi');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Reset to default' }));
-    await waitFor(() => expect(toasts()).toHaveTextContent('AMRUT Kalash programme banner now uses the default title and subtitle'));
+    await waitFor(() => expect(toasts()).toHaveTextContent('Sarthi programme banner now uses the default title and subtitle'));
     expect(puts()[0]![0]).toMatch(/\/cms\/page-banners\/programme$/);
     expect(bodies()).toEqual([{ title: null, subtitle: null }]);
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    await waitFor(() => expect(cell(rowOf('AMRUT Kalash programme'), 2)).toHaveTextContent('AMRUT KALASHअमृत कलशDefault title'));
+    await waitFor(() => expect(cell(rowOf('Sarthi programme'), 2)).toHaveTextContent('SARTHIसारथीDefault title'));
     expect(screen.getByText('0 of 5 customised')).toBeInTheDocument();
   });
 

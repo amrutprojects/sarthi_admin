@@ -20,7 +20,7 @@ import { attendanceReportsApi } from '../services/attendanceReportsApi';
 import type { ReportCounts, ReportRow } from '../types/attendanceReports.types';
 
 /*
- * M3 "Attendance reports": attendance read live from the LMS (amrut-kalash-api GET /attendance-reports), drilled
+ * M3 "Attendance reports": attendance read live from the LMS (sarthi-api GET /attendance-reports), drilled
  * division → district → centre → batch, with totals, percentages and evidence counts, CSV of what is on screen, and
  * English / Marathi labels. When the LMS cannot be used the screen says why and shows no figures (never dummy ones).
  */
@@ -76,7 +76,7 @@ export default function AttendanceReportsPage() {
   const badRange = rangeInvalid(prefs.dateFrom, prefs.dateTo);
 
   useEffect(() => {
-    document.title = 'Attendance reports — AMRUT × SUMAGO Admin';
+    document.title = 'Attendance reports — SARTHI Admin';
   }, []);
 
   const status = useQuery({ queryKey: ['attendance-reports', 'status'], queryFn: () => attendanceReportsApi.status() });

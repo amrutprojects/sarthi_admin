@@ -30,11 +30,7 @@ export default function useLegacyEvents() {
       if (!t || !t.closest) return;
       if (t.closest('[data-modal-close]')) U.closeModal();
       if (t.closest('[data-drawer-close]')) U.closeDrawer();
-      const ov = t.closest('[data-modal-ov]');
-      if (ov && t === ov) {
-        U.closeModal();
-        return;
-      }
+      /* A click outside a dialog does not close it (components/ui/Overlay.tsx): only its own buttons do. */
 
       const act = t.closest('[data-act]');
       if (act) {

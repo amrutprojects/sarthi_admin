@@ -1,4 +1,4 @@
-/* AMRUT's Impact, as /api/v1/cms/impact returns and accepts it. */
+/* SARTHI's Impact, as /api/v1/cms/impact returns and accepts it. */
 
 /** A Marathi/English pair. */
 export interface Bilingual {

@@ -4,7 +4,7 @@ import { LinkButton, NotAvailablePage } from '../../../components/ui';
 /* Programme masters, course catalogue and district target allocation have no live source yet: an honest empty state. */
 export default function AdministrationPage() {
   useEffect(() => {
-    document.title = 'Administration — AMRUT × SUMAGO Admin';
+    document.title = 'Administration — SARTHI Admin';
   }, []);
   return (
     <NotAvailablePage

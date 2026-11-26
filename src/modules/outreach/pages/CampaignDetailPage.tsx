@@ -6,7 +6,7 @@ import { NotAvailablePage } from '../../../components/ui';
 export default function CampaignDetailPage() {
   const { id = '' } = useParams();
   useEffect(() => {
-    document.title = 'Campaign — AMRUT × SUMAGO Admin';
+    document.title = 'Campaign — SARTHI Admin';
   }, []);
   return (
     <NotAvailablePage

@@ -24,7 +24,7 @@ interface BilingualFieldProps {
  *
  * The public site is bilingual and defaults to MARATHI, so a field edited in only one language
  * leaves half the visitors looking at a blank line. Showing the two inputs together — Marathi
- * first, as on the AMRUT portal — makes the pair obvious instead of something to remember, and both
+ * first, as on the SARTHI portal — makes the pair obvious instead of something to remember, and both
  * halves are validated as required.
  */
 export default function BilingualField({

@@ -18,12 +18,12 @@ import { sectionPayload, sectionToForm, serverErrors, validateSectionForm, type 
 const FORM_ID = 'cms-schemes-settings-form';
 
 /*
- * Section settings — the public heading (अमृत योजना विभाग / AMRUT Schemes by default) and subtitle
+ * Section settings — the public heading (सारथी योजना विभाग / SARTHI Schemes by default) and subtitle
  * above the cards, the default label of each card's button, and whether the section is shown at all.
  * Kept apart from the schemes, and independent of this module's own name in the admin panel.
  */
 export default function SchemesSettingsEdit() {
-  usePageTitle('Section Settings — AMRUT Schemes Management');
+  usePageTitle('Section Settings — SARTHI Schemes Management');
   const can = useCan();
   const detail = useApiData(() => schemesService.getSection(), []);
 
@@ -38,7 +38,7 @@ export default function SchemesSettingsEdit() {
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
       {detail.data && !can('updateScheme') ? (
         <Callout tone="warn" title="You can view this section but not change it">
-          Editing the section settings needs the &ldquo;Update AMRUT Schemes Management&rdquo; permission.
+          Editing the section settings needs the &ldquo;Update SARTHI Schemes Management&rdquo; permission.
         </Callout>
       ) : null}
       {detail.data && can('updateScheme') ? <SettingsForm key={detail.data.updatedAt} section={detail.data} /> : null}

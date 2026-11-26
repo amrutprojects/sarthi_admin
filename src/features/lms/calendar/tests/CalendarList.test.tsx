@@ -51,7 +51,7 @@ describe('<CalendarList>', () => {
     renderWithProviders(<CalendarList />);
     const row = (await screen.findByText('Academic Year 2026-27')).closest('tr') as HTMLTableRowElement;
     expect(row.cells[0]).toHaveTextContent('1');
-    expect(row.cells[2]).toHaveTextContent('Amrut Kalash');
+    expect(row.cells[2]).toHaveTextContent('Sarthi');
     expect(row.cells[3]).toHaveTextContent('All centresEntity-wide');
     expect(row.cells[4]).toHaveTextContent('01 Jun 2026');
     expect(row.cells[5]).toHaveTextContent('31 May 2027');

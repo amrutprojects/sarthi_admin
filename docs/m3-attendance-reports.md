@@ -1,7 +1,7 @@
 # M3 — Attendance reports screen
 
 Sidebar **Training Operations → Attendance reports** (`/attendance-reports`, module `src/modules/attendance-reports`).
-Data from amrut-kalash-api `GET /attendance-reports` (see that repo's `docs/m3-attendance-reports.md`), which reads the
+Data from sarthi-api `GET /attendance-reports` (see that repo's `docs/m3-attendance-reports.md`), which reads the
 LMS live with Amrut's tenant key. The key never reaches the browser.
 
 ## What the screen does

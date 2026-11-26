@@ -73,7 +73,7 @@ const LIST: ClientListOptions<ApiScheme> = {
 };
 
 /*
- * AMRUT Schemes — the AMRUT Schemes Management tab of Home Page Management: the अमृत योजना विभाग cards of the
+ * SARTHI Schemes — the SARTHI Schemes Management tab of Home Page Management: the सारथी योजना विभाग cards of the
  * public home page, and the section settings below them. The schemes are a listing like FAQ Management's: search,
  * sorting and paging, each row viewed, edited, switched on or off and deleted on its own, and moved up or down
  * while the table shows the website order.
@@ -254,7 +254,7 @@ export default function SchemesTab() {
           </>
         }
       >
-        The AMRUT Schemes cards of the public home page: each scheme&rsquo;s title, description, badge, last date and button, in display
+        The SARTHI Schemes cards of the public home page: each scheme&rsquo;s title, description, badge, last date and button, in display
         order.
       </SectionTabHead>
 

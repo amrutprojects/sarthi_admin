@@ -8,7 +8,7 @@ import { Can } from '../../auth';
  */
 export default function LmsPage() {
   useEffect(() => {
-    document.title = 'LMS integration — AMRUT × SUMAGO Admin';
+    document.title = 'LMS integration — SARTHI Admin';
   }, []);
   return (
     <NotAvailablePage

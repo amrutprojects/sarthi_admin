@@ -118,7 +118,7 @@ const inGroupOf = (g: ApiAdvisoryGroup) => ({ groupId: g.id, group: { id: g.id, 
 
 const section = (): ApiAdvisorySection => ({
   id: 's1',
-  heading: pair('अमृत कलश सल्लागार समिती', 'AMRUT Kalash Advisory Committee'),
+  heading: pair('सारथी सल्लागार समिती', 'Sarthi Advisory Committee'),
   subtitle: pair('तज्ज्ञ सल्लागार समिती सदस्य', 'The expert Advisory Committee members'),
   createdAt: '2026-10-01T10:00:00.000Z',
   updatedAt: '2026-10-02T10:00:00.000Z',
@@ -200,8 +200,8 @@ describe('Advisory Committee list', () => {
     expect(names()).toEqual(['Member 1', 'Member 2']);
 
     /* Section settings card */
-    expect(await screen.findByText('AMRUT Kalash Advisory Committee')).toBeInTheDocument();
-    expect(screen.getByText('अमृत कलश सल्लागार समिती')).toBeInTheDocument();
+    expect(await screen.findByText('Sarthi Advisory Committee')).toBeInTheDocument();
+    expect(screen.getByText('सारथी सल्लागार समिती')).toBeInTheDocument();
     expect(screen.getByText('The expert Advisory Committee members')).toBeInTheDocument();
   });
 
@@ -806,7 +806,7 @@ describe('Section settings', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save settings' }));
     await waitFor(() =>
       expect(advisoryService.updateSection).toHaveBeenCalledWith({
-        heading: pair('सल्लागार समिती', 'AMRUT Kalash Advisory Committee'),
+        heading: pair('सल्लागार समिती', 'Sarthi Advisory Committee'),
         subtitle: BLANK,
         expectedUpdatedAt: section().updatedAt,
       }),

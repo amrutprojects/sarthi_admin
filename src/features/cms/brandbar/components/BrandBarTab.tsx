@@ -84,7 +84,7 @@ function PartnerBoxSwitch({
 
 /*
  * Brand Bar — the Brand Bar tab of Home Page Management: the white bar directly under the top bar of the public
- * website, with the AMRUT Kalash title, the academy's full name in Marathi and in English, and the implementation
+ * website, with the Sarthi title, the academy's full name in Marathi and in English, and the implementation
  * partner at the right. One record, shown here as it reads and as the website draws it; Edit opens its form.
  *
  * The partner box also has a switch of its own here, so it can be hidden or shown again without opening the form.

@@ -7,12 +7,12 @@ export interface Bilingual {
 }
 
 /**
- * The white bar directly under the top bar of the website: the bold title (AMRUT KALASH), the academy's full name
+ * The white bar directly under the top bar of the website: the bold title (SARTHI), the academy's full name
  * in Marathi and in English underneath, and the implementation partner at the right.
  */
 export interface ApiBrandBar {
   id: string;
-  /** The bold title at the left ("AMRUT KALASH"); never blank. */
+  /** The bold title at the left ("SARTHI"); never blank. */
   title: string;
   /** The two full-name lines under the title, both shown whatever the visitor's language; a blank line is not shown. */
   fullName: Bilingual;

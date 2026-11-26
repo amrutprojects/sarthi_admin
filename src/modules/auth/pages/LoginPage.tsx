@@ -7,13 +7,6 @@ import { ApiError } from '../../../services/api-client';
 import { publicUrl } from '../../../utils/publicSite';
 
 /*
- * The programme figures on the sign-in screen's left panel. Fixed values, not the demo dataset's: the
- * dataset's own target, hours and centre count drive the rest of the mock data. `districts` is Maharashtra's 36
- * districts (real geography, also named in the panel text), not a count of sample records.
- */
-const LOGIN_FIGURES = { target: 2000, districts: 36, trainingHours: 500, approvedCentres: 20 };
-
-/*
  * Sign-in screen (design ported from assets/js/pages/public.js). Authenticates against the backend:
  * POST /api/v1/auth/login with email + password; errors from the API are shown inline.
  */
@@ -31,7 +24,7 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    document.title = 'Sign in — AMRUT × SUMAGO Admin';
+    document.title = 'Sign in — SARTHI Admin';
   }, []);
 
   if (status === 'authenticated') return <Navigate to={homePath({ permissions, hiddenMenus, portal })} replace />;
@@ -91,49 +84,23 @@ export default function LoginPage() {
         <div className="f ac gp10">
           <div>
             <b style={{ fontSize: 19, display: 'block', fontFamily: 'var(--serif)', letterSpacing: '.5px', color: '#DD792E' }}>
-              AMRUT KALASH
+              SARTHI
             </b>
             <span style={{ fontSize: 12, color: '#E3CBB4' }}>
               {T('कौशल्य विकास कार्यक्रम व्यवस्थापन पोर्टल', 'Skill Development Programme Management Portal')}
             </span>
           </div>
         </div>
-        <div style={{ marginTop: 52, maxWidth: 470 }}>
+        <div style={{ margin: 'auto 0', padding: '52px 0', maxWidth: 470 }}>
           <h1 style={{ color: '#fff', fontSize: 30, lineHeight: 1.25, fontFamily: 'var(--serif)' }}>
             {T('अर्जापासून प्रमाणपत्रापर्यंत — एकाच पोर्टलवर.', 'From application to certificate — one portal.')}
           </h1>
           <p style={{ color: '#F0D9C0', fontSize: 14.5, marginTop: 14 }}>
             {T(
-              'अमृत कलश २.० अंतर्गत मोबिलायझेशन, पडताळणी, प्रवेश, प्रशिक्षण, उपस्थिती, मूल्यमापन व प्रमाणपत्र — महाराष्ट्रातील ३६ जिल्ह्यांमध्ये, दोन स्वतंत्र प्रशिक्षण पद्धतींसह.',
-              'Mobilization, verification, enrollment, training, attendance, assessment and certification for AMRUT Kalash 2.0 — across 36 districts of Maharashtra, in two independent training modes.',
+              'सारथी २.० अंतर्गत मोबिलायझेशन, पडताळणी, प्रवेश, प्रशिक्षण, उपस्थिती, मूल्यमापन व प्रमाणपत्र — महाराष्ट्रातील ३६ जिल्ह्यांमध्ये, दोन स्वतंत्र प्रशिक्षण पद्धतींसह.',
+              'Mobilization, verification, enrollment, training, attendance, assessment and certification for Sarthi 2.0 — across 36 districts of Maharashtra, in two independent training modes.',
             )}
           </p>
-          <div className="f gp8 wrap mt18">
-            <span className="mode-tag mode-off" style={{ padding: '5px 11px' }}>
-              {T('ऑफलाइन — केंद्र व्यवस्थापित', 'OFFLINE — CENTRE MANAGED')}
-            </span>
-            <span className="mode-tag mode-on" style={{ padding: '5px 11px' }}>
-              {T('ऑनलाइन — केंद्रीय व्यवस्थापन', 'ONLINE — CENTRALLY MANAGED')}
-            </span>
-          </div>
-        </div>
-        <div className="auth-stat">
-          <div>
-            <b>{U.fmt(LOGIN_FIGURES.target)}</b>
-            <span>{T('कार्यक्रम लक्ष्य', 'Programme target')}</span>
-          </div>
-          <div>
-            <b>{LOGIN_FIGURES.districts}</b>
-            <span>{T('जिल्हे', 'Districts monitored')}</span>
-          </div>
-          <div>
-            <b>{LOGIN_FIGURES.trainingHours}</b>
-            <span>{T('प्रशिक्षण तास', 'Training hours')}</span>
-          </div>
-          <div>
-            <b>{LOGIN_FIGURES.approvedCentres}</b>
-            <span>{T('मंजूर केंद्रे', 'Approved centres')}</span>
-          </div>
         </div>
       </div>
 

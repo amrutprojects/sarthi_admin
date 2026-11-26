@@ -267,12 +267,8 @@ function ColumnChooser<T>({ columns, selected, onClose, onApply }: ColumnChooser
   const [sel, setSel] = useState(selected);
   const toggle = (k: string) => setSel((s) => (s.includes(k) ? s.filter((x) => x !== k) : [...s, k]));
   return createPortal(
-    <div
-      className="ov"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    /* Closed by its buttons only, as every dialog (components/ui/Overlay.tsx). */
+    <div className="ov">
       <div className="modal" role="dialog" aria-modal="true">
         <div className="modal-h">
           <h3>Choose visible columns</h3>

@@ -21,7 +21,7 @@ const STATE: Record<ApiKeyState, [string, string]> = {
 const isLive = (k: ApiKey) => k.state === 'ACTIVE' || k.state === 'EXPIRING';
 
 /*
- * API keys Amrut issues to the LMS (the LMS calls Amrut's /lms-integration endpoints with X-Api-Key). The list shows
+ * API keys Sarthi issues to the LMS (the LMS calls Sarthi's /lms-integration endpoints with X-Api-Key). The list shows
  * only each key's prefix; a new secret is shown once, in a dialog, and never kept by the page or the browser.
  */
 export default function ApiKeysPage() {
@@ -33,7 +33,7 @@ export default function ApiKeysPage() {
   const [issued, setIssued] = useState<IssuedApiKey | null>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
-    document.title = 'LMS API Keys — AMRUT × SUMAGO Admin';
+    document.title = 'LMS API Keys — SARTHI Admin';
   }, []);
 
   const refresh = () => void qc.invalidateQueries({ queryKey: lmsSyncKeys.apiKeys });
@@ -66,7 +66,7 @@ export default function ApiKeysPage() {
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'LMS API Keys' }]}
         title="LMS API Keys"
-        sub="Keys the LMS uses to match, create and correct Amrut students. Secrets are stored hashed and shown only once."
+        sub="Keys the LMS uses to match, create and correct Sarthi students. Secrets are stored hashed and shown only once."
         actions={
           can('createLmsApiKey') ? (
             <button type="button" className="btn primary" onClick={() => setDialog({ kind: 'generate' })}>
@@ -96,7 +96,7 @@ export default function ApiKeysPage() {
         {keys.isPending ? (
           <div className="skel" style={{ height: 160, margin: 14 }} aria-label="Loading API keys" />
         ) : !rows.length && !keys.isError ? (
-          <EmptyState title="No API keys yet" msg="Generate a key and give it to the LMS Super Admin for the Amrut tenant." />
+          <EmptyState title="No API keys yet" msg="Generate a key and give it to the LMS Super Admin for the Sarthi tenant." />
         ) : rows.length ? (
           <div className="tbl-wrap">
             <table className="tbl">

@@ -54,11 +54,11 @@ function ButtonLabel({ scheme, fallback }: { scheme: ApiScheme; fallback: Biling
 }
 
 /*
- * View Scheme — read-only detail page of one AMRUT scheme, reached from the View action (or a click on the row)
- * on the AMRUT Schemes tab of Home Page Management. Loads the saved record by its id.
+ * View Scheme — read-only detail page of one SARTHI scheme, reached from the View action (or a click on the row)
+ * on the SARTHI Schemes tab of Home Page Management. Loads the saved record by its id.
  */
 export default function SchemeView() {
-  usePageTitle('Scheme — AMRUT Schemes Management');
+  usePageTitle('Scheme — SARTHI Schemes Management');
   const { id = '' } = useParams();
   const go = useGo();
   const navigate = useNavigate();
@@ -122,7 +122,7 @@ export default function SchemeView() {
           <div className="card mb14">
             <div className="card-h">
               <h3>
-                Card preview <span className="sub">as the AMRUT Schemes section shows it</span>
+                Card preview <span className="sub">as the SARTHI Schemes section shows it</span>
               </h3>
             </div>
             <div className="card-b">
@@ -161,7 +161,7 @@ export default function SchemeView() {
                 ],
                 ['Display order', String(scheme.displayOrder)],
                 ['Status', <MasterStatusBadge isActive={scheme.isActive} />],
-                ['On the website', scheme.isActive ? 'Shown in the AMRUT Schemes section' : 'Hidden from the website'],
+                ['On the website', scheme.isActive ? 'Shown in the SARTHI Schemes section' : 'Hidden from the website'],
                 ['Created', fmtDateTime(scheme.createdAt)],
                 ['Last updated', fmtDateTime(scheme.updatedAt)],
               ]}

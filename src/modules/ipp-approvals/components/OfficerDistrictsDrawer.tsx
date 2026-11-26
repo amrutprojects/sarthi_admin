@@ -13,7 +13,7 @@ import { errorText } from '../utils';
 
 interface Props {
   officer: Officer;
-  /* Every officer, to show who else a district is with (a district may have several). */
+  /* Every officer, including inactive officers with saved district assignments. */
   officers: Officer[];
   withoutOfficer: DistrictWithoutOfficer[];
   onClose: () => void;
@@ -31,14 +31,14 @@ export default function OfficerDistrictsDrawer({ officer, officers, withoutOffic
   const options: MultiSelectOption[] = useMemo(
     () =>
       (districts.data ?? []).map((d) => {
-        const others = officers.filter((o) => o.id !== officer.id && o.isActive && o.districts.some((x) => x.id === d.id));
+        const others = officers.filter((o) => o.id !== officer.id && o.districts.some((x) => x.id === d.id));
         const waiting = withoutOfficer.find((w) => w.id === d.id)?.waiting;
         const note = others.length
           ? `with ${others.map((o) => o.name).join(', ')}`
           : waiting
             ? `${plural(waiting, 'application')} waiting, no officer`
             : null;
-        return { id: d.id, label: d.name, sub: d.code, note };
+        return { id: d.id, label: d.name, sub: d.code, note, disabled: others.length > 0 };
       }),
     [districts.data, officers, officer.id, withoutOfficer],
   );

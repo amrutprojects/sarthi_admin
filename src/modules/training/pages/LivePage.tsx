@@ -8,7 +8,7 @@ import { NotAvailablePage, NO_DATA_TEXT } from '../../../components/ui';
  */
 function LocalLivePage() {
   useEffect(() => {
-    document.title = 'Live training monitor — AMRUT × SUMAGO Admin';
+    document.title = 'Live training monitor — SARTHI Admin';
   }, []);
   return (
     <NotAvailablePage

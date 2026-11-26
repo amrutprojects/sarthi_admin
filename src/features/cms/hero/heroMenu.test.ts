@@ -29,7 +29,7 @@ describe('Home Hero Section menu', () => {
     expect(SIDEBAR_NAV.some((n) => !isNavGroup(n) && n.k === 'cms-hero')).toBe(false);
     expect(sidebarKey('cms-hero')).toBe('cms-home-page');
     expect(HOME_PAGE_TABS.filter((t) => t.menu === 'cms-hero').map((t) => [t.k, t.l])).toEqual([
-      ['hero', 'AMRUT Kalash – apply online'],
+      ['hero', 'Sarthi – apply online'],
       ['glance', 'Programme at a glance'],
     ]);
   });

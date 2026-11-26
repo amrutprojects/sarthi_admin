@@ -4,7 +4,7 @@
    strings for the public-facing site.
 
    NOTE ON SOURCES
-   Programme structure below follows the published AMRUT KALASH 2.0
+   Programme structure below follows the published SARTHI 2.0
    diploma structure (4 modules x 120 hours, 10 electives, eligibility,
    learning methodology, certification and application flow).
    The implementing-partner role is shown as SUMAGO INFOTECH PVT LTD
@@ -31,7 +31,7 @@
 
     navHome: { mr: 'मुख्यपृष्ठ', en: 'Home' },
     navAbout: { mr: 'अमृत विषयी', en: 'About AMRUT' },
-    navProgramme: { mr: 'अमृत कलश २.०', en: 'AMRUT Kalash 2.0' },
+    navProgramme: { mr: 'सारथी २.०', en: 'Sarthi 2.0' },
     navModules: { mr: 'मॉड्यूल्स', en: 'Modules' },
     navEligibility: { mr: 'पात्रता', en: 'Eligibility' },
     navApply: { mr: 'अर्ज कसा करावा', en: 'How to Apply' },
@@ -46,8 +46,8 @@
 
     dashTitle: { mr: 'कार्यक्रम प्रगती - थेट माहितीफलक', en: 'Programme Progress - Live Dashboard' },
     dashSub: {
-      mr: 'अमृत कलश २.० अंतर्गत महाराष्ट्रातील ३६ जिल्ह्यांमधील प्रशिक्षण प्रगतीचा सार्वजनिक आढावा.',
-      en: 'Public view of AMRUT Kalash 2.0 training progress across all 36 districts of Maharashtra.'
+      mr: 'सारथी २.० अंतर्गत महाराष्ट्रातील ३६ जिल्ह्यांमधील प्रशिक्षण प्रगतीचा सार्वजनिक आढावा.',
+      en: 'Public view of Sarthi 2.0 training progress across all 36 districts of Maharashtra.'
     },
     impact: { mr: 'अमृतचा प्रभाव', en: "AMRUT's Impact" },
     leadership: { mr: 'मान्यवर व संचालक मंडळ', en: 'Leadership & Governing Board' },
@@ -124,7 +124,7 @@
     { n: { mr: 'अमृत पर्यटन', en: 'AMRUT Tourism' }, d: { mr: 'पाहा महाराष्ट्र.. अमृतच्या नजरेतून', en: 'See Maharashtra through AMRUT' }, ico: 'globe' },
     { n: { mr: 'अमृत वर्ग', en: 'AMRUT Varg' }, d: { mr: 'विशेष गट उपक्रम', en: 'Special group initiative' }, ico: 'layers' },
     { n: { mr: 'अमृत ड्रोन मिशन', en: 'AMRUT Drone Mission' }, d: { mr: 'भारतीय आकाशाला सशक्त करणे', en: 'Empowering Indian skies' }, ico: 'play' },
-    { n: { mr: 'अमृत कलश २.०', en: 'AMRUT Kalash 2.0' }, d: { mr: 'कौशल्य विकास व रोजगारक्षमता', en: 'Skill development & employability' }, ico: 'award', active: true, link: '#/programme' }
+    { n: { mr: 'सारथी २.०', en: 'Sarthi 2.0' }, d: { mr: 'कौशल्य विकास व रोजगारक्षमता', en: 'Skill development & employability' }, ico: 'award', active: true, link: '#/programme' }
   ];
 
   /* ---------------------------------------------------------
@@ -132,7 +132,7 @@
      --------------------------------------------------------- */
   var schemes = [
     {
-      n: { mr: 'अमृत कलश २.० - कौशल्य प्रशिक्षण', en: 'AMRUT Kalash 2.0 - Skill Training' },
+      n: { mr: 'सारथी २.० - कौशल्य प्रशिक्षण', en: 'Sarthi 2.0 - Skill Training' },
       d: {
         mr: 'महाराष्ट्रातील खुल्या प्रवर्गातील आर्थिकदृष्ट्या दुर्बल घटकातील युवकांना २१ व्या शतकातील रोजगारक्षम कौशल्ये, संगणक कौशल्ये व इंग्रजी संभाषण कौशल्ये यांचे प्रशिक्षण देऊन रोजगार व स्वयंरोजगारक्षम बनविणे.',
         en: "Equipping economically weaker youth from the open category with 21st-century job-readiness skills, digital skills and English communication skills for employment and self-employment."
@@ -167,10 +167,10 @@
   ];
 
   /* ---------------------------------------------------------
-     AMRUT KALASH 2.0 - PROGRAMME DEFINITION
+     SARTHI 2.0 - PROGRAMME DEFINITION
      --------------------------------------------------------- */
   var kalash = {
-    title: { mr: 'अमृत कलश २.०', en: 'AMRUT KALASH 2.0' },
+    title: { mr: 'सारथी २.०', en: 'SARTHI 2.0' },
     expansion: {
       mr: 'अमृत - कौशल्य सुसंवादाद्वारे ज्ञानवृद्धी व शिकण्याची क्षमता',
       en: 'AMRUT - Knowledge Advancement and Learning Abilities through Skill Harmonization'
@@ -273,7 +273,7 @@
     proctoring: { mr: 'स्वयंचलित व कृत्रिम बुद्धिमत्ता (AI) प्रॉक्टर्ड मूल्यमापन, वैयक्तिक विद्यार्थी लॉगिनद्वारे.', en: 'Automated and Artificial Intelligence (AI) proctored assessment through personalised student logins.' },
 
     applySteps: [
-      { n: { mr: 'ऑनलाइन अर्ज', en: 'Online application' }, d: { mr: 'इच्छित बॅचसाठी अमृत कलश पोर्टलवर ऑनलाइन अर्ज करा व पात्रतेच्या कागदपत्रांच्या स्कॅन प्रती अपलोड करा. पसंतीचे केंद्र निवडा.', en: 'Apply online on the AMRUT Kalash portal for your desired batch, upload scanned proofs of eligibility and indicate your preferred centre.' } },
+      { n: { mr: 'ऑनलाइन अर्ज', en: 'Online application' }, d: { mr: 'इच्छित बॅचसाठी सारथी पोर्टलवर ऑनलाइन अर्ज करा व पात्रतेच्या कागदपत्रांच्या स्कॅन प्रती अपलोड करा. पसंतीचे केंद्र निवडा.', en: 'Apply online on the Sarthi portal for your desired batch, upload scanned proofs of eligibility and indicate your preferred centre.' } },
       { n: { mr: 'स्थानिक मदत (ऐच्छिक)', en: 'Local support (optional)' }, d: { mr: 'आवश्यक असल्यास जवळच्या अधिकृत अध्ययन केंद्राची (ALC) मदत घेता येईल.', en: 'Candidates may seek local support for the online application from a nearby Authorized Learning Centre (ALC).' } },
       { n: { mr: 'केंद्राकडून पडताळणी', en: 'Centre verification' }, d: { mr: 'निवडलेले ALC उमेदवाराची माहिती व कागदपत्रे तपासून पात्रतेची पुष्टी करते.', en: "The selected ALC verifies the candidate's data and supporting documents and confirms eligibility." } },
       { n: { mr: 'जिल्हा समन्वयक तपासणी', en: 'District coordinator review' }, d: { mr: 'संबंधित जिल्हा/क्लस्टर समन्वयक आपल्या लॉगिनमधून प्रत्येक उमेदवाराची माहिती पडताळतो.', en: 'The respective district / cluster coordinator verifies each candidate from their login.' } },
@@ -283,7 +283,7 @@
 
     certification: [
       { mr: 'प्रत्येक मॉड्यूल पूर्ण करून अंतिम परीक्षा उत्तीर्ण झाल्यावर मॉड्यूलनिहाय प्रमाणपत्र मिळते.', en: 'A module-wise certificate is issued on completing each module and passing its final examination.' },
-      { mr: 'चारही मॉड्यूल्स उत्तीर्ण झाल्यावर "अमृत कलश डिप्लोमा" प्रमाणपत्र मिळते.', en: 'On passing all four modules, the AMRUT-KALASH Diploma certificate is awarded.' },
+      { mr: 'चारही मॉड्यूल्स उत्तीर्ण झाल्यावर "सारथी डिप्लोमा" प्रमाणपत्र मिळते.', en: 'On passing all four modules, the SARTHI Diploma certificate is awarded.' },
       { mr: 'सर्व प्रमाणपत्रे अमृत व सुमागो इन्फोटेक यांच्याकडून संयुक्तरीत्या दिली जातात.', en: 'All certificates are jointly issued by AMRUT and SUMAGO INFOTECH PVT LTD' },
       { mr: 'प्रत्येक प्रमाणपत्र QR कोडद्वारे सार्वजनिकरीत्या पडताळता येते.', en: 'Every certificate carries a QR code for public verification.' },
       { mr: 'चौथे मॉड्यूल पूर्ण झाल्यावर अनामत रक्कम परत केली जाते.', en: 'The security deposit is refunded after the fourth module is completed.' }
@@ -291,7 +291,7 @@
 
     faqs: [
       {
-        q: { mr: 'अमृत कलश २.० म्हणजे काय?', en: 'What is AMRUT Kalash 2.0?' },
+        q: { mr: 'सारथी २.० म्हणजे काय?', en: 'What is Sarthi 2.0?' },
         a: { mr: 'अमृत व सुमागो इन्फोटेक यांच्या संयुक्त विद्यमाने राबविला जाणारा ४८० तासांचा, ४ मॉड्यूल्सचा कौशल्य विकास डिप्लोमा कार्यक्रम.', en: 'A 480-hour, four-module skill development diploma programme run by AMRUT in collaboration with SUMAGO INFOTECH PVT LTD' }
       },
       {
@@ -327,7 +327,7 @@
   var announcements = [
     {
       tag: { mr: 'प्रवेश सुरू', en: 'Admissions open' },
-      t: { mr: 'अमृत कलश २.० - कौशल्य प्रशिक्षणासाठी ऑनलाइन अर्ज करा', en: 'AMRUT Kalash 2.0 - apply online for skill training' },
+      t: { mr: 'सारथी २.० - कौशल्य प्रशिक्षणासाठी ऑनलाइन अर्ज करा', en: 'Sarthi 2.0 - apply online for skill training' },
       d: { mr: 'खुल्या प्रवर्गातील आर्थिकदृष्ट्या दुर्बल घटकातील युवकांसाठी ४८० तासांचा डिप्लोमा कार्यक्रम.', en: 'A 480-hour diploma programme for economically weaker youth from the open category.' },
       cta: { mr: 'आता अर्ज करा', en: 'Apply now' }, link: '#/apply'
     },
@@ -390,7 +390,7 @@
      --------------------------------------------------------- */
   var learnerStats = {
     title: { mr: 'तुमची प्रगती', en: 'Your numbers' },
-    sub: { mr: 'अमृत कलश २.० — चालू मॉड्यूल', en: 'AMRUT Kalash 2.0 — current module' },
+    sub: { mr: 'सारथी २.० — चालू मॉड्यूल', en: 'Sarthi 2.0 — current module' },
     overall: { mr: 'एकूण प्रगती', en: 'Overall progress' },
     hours: { mr: 'शिकण्याचे तास', en: 'Learning hours' },
     topics: { mr: 'पूर्ण झालेले विषय', en: 'Topics done' },

@@ -41,7 +41,7 @@ const renderCreate = () =>
 
 /* Fills a valid calendar for the first entity. */
 async function fillValid() {
-  await screen.findByRole('option', { name: 'Amrut Kalash (AMK)' });
+  await screen.findByRole('option', { name: 'Sarthi (AMK)' });
   await userEvent.selectOptions(screen.getByLabelText(/Entity/), ENTITY_ID);
   await userEvent.type(screen.getByLabelText(/Calendar Name/), '  Academic   Year 2026-27 ');
   setDate(screen.getByLabelText(/Valid From/), '2026-06-01');
@@ -61,7 +61,7 @@ describe('Calendar form (Add)', () => {
 
   it('shows the field messages on submit and sends nothing while invalid', async () => {
     renderCreate();
-    await screen.findByRole('option', { name: 'Amrut Kalash (AMK)' });
+    await screen.findByRole('option', { name: 'Sarthi (AMK)' });
     await save();
     expect(await screen.findByText('Select an entity.')).toBeInTheDocument();
     expect(screen.getByText('Enter a calendar name.')).toBeInTheDocument();
@@ -80,7 +80,7 @@ describe('Calendar form (Add)', () => {
 
   it('offers only the centres enabled for the chosen entity', async () => {
     renderCreate();
-    await screen.findByRole('option', { name: 'Amrut Kalash (AMK)' });
+    await screen.findByRole('option', { name: 'Sarthi (AMK)' });
     await userEvent.selectOptions(screen.getByLabelText(/Entity/), ENTITY_ID);
     await waitFor(() => expect(lmsOptions.centres).toHaveBeenCalledWith(ENTITY_ID));
     const centre = screen.getByLabelText(/Centre/);
@@ -187,7 +187,7 @@ describe('Calendar form (Add)', () => {
   it('says when no centre is enabled for the entity, leaving only the entity-wide calendar', async () => {
     vi.mocked(lmsOptions.centres).mockResolvedValue([]);
     renderCreate();
-    await screen.findByRole('option', { name: 'Amrut Kalash (AMK)' });
+    await screen.findByRole('option', { name: 'Sarthi (AMK)' });
     await userEvent.selectOptions(screen.getByLabelText(/Entity/), ENTITY_ID);
     expect(await screen.findByText(/No active centre is enabled for this entity/)).toBeInTheDocument();
     expect(within(screen.getByLabelText(/Centre/)).getAllByRole('option')).toHaveLength(1);

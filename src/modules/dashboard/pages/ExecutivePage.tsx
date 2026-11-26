@@ -10,7 +10,7 @@ const EmptyKpi = ({ label }: { label: string }) => <Kpi label={label} value={NO_
 
 export default function ExecutivePage() {
   useEffect(() => {
-    document.title = 'Executive Command Centre — AMRUT × SUMAGO Admin';
+    document.title = 'Executive Command Centre — SARTHI Admin';
   }, []);
 
   /* Live student figures (Applications / Eligible / Enrolled and the district heatmap). */

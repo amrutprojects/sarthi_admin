@@ -33,8 +33,8 @@ function BannerText({ own, fallback, what }: { own: Bilingual | null; fallback: 
 }
 
 /*
- * Page Banners — the title and subtitle in the banner at the top of five pages of the public website (About AMRUT,
- * FAQs, the AMRUT Kalash programme, Check Application Status and Verify Certificate), one row per page. Each half is
+ * Page Banners — the title and subtitle in the banner at the top of five pages of the public website (About SARTHI,
+ * FAQs, the Sarthi programme, Check Application Status and Verify Certificate), one row per page. Each half is
  * the page's own text when one was set, else the website's default. With cms-pagebanners.update each row has an Edit
  * button that opens PageBannerModal; without it the screen is read-only.
  *

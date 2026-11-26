@@ -48,7 +48,7 @@ export const variant = (over: Partial<ApiTrackVariant> = {}): ApiTrackVariant =>
   id: 'v1',
   courseModuleId: 'm3',
   trackId: 't7',
-  course: { id: 'c1', code: 'AK-DIP', title: 'Amrut Kalash Diploma', entityId: 'e1' },
+  course: { id: 'c1', code: 'AK-DIP', title: 'Sarthi Diploma', entityId: 'e1' },
   courseModule: { id: 'm3', moduleNumber: 3, title: 'Track Specialisation', coreHours: 300, oftHoursMin: 120, oftHoursMax: 180 },
   track: { id: 't7', code: 'T07', name: 'Cyber Security', isActive: true },
   status: 'DRAFT',
@@ -99,7 +99,7 @@ export const items: Partial<Record<ItemPath, unknown[]>> = {
 export const page = <T,>(rows: T[]) => ({ items: rows, meta: { page: 1, limit: 15, total: rows.length, totalPages: 1 } });
 
 export const courseOptions = [
-  { id: 'c1', code: 'AK-DIP', title: 'Amrut Kalash Diploma', entityId: 'e1' },
+  { id: 'c1', code: 'AK-DIP', title: 'Sarthi Diploma', entityId: 'e1' },
   { id: 'c2', code: 'PILOT', title: 'Pilot Course', entityId: 'e2' },
 ];
 

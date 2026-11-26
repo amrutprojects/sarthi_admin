@@ -133,7 +133,7 @@ function BrandBarForm({ bar }: { bar: ApiBrandBar }) {
               label="Title"
               required
               error={titleError}
-              hint="The bold text at the left of the bar, e.g. AMRUT KALASH."
+              hint="The bold text at the left of the bar, e.g. SARTHI."
             >
               <input
                 className="inp"

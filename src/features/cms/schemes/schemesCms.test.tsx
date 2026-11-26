@@ -119,7 +119,7 @@ describe('AMRUT Schemes list', () => {
   it('is a FAQ-style table: Sr. No., Order, Scheme, Link, Last date, Status, Updated and Action', async () => {
     vi.mocked(schemesService.list).mockResolvedValue([
       scheme(1, {
-        title: pair('अमृत कलश - कौशल्य प्रशिक्षण', 'AMRUT Kalash - Skill Training'),
+        title: pair('सारथी - कौशल्य प्रशिक्षण', 'Sarthi - Skill Training'),
         badge: pair('हा कार्यक्रम', 'This programme'),
         deadline: '2027-03-31',
         link: '/programme',
@@ -130,13 +130,13 @@ describe('AMRUT Schemes list', () => {
     ]);
     renderAt(TAB);
 
-    await screen.findByText('AMRUT Kalash - Skill Training');
+    await screen.findByText('Sarthi - Skill Training');
     expect(screen.getByRole('heading', { name: /^Schemes/ })).toHaveTextContent('Schemes live from the backend');
     expect(headings()).toEqual(['Sr. No.', 'Order', 'Scheme', 'Link', 'Last date', 'Status', 'Updated', 'Action']);
-    const kalash = row('AMRUT Kalash - Skill Training');
+    const kalash = row('Sarthi - Skill Training');
     /* English in the brand colour, Marathi underneath, as the FAQ question. */
-    expect(within(kalash).getByText('AMRUT Kalash - Skill Training')).toHaveClass('lnk');
-    expect(within(kalash).getByText('अमृत कलश - कौशल्य प्रशिक्षण')).toBeInTheDocument();
+    expect(within(kalash).getByText('Sarthi - Skill Training')).toHaveClass('lnk');
+    expect(within(kalash).getByText('सारथी - कौशल्य प्रशिक्षण')).toBeInTheDocument();
     expect(within(kalash).getByText('Highlighted')).toBeInTheDocument();
     expect(within(kalash).getByText('31 Mar 2027')).toBeInTheDocument();
     expect(within(kalash).getByText('/programme')).toBeInTheDocument();

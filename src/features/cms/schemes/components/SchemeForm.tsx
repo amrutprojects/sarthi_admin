@@ -98,7 +98,7 @@ export default function SchemeForm({
         <div className="card mb14">
           <div className="card-h">
             <h3>Card preview</h3>
-            <span className="muted fs12">As it will appear in the AMRUT Schemes section</span>
+            <span className="muted fs12">As it will appear in the SARTHI Schemes section</span>
           </div>
           <div className="card-b">
             <SchemeCardPreview
@@ -158,7 +158,7 @@ export default function SchemeForm({
             </div>
             <label className="f ac gp8 fs13 mt10">
               <input type="checkbox" checked={values.featured} onChange={(e) => set('featured', e.target.checked)} />
-              Highlight this card (saffron border, as for AMRUT Kalash)
+              Highlight this card (saffron border, as for Sarthi)
             </label>
           </div>
         </div>

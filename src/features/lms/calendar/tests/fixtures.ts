@@ -11,7 +11,7 @@ export const calendar = (over: Partial<ApiLmsCalendar> = {}): ApiLmsCalendar => 
   id: 'cal1',
   name: 'Academic Year 2026-27',
   entityId: ENTITY_ID,
-  entity: { id: ENTITY_ID, name: 'Amrut Kalash', code: 'AMK', isActive: true },
+  entity: { id: ENTITY_ID, name: 'Sarthi', code: 'AMK', isActive: true },
   centreId: null,
   centre: null,
   type: 'ENTITY',
@@ -32,7 +32,7 @@ export const calendar = (over: Partial<ApiLmsCalendar> = {}): ApiLmsCalendar => 
 export const page = <T,>(items: T[]) => ({ items, meta: { page: 1, limit: 15, total: items.length, totalPages: 1 } });
 
 export const entityOptions = [
-  { id: ENTITY_ID, name: 'Amrut Kalash', code: 'AMK' },
+  { id: ENTITY_ID, name: 'Sarthi', code: 'AMK' },
   { id: 'e2', name: 'Pilot Entity', code: 'PILOT' },
 ];
 

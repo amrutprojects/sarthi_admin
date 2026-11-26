@@ -29,7 +29,7 @@ export function ReadOnlyNote({ summary }: { summary: ApprovalSummary }) {
     return (
       <div className="mb14">
         <Callout tone="warn" title="No district is assigned to you yet. ">
-          You see and decide the applications of your districts. Ask an administrator to assign them under Officer Districts.
+          You see and decide the applications of your districts. Ask an administrator to assign them under Divisional Officer Mapping.
         </Callout>
       </div>
     );

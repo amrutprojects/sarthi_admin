@@ -39,7 +39,7 @@ export const VISIBILITY_UPDATE_ACTION: Record<SectionVisibilityKey, Action> = {
  */
 export const HIDE_CONSEQUENCE: Partial<Record<SectionVisibilityKey, string>> = {
   'top-bar': 'The Marathi / English language switch is part of the top bar and is hidden with it.',
-  'brand-bar': 'The AMRUT KALASH name and its link to the home page are hidden.',
+  'brand-bar': 'The SARTHI name and its link to the home page are hidden.',
   hero: 'The Programme at a glance card is inside the banner and is hidden with it.',
   glance: 'Only the card is hidden; the banner then uses the full width.',
   board: 'Hidden on the home page and on the About page.',

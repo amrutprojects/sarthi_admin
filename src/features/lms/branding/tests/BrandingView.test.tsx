@@ -40,7 +40,7 @@ describe('<BrandingView>', () => {
     renderView();
     const table = await screen.findByRole('table', { name: 'Settings' });
     const row = (label: string) => within(table).getByText(label).closest('tr') as HTMLTableRowElement;
-    expect(row('Display name')).toHaveTextContent('Amrut Kalash LMS');
+    expect(row('Display name')).toHaveTextContent('Sarthi LMS');
     expect(row('Display name')).toHaveTextContent('Set');
     expect(row('Primary and accent colour')).toHaveTextContent('Primary #1F4E79');
     expect(row('Support email')).toHaveTextContent('help@amrut.org');
@@ -48,9 +48,9 @@ describe('<BrandingView>', () => {
     expect(await within(table).findByText('English (en), Marathi (mr)')).toBeInTheDocument();
     expect(row('Logo')).toHaveTextContent('amk-logo.png · 512 × 128 px · 12.4 KB');
 
-    expect(await screen.findByRole('img', { name: 'Logo of Amrut Kalash' })).toHaveAttribute('src', 'blob:logo-preview');
+    expect(await screen.findByRole('img', { name: 'Logo of Sarthi' })).toHaveAttribute('src', 'blob:logo-preview');
     expect(brandingService.logoBlob).toHaveBeenCalledWith('e1', expect.anything());
-    expect(screen.getByText('Amrut Kalash', { selector: 'h1' })).toBeInTheDocument();
+    expect(screen.getByText('Sarthi', { selector: 'h1' })).toBeInTheDocument();
     expect(screen.queryByText(/Required setting not set/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Contrast warning/)).not.toBeInTheDocument();
   });
@@ -118,6 +118,6 @@ describe('<BrandingView>', () => {
     renderView();
     expect(await screen.findByText(/The logo file is missing/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(await screen.findByRole('img', { name: 'Logo of Amrut Kalash' })).toBeInTheDocument();
+    expect(await screen.findByRole('img', { name: 'Logo of Sarthi' })).toBeInTheDocument();
   });
 });

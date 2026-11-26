@@ -14,7 +14,7 @@ export interface ListState {
 
 export function useTitle(title: string) {
   useEffect(() => {
-    document.title = `${title} — AMRUT × SUMAGO Admin`;
+    document.title = `${title} — SARTHI Admin`;
   }, [title]);
 }
 

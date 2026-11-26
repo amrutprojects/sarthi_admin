@@ -1,6 +1,6 @@
 # AMRUT × SUMAGO — Admin Panel
 
-React single-page admin panel for the AMRUT × SUMAGO programme. It talks to the REST API in [amrut-kalash-api](https://github.com/amrutprojects/amrut-kalash-api) and is organised as feature modules.
+React single-page admin panel for the AMRUT × SUMAGO programme. It talks to the REST API in [sarthi-api](https://github.com/amrutprojects/sarthi-api) and is organised as feature modules.
 
 | Concern | Choice |
 |---|---|

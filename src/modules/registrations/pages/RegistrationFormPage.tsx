@@ -145,7 +145,7 @@ export default function RegistrationFormPage() {
   const educations = useMasterOptions(master('education'));
   const docTypes = useMasterOptions(master('documentType'));
   useEffect(() => {
-    document.title = 'Registration form — AMRUT × SUMAGO Admin';
+    document.title = 'Registration form — SARTHI Admin';
   }, []);
 
   const {
@@ -382,7 +382,7 @@ export default function RegistrationFormPage() {
           { l: 'Student Registration', link: '#/student-registrations' },
           { l: editing ? 'Edit student' : 'Registration form' },
         ]}
-        title={editing ? `Edit — ${existing.data?.name ?? ''}` : 'Registration Form — AMRUT KALASH'}
+        title={editing ? `Edit — ${existing.data?.name ?? ''}` : 'Registration Form — SARTHI'}
         sub={
           editing
             ? 'Change the details in steps 1–2; in step 3 replace or add documents and update barcodes, then save.'

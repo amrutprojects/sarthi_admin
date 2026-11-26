@@ -59,7 +59,7 @@ describe('Entity form (Add / Edit)', () => {
   it('creates an entity with the normalised values and the chosen centres and tracks', async () => {
     vi.mocked(lmsEntityService.create).mockResolvedValue(entity({ id: 'new1' }));
     renderWithProviders(<LmsEntityCreate />);
-    await userEvent.type(await screen.findByLabelText(/Entity Name/), '  Amrut   Kalash ');
+    await userEvent.type(await screen.findByLabelText(/Entity Name/), '  Sarthi ');
     /* The code box keeps only A–Z, 0–9 and hyphen, upper-cased. */
     await userEvent.type(screen.getByLabelText(/Entity Code/), 'amk_01');
     expect(screen.getByLabelText(/Entity Code/)).toHaveValue('AMK01');
@@ -70,7 +70,7 @@ describe('Entity form (Add / Edit)', () => {
 
     await waitFor(() =>
       expect(lmsEntityService.create).toHaveBeenCalledWith({
-        name: 'Amrut Kalash',
+        name: 'Sarthi',
         code: 'AMK01',
         description: null,
         defaultLanguage: 'mr',
@@ -87,7 +87,7 @@ describe('Entity form (Add / Edit)', () => {
       new ApiError('An entity with this code already exists', 409, 'CONFLICT', [{ field: 'code', message: 'This code is already used.' }]),
     );
     renderWithProviders(<LmsEntityCreate />);
-    await userEvent.type(await screen.findByLabelText(/Entity Name/), 'Amrut Kalash');
+    await userEvent.type(await screen.findByLabelText(/Entity Name/), 'Sarthi');
     await userEvent.type(screen.getByLabelText(/Entity Code/), 'AMK');
     await userEvent.selectOptions(screen.getByLabelText(/Default Language/), 'en');
     await save();
@@ -113,7 +113,7 @@ describe('Entity form (Add / Edit)', () => {
       </Routes>,
       { route: '/lms/entities/e1/edit' },
     );
-    expect(await screen.findByDisplayValue('Amrut Kalash')).toBeInTheDocument();
+    expect(await screen.findByDisplayValue('Sarthi')).toBeInTheDocument();
     const old = await screen.findByLabelText(/Old Centre \(inactive\)/);
     expect(old).toBeChecked();
     expect(old).toBeEnabled();

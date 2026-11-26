@@ -15,7 +15,7 @@ const PROJECT_TEXT: BiText = {
  */
 export default function SettingsPage() {
   useEffect(() => {
-    document.title = 'System settings — AMRUT × SUMAGO Admin';
+    document.title = 'System settings — SARTHI Admin';
   }, []);
   return (
     <div className="page">

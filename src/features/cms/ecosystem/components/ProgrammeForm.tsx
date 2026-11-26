@@ -98,7 +98,7 @@ export default function ProgrammeForm({
         <div className="card mb14">
           <div className="card-h">
             <h3>Card preview</h3>
-            <span className="muted fs12">As it will appear in the अमृत प्रणाली section</span>
+            <span className="muted fs12">As it will appear in the सारथी प्रणाली section</span>
           </div>
           <div className="card-b">
             <CardPreview
@@ -125,7 +125,7 @@ export default function ProgrammeForm({
               onBlur={(half) => touch(`name.${half}`)}
               errorMr={show('name.mr')}
               errorEn={show('name.en')}
-              hint="e.g. अमृत कलश / AMRUT Kalash."
+              hint="e.g. सारथी / Sarthi."
             />
             <div className="mt10">
               <BilingualField

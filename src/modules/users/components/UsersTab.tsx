@@ -11,10 +11,16 @@ import { useDeleteUser, useReplaceUserRoles, useSetUserStatus, useUsers } from '
 import type { User, UserListParams } from '../types/user.types';
 import { toggleRole } from './roleSelection';
 import { CreateUserDialog, EditUserDialog } from './UserDialogs';
+import UserDetailsDrawer from './UserDetailsDrawer';
 import UserFilters, { type UserFilterValues } from './UserFilters';
 import UserTable from './UserTable';
 
-type Dialog = { type: 'create' } | { type: 'edit'; user: User } | { type: 'roles'; user: User } | { type: 'delete'; user: User };
+type Dialog =
+  | { type: 'create' }
+  | { type: 'view'; user: User }
+  | { type: 'edit'; user: User }
+  | { type: 'roles'; user: User }
+  | { type: 'delete'; user: User };
 const PAGE_SIZE = 20;
 
 /*
@@ -75,6 +81,13 @@ export default function UsersTab() {
     const self = u.id === me?.id;
     return (
       <div className="tw-flex tw-flex-wrap tw-gap-1">
+        {/* The row's name is read out ("View Asha Patil"); not aria-label, which the table styles draw as an icon button. */}
+        {can('viewUsers') ? (
+          <button type="button" className="btn xs tw-relative" onClick={() => setDialog({ type: 'view', user: u })}>
+            View
+            <span className="tw-sr-only"> {u.name}</span>
+          </button>
+        ) : null}
         {can('updateUser') ? (
           <button type="button" className="btn xs" onClick={() => setDialog({ type: 'edit', user: u })}>
             Edit
@@ -158,6 +171,7 @@ export default function UsersTab() {
       </div>
 
       {dialog?.type === 'create' ? <CreateUserDialog roles={can('assignRoles') ? (roles.data ?? []) : []} onClose={close} /> : null}
+      {dialog?.type === 'view' ? <UserDetailsDrawer user={dialog.user} readAccount onClose={close} /> : null}
       {dialog?.type === 'edit' ? <EditUserDialog user={dialog.user} onClose={close} /> : null}
       {dialog?.type === 'roles' ? <UserRolesDrawer user={dialog.user} onClose={close} /> : null}
       {dialog?.type === 'delete' ? (

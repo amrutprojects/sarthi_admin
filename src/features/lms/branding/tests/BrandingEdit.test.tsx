@@ -51,7 +51,7 @@ describe('Branding & Settings edit form', () => {
 
   it('builds the fields from the catalogue and keeps the default language locked on', async () => {
     renderEdit();
-    expect(await screen.findByLabelText('Display name')).toHaveAttribute('placeholder', 'Amrut Kalash');
+    expect(await screen.findByLabelText('Display name')).toHaveAttribute('placeholder', 'Sarthi');
     expect(screen.getByRole('heading', { name: 'Branding' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Contact' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
@@ -173,7 +173,7 @@ describe('Branding & Settings edit form', () => {
     await user.click(screen.getByRole('button', { name: 'Upload logo' }));
     await waitFor(() => expect(brandingService.uploadLogo).toHaveBeenCalledWith('e1', png));
     /* The new logo is read through the authenticated endpoint and shown from a blob URL. */
-    expect(await screen.findByRole('img', { name: 'Logo of Amrut Kalash' })).toHaveAttribute('src', 'blob:logo-preview');
+    expect(await screen.findByRole('img', { name: 'Logo of Sarthi' })).toHaveAttribute('src', 'blob:logo-preview');
     expect(brandingService.logoBlob).toHaveBeenCalledWith('e1', expect.anything());
   });
 
@@ -271,10 +271,10 @@ describe('Branding & Settings edit form', () => {
     vi.mocked(brandingService.get).mockResolvedValue(configured());
     vi.mocked(brandingService.removeLogo).mockResolvedValue(unset());
     renderEdit();
-    expect(await screen.findByRole('img', { name: 'Logo of Amrut Kalash' })).toHaveAttribute('src', 'blob:logo-preview');
+    expect(await screen.findByRole('img', { name: 'Logo of Sarthi' })).toHaveAttribute('src', 'blob:logo-preview');
     await userEvent.click(screen.getByRole('button', { name: 'Remove logo' }));
     const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText(/Remove the logo of Amrut Kalash\?/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Remove the logo of Sarthi\?/)).toBeInTheDocument();
     expect(brandingService.removeLogo).not.toHaveBeenCalled();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Remove logo' }));
     await waitFor(() => expect(brandingService.removeLogo).toHaveBeenCalledWith('e1'));

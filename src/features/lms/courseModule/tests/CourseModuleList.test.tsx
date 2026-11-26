@@ -168,7 +168,7 @@ describe('<CourseModuleList>', () => {
 
     await userEvent.type(within(dialog).getByLabelText(/Syllabus Reference/), '  Final syllabus v1 ');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Continue' }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('Create modules 2, 3 and 4 of Amrut Kalash Programme (AKP)');
+    expect(screen.getByRole('dialog')).toHaveTextContent('Create modules 2, 3 and 4 of Sarthi Programme (AKP)');
     expect(svc.createPrescribed).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole('button', { name: 'Yes, create modules' }));
     await waitFor(() => expect(svc.createPrescribed).toHaveBeenCalledWith({ courseId: COURSE_ID, syllabusRef: 'Final syllabus v1' }));

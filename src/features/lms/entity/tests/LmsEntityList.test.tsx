@@ -36,7 +36,7 @@ describe('<LmsEntityList>', () => {
 
   it('lists the entities with their selections, status and Sr. No., and the KPI totals', async () => {
     renderWithProviders(<LmsEntityList />);
-    const row = (await screen.findByText('Amrut Kalash')).closest('tr') as HTMLTableRowElement;
+    const row = (await screen.findByText('Sarthi')).closest('tr') as HTMLTableRowElement;
     /* Sr. No., name, code, centres, tracks, language · time zone, status. */
     expect(row.cells[0]).toHaveTextContent('1');
     expect(row.cells[2]).toHaveTextContent('AMK');
@@ -65,28 +65,28 @@ describe('<LmsEntityList>', () => {
     expect(await screen.findByText(/Database unavailable/)).toBeInTheDocument();
     vi.mocked(lmsEntityService.list).mockResolvedValue(page([entity()]));
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(await screen.findByText('Amrut Kalash')).toBeInTheDocument();
+    expect(await screen.findByText('Sarthi')).toBeInTheDocument();
   });
 
   it('shows the write actions only for the permissions held', async () => {
     const { unmount } = renderWithProviders(<LmsEntityList />);
-    await screen.findByText('Amrut Kalash');
+    await screen.findByText('Sarthi');
     expect(screen.queryByRole('button', { name: /Add Entity/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Edit Amrut Kalash' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('switch', { name: /Amrut Kalash/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Delete Amrut Kalash' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'View Amrut Kalash' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit Sarthi' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /Sarthi/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Delete Sarthi' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View Sarthi' })).toBeInTheDocument();
     unmount();
 
     permissions.add('createLmsEntity');
     permissions.add('updateLmsEntity');
     permissions.add('deleteLmsEntity');
     renderWithProviders(<LmsEntityList />);
-    await screen.findByText('Amrut Kalash');
+    await screen.findByText('Sarthi');
     expect(screen.getByRole('button', { name: /Add Entity/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Edit Amrut Kalash' })).toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: 'Amrut Kalash: active' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Delete Amrut Kalash' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit Sarthi' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Sarthi: active' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete Sarthi' })).toBeInTheDocument();
   });
 
   it('asks for confirmation before deactivating and deleting', async () => {
@@ -95,21 +95,21 @@ describe('<LmsEntityList>', () => {
     vi.mocked(lmsEntityService.setStatus).mockResolvedValue(entity({ isActive: false }));
     vi.mocked(lmsEntityService.remove).mockResolvedValue();
     renderWithProviders(<LmsEntityList />);
-    await screen.findByText('Amrut Kalash');
+    await screen.findByText('Sarthi');
 
-    await userEvent.click(screen.getByRole('switch', { name: 'Amrut Kalash: active' }));
-    expect(screen.getByText('Are you sure you want to deactivate the entity Amrut Kalash?')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('switch', { name: 'Sarthi: active' }));
+    expect(screen.getByText('Are you sure you want to deactivate the entity Sarthi?')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Yes, deactivate' }));
     await waitFor(() => expect(lmsEntityService.setStatus).toHaveBeenCalledWith('e1', false));
 
-    await userEvent.click(screen.getByRole('button', { name: 'Delete Amrut Kalash' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Delete Sarthi' }));
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
     await waitFor(() => expect(lmsEntityService.remove).toHaveBeenCalledWith('e1'));
   });
 
   it('sends the status, centre and track filters to the API', async () => {
     renderWithProviders(<LmsEntityList />);
-    await screen.findByText('Amrut Kalash');
+    await screen.findByText('Sarthi');
     await screen.findByRole('option', { name: 'Pune Main Centre (TC0003)' });
     await userEvent.selectOptions(screen.getByLabelText('Enabled Centre'), 'c3');
     await waitFor(() => expect(lmsEntityService.list).toHaveBeenLastCalledWith(expect.objectContaining({ centreId: 'c3', page: 1 })));
@@ -124,13 +124,13 @@ describe('<LmsEntityList>', () => {
     permissions.add('viewLmsEntities');
     permissions.add('updateLmsEntity');
     const { unmount } = renderWithProviders(<LmsEntityList />);
-    await screen.findByText('Amrut Kalash');
+    await screen.findByText('Sarthi');
     expect(screen.queryByRole('switch', { name: 'Show deleted' })).not.toBeInTheDocument();
     unmount();
 
     permissions.add('deleteLmsEntity');
     renderWithProviders(<LmsEntityList />);
-    await screen.findByText('Amrut Kalash');
+    await screen.findByText('Sarthi');
     expect(screen.getByRole('switch', { name: 'Show deleted' })).toHaveAttribute('aria-checked', 'false');
   });
 
@@ -145,7 +145,7 @@ describe('<LmsEntityList>', () => {
       .mockRejectedValueOnce(new ApiError('An entity with this code already exists', 409, 'CONFLICT', [{ field: 'code', message: 'This code is already used.' }]))
       .mockResolvedValueOnce(gone);
     renderWithProviders(<LmsEntityList />);
-    await screen.findByText('Amrut Kalash');
+    await screen.findByText('Sarthi');
 
     await userEvent.click(screen.getByRole('switch', { name: 'Show deleted' }));
     expect(lmsEntityService.list).toHaveBeenLastCalledWith(expect.objectContaining({ deleted: true, page: 1 }));

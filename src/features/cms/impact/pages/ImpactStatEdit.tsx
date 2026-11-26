@@ -15,7 +15,7 @@ import { statChanges, statToForm } from '../validation/impact.validation';
  * opened at; a save over someone else's newer edit is refused rather than overwriting it.
  */
 export default function ImpactStatEdit() {
-  usePageTitle('Edit Statistic — AMRUT Impact Management');
+  usePageTitle('Edit Statistic — SARTHI Impact Management');
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const can = useCan();
@@ -33,7 +33,7 @@ export default function ImpactStatEdit() {
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
       {s && !can('updateImpactStat') ? (
         <Callout tone="warn" title="You can view this section but not edit statistics">
-          Editing a statistic needs the &ldquo;Update AMRUT Impact Management&rdquo; permission.
+          Editing a statistic needs the &ldquo;Update SARTHI Impact Management&rdquo; permission.
         </Callout>
       ) : null}
       {s && can('updateImpactStat') ? (

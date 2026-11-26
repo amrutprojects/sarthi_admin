@@ -18,14 +18,14 @@ interface ContactSectionFormProps {
   /* The caller saves and navigates; this component only reports. */
   onSave: (payload: UpdateContactPageInput) => Promise<void>;
   backTo: string;
-  /* What is being saved, for the confirmation: "the AMRUT contact details". */
+  /* What is being saved, for the confirmation: "the SARTHI contact details". */
   confirmName: string;
 }
 
 const FORM_ID = 'cms-contact-section-form';
 
 /*
- * One section of the Contact page — page information, the AMRUT card, the implementation partner
+ * One section of the Contact page — page information, the SARTHI card, the implementation partner
  * card or the Helpline & WhatsApp details — on its own page (no modal), with only that section's fields.
  *
  * Behaviour matches the other CMS forms: validate on submit, re-validate a field once it has been
@@ -285,7 +285,7 @@ export default function ContactSectionForm({ page, section, onSave, backTo, conf
                   id="cp-wa-number"
                   label="WhatsApp number"
                   error={show('whatsappNumber')}
-                  hint="Digits with country code, e.g. 919730151450. Leave blank to use the AMRUT phone number above."
+                  hint="Digits with country code, e.g. 919730151450. Leave blank to use the SARTHI phone number above."
                 >
                   <input
                     className="inp"

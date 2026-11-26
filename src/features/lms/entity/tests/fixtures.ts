@@ -12,7 +12,7 @@ export const formOptions: LmsEntityFormOptions = {
 
 export const entity = (over: Partial<ApiLmsEntity> = {}): ApiLmsEntity => ({
   id: 'e1',
-  name: 'Amrut Kalash',
+  name: 'Sarthi',
   code: 'AMK',
   description: 'Programme learning environment',
   defaultLanguage: 'mr',

@@ -10,7 +10,7 @@ import * as S from '../../../services/geography';
 export default function TalukaDetailPage() {
   const { id = '', t: rawT = '' } = useParams();
   useEffect(() => {
-    document.title = 'Taluka — AMRUT × SUMAGO Admin';
+    document.title = 'Taluka — SARTHI Admin';
   }, []);
 
   const d = S.district(id);

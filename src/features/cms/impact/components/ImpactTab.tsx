@@ -46,7 +46,7 @@ const LIST: ClientListOptions<ApiImpactStat> = {
 };
 
 /*
- * AMRUT's Impact — the AMRUT Impact Management tab of Home Page Management: the AMRUT's Impact (अमृतचा प्रभाव)
+ * SARTHI's Impact — the SARTHI Impact Management tab of Home Page Management: the SARTHI's Impact (सारथीचा प्रभाव)
  * figures of the public home page as a listing like FAQ Management's, and the section settings under them.
  *
  * Every action names its card by id, never by its position on screen, so a list that has moved on
@@ -221,13 +221,13 @@ export default function ImpactTab() {
           </>
         }
       >
-        The AMRUT&rsquo;s Impact figures of the public home page: each card&rsquo;s value and label, in display order.
+        The SARTHI&rsquo;s Impact figures of the public home page: each card&rsquo;s value and label, in display order.
       </SectionTabHead>
 
       <div className="mb14">
         <Callout tone="info" title="These figures are entered by hand">
           Each value is shown on the website exactly as typed here; none of them is counted automatically. In particular, &ldquo;Schemes
-          running&rdquo; does not update from AMRUT Schemes Management — update it here when schemes are added or removed.
+          running&rdquo; does not update from SARTHI Schemes Management — update it here when schemes are added or removed.
         </Callout>
       </div>
 

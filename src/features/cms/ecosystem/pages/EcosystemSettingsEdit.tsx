@@ -24,12 +24,12 @@ import {
 const FORM_ID = 'cms-ecosystem-settings-form';
 
 /*
- * Section settings — the public heading (अमृत प्रणाली by default) and subtitle above the cards, the
+ * Section settings — the public heading (सारथी प्रणाली by default) and subtitle above the cards, the
  * default label of each card's link, and whether the section is shown at all. Kept apart from the
  * cards, and independent of this module's own name in the admin panel.
  */
 export default function EcosystemSettingsEdit() {
-  usePageTitle('Section Settings — The AMRUT Ecosystem');
+  usePageTitle('Section Settings — The SARTHI Ecosystem');
   const can = useCan();
   const detail = useApiData(() => ecosystemService.getSection(), []);
 
@@ -44,7 +44,7 @@ export default function EcosystemSettingsEdit() {
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
       {detail.data && !can('updateEcosystemProgramme') ? (
         <Callout tone="warn" title="You can view this section but not change it">
-          Editing the section settings needs the &ldquo;Update The AMRUT Ecosystem&rdquo; permission.
+          Editing the section settings needs the &ldquo;Update The SARTHI Ecosystem&rdquo; permission.
         </Callout>
       ) : null}
       {detail.data && can('updateEcosystemProgramme') ? <SettingsForm key={detail.data.updatedAt} section={detail.data} /> : null}

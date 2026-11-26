@@ -13,7 +13,7 @@ import { emptyStatForm, statPayload } from '../validation/impact.validation';
 
 /* Add New Statistic — a dedicated page, reached from the button on the listing. */
 export default function ImpactStatCreate() {
-  usePageTitle('Add Statistic — AMRUT Impact Management');
+  usePageTitle('Add Statistic — SARTHI Impact Management');
   const navigate = useNavigate();
   const can = useCan();
   /*
@@ -28,7 +28,7 @@ export default function ImpactStatCreate() {
       <PageHead
         crumbs={[...IMPACT_CRUMBS, { l: 'Add New Statistic' }]}
         title="Add New Statistic"
-        sub="Adds a card to the AMRUT's Impact section of the public home page. The label is entered in Marathi and English — the site defaults to Marathi."
+        sub="Adds a card to the SARTHI's Impact section of the public home page. The label is entered in Marathi and English — the site defaults to Marathi."
         back={<BackButton to={IMPACT_TAB_PATH} />}
       />
       {can('createImpactStat') ? (
@@ -50,7 +50,7 @@ export default function ImpactStatCreate() {
         />
       ) : (
         <Callout tone="warn" title="You can view this section but not add statistics">
-          Adding a statistic needs the &ldquo;Add AMRUT Impact Management&rdquo; permission.
+          Adding a statistic needs the &ldquo;Add SARTHI Impact Management&rdquo; permission.
         </Callout>
       )}
     </div>

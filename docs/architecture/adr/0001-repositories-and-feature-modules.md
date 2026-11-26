@@ -5,7 +5,7 @@
 
 ## Context
 
-The brief describes one repository with `frontend/` and `backend/`. The project already has two GitHub repositories (`amrut-kalash-admin`, `amrut-kalash-api`) and the team chose to keep them separate. The panel was organised by page area (`pages/<area>/`), with one global `services/` folder. Most screens still read the original portal's sample data (`src/legacy`).
+The brief describes one repository with `frontend/` and `backend/`. The project already has two GitHub repositories (`sarthi-admin`, `sarthi-api`) and the team chose to keep them separate. The panel was organised by page area (`pages/<area>/`), with one global `services/` folder. Most screens still read the original portal's sample data (`src/legacy`).
 
 ## Decision
 

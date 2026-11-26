@@ -11,22 +11,22 @@ export interface PageBannerEntry {
   /** The banner title the website shows while the page has none of its own. */
   title: Bilingual;
   /**
-   * The subtitle it shows then; null for About AMRUT, whose default subtitle is not fixed text but the opening of the
-   * About AMRUT description (About AMRUT Management).
+   * The subtitle it shows then; null for About SARTHI, whose default subtitle is not fixed text but the opening of the
+   * About SARTHI description (About SARTHI Management).
    */
   subtitle: Bilingual | null;
 }
 
 /* What the About page shows under its title by default, described rather than quoted (it follows the description). */
-export const ABOUT_DEFAULT_SUBTITLE = 'The first 160 characters of the About AMRUT description';
+export const ABOUT_DEFAULT_SUBTITLE = 'The first 160 characters of the About SARTHI description';
 
 /* The five pages, in list order, with the website's own banner text (content/strings.ts, content/kalash.ts, the pages). */
 export const PAGE_BANNERS: readonly PageBannerEntry[] = [
   {
     key: 'about',
-    page: 'About AMRUT',
+    page: 'About SARTHI',
     path: '/about',
-    title: { en: 'About AMRUT', mr: 'अमृत विषयी माहिती' },
+    title: { en: 'About SARTHI', mr: 'सारथी विषयी माहिती' },
     subtitle: null,
   },
   {
@@ -38,12 +38,12 @@ export const PAGE_BANNERS: readonly PageBannerEntry[] = [
   },
   {
     key: 'programme',
-    page: 'AMRUT Kalash programme',
+    page: 'Sarthi programme',
     path: '/programme',
-    title: { en: 'AMRUT KALASH', mr: 'अमृत कलश' },
+    title: { en: 'SARTHI', mr: 'सारथी' },
     subtitle: {
-      en: 'AMRUT - Knowledge Advancement and Learning Abilities through Skill Harmonization',
-      mr: 'अमृत - कौशल्य सुसंवादाद्वारे ज्ञानवृद्धी व शिकण्याची क्षमता',
+      en: 'SARTHI - Knowledge Advancement and Learning Abilities through Skill Harmonization',
+      mr: 'सारथी - कौशल्य सुसंवादाद्वारे ज्ञानवृद्धी व शिकण्याची क्षमता',
     },
   },
   {

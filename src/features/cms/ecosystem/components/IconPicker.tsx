@@ -6,7 +6,7 @@ import { ECOSYSTEM_ICONS } from '../constants';
  * button with its glyph and name, the chosen one marked. Only listed identifiers can be chosen, so the
  * form can never send markup or an unknown name.
  *
- * The list, the ids and the hint default to The AMRUT Ecosystem's cards; another section passes its own
+ * The list, the ids and the hint default to The SARTHI Ecosystem's cards; another section passes its own
  * (Quick Actions: its tiles' icons).
  */
 export default function IconPicker({

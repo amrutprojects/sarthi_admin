@@ -310,7 +310,7 @@ export function validateSectionForm(v: SectionFormValues): FieldErrors<AdvisoryF
 
 /*
  * A group name, required in both languages because the website prints it as a heading in the visitor's
- * language. Any characters: it is often an organisation's full name, "ACADEMY OF … (AMRUT)".
+ * language. Any characters: it is often an organisation's full name, "ACADEMY OF … (SARTHI)".
  */
 export function validateGroupForm(v: GroupFormValues): FieldErrors<AdvisoryField> {
   const errors: FieldErrors<AdvisoryField> = {};

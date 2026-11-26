@@ -17,7 +17,7 @@ const CHANGED = '2026-11-17T10:00:00.000Z';
 const ENGLISH = [
   'Home',
   'About AMRUT',
-  'AMRUT Kalash',
+  'Sarthi',
   'AMRUT Advisory Committee',
   'Modules',
   'Eligibility',
@@ -29,8 +29,8 @@ const ENGLISH = [
 const MARATHI = [
   'मुख्यपृष्ठ',
   'अमृत विषयी',
-  'अमृत कलश',
-  'अमृत कलश सल्लागार समिती',
+  'सारथी',
+  'सारथी सल्लागार समिती',
   'मॉड्यूल्स',
   'पात्रता',
   'अर्ज कसा करावा',

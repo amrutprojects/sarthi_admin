@@ -90,7 +90,7 @@ interface AdvisoryQuery extends MasterQuery {
 const inGroup = (m: ApiAdvisoryMember, group: string) => group === '' || (group === NO_GROUP ? !m.groupId : m.groupId === group);
 
 /*
- * Advisory Committee Management — the website's Advisory Committee page (अमृत कलश सल्लागार समिती): its heading
+ * Advisory Committee Management — the website's Advisory Committee page (सारथी सल्लागार समिती): its heading
  * and subtitle, and the Advisory Committee members listed on it. The list works like Board Members Management's:
  * search, sorting and paging, each Advisory Committee member viewed, edited, shown or hidden and deleted on its own, and moved up
  * or down while the table shows the website order.
@@ -293,7 +293,7 @@ export default function AdvisoryList() {
       <PageHead
         crumbs={[{ l: 'Dashboard', link: '/dashboard' }, { l: 'CMS' }, { l: ADVISORY_TITLE }]}
         title={ADVISORY_TITLE}
-        sub="The website's Advisory Committee page (अमृत कलश सल्लागार समिती): its heading and subtitle, and the Advisory Committee members listed on it, in Marathi and English."
+        sub="The website's Advisory Committee page (सारथी सल्लागार समिती): its heading and subtitle, and the Advisory Committee members listed on it, in Marathi and English."
         back={<BackButton to="/dashboard" />}
         actions={
           <div className="f ac gp8 wrap">

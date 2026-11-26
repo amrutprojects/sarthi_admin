@@ -10,7 +10,7 @@ export const OTHER_COURSE_ID = '22222222-2222-4222-8222-222222222222';
 export const courseModule = (over: Partial<ApiCourseModule> = {}): ApiCourseModule => ({
   id: 'm1',
   courseId: COURSE_ID,
-  course: { id: COURSE_ID, code: 'AKP', title: 'Amrut Kalash Programme', entityId: 'e1' },
+  course: { id: COURSE_ID, code: 'AKP', title: 'Sarthi Programme', entityId: 'e1' },
   moduleNumber: 1,
   title: 'Personality Development and Communication',
   description: null,
@@ -52,7 +52,7 @@ export const page = <T,>(items: T[]) => ({ items, meta: { page: 1, limit: 15, to
 
 /* GET /lms/courses/options rows. */
 export const courseFeed: CourseOption[] = [
-  { id: COURSE_ID, code: 'AKP', title: 'Amrut Kalash Programme', entityId: 'e1' },
+  { id: COURSE_ID, code: 'AKP', title: 'Sarthi Programme', entityId: 'e1' },
   { id: OTHER_COURSE_ID, code: 'PIL', title: 'Pilot Programme', entityId: 'e1' },
 ];
 

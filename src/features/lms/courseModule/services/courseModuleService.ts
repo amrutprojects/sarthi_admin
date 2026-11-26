@@ -55,7 +55,7 @@ export interface CourseModulePage {
   deleted?: boolean;
 }
 
-/* "Amrut Kalash Programme (AKP)": a course option (lmsOptions.courses) or a module's course summary. */
+/* "Sarthi Programme (AKP)": a course option (lmsOptions.courses) or a module's course summary. */
 export const courseLabel = (c: { code: string; title: string }) => (c.code ? `${c.title} (${c.code})` : c.title);
 
 export const courseModuleService = {

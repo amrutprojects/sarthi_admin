@@ -29,7 +29,7 @@ vi.mock('../../../modules/auth/auth-context', () => ({
 const pair = (mr: string, en: string): Bilingual => ({ mr, en });
 const ALL = ['cms-brandbar.view', 'cms-brandbar.update'];
 /* The seeded bar: what the website showed before it could be managed. */
-const TITLE = 'AMRUT KALASH';
+const TITLE = 'SARTHI';
 const FULL_NAME = pair(
   'अमृत - महाराष्ट्र संशोधन, उन्नती व प्रशिक्षण प्रबोधिनी',
   'Academy of Maharashtra Research, Upliftment and Training',
@@ -258,19 +258,19 @@ describe('Edit Brand Bar', () => {
     expect(screen.getByLabelText('Partner name')).toHaveValue(PARTNER);
 
     await userEvent.clear(title);
-    await userEvent.type(title, '  AMRUT   Kalash ');
+    await userEvent.type(title, '  Sarthi ');
     await userEvent.clear(screen.getByLabelText('Full name (English)'));
     await userEvent.clear(screen.getByLabelText('Partner name'));
     await userEvent.type(screen.getByLabelText('Partner name'), 'Partner Ltd');
     /* The preview follows what is typed. */
-    expect(bar('English')).toHaveTextContent('AMRUT Kalash');
+    expect(bar('English')).toHaveTextContent('Sarthi');
     expect(bar('English')).not.toHaveTextContent(FULL_NAME.en);
     expect(bar('English')).toHaveTextContent('Partner Ltd');
 
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
     await waitFor(() =>
       expect(brandBarService.update).toHaveBeenCalledWith({
-        title: 'AMRUT Kalash',
+        title: 'Sarthi',
         fullName: pair(FULL_NAME.mr, ''),
         partnerLabel: PARTNER_LABEL,
         partnerName: 'Partner Ltd',
@@ -422,7 +422,7 @@ describe('brand bar validation', () => {
     expect(
       brandBarPayload(
         {
-          title: ' AMRUT  KALASH ',
+          title: ' SARTHI ',
           fullName: pair(' अमृत ', '  '),
           partnerLabel: pair('', ''),
           partnerName: ' SUMAGO ',

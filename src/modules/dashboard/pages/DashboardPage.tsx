@@ -53,7 +53,7 @@ const NO_SOURCE_TILES = ['Total Target', 'Training Active', 'Completed', 'Assess
 export default function DashboardPage() {
   const [f, setF] = useDashFilter();
   useEffect(() => {
-    document.title = 'Dashboard — AMRUT × SUMAGO Admin';
+    document.title = 'Dashboard — SARTHI Admin';
   }, []);
 
   /* Live student figures from the register; the district filter limits them to one district (?centre=). */

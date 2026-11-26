@@ -15,7 +15,7 @@ import { schemeChanges, schemeToForm } from '../validation/schemes.validation';
  * opened at; a save over someone else's newer edit is refused rather than overwriting it.
  */
 export default function SchemeEdit() {
-  usePageTitle('Edit Scheme — AMRUT Schemes Management');
+  usePageTitle('Edit Scheme — SARTHI Schemes Management');
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const can = useCan();
@@ -34,7 +34,7 @@ export default function SchemeEdit() {
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
       {s && !can('updateScheme') ? (
         <Callout tone="warn" title="You can view this section but not edit schemes">
-          Editing a scheme needs the &ldquo;Update AMRUT Schemes Management&rdquo; permission.
+          Editing a scheme needs the &ldquo;Update SARTHI Schemes Management&rdquo; permission.
         </Callout>
       ) : null}
       {s && can('updateScheme') ? (

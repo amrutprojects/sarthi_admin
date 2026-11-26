@@ -70,9 +70,9 @@ describe('course field rules', () => {
 
 describe('payloads and server errors', () => {
   it('normalises the form and leaves out an empty language list on create', () => {
-    const p = normalizeCourseForm({ entityId: 'e1', code: ' ak-1 ', title: '  Amrut   Kalash ', description: '  ', languages: [], isActive: false });
-    expect(toCreateInput(p)).toEqual({ entityId: 'e1', code: 'AK-1', title: 'Amrut Kalash', description: null, isActive: false });
-    expect(toUpdateInput({ ...p, languages: ['mr'] }, true)).toEqual({ title: 'Amrut Kalash', description: null, languages: ['mr'] });
+    const p = normalizeCourseForm({ entityId: 'e1', code: ' ak-1 ', title: '  Sarthi ', description: '  ', languages: [], isActive: false });
+    expect(toCreateInput(p)).toEqual({ entityId: 'e1', code: 'AK-1', title: 'Sarthi', description: null, isActive: false });
+    expect(toUpdateInput({ ...p, languages: ['mr'] }, true)).toEqual({ title: 'Sarthi', description: null, languages: ['mr'] });
     expect(toUpdateInput({ ...p, languages: ['mr'] }, false)).toHaveProperty('code', 'AK-1');
   });
 

@@ -33,7 +33,7 @@ describe('branding form rules (backend validator mirror)', () => {
     const v = blank();
     expect(messages({ ...v, display_name: '  ab  ' })).toEqual({ display_name: 'Enter a display name of at least 3 characters.' });
     expect(messages({ ...v, display_name: 'x'.repeat(61) })).toEqual({ display_name: 'Enter a display name of at most 60 characters.' });
-    expect(messages({ ...v, display_name: 'Amrut‮Kalash' })).toEqual({ display_name: 'Enter a display name.' });
+    expect(messages({ ...v, display_name: 'Sarthi‮Portal' })).toEqual({ display_name: 'Enter a display name.' });
     /* ZWJ / ZWNJ stay allowed (Devanagari spelling). */
     expect(messages({ ...v, display_name: 'क्‍ष अमृत' })).toEqual({});
     expect(messages({ ...v, colours: { primary: '#12345', accent: 'abc' } })).toEqual({
@@ -68,7 +68,7 @@ describe('brandingPayload', () => {
     const payload = brandingPayload(
       {
         ...initial,
-        display_name: '  Amrut   Kalash  Portal ',
+        display_name: '  Sarthi   Portal ',
         colours: { primary: '#1f4e79', accent: '' },
         support_phone: '+91 98765-43211',
         support_hours: { en: ' Mon–Fri ', mr: '' },
@@ -79,7 +79,7 @@ describe('brandingPayload', () => {
     );
     /* Colour case and language order are not changes; the cleared accent is. */
     expect(payload).toEqual({
-      display_name: 'Amrut Kalash Portal',
+      display_name: 'Sarthi Portal',
       colours: { primary: '#1F4E79', accent: null },
       support_phone: '+919876543211',
       support_hours: { en: 'Mon–Fri' },

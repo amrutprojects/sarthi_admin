@@ -71,7 +71,7 @@ function HeroTabBody({ tab, sub, children }: { tab: HeroTab; sub: ReactNode; chi
   );
 }
 
-/* AMRUT Kalash – apply online: the rotating slides, each with its own button, and the two buttons under every slide. */
+/* Sarthi – apply online: the rotating slides, each with its own button, and the two buttons under every slide. */
 export function HeroSlidesTab() {
   return (
     <HeroTabBody

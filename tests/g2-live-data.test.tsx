@@ -51,7 +51,7 @@ const live = <T,>(data: T, total?: number): LiveResult<T> => ({
   ...(total !== undefined ? { meta: { page: 1, limit: 100, total, totalPages: 1 } } : {}),
 });
 
-/* Synthetic LMS answers (shapes of amrut-kalash-api docs/lms-reads/README.md). */
+/* Synthetic LMS answers (shapes of sarthi-api docs/lms-reads/README.md). */
 const BATCH = {
   id: 'b-1',
   code: 'LMS-B-0001',

@@ -1,6 +1,6 @@
 # G-2: "Show live LMS data" on the Panel screens
 
-Full note (setting, master switch, API, tests, what stays for later): amrut-kalash-api `docs/mt-g2-live-data-setting.md`.
+Full note (setting, master switch, API, tests, what stays for later): sarthi-api `docs/mt-g2-live-data-setting.md`.
 
 - Module `src/modules/lms-live`: state hook (`GET /lms-reads/live-data`), `LmsDataSource` wrapper, the badge
   ("Local data" / "Live from LMS" + fetch time), live views of the screens, and the System Settings card (en + mr).

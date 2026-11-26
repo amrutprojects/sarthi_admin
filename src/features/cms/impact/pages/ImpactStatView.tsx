@@ -11,11 +11,11 @@ import { IMPACT_CRUMBS, IMPACT_TAB_PATH, impactEditPath, statLabel } from '../co
 import { impactService } from '../services/impactService';
 
 /*
- * View Statistic — read-only detail page of one AMRUT's Impact card, reached from the View action (or a click on
- * the row) in the AMRUT's Impact tab of Home Page Management. Loads the saved record by its id.
+ * View Statistic — read-only detail page of one SARTHI's Impact card, reached from the View action (or a click on
+ * the row) in the SARTHI's Impact tab of Home Page Management. Loads the saved record by its id.
  */
 export default function ImpactStatView() {
-  usePageTitle('Statistic — AMRUT Impact Management');
+  usePageTitle('Statistic — SARTHI Impact Management');
   const { id = '' } = useParams();
   const go = useGo();
   const navigate = useNavigate();
@@ -84,7 +84,7 @@ export default function ImpactStatView() {
                   ['Label (English)', <span lang="en">{s.label.en}</span>],
                   ['Display order', String(s.displayOrder)],
                   ['Status', <MasterStatusBadge isActive={s.isActive} />],
-                  ['On the website', s.isActive ? "Shown in the AMRUT's Impact section of the home page" : 'Hidden from the home page'],
+                  ['On the website', s.isActive ? "Shown in the SARTHI's Impact section of the home page" : 'Hidden from the home page'],
                   ['Created', fmtDateTime(s.createdAt)],
                   ['Last updated', fmtDateTime(s.updatedAt)],
                 ]}

@@ -4,7 +4,7 @@ import type { ItemInput } from '../services/aboutService';
 import type { AboutField, AboutItem, AboutKind, Bilingual } from '../types/about.types';
 
 /*
- * About AMRUT form rules, deliberately identical to the server rules in
+ * About SARTHI form rules, deliberately identical to the server rules in
  * backend/src/cms/about/about.validator.ts and to the CHECK constraints on the about_* tables.
  *
  * This is for the person filling in the form — it names the problem next to the field instead of

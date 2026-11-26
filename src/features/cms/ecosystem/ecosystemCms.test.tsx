@@ -106,7 +106,7 @@ describe('The AMRUT Ecosystem list', () => {
   it('lists every card in a FAQ-style table — order, both names, icon, status, updated — and the section settings', async () => {
     vi.mocked(ecosystemService.list).mockResolvedValue([
       programme(1),
-      programme(2, { name: pair('अमृत कलश', 'AMRUT Kalash'), icon: 'award', link: '/programme' }),
+      programme(2, { name: pair('सारथी', 'Sarthi'), icon: 'award', link: '/programme' }),
       programme(3, { link: 'https://example.gov.in/x', isActive: false }),
     ]);
     renderAt(TAB);
@@ -114,16 +114,16 @@ describe('The AMRUT Ecosystem list', () => {
     expect(headings()).toEqual(['Sr. No.', 'Order', 'Programme', 'Icon', 'Status', 'Updated', 'Action']);
     expect(screen.getByText('live from the backend').closest('h3')).toHaveTextContent('Programmes live from the backend');
     /* The English name in the brand colour, the Marathi one under it, as FAQ Management shows a question. */
-    expect(screen.getByText('AMRUT Kalash')).toHaveClass('lnk');
-    expect(within(row('AMRUT Kalash')).getByText('अमृत कलश')).toBeInTheDocument();
-    expect(within(row('AMRUT Kalash')).getByRole('img', { name: 'Icon: Award / skills' })).toBeInTheDocument();
+    expect(screen.getByText('Sarthi')).toHaveClass('lnk');
+    expect(within(row('Sarthi')).getByText('सारथी')).toBeInTheDocument();
+    expect(within(row('Sarthi')).getByRole('img', { name: 'Icon: Award / skills' })).toBeInTheDocument();
     expect(within(row('Card 1')).getByRole('img', { name: 'Icon: Tourism / world' })).toBeInTheDocument();
     expect(cell(row('Card 3'), 0)).toHaveTextContent('3');
     expect(cell(row('Card 3'), 1)).toHaveTextContent('3');
     expect(within(row('Card 1')).getByText('Active')).toBeInTheDocument();
     expect(within(row('Card 3')).getByText('Inactive')).toBeInTheDocument();
     expect(cell(row('Card 1'), 5)).toHaveTextContent(new Date(programme(1).updatedAt).toLocaleString('en-IN'));
-    expect(names()).toEqual(['Card 1', 'AMRUT Kalash', 'Card 3']);
+    expect(names()).toEqual(['Card 1', 'Sarthi', 'Card 3']);
     expect(screen.getByText('3 listed, 2 shown on the website')).toBeInTheDocument();
     expect(screen.getByText(/Showing/)).toHaveTextContent('Showing 1-3 of 3 records');
     expect(screen.getByRole('combobox', { name: 'Rows per page' })).toHaveValue('15');
@@ -138,7 +138,7 @@ describe('The AMRUT Ecosystem list', () => {
     vi.mocked(ecosystemService.list).mockResolvedValue([
       programme(1),
       programme(2, { isActive: false }),
-      programme(3, { name: pair('अमृत कलश', 'AMRUT Kalash') }),
+      programme(3, { name: pair('सारथी', 'Sarthi') }),
     ]);
     renderAt(TAB);
     await screen.findByText('Card 1');
@@ -153,8 +153,8 @@ describe('The AMRUT Ecosystem list', () => {
     expect(screen.getByText('Sort by Order, ascending, with no search to reorder.')).toBeInTheDocument();
 
     await userEvent.clear(search());
-    await userEvent.type(search(), 'कलश');
-    await waitFor(() => expect(names()).toEqual(['AMRUT Kalash']));
+    await userEvent.type(search(), 'सारथी');
+    await waitFor(() => expect(names()).toEqual(['Sarthi']));
 
     await userEvent.clear(search());
     await userEvent.type(search(), 'description 1');
@@ -165,7 +165,7 @@ describe('The AMRUT Ecosystem list', () => {
     expect(screen.getByText(/Showing/)).toHaveTextContent('Showing 0-0 of 0 records');
 
     await userEvent.clear(search());
-    await waitFor(() => expect(names()).toEqual(['Card 1', 'Card 2', 'AMRUT Kalash']));
+    await waitFor(() => expect(names()).toEqual(['Card 1', 'Card 2', 'Sarthi']));
     expect(screen.getByRole('button', { name: 'Move Card 1 down' })).toBeInTheDocument();
   });
 
@@ -512,7 +512,7 @@ describe('View Programme', () => {
 
   it('shows every field in both languages, the status and a preview, under the Home Page Management trail', async () => {
     const saved = programme(2, {
-      name: pair('अमृत कलश', 'AMRUT Kalash'),
+      name: pair('सारथी', 'Sarthi'),
       icon: 'award',
       link: '/programme',
       linkLabel: pair('पहा →', 'See →'),
@@ -520,11 +520,11 @@ describe('View Programme', () => {
     });
     vi.mocked(ecosystemService.get).mockResolvedValue(saved);
     renderAt(`/cms/amrut-ecosystem/${saved.id}/view`);
-    expect(await screen.findByRole('heading', { level: 1, name: /AMRUT Kalash/ })).toHaveTextContent('Order 2');
+    expect(await screen.findByRole('heading', { level: 1, name: /Sarthi/ })).toHaveTextContent('Order 2');
     expect(ecosystemService.get).toHaveBeenCalledWith(saved.id);
     expect(document.querySelector('.crumb')).toHaveTextContent('Dashboard/CMS/Home Page Management/The AMRUT Ecosystem/View');
-    expect(kv('Programme name (Marathi)')).toHaveTextContent('अमृत कलश');
-    expect(kv('Programme name (English)')).toHaveTextContent('AMRUT Kalash');
+    expect(kv('Programme name (Marathi)')).toHaveTextContent('सारथी');
+    expect(kv('Programme name (English)')).toHaveTextContent('Sarthi');
     expect(kv('Description (Marathi)')).toHaveTextContent('वर्णन 2');
     expect(kv('Description (English)')).toHaveTextContent('Description 2');
     expect(kv('Icon')).toHaveTextContent('Award / skills');
@@ -536,8 +536,8 @@ describe('View Programme', () => {
     expect(kv('On the website')).toHaveTextContent('Hidden from the website');
     expect(kv('Created')).toHaveTextContent(new Date(saved.createdAt).toLocaleString('en-IN'));
     expect(kv('Last updated')).toHaveTextContent(new Date(saved.updatedAt).toLocaleString('en-IN'));
-    expect(screen.getByRole('figure', { name: 'Marathi preview' })).toHaveTextContent('अमृत कलशवर्णन 2पहा →');
-    expect(screen.getByRole('figure', { name: 'English preview' })).toHaveTextContent('AMRUT KalashDescription 2See →');
+    expect(screen.getByRole('figure', { name: 'Marathi preview' })).toHaveTextContent('सारथीवर्णन 2पहा →');
+    expect(screen.getByRole('figure', { name: 'English preview' })).toHaveTextContent('SarthiDescription 2See →');
   });
 
   it("names the section's default link label for a card without its own, and an external or missing destination", async () => {

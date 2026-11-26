@@ -13,12 +13,12 @@ import type { AboutKind } from '../types/about.types';
 
 /*
  * View Information Row / View About Card — the read-only detail page of one record, reached from the View action
- * (or a click on the row) in the About AMRUT tab of Home Page Management. Loads the saved record by its id.
+ * (or a click on the row) in the About SARTHI tab of Home Page Management. Loads the saved record by its id.
  * Required cards (Mission, Vision, Values) offer no Activate / Deactivate or Delete: the server refuses both.
  */
 export default function ItemView({ kind }: { kind: AboutKind }) {
   const k = KINDS[kind];
-  usePageTitle(`${k.noun} — About AMRUT Management`);
+  usePageTitle(`${k.noun} — About SARTHI Management`);
   const { id = '' } = useParams();
   const go = useGo();
   const navigate = useNavigate();
@@ -84,7 +84,7 @@ export default function ItemView({ kind }: { kind: AboutKind }) {
           <div className="card">
             <div className="card-h">
               <h3>
-                {k.noun} details <span className="sub">as the About AMRUT section shows them, Marathi first</span>
+                {k.noun} details <span className="sub">as the About SARTHI section shows them, Marathi first</span>
               </h3>
             </div>
             <FieldTable
@@ -95,7 +95,7 @@ export default function ItemView({ kind }: { kind: AboutKind }) {
                 ['Status', <MasterStatusBadge isActive={item.isActive} />],
                 [
                   'On the website',
-                  item.isActive ? 'Shown in the About AMRUT section of the home page and the About page' : 'Hidden from the website',
+                  item.isActive ? 'Shown in the About SARTHI section of the home page and the About page' : 'Hidden from the website',
                 ],
                 ...(kind === 'cards'
                   ? ([

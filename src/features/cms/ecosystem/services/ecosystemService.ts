@@ -1,4 +1,4 @@
-/* The AMRUT Ecosystem API (backend /api/v1/cms/ecosystem). */
+/* The SARTHI Ecosystem API (backend /api/v1/cms/ecosystem). */
 import { request } from '../../../../services/api-client';
 import type { ApiEcosystemSection, ApiProgramme, ProgrammeInput, UpdateEcosystemSectionInput } from '../types/ecosystem.types';
 

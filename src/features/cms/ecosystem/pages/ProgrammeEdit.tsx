@@ -15,7 +15,7 @@ import { programmeChanges, programmeToForm } from '../validation/ecosystem.valid
  * opened at; a save over someone else's newer edit is refused rather than overwriting it.
  */
 export default function ProgrammeEdit() {
-  usePageTitle('Edit Programme — The AMRUT Ecosystem');
+  usePageTitle('Edit Programme — The SARTHI Ecosystem');
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const can = useCan();
@@ -34,7 +34,7 @@ export default function ProgrammeEdit() {
       <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} />
       {p && !can('updateEcosystemProgramme') ? (
         <Callout tone="warn" title="You can view this section but not edit programmes">
-          Editing a programme needs the &ldquo;Update The AMRUT Ecosystem&rdquo; permission.
+          Editing a programme needs the &ldquo;Update The SARTHI Ecosystem&rdquo; permission.
         </Callout>
       ) : null}
       {p && can('updateEcosystemProgramme') ? (

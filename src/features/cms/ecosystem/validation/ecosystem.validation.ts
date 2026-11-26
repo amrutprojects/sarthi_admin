@@ -11,7 +11,7 @@ import type {
 } from '../types/ecosystem.types';
 
 /*
- * The AMRUT Ecosystem form rules, deliberately identical to the server rules in
+ * The SARTHI Ecosystem form rules, deliberately identical to the server rules in
  * backend/src/cms/ecosystem/ecosystem.validator.ts and to the CHECK constraints on the tables.
  *
  * This is for the person filling in the form — it names the problem next to the field instead of
@@ -114,7 +114,7 @@ export function sectionPayload(v: SectionFormValues, expectedUpdatedAt: string):
   };
 }
 
-/* The destination rule is shared with AMRUT Schemes (features/cms/destination.ts). */
+/* The destination rule is shared with SARTHI Schemes (features/cms/destination.ts). */
 export { destinationProblem };
 
 const tooLong = (value: string, label: string, max: number) =>

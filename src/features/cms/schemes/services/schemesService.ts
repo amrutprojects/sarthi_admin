@@ -1,4 +1,4 @@
-/* AMRUT Schemes API (backend /api/v1/cms/schemes). */
+/* SARTHI Schemes API (backend /api/v1/cms/schemes). */
 import { request } from '../../../../services/api-client';
 import type { ApiScheme, ApiSchemesSection, SchemeInput, UpdateSchemesSectionInput } from '../types/schemes.types';
 

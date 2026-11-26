@@ -1,7 +1,7 @@
 /*
  * M3 screen labels in English and Marathi. The Panel has no app-wide translation layer yet, so the Attendance
  * reports screen carries its own two-language table and a language switch; place names come from the API
- * (`nameMr` where Amrut knows it, else the English name).
+ * (`nameMr` where Sarthi knows it, else the English name).
  */
 export type Lang = 'en' | 'mr';
 
@@ -40,10 +40,10 @@ const en = {
   code: 'Code',
   exportCsv: 'Export CSV',
   open: 'Open',
-  notInMasters: 'Not in Amrut masters',
+  notInMasters: 'Not in Sarthi masters',
   percentBase: 'Percentages are of records marked (present + late + absent + excused). Attendance % = present + late.',
   unplaced: (n: number) =>
-    `${n} LMS ${n === 1 ? 'row' : 'rows'} could not be placed in this area because Amrut's masters do not know ${n === 1 ? 'it' : 'them'}.`,
+    `${n} LMS ${n === 1 ? 'row' : 'rows'} could not be placed in this area because Sarthi's masters do not know ${n === 1 ? 'it' : 'them'}.`,
   loading: 'Loading attendance…',
   emptyTitle: 'No attendance in this range',
   emptyMsg: 'The LMS has no marked attendance for this area and these dates.',
@@ -53,7 +53,7 @@ const en = {
     'Attendance reports read live from the LMS, and live LMS reads are switched off on the server (LMS_READS_ENABLED). Ask whoever runs the server to switch them on.',
   openSettings: 'Open System Settings',
   notConfiguredTitle: 'The LMS link is not configured',
-  notConfiguredMsg: 'The LMS address and the Amrut tenant key have not been entered on the server, so no attendance can be shown.',
+  notConfiguredMsg: 'The LMS address and the Sarthi tenant key have not been entered on the server, so no attendance can be shown.',
   downTitle: 'The LMS cannot be reached right now',
   downMsg: 'No figures are shown rather than old or made-up ones. Try again in a few minutes.',
   noAccessTitle: 'No access to attendance reports',
@@ -101,9 +101,9 @@ const mr: Labels = {
   code: 'कोड',
   exportCsv: 'CSV निर्यात करा',
   open: 'उघडा',
-  notInMasters: 'अमृत मास्टरमध्ये नाही',
+  notInMasters: 'सारथी मास्टरमध्ये नाही',
   percentBase: 'टक्केवारी नोंदवलेल्या उपस्थितीवर (उपस्थित + उशिरा + अनुपस्थित + रजा मंजूर) आधारित आहे. उपस्थिती % = उपस्थित + उशिरा.',
-  unplaced: (n: number) => `${n} एलएमएस नोंदी या क्षेत्रात ठेवता आल्या नाहीत, कारण त्या अमृतच्या मास्टरमध्ये नाहीत.`,
+  unplaced: (n: number) => `${n} एलएमएस नोंदी या क्षेत्रात ठेवता आल्या नाहीत, कारण त्या सारथीच्या मास्टरमध्ये नाहीत.`,
   loading: 'उपस्थिती लोड होत आहे…',
   emptyTitle: 'या कालावधीत उपस्थिती नाही',
   emptyMsg: 'या क्षेत्रासाठी आणि या तारखांसाठी एलएमएसमध्ये उपस्थितीची नोंद नाही.',
@@ -113,7 +113,7 @@ const mr: Labels = {
     'उपस्थिती अहवाल थेट एलएमएसमधून वाचले जातात, आणि सर्व्हरवर थेट एलएमएस वाचन बंद आहे (LMS_READS_ENABLED). सर्व्हर चालवणाऱ्यांना ते सुरू करण्यास सांगा.',
   openSettings: 'सिस्टम सेटिंग्ज उघडा',
   notConfiguredTitle: 'एलएमएस जोडणी कॉन्फिगर केलेली नाही',
-  notConfiguredMsg: 'सर्व्हरवर एलएमएसचा पत्ता आणि अमृत टेनंट की भरलेली नाही, त्यामुळे उपस्थिती दाखवता येत नाही.',
+  notConfiguredMsg: 'सर्व्हरवर एलएमएसचा पत्ता आणि सारथी टेनंट की भरलेली नाही, त्यामुळे उपस्थिती दाखवता येत नाही.',
   downTitle: 'एलएमएसशी सध्या संपर्क होत नाही',
   downMsg: 'जुनी किंवा अंदाजे आकडेवारी दाखवली जात नाही. काही मिनिटांनी पुन्हा प्रयत्न करा.',
   noAccessTitle: 'उपस्थिती अहवाल पाहण्याची परवानगी नाही',
@@ -126,5 +126,5 @@ const mr: Labels = {
 
 export const LABELS: Record<Lang, Labels> = { en, mr };
 
-/* A place's name in the chosen language (Marathi where Amrut knows it). */
+/* A place's name in the chosen language (Marathi where Sarthi knows it). */
 export const placeName = (p: { name: string; nameMr: string | null }, lang: Lang) => (lang === 'mr' && p.nameMr ? p.nameMr : p.name);

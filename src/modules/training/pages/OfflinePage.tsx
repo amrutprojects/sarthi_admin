@@ -8,7 +8,7 @@ import { NotAvailablePage, NO_DATA_TEXT } from '../../../components/ui';
  */
 function LocalOfflinePage() {
   useEffect(() => {
-    document.title = 'Offline training — AMRUT × SUMAGO Admin';
+    document.title = 'Offline training — SARTHI Admin';
   }, []);
   return (
     <NotAvailablePage

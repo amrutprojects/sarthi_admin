@@ -57,7 +57,7 @@ export default function DistrictsPage() {
   const go = useGo();
   const [s, setS] = usePersistentState('geo-live', DEFAULT_FILTER);
   useEffect(() => {
-    document.title = 'Districts — AMRUT × SUMAGO Admin';
+    document.title = 'Districts — SARTHI Admin';
   }, []);
 
   /* Live Applications / Eligible / Enrolled per district (centreCode = district code). */

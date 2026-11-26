@@ -21,9 +21,9 @@ export const module = (n: number, over: Partial<CourseModuleSummary> = {}): Cour
 export const course = (over: Partial<ApiLmsCourseDetail> = {}): ApiLmsCourseDetail => ({
   id: 'co1',
   entityId: ENTITY_ID,
-  entity: { id: ENTITY_ID, name: 'Amrut Kalash', code: 'AMK' },
+  entity: { id: ENTITY_ID, name: 'Sarthi', code: 'AMK' },
   code: 'AK-PROG',
-  title: 'Amrut Kalash Programme',
+  title: 'Sarthi Programme',
   description: '<p>Four-module <strong>skilling</strong> programme.</p>',
   languages: ['en', 'mr'],
   status: 'DRAFT',
@@ -40,7 +40,7 @@ export const course = (over: Partial<ApiLmsCourseDetail> = {}): ApiLmsCourseDeta
 });
 
 export const entityOptions = [
-  { id: ENTITY_ID, name: 'Amrut Kalash', code: 'AMK' },
+  { id: ENTITY_ID, name: 'Sarthi', code: 'AMK' },
   { id: ENTITY_2, name: 'Pilot Entity', code: 'PILOT' },
 ];
 

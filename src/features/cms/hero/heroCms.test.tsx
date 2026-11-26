@@ -669,7 +669,7 @@ describe('Home Hero Section CMS', () => {
       renderEdit();
 
       expect(await screen.findByRole('heading', { name: 'Edit Home Hero Section' })).toBeInTheDocument();
-      expect(crumbs()).toEqual(['Dashboard', 'CMS', 'Home Page Management', 'AMRUT Kalash – apply online', 'Edit']);
+      expect(crumbs()).toEqual(['Dashboard', 'CMS', 'Home Page Management', 'Sarthi – apply online', 'Edit']);
       await userEvent.click(screen.getByRole('button', { name: 'Back' }));
       expect(await screen.findByText(HERO_TAB)).toBeInTheDocument();
     });
@@ -709,7 +709,7 @@ describe('Home Hero Section CMS', () => {
       vi.mocked(heroService.get).mockResolvedValue(hero());
       renderWithProviders(<AppRoutes />, { route: '/cms/hero' });
 
-      expect(await screen.findByRole('tab', { name: 'AMRUT Kalash – apply online' })).toHaveAttribute('aria-selected', 'true');
+      expect(await screen.findByRole('tab', { name: 'Sarthi – apply online' })).toHaveAttribute('aria-selected', 'true');
       expect(await screen.findByText('Heading 1')).toBeInTheDocument();
     });
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { emptyLmsEntityForm, lmsEntityFormFrom, normalizeLmsEntityForm, validateLmsEntityForm } from '../validation/entity.validation';
 import { entity } from './fixtures';
 
-const valid = { ...emptyLmsEntityForm('Asia/Kolkata'), name: 'Amrut Kalash', code: 'AMK-01', defaultLanguage: 'en' };
+const valid = { ...emptyLmsEntityForm('Asia/Kolkata'), name: 'Sarthi', code: 'AMK-01', defaultLanguage: 'en' };
 
 describe('Entity form rules (F-LMS-03)', () => {
   it('accepts a complete form', () => {
@@ -25,8 +25,8 @@ describe('Entity form rules (F-LMS-03)', () => {
   });
 
   it('normalises what is sent and reads an entity back into the form', () => {
-    expect(normalizeLmsEntityForm({ ...valid, name: '  Amrut   Kalash ', code: ' amk-01 ', description: '   ' })).toMatchObject({
-      name: 'Amrut Kalash', code: 'AMK-01', description: null,
+    expect(normalizeLmsEntityForm({ ...valid, name: '  Sarthi ', code: ' amk-01 ', description: '   ' })).toMatchObject({
+      name: 'Sarthi', code: 'AMK-01', description: null,
     });
     expect(lmsEntityFormFrom(entity())).toMatchObject({ code: 'AMK', centreIds: ['c1', 'c2'], trackIds: ['t1'], defaultLanguage: 'mr' });
   });

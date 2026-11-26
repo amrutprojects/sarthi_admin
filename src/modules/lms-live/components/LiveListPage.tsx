@@ -6,13 +6,13 @@ import { ApiError } from '../../../services/api-client';
 import type { LiveResult } from '../types/lmsLive.types';
 import { DataSourceBadge } from './DataSource';
 
-/* Why a live read failed, in words a Panel user can act on (codes from amrut-kalash-api docs/lms-reads/README.md). */
+/* Why a live read failed, in words a Panel user can act on (codes from sarthi-api docs/lms-reads/README.md). */
 const ERROR_TEXT: Record<string, string> = {
   LMS_TIMEOUT: 'The LMS did not answer in time.',
   LMS_UNREACHABLE: 'The LMS cannot be reached.',
   LMS_UNAVAILABLE: 'The LMS is temporarily unavailable.',
   LMS_RATE_LIMITED: 'The LMS is busy (too many requests).',
-  LMS_KEY_REJECTED: 'The LMS refused Amrut’s tenant key.',
+  LMS_KEY_REJECTED: 'The LMS refused Sarthi’s tenant key.',
   LMS_BAD_ANSWER: 'The LMS sent an answer the Panel cannot read.',
   LMS_NOT_CONFIGURED: 'The LMS link is not configured on the server.',
   LMS_NOT_FOUND: 'The LMS does not offer this data yet.',
@@ -61,7 +61,7 @@ interface LiveListPageProps<R, T> {
 export function LiveListPage<R, T>(p: LiveListPageProps<R, T>) {
   const q = useQuery({ queryKey: p.queryKey, queryFn: p.queryFn, retry: false });
   useEffect(() => {
-    document.title = `${p.title} — AMRUT × SUMAGO Admin`;
+    document.title = `${p.title} — SARTHI Admin`;
   }, [p.title]);
   const total = q.data?.meta?.total;
   const rows = q.data ? p.rows(q.data.data) : [];

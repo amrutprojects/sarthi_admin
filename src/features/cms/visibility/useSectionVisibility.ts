@@ -9,7 +9,7 @@ import { visibilityService } from './visibilityService';
  * tab then has to catch up with what the switch changed (a badge, and the updatedAt its own Save sends, which
  * would otherwise be refused as changed since it was opened), in one of two ways:
  * - `revision` moves on, and HomePageView remounts the tab from it, so it reloads;
- * - `switched` is the switch's last result, for a tab with inline editors (About AMRUT), which a remount would
+ * - `switched` is the switch's last result, for a tab with inline editors (About SARTHI), which a remount would
  *   empty of unsaved edits: it merges the result into the section it saves against instead.
  */
 export function useSectionVisibility() {

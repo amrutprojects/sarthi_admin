@@ -14,7 +14,7 @@ import type {
 } from '../types/lmsLive.types';
 
 /*
- * G-2 calls of the Panel (amrut-kalash-api /api/v1/lms-reads, docs/mt-g2-live-data-setting.md).
+ * G-2 calls of the Panel (sarthi-api /api/v1/lms-reads, docs/mt-g2-live-data-setting.md).
  * The live reads answer only while "Show live LMS data" is on; they never fall back to local data, so an error is shown
  * as an error. The LMS key never reaches the browser.
  */

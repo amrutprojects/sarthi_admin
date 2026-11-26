@@ -111,7 +111,7 @@ function SettingsForm({ section }: { section: ApiAdvisorySection }) {
               onBlur={(half) => touch(`heading.${half}`)}
               errorMr={show('heading.mr') ?? show('heading')}
               errorEn={show('heading.en')}
-              hint="The page heading on the website, e.g. अमृत कलश सल्लागार समिती / AMRUT Kalash Advisory Committee."
+              hint="The page heading on the website, e.g. सारथी सल्लागार समिती / Sarthi Advisory Committee."
             />
             <div className="mt10">
               <BilingualField

@@ -1,7 +1,7 @@
 import { homePageCrumbs, homePageTabPath } from '../homePage/homePageNav';
 import type { ApiProgramme } from './types/ecosystem.types';
 
-/* Breadcrumb trail shared by The AMRUT Ecosystem pages: the section is a tab of Home Page Management. */
+/* Breadcrumb trail shared by The SARTHI Ecosystem pages: the section is a tab of Home Page Management. */
 export const ECOSYSTEM_CRUMBS = homePageCrumbs('ecosystem');
 
 /* The section's tab of Home Page Management: where Back, Cancel and Save return to. */
@@ -13,7 +13,7 @@ export const ecosystemViewPath = (id: string): string => `/cms/amrut-ecosystem/$
 /* A programme's Edit page (route /cms/amrut-ecosystem/:id/edit). */
 export const ecosystemEditPath = (id: string): string => `/cms/amrut-ecosystem/${encodeURIComponent(id)}/edit`;
 
-/* How a confirmation names a card: both names, Marathi first, e.g. "अमृत कलश / AMRUT Kalash". */
+/* How a confirmation names a card: both names, Marathi first, e.g. "सारथी / Sarthi". */
 export const programmeLabel = (p: ApiProgramme): string => `${p.name.mr} / ${p.name.en}`;
 
 /*
@@ -51,5 +51,5 @@ export const ECOSYSTEM_ICONS: { id: string; label: string }[] = [
 
 export const iconLabel = (id: string) => ECOSYSTEM_ICONS.find((i) => i.id === id)?.label ?? id;
 
-/* Shared with AMRUT Schemes; kept importable from here. */
+/* Shared with SARTHI Schemes; kept importable from here. */
 export { SITE_PAGES } from '../destination';

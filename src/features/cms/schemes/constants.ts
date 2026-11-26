@@ -1,6 +1,6 @@
 import { homePageCrumbs, homePageTabPath } from '../homePage/homePageNav';
 
-/* Breadcrumb trail shared by the AMRUT Schemes Management pages: the section is a tab of Home Page Management. */
+/* Breadcrumb trail shared by the SARTHI Schemes Management pages: the section is a tab of Home Page Management. */
 export const SCHEMES_CRUMBS = homePageCrumbs('schemes');
 
 /* The section's tab of Home Page Management: where Back, Cancel and Save return to. */

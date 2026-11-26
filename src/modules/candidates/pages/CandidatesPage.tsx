@@ -100,7 +100,7 @@ function StudentRegister({ viewSwitch }: { viewSwitch: ReactNode }) {
   const { bucket, f, search, page, update } = useListParams();
   const [searchInput, setSearchInput] = useState(search);
   useEffect(() => {
-    document.title = 'Candidates — AMRUT × SUMAGO Admin';
+    document.title = 'Candidates — SARTHI Admin';
   }, []);
   /* Keep the box in step with the URL (back/forward), and commit typing after a pause. */
   useEffect(() => setSearchInput(search), [search]);

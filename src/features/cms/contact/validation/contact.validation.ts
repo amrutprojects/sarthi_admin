@@ -281,7 +281,7 @@ export function validateContactSection(section: ContactSection, v: ContactFormVa
 }
 
 /*
- * Optional: blank means the WhatsApp button uses the AMRUT card's phone. Otherwise 10 to 15 digits with the
+ * Optional: blank means the WhatsApp button uses the SARTHI card's phone. Otherwise 10 to 15 digits with the
  * country code, once spaces, "+" and "-" are taken out — wa.me links take nothing else.
  */
 export const validateWhatsappNumber = (raw: string): string | undefined => {

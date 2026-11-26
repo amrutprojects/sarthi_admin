@@ -1,4 +1,4 @@
-/* AMRUT Schemes, as /api/v1/cms/schemes returns and accepts it. */
+/* SARTHI Schemes, as /api/v1/cms/schemes returns and accepts it. */
 
 /** A Marathi/English pair. An optional pair is { mr: '', en: '' } when blank. */
 export interface Bilingual {

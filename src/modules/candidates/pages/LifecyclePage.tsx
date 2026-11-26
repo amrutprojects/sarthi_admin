@@ -42,7 +42,7 @@ const NO_SOURCE_STAGES = [
 export default function LifecyclePage() {
   const go = useGo();
   useEffect(() => {
-    document.title = 'Candidate lifecycle — AMRUT × SUMAGO Admin';
+    document.title = 'Candidate lifecycle — SARTHI Admin';
   }, []);
 
   const summary = useStudentSummary();

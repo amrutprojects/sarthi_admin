@@ -35,7 +35,7 @@ export default function ItemEditor({ kind }: { kind: AboutKind }) {
   const k = KINDS[kind];
   const { id } = useParams();
   const isCreate = !id;
-  usePageTitle(`${isCreate ? 'Add' : 'Edit'} ${k.noun} — About AMRUT Management`);
+  usePageTitle(`${isCreate ? 'Add' : 'Edit'} ${k.noun} — About SARTHI Management`);
   const can = useCan();
   const detail = useApiData(() => (id ? aboutService.getItem(kind, id) : Promise.resolve(null)), [kind, id]);
   const allowed = isCreate ? can('createAboutItem') : can('updateAbout');
@@ -51,7 +51,7 @@ export default function ItemEditor({ kind }: { kind: AboutKind }) {
       {!isCreate ? <LoadState loading={detail.loading} error={detail.error} onRetry={() => void detail.reload()} /> : null}
       {!allowed ? (
         <Callout tone="warn" title="You can view this section but not change it">
-          This needs the &ldquo;{isCreate ? 'Add' : 'Update'} About AMRUT Management&rdquo; permission.
+          This needs the &ldquo;{isCreate ? 'Add' : 'Update'} About SARTHI Management&rdquo; permission.
         </Callout>
       ) : isCreate ? (
         <ItemForm kind={kind} initial={null} />
@@ -121,7 +121,7 @@ function ItemForm({ kind, initial }: { kind: AboutKind; initial: AboutItem | nul
         <div className="card mb14">
           <div className="card-h">
             <h3>Preview</h3>
-            <span className="muted fs12">As it will appear in the About AMRUT section</span>
+            <span className="muted fs12">As it will appear in the About SARTHI section</span>
           </div>
           <div className="card-b">
             <div className="f gp14 wrap">

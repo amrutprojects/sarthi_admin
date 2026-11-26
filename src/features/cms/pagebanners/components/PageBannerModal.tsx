@@ -20,7 +20,7 @@ import {
 
 const FORM_ID = 'cms-pagebanner-form';
 
-/* "Default title: About AMRUT · अमृत विषयी माहिती" under a pair, so the admin knows what blank brings back. */
+/* "Default title: About SARTHI · सारथी विषयी माहिती" under a pair, so the admin knows what blank brings back. */
 function DefaultLine({ label, value }: { label: string; value: Bilingual | null }) {
   return (
     <div className="hint mt4">

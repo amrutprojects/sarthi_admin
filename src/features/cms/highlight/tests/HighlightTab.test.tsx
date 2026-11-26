@@ -33,7 +33,7 @@ const objective = (over: Partial<ApiObjective>): ApiObjective => ({
 
 const highlightData = (over: Partial<ApiProgrammeHighlight> = {}): ApiProgrammeHighlight => ({
   id: 'h1',
-  heading: { mr: 'अमृत कलश — कौशल्य कार्यक्रम', en: 'AMRUT Kalash — skills programme' },
+  heading: { mr: 'सारथी — कौशल्य कार्यक्रम', en: 'Sarthi — skills programme' },
   subheading: { mr: 'महाराष्ट्र संशोधन उन्नती', en: 'Maharashtra Research Upliftment' },
   tagline: { mr: 'तरुणांसाठी प्रशिक्षण.', en: 'Training for young people.' },
   certification: { mr: 'शासन मान्य प्रमाणपत्र', en: 'Government-recognised certificate' },
@@ -90,8 +90,8 @@ describe('<HighlightTab> — Skill Development Diploma', () => {
     expect(headers(table)).toEqual(['Sr. No.', 'Field', 'Content']);
     expect(bodyRows(table).map((r) => cellText(r, 0))).toEqual(['1', '2', '3', '4']);
     expect(bodyRows(table).map((r) => cellText(r, 1))).toEqual(['Heading', 'Subheading', 'Tagline', 'Certification']);
-    expect(screen.getByText('अमृत कलश — कौशल्य कार्यक्रम')).toHaveAttribute('lang', 'mr');
-    expect(screen.getByText('AMRUT Kalash — skills programme')).toHaveAttribute('lang', 'en');
+    expect(screen.getByText('सारथी — कौशल्य कार्यक्रम')).toHaveAttribute('lang', 'mr');
+    expect(screen.getByText('Sarthi — skills programme')).toHaveAttribute('lang', 'en');
     expect(screen.getByText('महाराष्ट्र संशोधन उन्नती')).toHaveAttribute('lang', 'mr');
     expect(screen.getByText('Maharashtra Research Upliftment')).toBeInTheDocument();
     expect(screen.getByText('तरुणांसाठी प्रशिक्षण.')).toHaveAttribute('lang', 'mr');

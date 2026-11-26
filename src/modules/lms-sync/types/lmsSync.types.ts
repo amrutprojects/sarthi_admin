@@ -1,5 +1,5 @@
 /*
- * M1 DTOs, matching amrut-kalash-api:
+ * M1 DTOs, matching sarthi-api:
  * - LMS sync admin API `/api/v1/lms-sync` (docs/lms-sync/admin-api.md, src/modules/lms-sync/lms-sync.validation.ts);
  * - API keys `/api/v1/api-keys` (docs/lms-integration-api-keys.md, src/modules/api-keys/api-key.validation.ts).
  */
@@ -66,7 +66,7 @@ export interface LmsSyncDetail extends Omit<LmsSyncRow, 'centreCode' | 'trackCod
   linkCreatedAt: string | null;
   payload: {
     fields: string[];
-    /* LMS-required fields empty in Amrut: "fill these in to sync". */
+    /* LMS-required fields empty in Sarthi: "fill these in to sync". */
     missingRequiredFields: string[];
     checksum: string;
     lastSentChecksum: string | null;
@@ -91,13 +91,13 @@ export const BULK_PUSH_MAX = 500;
 
 /* Error codes in lastErrorCode besides LMS_<status> and the LMS's own (lms-sync.constants.ts SYNC_ERROR). */
 export const SYNC_ERROR_LABEL: Record<string, string> = {
-  MISSING_REQUIRED_FIELDS: 'Required fields are empty in Amrut',
+  MISSING_REQUIRED_FIELDS: 'Required fields are empty in Sarthi',
   LMS_REJECTED_FIELDS: 'The LMS rejected some fields',
   LMS_UNAVAILABLE: 'The LMS could not be reached; it will be tried again',
   NOT_ELIGIBLE: 'No longer approved or active',
 };
 
-/* Scopes of an Amrut-issued key (api-key.secret.ts API_KEY_SCOPES); the LMS needs all three. */
+/* Scopes of an Sarthi-issued key (api-key.secret.ts API_KEY_SCOPES); the LMS needs all three. */
 export const API_KEY_SCOPES = ['lms.students.match', 'lms.students.create', 'lms.students.update'] as const;
 export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
 export const API_KEY_SCOPE_LABEL: Record<ApiKeyScope, string> = {

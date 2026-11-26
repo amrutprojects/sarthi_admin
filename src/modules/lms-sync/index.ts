@@ -1,4 +1,4 @@
-/* Public API of the lms-sync module (M1: Amrut students in the LMS, Amrut-issued API keys). Other modules import only from here. */
+/* Public API of the lms-sync module (M1: Sarthi students in the LMS, Sarthi-issued API keys). Other modules import only from here. */
 export { LmsSyncCard } from './components/LmsSyncCard';
 export { LmsSyncRegister } from './components/registerSync';
 export { SYNC_FLAG_LABEL, SyncFlagBadge } from './components/SyncFlagBadge';

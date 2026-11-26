@@ -114,7 +114,7 @@ export default function LmsEntityForm({
         <form id={FORM_ID} onSubmit={submit} noValidate>
           <h3 className="fs13" style={{ margin: '0 0 10px' }}>Identity</h3>
           <div className="grid g2">
-            <MasterField id="le-name" label="Entity Name" required error={show('name')} hint="Display name of the learning environment, for example AMRUT KALASH. 3 to 120 characters.">
+            <MasterField id="le-name" label="Entity Name" required error={show('name')} hint="Display name of the learning environment, for example SARTHI. 3 to 120 characters.">
               <input
                 className="inp"
                 {...fieldAria('le-name', show('name'))}

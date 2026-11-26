@@ -14,7 +14,7 @@ import type {
 } from '../types/lmsSync.types';
 
 /*
- * Every M1 call of the Panel (amrut-kalash-api: docs/lms-sync/admin-api.md, docs/lms-integration-api-keys.md).
+ * Every M1 call of the Panel (sarthi-api: docs/lms-sync/admin-api.md, docs/lms-integration-api-keys.md).
  *
  * Secrets: generate and rotate return the new key's secret once (Cache-Control: no-store). It is handed to the
  * caller and never cached (these calls do not go through the query cache) or written to browser storage.

@@ -10,7 +10,7 @@ import CandidatesPage from '../pages/CandidatesPage';
 
 let granted = new Set<string>();
 vi.mock('../../auth', () => ({ useCan: () => (a: string) => granted.has(a) }));
-/* The lms-sync module's calls all go through request(); answer them per path (amrut-kalash-api docs/lms-sync/admin-api.md). */
+/* The lms-sync module's calls all go through request(); answer them per path (sarthi-api docs/lms-sync/admin-api.md). */
 vi.mock('../../../services/api-client', async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
   request: vi.fn(),

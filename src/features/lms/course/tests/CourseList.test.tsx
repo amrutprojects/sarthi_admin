@@ -43,11 +43,11 @@ describe('<CourseList>', () => {
 
   it('lists the courses with Sr. No., entity, languages, course status, release and the KPI totals', async () => {
     renderWithProviders(<CourseList />);
-    const row = (await screen.findByText('Amrut Kalash Programme')).closest('tr') as HTMLTableRowElement;
+    const row = (await screen.findByText('Sarthi Programme')).closest('tr') as HTMLTableRowElement;
     /* Sr. No., code, title, entity, languages, course status, latest release, active. */
     expect(row.cells[0]).toHaveTextContent('1');
     expect(row.cells[1]).toHaveTextContent('AK-PROG');
-    expect(row.cells[3]).toHaveTextContent('Amrut Kalash (AMK)');
+    expect(row.cells[3]).toHaveTextContent('Sarthi (AMK)');
     expect(row.cells[4]).toHaveTextContent('en · mr');
     expect(within(row.cells[5]).getByText('Draft')).toBeInTheDocument();
     expect(row.cells[6]).toHaveTextContent('None yet');
@@ -76,30 +76,30 @@ describe('<CourseList>', () => {
     expect(await screen.findByText(/Database unavailable/)).toBeInTheDocument();
     vi.mocked(courseService.list).mockResolvedValue(page([draft]));
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(await screen.findByText('Amrut Kalash Programme')).toBeInTheDocument();
+    expect(await screen.findByText('Sarthi Programme')).toBeInTheDocument();
   });
 
   it('shows the write actions only for the permissions held, Retire only on a published course and Delete only on a draft', async () => {
     const { unmount } = renderWithProviders(<CourseList />);
-    await screen.findByText('Amrut Kalash Programme');
+    await screen.findByText('Sarthi Programme');
     expect(screen.queryByRole('button', { name: /Add Course/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Edit Amrut Kalash Programme' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('switch', { name: /Amrut Kalash Programme/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Delete Amrut Kalash Programme' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit Sarthi Programme' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /Sarthi Programme/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Delete Sarthi Programme' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Retire Published Course' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'View Amrut Kalash Programme' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View Sarthi Programme' })).toBeInTheDocument();
     unmount();
 
     permissions.add('createLmsCourse');
     permissions.add('updateLmsCourse');
     permissions.add('deleteLmsCourse');
     renderWithProviders(<CourseList />);
-    await screen.findByText('Amrut Kalash Programme');
+    await screen.findByText('Sarthi Programme');
     expect(screen.getByRole('button', { name: /Add Course/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Edit Amrut Kalash Programme' })).toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: 'Amrut Kalash Programme: active' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Delete Amrut Kalash Programme' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Retire Amrut Kalash Programme' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit Sarthi Programme' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Sarthi Programme: active' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete Sarthi Programme' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Retire Sarthi Programme' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Retire Published Course' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete Published Course' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Retire Retired Course' })).not.toBeInTheDocument();
@@ -120,8 +120,8 @@ describe('<CourseList>', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Yes, retire' }));
     await waitFor(() => expect(courseService.retire).toHaveBeenCalledWith('co2'));
 
-    await userEvent.click(screen.getByRole('button', { name: 'Delete Amrut Kalash Programme' }));
-    expect(screen.getByText(/Delete the draft course Amrut Kalash Programme \(AK-PROG\)\?/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Delete Sarthi Programme' }));
+    expect(screen.getByText(/Delete the draft course Sarthi Programme \(AK-PROG\)\?/)).toBeInTheDocument();
     expect(courseService.remove).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
     await waitFor(() => expect(courseService.remove).toHaveBeenCalledWith('co1'));
@@ -135,15 +135,15 @@ describe('<CourseList>', () => {
     permissions.add('updateLmsCourse');
     vi.mocked(courseService.setStatus).mockResolvedValue(course({ isActive: false }));
     renderWithProviders(<CourseList />);
-    await userEvent.click(await screen.findByRole('switch', { name: 'Amrut Kalash Programme: active' }));
-    expect(screen.getByText('Are you sure you want to deactivate the course Amrut Kalash Programme (AK-PROG)?')).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('switch', { name: 'Sarthi Programme: active' }));
+    expect(screen.getByText('Are you sure you want to deactivate the course Sarthi Programme (AK-PROG)?')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Yes, deactivate' }));
     await waitFor(() => expect(courseService.setStatus).toHaveBeenCalledWith('co1', false));
   });
 
   it('sends the entity, course status and active filters to the API', async () => {
     renderWithProviders(<CourseList />);
-    await screen.findByText('Amrut Kalash Programme');
+    await screen.findByText('Sarthi Programme');
     await screen.findByRole('option', { name: 'Pilot Entity (PILOT)' });
     await userEvent.selectOptions(screen.getByLabelText('Entity'), ENTITY_2);
     await waitFor(() => expect(courseService.list).toHaveBeenLastCalledWith(expect.objectContaining({ entityId: ENTITY_2, page: 1 })));
@@ -160,13 +160,13 @@ describe('<CourseList>', () => {
     permissions.add('viewLmsCourses');
     permissions.add('updateLmsCourse');
     const { unmount } = renderWithProviders(<CourseList />);
-    await screen.findByText('Amrut Kalash Programme');
+    await screen.findByText('Sarthi Programme');
     expect(screen.queryByRole('switch', { name: 'Show deleted' })).not.toBeInTheDocument();
     unmount();
 
     permissions.add('deleteLmsCourse');
     renderWithProviders(<CourseList />);
-    await screen.findByText('Amrut Kalash Programme');
+    await screen.findByText('Sarthi Programme');
     expect(screen.getByRole('switch', { name: 'Show deleted' })).toHaveAttribute('aria-checked', 'false');
   });
 
@@ -180,7 +180,7 @@ describe('<CourseList>', () => {
       .mockRejectedValueOnce(new ApiError('A course with this code already exists', 409, 'CONFLICT', [{ field: 'code', message: 'This course code is already used.' }]))
       .mockResolvedValueOnce(gone);
     renderWithProviders(<CourseList />);
-    await screen.findByText('Amrut Kalash Programme');
+    await screen.findByText('Sarthi Programme');
 
     await userEvent.click(screen.getByRole('switch', { name: 'Show deleted' }));
     expect(courseService.list).toHaveBeenLastCalledWith(expect.objectContaining({ deleted: true, page: 1 }));
