@@ -4,6 +4,8 @@ import type { PageMeta } from '../../services/api-client';
 export interface ServerColumn<T> {
   key: string;
   label: string;
+  /* Shown in the header instead of the label, e.g. a checkbox that selects the page. */
+  header?: ReactNode;
   render: (row: T) => ReactNode;
   /* Backend sortBy value; when set, the header toggles server-side sorting. */
   sortKey?: string;
@@ -60,8 +62,15 @@ export default function ServerTable<T>({
                     sort && c.sortKey && sort.sortBy === c.sortKey ? (sort.sortOrder === 'ASC' ? 'ascending' : 'descending') : undefined
                   }
                 >
-                  {c.sortKey && onSort ? (
-                    <button type="button" className="tw-font-semibold" onClick={() => toggle(c.sortKey as string)}>
+                  {c.header ? (
+                    c.header
+                  ) : c.sortKey && onSort ? (
+                    <button
+                      type="button"
+                      className="tw-cursor-pointer tw-border-0 tw-bg-transparent tw-p-0 tw-text-inherit"
+                      style={{ font: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' }}
+                      onClick={() => toggle(c.sortKey as string)}
+                    >
                       {c.label}
                       {sort?.sortBy === c.sortKey ? (sort.sortOrder === 'ASC' ? ' ▲' : ' ▼') : ''}
                     </button>

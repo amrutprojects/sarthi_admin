@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 
 /*
  * Checkbox list for choosing several reference records (the centres and tracks an LMS entity delivers,
- * F-LMS-03-04 / -05), shared by the LMS masters.
+ * F-LMS-03-04 / -05; the districts of a coordinator or of a Divisional Officer).
  *
  * - A search box narrows the list (label, code line and group); "Select all" / "Select none" act on the
  *   rows on screen, so "search Nashik → Select all" enables exactly the Nashik centres.
@@ -54,7 +54,21 @@ interface MultiSelectListProps {
 const INACTIVE = ' (inactive)';
 
 export default function MultiSelectList({
-  id, label, options, saved = [], value, onChange, loading, error, onRetry, emptyMsg, noun, required, hint, fieldError, disabled,
+  id,
+  label,
+  options,
+  saved = [],
+  value,
+  onChange,
+  loading,
+  error,
+  onRetry,
+  emptyMsg,
+  noun,
+  required,
+  hint,
+  fieldError,
+  disabled,
 }: MultiSelectListProps) {
   const [term, setTerm] = useState('');
 
@@ -66,9 +80,7 @@ export default function MultiSelectList({
   }, [options, saved]);
 
   const needle = term.trim().toLowerCase();
-  const visible = needle
-    ? all.filter((o) => [o.label, o.sub ?? '', o.group ?? ''].some((t) => t.toLowerCase().includes(needle)))
-    : all;
+  const visible = needle ? all.filter((o) => [o.label, o.sub ?? '', o.group ?? ''].some((t) => t.toLowerCase().includes(needle))) : all;
 
   const selected = new Set(value);
   const selectable = (o: MultiSelectOption) => !o.inactive || selected.has(o.id);
@@ -102,25 +114,46 @@ export default function MultiSelectList({
         <div>
           <b>Could not load the {noun}. </b>
           {error}{' '}
-          {onRetry ? <button type="button" className="btn xs" onClick={onRetry}>Retry</button> : null}
+          {onRetry ? (
+            <button type="button" className="btn xs" onClick={onRetry}>
+              Retry
+            </button>
+          ) : null}
         </div>
       </div>
     );
   } else if (loading) {
-    body = <div className="muted fs12" aria-live="polite">Loading {noun}…</div>;
+    body = (
+      <div className="muted fs12" aria-live="polite">
+        Loading {noun}…
+      </div>
+    );
   } else if (!all.length) {
     body = <div className="muted fs12">{emptyMsg}</div>;
   } else if (!visible.length) {
-    body = <div className="muted fs12">No {noun} match “{term.trim()}”.</div>;
+    body = (
+      <div className="muted fs12">
+        No {noun} match “{term.trim()}”.
+      </div>
+    );
   } else {
     body = groups.map(([group, rows]) => (
       <div key={group || '-'} style={{ marginBottom: 6 }}>
-        {group ? <div className="fs12" style={{ fontWeight: 700, color: 'var(--text-2)', margin: '6px 0 2px' }}>{group}</div> : null}
+        {group ? (
+          <div className="fs12" style={{ fontWeight: 700, color: 'var(--text-2)', margin: '6px 0 2px' }}>
+            {group}
+          </div>
+        ) : null}
         {rows.map((o) => {
           const checked = selected.has(o.id);
           const boxId = `${id}-${o.id}`;
           return (
-            <label key={o.id} htmlFor={boxId} className="f ac gp8" style={{ padding: '3px 0', cursor: selectable(o) && !disabled ? 'pointer' : 'default' }}>
+            <label
+              key={o.id}
+              htmlFor={boxId}
+              className="f ac gp8"
+              style={{ padding: '3px 0', cursor: selectable(o) && !disabled ? 'pointer' : 'default' }}
+            >
               <input id={boxId} type="checkbox" checked={checked} disabled={disabled || !selectable(o)} onChange={() => toggle(o)} />
               <span className="fs13" style={{ color: o.inactive ? 'var(--muted)' : undefined }}>
                 {o.label}
@@ -139,7 +172,12 @@ export default function MultiSelectList({
     <div className="fld">
       <label id={labelId} htmlFor={`${id}-search`}>
         {label}
-        {required ? <span style={{ color: 'var(--red)' }} aria-hidden="true"> *</span> : null}
+        {required ? (
+          <span style={{ color: 'var(--red)' }} aria-hidden="true">
+            {' '}
+            *
+          </span>
+        ) : null}
       </label>
       <div className="f ac gp8 wrap" style={{ marginBottom: 6 }}>
         <input
@@ -151,10 +189,20 @@ export default function MultiSelectList({
           disabled={disabled || loading || !!error || !all.length}
           onChange={(e) => setTerm(e.target.value)}
         />
-        <button type="button" className="btn xs" disabled={disabled || loading || !!error || !visible.some((o) => !o.inactive)} onClick={selectAll}>
+        <button
+          type="button"
+          className="btn xs"
+          disabled={disabled || loading || !!error || !visible.some((o) => !o.inactive)}
+          onClick={selectAll}
+        >
           Select all
         </button>
-        <button type="button" className="btn xs" disabled={disabled || loading || !!error || !visible.some((o) => selected.has(o.id))} onClick={selectNone}>
+        <button
+          type="button"
+          className="btn xs"
+          disabled={disabled || loading || !!error || !visible.some((o) => selected.has(o.id))}
+          onClick={selectNone}
+        >
           Select none
         </button>
         <span className="muted fs12" aria-live="polite">
@@ -166,7 +214,14 @@ export default function MultiSelectList({
         aria-labelledby={labelId}
         aria-describedby={fieldError ? errorId : undefined}
         aria-busy={loading || undefined}
-        style={{ border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '6px 10px', maxHeight: 240, overflowY: 'auto', background: 'var(--surface)' }}
+        style={{
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--r-sm)',
+          padding: '6px 10px',
+          maxHeight: 240,
+          overflowY: 'auto',
+          background: 'var(--surface)',
+        }}
       >
         {body}
       </div>

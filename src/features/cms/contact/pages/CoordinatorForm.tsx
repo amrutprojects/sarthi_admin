@@ -2,7 +2,7 @@ import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { ApiError } from '../../../../services/api-client';
 import MasterField, { fieldAria } from '../../components/MasterField';
 import MasterFormActions from '../../components/MasterFormActions';
-import MultiSelectList from '../../../lms/components/MultiSelectList';
+import MultiSelectList from '../../../../components/ui/MultiSelectList';
 import { digitsKeystroke, isValid, type FieldErrors } from '../../validation';
 import { ConfirmModal, toastError, useApiData } from '../../shared';
 import { contactService } from '../services/contactService';

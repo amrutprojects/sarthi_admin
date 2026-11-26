@@ -13,8 +13,12 @@ vi.mock('../../auth', () => ({
   Can: ({ action, children }: { action: string; children: ReactNode }) => (granted.has(action) ? children : null),
   useCan: () => (a: string) => granted.has(a),
 }));
-/* The live G-2 card has its own behaviour; here it only has to stay on the settings screen. */
+/* The live cards have their own behaviour (and tests); here they only have to be on the settings screen. */
 vi.mock('../../lms-live', () => ({ LiveDataSettingCard: () => <div data-testid="live-data-setting" /> }));
+vi.mock('../../ipp-approvals', () => ({
+  HeadOfficeApprovalCard: () => <div data-testid="head-office-approval" />,
+  IppConnectionCard: () => <div data-testid="ipp-connection" />,
+}));
 
 beforeEach(() => {
   granted = new Set();
@@ -64,14 +68,16 @@ describe('platform screens without a live source', () => {
 });
 
 describe('System settings', () => {
-  it('keeps the live LMS data card and shows no invented configuration', () => {
+  it('keeps the live LMS data and IPP cards and shows no invented configuration', () => {
     granted = new Set(['editSettings']);
     const { container } = renderWithProviders(<SettingsPage />);
     expect(screen.getByRole('heading', { name: 'System Settings' })).toBeInTheDocument();
     expect(screen.getByTestId('live-data-setting')).toBeInTheDocument();
+    expect(screen.getByTestId('head-office-approval')).toBeInTheDocument();
+    expect(screen.getByTestId('ipp-connection')).toBeInTheDocument();
     expect(screen.getByTestId('no-data')).toHaveTextContent('not stored on the server yet');
     expect(screen.getByTestId('no-data')).toHaveTextContent('सर्व्हरवर साठवले जात नाहीत');
-    /* No fake save, fake toggles or session-only parameter fields. */
+    /* No fake save, fake toggles (the cards' own switches are replaced above) or session-only parameter fields. */
     expect(screen.queryByRole('button', { name: /save settings/i })).toBeNull();
     expect(screen.queryByRole('spinbutton')).toBeNull();
     expect(container.querySelector('.switch')).toBeNull();

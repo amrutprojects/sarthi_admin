@@ -221,6 +221,11 @@ export type RouteName =
   | 'registrationNew'
   | 'registrationDetail'
   | 'registrationEdit'
+  | 'ippApplications'
+  | 'ippApplicationDetail'
+  | 'ippBatches'
+  | 'ippBatchDetail'
+  | 'ippOfficers'
   | 'masterList'
   | 'audit'
   | 'settings'
@@ -302,6 +307,10 @@ export const NAV: NavEntry[] = [
   { k: 'atrisk', l: 'At-Risk Engine', i: 'alert', r: '/at-risk' },
   { k: 'imports', l: 'Student Import', i: 'download', r: '/student-import' },
   { k: 'registrations', l: 'Student Registration', i: 'clipboard', r: '/student-registrations' },
+  /* Student forms of IPP, decided by the Divisional Officer, COEP and Head Office or the Super Admin (sarthi-api /ipp-approvals). */
+  { g: 'IPP Approvals' },
+  { k: 'ipp-approvals', l: 'Applications', i: 'check', r: '/ipp-approvals' },
+  { k: 'ipp-officers', l: 'Officer Districts', i: 'pin', r: '/ipp-officers' },
   { g: 'Delivery Network' },
   { k: 'districts', l: 'Districts', i: 'map', r: '/districts' },
   { k: 'map', l: 'District Map', i: 'pin', r: '/map' },
@@ -440,6 +449,11 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/student-registrations/new', 'registrationNew', 'registrations'],
   ['/student-registrations/:id', 'registrationDetail', 'registrations'],
   ['/student-registrations/:id/edit', 'registrationEdit', 'registrations'],
+  ['/ipp-approvals', 'ippApplications', 'ipp-approvals'],
+  ['/ipp-approvals/applications/:id', 'ippApplicationDetail', 'ipp-approvals'],
+  ['/ipp-approvals/batches', 'ippBatches', 'ipp-approvals'],
+  ['/ipp-approvals/batches/:id', 'ippBatchDetail', 'ipp-approvals'],
+  ['/ipp-officers', 'ippOfficers', 'ipp-officers'],
   ['/districts', 'districts', 'districts'],
   ['/districts/:id', 'districtDetail', 'districts'],
   ['/districts/:id/talukas/:t', 'talukaDetail', 'districts'],

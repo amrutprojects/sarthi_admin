@@ -27,6 +27,8 @@ const MENU_KEYS = [
   'atrisk',
   'imports',
   'registrations',
+  'ipp-approvals',
+  'ipp-officers',
   'districts',
   'map',
   'centres',
@@ -344,6 +346,14 @@ export const ACTION_ACCESS = {
   createLmsApiKey: ['lms.create'],
   rotateLmsApiKey: ['lms.update'],
   revokeLmsApiKey: ['lms.delete'],
+  /*
+   * IPP approvals: the stage a role decides at. Whether one application can be decided comes from the API with the
+   * application (canDecide): the Super Admin holds every code and decides only while Head Office approval is off.
+   */
+  decideIppDivision: ['ipp-approvals.division-officer'],
+  decideIppCoep: ['ipp-approvals.coep'],
+  decideIppHeadOffice: ['ipp-approvals.head-office'],
+  updateIppOfficers: ['ipp-officers.update'],
   /* M3 Attendance reports: CSV export of the table on screen. */
   exportAttendanceReports: ['reports.export'],
 } satisfies Record<string, string[]>;

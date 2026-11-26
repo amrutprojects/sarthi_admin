@@ -4,7 +4,7 @@ import MasterField, { fieldAria } from '../../../cms/components/MasterField';
 import MasterFormActions from '../../../cms/components/MasterFormActions';
 import { ConfirmModal, toastError, useApiData } from '../../../cms/shared';
 import { codeKeystroke, isValid, serverFieldErrors, type FieldErrors } from '../../../cms/validation';
-import MultiSelectList, { type MultiSelectOption } from '../../components/MultiSelectList';
+import MultiSelectList, { type MultiSelectOption } from '../../../../components/ui/MultiSelectList';
 import { lmsOptions } from '../../options';
 import { LMS_ENTITY_FIELDS, type EnabledCentre, type EnabledTrack, type LmsEntityField, type LmsEntityFormOptions } from '../types/entity.types';
 import {

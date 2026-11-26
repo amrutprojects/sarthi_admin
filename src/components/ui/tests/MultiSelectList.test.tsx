@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import MultiSelectList, { type MultiSelectOption } from '../../components/MultiSelectList';
+import MultiSelectList, { type MultiSelectOption } from '../MultiSelectList';
 
 const OPTIONS: MultiSelectOption[] = [
   { id: 'c1', label: 'Nashik Road Centre', sub: 'TC0001', group: 'Nashik' },
@@ -15,7 +15,16 @@ function Host({ initial = [], saved = [] }: { initial?: string[]; saved?: MultiS
   const [value, setValue] = useState<string[]>(initial);
   return (
     <>
-      <MultiSelectList id="ms" label="Enabled Centres" noun="centres" options={OPTIONS} saved={saved} value={value} onChange={setValue} emptyMsg="Nothing here." />
+      <MultiSelectList
+        id="ms"
+        label="Enabled Centres"
+        noun="centres"
+        options={OPTIONS}
+        saved={saved}
+        value={value}
+        onChange={setValue}
+        emptyMsg="Nothing here."
+      />
       <output data-testid="value">{value.join(',')}</output>
     </>
   );
@@ -60,7 +69,14 @@ describe('<MultiSelectList>', () => {
 
   it('shows loading, empty and error states, with Retry', async () => {
     const retry = vi.fn();
-    const props = { id: 'ms', label: 'Enabled Tracks', noun: 'tracks', value: [], onChange: () => undefined, emptyMsg: 'No active track yet.' };
+    const props = {
+      id: 'ms',
+      label: 'Enabled Tracks',
+      noun: 'tracks',
+      value: [],
+      onChange: () => undefined,
+      emptyMsg: 'No active track yet.',
+    };
     const { rerender } = render(<MultiSelectList {...props} options={[]} loading />);
     expect(screen.getByText('Loading tracks…')).toBeInTheDocument();
     rerender(<MultiSelectList {...props} options={[]} />);

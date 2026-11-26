@@ -48,6 +48,7 @@ src/
     users/               Reference module — see docs/development-guidelines/module-guide.md
     roles-permissions/   Roles, permission matrix, menu visibility
     students/            Student data import and register
+    ipp-approvals/       Approval of the IPP student forms by the officers (docs/ipp-approvals.md)
     dashboard, candidates, network, delivery, training, outcomes, outreach, governance, platform
                          Screens with no API source yet show an empty state (no sample data)
   components/            ui/ (design-system primitives), tables/, feedback/ (errors, toasts, dialogs), charts/
