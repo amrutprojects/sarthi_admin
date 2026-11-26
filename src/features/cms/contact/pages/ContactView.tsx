@@ -273,7 +273,7 @@ export default function ContactView() {
             <PageInfoTab page={page} />
           </SectionTabPanel>
           <SectionTabPanel tab="amrut" active={tab} idPrefix="contact">
-            <CardTab type="SARTHI" org={amrut} />
+            <CardTab type="AMRUT" org={amrut} />
           </SectionTabPanel>
           <SectionTabPanel tab="partner" active={tab} idPrefix="contact">
             <CardTab type="IMPLEMENTATION_PARTNER" org={partner} />
