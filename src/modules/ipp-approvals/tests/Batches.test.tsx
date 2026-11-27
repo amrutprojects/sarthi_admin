@@ -193,7 +193,10 @@ describe('IPP batches — one batch', () => {
     renderAt(ONE);
     await userEvent.click(await screen.findByRole('button', { name: 'Approve all that wait for me (7)' }));
     const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveTextContent('Approve all 7 applications of batch IPP-B-0001 that wait for you? After your approval: With COEP.');
+    expect(dialog).toHaveTextContent(
+      'Are you sure you want to approve all 7 applications of batch IPP-B-0001 that wait for you? ' +
+        'Once approved, the applications will be forwarded to the COEP for further review and approval.',
+    );
     expect(api.approveBatch).not.toHaveBeenCalled();
     api.batch.mockResolvedValue(batch({ toDecide: 0 }));
     await userEvent.click(within(dialog).getByRole('button', { name: 'Approve 7' }));
@@ -202,6 +205,33 @@ describe('IPP batches — one batch', () => {
       expect(toasts()).toHaveTextContent('6 applications approved; 1 application skipped: not waiting for you any more.'),
     );
     await waitFor(() => expect(screen.queryByRole('button', { name: /Approve all/ })).not.toBeInTheDocument());
+  });
+
+  it.each([
+    ['COEP', ['COEP'], true, 'the applications will be forwarded to the Head Officer (HO) for final review and approval.'],
+    [
+      'COEP while Head Office approval is off',
+      ['COEP'],
+      false,
+      'the applications will be forwarded to the Super Admin for final review and approval.',
+    ],
+    ['the Head Officer', ['HEAD_OFFICE'], true, 'this will be their final approval.'],
+    ['the Super Admin', ['SUPER_ADMIN'], false, 'this will be their final approval.'],
+    [
+      'a Divisional Officer who is also COEP',
+      ['DIVISION', 'COEP'],
+      true,
+      'each application will be forwarded to its own next approval authority: those with the Divisional Officer to the COEP for further ' +
+        'review and approval and those with the COEP to the Head Officer (HO) for final review and approval.',
+    ],
+  ] as const)('the confirmation for %s names who approves next', async (_who, stages, headOfficeEnabled, sentence) => {
+    api.summary.mockResolvedValue(summary({ stages: [...stages], headOfficeEnabled }));
+    api.batch.mockResolvedValue(batch({ stages: counts({ DIVISION: 3, COEP: 4, HEAD_OFFICE: 4, SUPER_ADMIN: 4 }) }));
+    renderAt(ONE);
+    await userEvent.click(await screen.findByRole('button', { name: 'Approve all that wait for me (7)' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      `Are you sure you want to approve all 7 applications of batch IPP-B-0001 that wait for you? Once approved, ${sentence}`,
+    );
   });
 
   it('is read-only for who does not decide', async () => {

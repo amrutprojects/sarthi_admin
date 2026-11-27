@@ -9,7 +9,7 @@ import { DecideAs, ReadOnlyNote } from '../components/DecideAs';
 import { LoadProblem, Loading, Notice, StageCounts } from '../components/common';
 import { useApprovalSummary, useBatch } from '../hooks/useIppApprovals';
 import { useDecisions } from '../hooks/useDecisions';
-import { STAGE_LABEL, plural, stageAfterApproval } from '../labels';
+import { approveManyQuestion, batchDecisionStages, plural } from '../labels';
 import type { BatchRow } from '../types/ippApprovals.types';
 import { BATCHES_PATH, fmtDay, isStatus, useTitle } from '../utils';
 
@@ -57,7 +57,6 @@ export default function BatchDetailPage() {
   const batch = q.data;
   useTitle(batch ? `Batch ${batch.code}` : 'IPP batch');
 
-  const to = summary.data?.stages.length === 1 ? stageAfterApproval(summary.data.stages[0], summary.data.headOfficeEnabled) : null;
   const close = () => setConfirm(false);
 
   return (
@@ -118,10 +117,17 @@ export default function BatchDetailPage() {
           <ApplicationsPanel summary={summary.data} batch={batch} defaultView="ALL" />
         </>
       )}
-      {confirm && batch ? (
+      {confirm && batch && summary.data ? (
         <ApproveModal
           title="Approve all that wait for you"
-          message={`Approve all ${plural(batch.toDecide, 'application')} of batch ${batch.code} that wait for you?${to ? ` After your approval: ${STAGE_LABEL[to]}.` : ' Each goes on to its next level.'}`}
+          message={approveManyQuestion(
+            batch.toDecide === 1
+              ? `the 1 application of batch ${batch.code} that waits for you`
+              : `all ${plural(batch.toDecide, 'application')} of batch ${batch.code} that wait for you`,
+            batchDecisionStages(summary.data.stages, batch.stages),
+            summary.data.headOfficeEnabled,
+            batch.toDecide,
+          )}
           confirmLabel={decisions.busy ? 'Approving…' : `Approve ${fmt(batch.toDecide)}`}
           askReason={false}
           several={batch.toDecide > 1}

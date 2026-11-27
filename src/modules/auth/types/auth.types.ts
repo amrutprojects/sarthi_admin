@@ -21,6 +21,9 @@ export interface CurrentUser extends ApiUser {
   permissions: string[];
   /* Menus hidden from this user by the per-role Menu Visibility settings. */
   hiddenMenus?: string[];
-  /* 'website' for a Website Admin (CMS menu only); 'admin' (the default) for the full panel. */
-  portal?: 'admin' | 'website';
+  /*
+   * 'website' for a Website Admin (CMS menu only); 'ipp' for an IPP officer: Divisional Officer, COEP or Head Officer
+   * (IPP Approvals' Applications only); 'admin' (the default) for the full panel.
+   */
+  portal?: 'admin' | 'website' | 'ipp';
 }

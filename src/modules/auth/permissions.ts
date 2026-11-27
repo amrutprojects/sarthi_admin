@@ -392,7 +392,21 @@ export const WEBSITE_MENUS: readonly string[] = [
   'cms-districts',
   'cms-talukas',
 ];
-export type Portal = 'admin' | 'website';
+
+/*
+ * IPP officer accounts (backend roles DIVISIONAL_OFFICER, COEP, HEAD_OFFICER; GET /auth/me → portal 'ipp') work in the
+ * Applications screen of IPP Approvals only: no Dashboard, no Outcomes, no links to the public site. The backend confines
+ * those roles to the same menu (sarthi-api RbacService rule 8).
+ */
+export const IPP_OFFICER_MENUS: readonly string[] = ['ipp-approvals'];
+export type Portal = 'admin' | 'website' | 'ipp';
+
+/* The menus a workspace is limited to; null = the full panel. */
+const PORTAL_MENUS: Readonly<Record<Portal, readonly string[] | null>> = {
+  admin: null,
+  website: WEBSITE_MENUS,
+  ipp: IPP_OFFICER_MENUS,
+};
 
 export function hasAny(permissions: Set<string>, required: readonly string[] | undefined): boolean {
   if (!required) return true;
@@ -401,12 +415,14 @@ export function hasAny(permissions: Set<string>, required: readonly string[] | u
 
 /*
  * A menu opens when the user holds its view permission and no Menu Visibility setting hides it. In the website
- * portal nothing outside the CMS menu opens, not even the screens open to every signed-in user. An entry that
+ * portal nothing outside the CMS menu opens, and in the IPP portal nothing outside IPP Approvals' Applications: not
+ * even the screens and links open to every signed-in user (Certificate Verification, the public site). An entry that
  * gathers several menus (MENU_GROUPS) opens when any one of them would, by the same rules.
  */
 export const canOpen = (permissions: Set<string>, navKey: string, hidden?: Set<string>, portal: Portal = 'admin'): boolean => {
   const menus = MENU_GROUPS[navKey];
   if (menus) return !hidden?.has(navKey) && menus.some((menu) => canOpen(permissions, menu, hidden, portal));
-  return (portal !== 'website' || WEBSITE_MENUS.includes(navKey)) && !hidden?.has(navKey) && hasAny(permissions, SCREEN_ACCESS[navKey]);
+  const confined = PORTAL_MENUS[portal] ?? null;
+  return (!confined || confined.includes(navKey)) && !hidden?.has(navKey) && hasAny(permissions, SCREEN_ACCESS[navKey]);
 };
 export const canDo = (permissions: Set<string>, action: Action): boolean => hasAny(permissions, ACTION_ACCESS[action]);

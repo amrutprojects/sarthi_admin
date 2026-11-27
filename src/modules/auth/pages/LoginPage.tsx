@@ -3,7 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import AS from '../../../legacy';
 import { useAuth } from '../auth-context';
 import { canOpenPath, homePath } from '../home';
-import { ApiError } from '../../../services/api-client';
+import { API_BASE_URL, ApiError, NETWORK_FAILURE_TEXT, diagnoseNetworkFailure, isNetworkError } from '../../../services/api-client';
 import { publicUrl } from '../../../utils/publicSite';
 
 /*
@@ -56,7 +56,12 @@ export default function LoginPage() {
       if (err instanceof ApiError && err.status === 401) setError(T('ईमेल किंवा पासवर्ड चुकीचा आहे.', 'Invalid email or password.'));
       else if (err instanceof ApiError && err.status === 429)
         setError(T('खूप प्रयत्न झाले. थोड्या वेळाने पुन्हा प्रयत्न करा.', 'Too many attempts. Please try again later.'));
-      else setError(err instanceof ApiError ? err.fullMessage : 'Sign-in failed.');
+      else if (isNetworkError(err)) {
+        /* No answer the page may read: say whether the browser blocked it, the server sent an error page, or nothing answered. */
+        const why = await diagnoseNetworkFailure();
+        console.warn(`Sign-in got no readable answer from ${API_BASE_URL} (${why})`);
+        setError(NETWORK_FAILURE_TEXT[why]);
+      } else setError(err instanceof ApiError ? err.fullMessage : 'Sign-in failed.');
     } finally {
       setBusy(false);
     }
@@ -196,7 +201,7 @@ export default function LoginPage() {
               </div>
             </div>
             {error && (
-              <div className="hint mb10" style={{ color: 'var(--red)' }}>
+              <div className="hint mb10" role="alert" style={{ color: 'var(--red)' }}>
                 {error}
               </div>
             )}

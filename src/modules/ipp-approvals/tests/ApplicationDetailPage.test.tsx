@@ -199,7 +199,10 @@ describe('IPP application — decision', () => {
     renderAt();
     await userEvent.click(await screen.findByRole('button', { name: 'Approve' }));
     const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveTextContent('Approve the application of Asha Patil (IPP-000001)? After your approval: With COEP.');
+    expect(dialog).toHaveTextContent('Approve — Asha Patil (IPP-000001)');
+    expect(dialog).toHaveTextContent(
+      'Are you sure you want to approve this application? Once approved, the application will be forwarded to the COEP for further review and approval.',
+    );
     api.approveOne.mockResolvedValue(movedOn());
     api.application.mockResolvedValue(movedOn());
     /* A first approval: no reason is asked. */
@@ -209,6 +212,23 @@ describe('IPP application — decision', () => {
     await waitFor(() => expect(toasts()).toHaveTextContent('Asha Patil (IPP-000001) approved. Now: With COEP.'));
     expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
     expect(screen.getByText('This application is not waiting for your decision. Now: With COEP.')).toBeInTheDocument();
+  });
+
+  it.each([
+    [
+      'COEP',
+      'HEAD_OFFICE',
+      'With Head Office',
+      'the application will be forwarded to the Head Officer (HO) for final review and approval.',
+    ],
+    ['COEP', 'SUPER_ADMIN', 'With Super Admin', 'the application will be forwarded to the Super Admin for final review and approval.'],
+    ['HEAD_OFFICE', 'APPROVED', 'Final approved', 'this will be its final approval.'],
+    ['SUPER_ADMIN', 'APPROVED', 'Final approved', 'this will be its final approval.'],
+  ] as const)('at %s, going to %s: the confirmation names who is next', async (stage, to, label, sentence) => {
+    api.application.mockResolvedValue(detail({ stage, stageLabel: `With ${stage}`, approveTo: { stage: to, label } }));
+    renderAt();
+    await userEvent.click(await screen.findByRole('button', { name: 'Approve' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent(`Are you sure you want to approve this application? Once approved, ${sentence}`);
   });
 
   it('a second approval needs a reason of 3–500 characters, and shows a refused one in the dialog', async () => {

@@ -1,5 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, onUnauthorized, request, requestBlob, setCsrfToken } from '../src/services/api-client';
+import {
+  ApiError,
+  NETWORK_ERROR_MESSAGE,
+  diagnoseNetworkFailure,
+  isNetworkError,
+  onUnauthorized,
+  request,
+  requestBlob,
+  setCsrfToken,
+} from '../src/services/api-client';
 
 const respond = (status: number, body: unknown) =>
   vi.fn().mockResolvedValue({ ok: status < 400, status, statusText: '', json: () => Promise.resolve(body) } as Response);
@@ -74,9 +83,55 @@ describe('api-client', () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
-  it('reports network failures as NETWORK_ERROR', async () => {
+  it('reports network failures as NETWORK_ERROR, in words for the user', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
-    await expect(request('/users')).rejects.toMatchObject({ status: 0, code: 'NETWORK_ERROR' });
+    const err = await request('/users').catch((e: unknown) => e);
+    expect(err).toMatchObject({ status: 0, code: 'NETWORK_ERROR', message: NETWORK_ERROR_MESSAGE });
+    expect(isNetworkError(err)).toBe(true);
+    expect(isNetworkError(new ApiError('Forbidden', 403, 'FORBIDDEN'))).toBe(false);
+    expect(NETWORK_ERROR_MESSAGE).not.toMatch(/backend/);
+  });
+
+  describe('diagnoseNetworkFailure', () => {
+    const answered = { ok: true, status: 200, type: 'cors' } as Response;
+    const opaque = { ok: false, status: 0, type: 'opaque' } as Response;
+    const failed = new TypeError('Failed to fetch');
+
+    it('the API answers its health check: the browser blocked the request (e.g. Brave Shields)', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(answered);
+      vi.stubGlobal('fetch', fetchMock);
+      expect(await diagnoseNetworkFailure()).toBe('blocked');
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toBe('/api/v1/health');
+      /* No cookie, no preflight: a probe that nothing but a block of the whole server can stop. */
+      expect(init).toMatchObject({ credentials: 'omit', cache: 'no-store', headers: { Accept: 'application/json' } });
+      expect(init.mode).toBeUndefined();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('only an opaque answer: an error page without CORS headers (the proxy while the API restarts)', async () => {
+      const fetchMock = vi.fn().mockRejectedValueOnce(failed).mockResolvedValueOnce(opaque);
+      vi.stubGlobal('fetch', fetchMock);
+      expect(await diagnoseNetworkFailure()).toBe('server-error');
+      expect(fetchMock.mock.calls[1][1]).toMatchObject({ mode: 'no-cors', credentials: 'omit' });
+    });
+
+    it('no answer at all: unreachable', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(failed));
+      expect(await diagnoseNetworkFailure()).toBe('unreachable');
+    });
+
+    it('offline: says so without a probe', async () => {
+      const fetchMock = vi.fn();
+      vi.stubGlobal('fetch', fetchMock);
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      try {
+        expect(await diagnoseNetworkFailure()).toBe('offline');
+        expect(fetchMock).not.toHaveBeenCalled();
+      } finally {
+        vi.restoreAllMocks();
+      }
+    });
   });
 
   it('requestBlob: reads a binary body with the session cookie; 401 notifies the app; errors carry the envelope', async () => {

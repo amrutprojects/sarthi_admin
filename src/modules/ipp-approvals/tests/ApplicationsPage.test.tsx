@@ -263,7 +263,9 @@ describe('IPP applications — selection and bulk approval', () => {
     await userEvent.click(within(bar()).getByRole('button', { name: 'Select page' }));
     await userEvent.click(within(bar()).getByRole('button', { name: 'Approve selected' }));
     const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveTextContent('Approve 2 selected applications? After your approval: With COEP.');
+    expect(dialog).toHaveTextContent(
+      'Are you sure you want to approve these 2 selected applications? Once approved, the applications will be forwarded to the COEP for further review and approval.',
+    );
     expect(api.approve).not.toHaveBeenCalled();
     const reads = api.applications.mock.calls.length;
     expect(within(dialog).queryByLabelText(/Approval reason/)).not.toBeInTheDocument();
@@ -311,7 +313,8 @@ describe('IPP applications — selection and bulk approval', () => {
     await userEvent.click(within(bar()).getByRole('button', { name: 'Approve selected' }));
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveTextContent(
-      'Approve all 7 applications of batch IPP-B-0001 that wait for you, on every page and whatever the other filters show?',
+      'Are you sure you want to approve all 7 applications of batch IPP-B-0001 that wait for you, on every page and whatever the other filters show? ' +
+        'Once approved, the applications will be forwarded to the COEP for further review and approval.',
     );
     await userEvent.click(within(dialog).getByRole('button', { name: 'Approve 7' }));
     await waitFor(() => expect(api.approveBatch).toHaveBeenCalledWith(BATCH_ID, null));
@@ -345,7 +348,10 @@ describe('IPP applications — one application', () => {
     renderAt();
     await userEvent.click(await screen.findByRole('button', { name: 'Approve Asha Patil' }));
     const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveTextContent('Approve the application of Asha Patil (IPP-000001)? After your approval: With COEP.');
+    expect(dialog).toHaveTextContent('Approve — Asha Patil (IPP-000001)');
+    expect(dialog).toHaveTextContent(
+      'Are you sure you want to approve this application? Once approved, the application will be forwarded to the COEP for further review and approval.',
+    );
     await userEvent.click(within(dialog).getByRole('button', { name: 'Approve application' }));
     await waitFor(() => expect(api.approveOne).toHaveBeenCalledWith('app-1', null));
     await waitFor(() => expect(toasts()).toHaveTextContent('Asha Patil (IPP-000001) approved. Now: With COEP.'));
@@ -446,7 +452,9 @@ describe('IPP applications — who decides', () => {
     renderAt();
     expect(await screen.findByText(/You decide as COEP for all districts\. 1 application to decide\./)).toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button', { name: 'Approve Asha Patil' }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('After your approval: With Super Admin.');
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      'Are you sure you want to approve this application? Once approved, the application will be forwarded to the Super Admin for final review and approval.',
+    );
     /* Not limited to districts: the filter offers all of them. */
     expect(api.districts).toHaveBeenCalled();
   });
@@ -482,6 +490,114 @@ describe('IPP applications — who decides', () => {
     api.applications.mockResolvedValue(pageOf([]));
     renderAt();
     expect(await screen.findByText(/No district is assigned to you yet/)).toBeInTheDocument();
+  });
+});
+
+describe('IPP applications — the approval confirmation names who approves next', () => {
+  const ASK_ONE = 'Are you sure you want to approve this application?';
+  const ASK_TWO = 'Are you sure you want to approve these 2 selected applications?';
+  const TO_COEP = 'will be forwarded to the COEP for further review and approval.';
+  const TO_HO = 'will be forwarded to the Head Officer (HO) for final review and approval.';
+  const TO_SUPER = 'will be forwarded to the Super Admin for final review and approval.';
+  const at = (stage: 'DIVISION' | 'COEP' | 'HEAD_OFFICE' | 'SUPER_ADMIN', over = {}) => [
+    row({ stage, ...over }),
+    row({ id: 'app-2', registrationId: 'IPP-000002', name: 'Ravi Kale', stage, ...over }),
+  ];
+  const confirmOne = async () => {
+    await userEvent.click(await screen.findByRole('button', { name: 'Approve Asha Patil' }));
+    return screen.getByRole('dialog');
+  };
+  const confirmPage = async () => {
+    await screen.findByRole('link', { name: 'Asha Patil' });
+    await userEvent.click(within(bar()).getByRole('button', { name: 'Select page' }));
+    await userEvent.click(within(bar()).getByRole('button', { name: 'Approve selected' }));
+    return screen.getByRole('dialog');
+  };
+
+  it.each([
+    [
+      'Divisional Officer',
+      'DIVISION',
+      true,
+      `${ASK_ONE} Once approved, the application ${TO_COEP}`,
+      `${ASK_TWO} Once approved, the applications ${TO_COEP}`,
+    ],
+    ['COEP', 'COEP', true, `${ASK_ONE} Once approved, the application ${TO_HO}`, `${ASK_TWO} Once approved, the applications ${TO_HO}`],
+    [
+      'COEP while Head Office approval is off',
+      'COEP',
+      false,
+      `${ASK_ONE} Once approved, the application ${TO_SUPER}`,
+      `${ASK_TWO} Once approved, the applications ${TO_SUPER}`,
+    ],
+    [
+      'Head Officer',
+      'HEAD_OFFICE',
+      true,
+      `${ASK_ONE} Once approved, this will be its final approval.`,
+      `${ASK_TWO} Once approved, this will be their final approval.`,
+    ],
+    [
+      'Super Admin (Head Office approval off)',
+      'SUPER_ADMIN',
+      false,
+      `${ASK_ONE} Once approved, this will be its final approval.`,
+      `${ASK_TWO} Once approved, this will be their final approval.`,
+    ],
+  ] as const)('as %s: one and several', async (_who, stage, headOfficeEnabled, one, several) => {
+    api.summary.mockResolvedValue(summary({ stages: [stage], districts: stage === 'DIVISION' ? [PUNE] : null, headOfficeEnabled }));
+    api.applications.mockResolvedValue(pageOf(at(stage)));
+    const { unmount } = renderAt();
+    expect(await confirmOne()).toHaveTextContent(one);
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
+    expect(await confirmPage()).toHaveTextContent(several);
+    unmount();
+  });
+
+  it('one selected application is "this application"', async () => {
+    api.summary.mockResolvedValue(summary({ stages: ['COEP'], districts: null }));
+    api.applications.mockResolvedValue(pageOf(at('COEP')));
+    renderAt();
+    await screen.findByRole('link', { name: 'Asha Patil' });
+    await userEvent.click(box(/Select Asha Patil/));
+    await userEvent.click(within(bar()).getByRole('button', { name: 'Approve selected' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent(`${ASK_ONE} Once approved, the application ${TO_HO}`);
+  });
+
+  it('selected at different stages: each goes to its own next authority, across pages too', async () => {
+    api.summary.mockResolvedValue(summary({ stages: ['DIVISION', 'COEP'] }));
+    api.applications.mockImplementation(async (q) =>
+      pageOf([q.page === 1 ? row() : row({ id: 'app-2', registrationId: 'IPP-000002', name: 'Ravi Kale', stage: 'COEP' })], q.page, 26, 2),
+    );
+    renderAt();
+    await userEvent.click(await screen.findByRole('checkbox', { name: /Select Asha Patil/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Next page' }));
+    await userEvent.click(await screen.findByRole('checkbox', { name: /Select Ravi Kale/ }));
+    await userEvent.click(within(bar()).getByRole('button', { name: 'Approve selected' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      `${ASK_TWO} Once approved, each application will be forwarded to its own next approval authority: ` +
+        'those with the Divisional Officer to the COEP for further review and approval and those with the COEP to the Head Officer (HO) for final review and approval.',
+    );
+  });
+
+  it('selected at one stage by a user who decides at two: that stage’s sentence', async () => {
+    api.summary.mockResolvedValue(summary({ stages: ['DIVISION', 'COEP'] }));
+    api.applications.mockResolvedValue(pageOf(at('COEP')));
+    renderAt();
+    expect(await confirmPage()).toHaveTextContent(`${ASK_TWO} Once approved, the applications ${TO_HO}`);
+  });
+
+  it('still asks the reason of a second approval with the new wording', async () => {
+    api.summary.mockResolvedValue(summary({ stages: ['COEP'], districts: null }));
+    api.applications.mockResolvedValue(pageOf(at('COEP', { reasonRequired: true })));
+    api.approveOne.mockResolvedValue(movedOn({ stage: 'HEAD_OFFICE', stageLabel: 'With Head Office' }));
+    renderAt();
+    const dialog = await confirmOne();
+    expect(dialog).toHaveTextContent(`${ASK_ONE} Once approved, the application ${TO_HO}`);
+    expect(within(dialog).getByRole('button', { name: 'Approve application' })).toBeDisabled();
+    await userEvent.type(within(dialog).getByLabelText(/Approval reason/), 'Documents checked again');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Approve application' }));
+    await waitFor(() => expect(api.approveOne).toHaveBeenCalledWith('app-1', 'Documents checked again'));
   });
 });
 

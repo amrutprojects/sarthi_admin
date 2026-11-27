@@ -71,7 +71,7 @@ describe('website portal layout', () => {
     expect([...container.querySelectorAll('.sb-item .sb-label')].map((l) => l.textContent)).toEqual(CMS_LABELS);
     expect(screen.getByText('Sarthi Admin')).toBeInTheDocument();
     expect(screen.queryByText('Certificate Verification')).not.toBeInTheDocument();
-    expect(screen.queryByText('AMRUT Public Site')).not.toBeInTheDocument();
+    expect(screen.queryByText('SARTHI Public Site')).not.toBeInTheDocument();
   });
 
   it('the sidebar shows only the CMS pages the role grants', () => {
@@ -125,11 +125,10 @@ describe('website portal layout', () => {
     signInAs('admin', ['dashboard.view', 'cms-faqs.view']);
     sidebar();
     expect(screen.getByText('Sarthi Admin')).toBeInTheDocument();
-    expect(screen.getByAltText('AMRUT')).toBeInTheDocument();
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('FAQ Management')).toBeInTheDocument();
     expect(screen.getByText('Certificate Verification')).toBeInTheDocument();
-    expect(screen.getByText('AMRUT Public Site')).toBeInTheDocument();
+    expect(screen.getByText('SARTHI Public Site')).toBeInTheDocument();
   });
 
   it('the topbar drops programme alerts and tours for a Website Admin', () => {

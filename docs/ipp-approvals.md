@@ -21,6 +21,13 @@ Office approval is off. API: sarthi-api `docs/ipp-approvals.md` (`/api/v1/ipp-ap
   word the read-only note.
 - The selection stays across pages and is cleared when the tab or a filter changes. "Select all in this batch" (with a batch filter) uses
   `POST /batches/:id/approve`, so the search and the other filters do not limit it; the confirmation says so.
+- The approval confirmation names the next approval authority from the stage the application is at (`labels.ts`): Divisional Officer → "will be
+  forwarded to the COEP for further review and approval"; COEP → "… to the Head Officer (HO) for final review and approval", or "… to the Super
+  Admin …" while Head Office approval is off; Head Office or Super Admin → "this will be its final approval". Several at one stage get that stage's
+  sentence; at several stages, each stage's next authority is named. A second approval still asks the reason.
+- Divisional Officers, COEP and Head Officers (`GET /auth/me` → `portal: 'ipp'`) see the Applications menu only: no Dashboard, Outcomes,
+  Certificate Verification or public site links, and every other screen shows the access notice or "Page not found" by direct URL
+  (`modules/auth/permissions.ts` `IPP_OFFICER_MENUS`).
 - A rejection concerns one application and needs a reason of 3–500 characters.
 - A 409 (the application has moved on) shows the API's message, and every query of the module is read again, as after each write.
 - Filters, sorting and the page are in the URL. Documents are streamed from IPP through the API and shown through an object URL of the document's

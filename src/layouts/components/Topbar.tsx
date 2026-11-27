@@ -35,8 +35,8 @@ type PopKind = 'notif' | 'profile';
 export default function Topbar({ onBurger }: { onBurger: () => void }) {
   const navigate = useNavigate();
   const { user, primaryRole, portal, logout } = useAuth();
-  /* Alerts and the guided tours cover programme data, which a Website Admin does not work with. */
-  const programme = portal !== 'website';
+  /* Alerts and the guided tours cover programme data, which a Website Admin and an IPP officer do not work with. */
+  const programme = portal === 'admin';
   const [pop, setPop] = useState<PopKind | null>(null);
   const notifRef = useRef<HTMLButtonElement>(null);
   const profileRef = useRef<HTMLButtonElement>(null);

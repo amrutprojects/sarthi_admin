@@ -9,7 +9,7 @@ import RejectModal from '../components/RejectModal';
 import { LoadProblem, Loading, Notice, StageBadge } from '../components/common';
 import { useDecisions } from '../hooks/useDecisions';
 import { useApplication } from '../hooks/useIppApprovals';
-import { whoLabel } from '../labels';
+import { approveOneQuestion, whoLabel } from '../labels';
 import type { ApplicationDetail } from '../types/ippApprovals.types';
 import { APPLICATIONS_PATH, applicationPath, isStatus, useTitle, type ListState } from '../utils';
 
@@ -167,8 +167,8 @@ export default function ApplicationDetailPage() {
 
       {a && approveTo && dialog === 'approve' ? (
         <ApproveModal
-          title={`Approve — ${a.name}`}
-          message={`Approve the application of ${a.name} (${a.registrationId})? After your approval: ${approveTo.label}.`}
+          title={`Approve — ${a.name} (${a.registrationId})`}
+          message={approveOneQuestion(approveTo.stage)}
           confirmLabel={decisions.busy ? 'Approving…' : 'Approve application'}
           askReason={a.reasonRequired}
           busy={decisions.busy}

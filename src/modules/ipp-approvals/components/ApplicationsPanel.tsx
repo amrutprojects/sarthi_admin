@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { fmt } from '../../../components/ui';
 import SearchableSelect from '../../../components/ui/SearchableSelect';
@@ -7,7 +7,7 @@ import { useApplications, useBatch, useBatchOptions, useIppDistricts } from '../
 import { useDecisions } from '../hooks/useDecisions';
 import { useDebouncedSearch, useExistingPage, useListParams } from '../hooks/useListParams';
 import { useRowSelection } from '../hooks/useRowSelection';
-import { STAGE_LABEL, stageAfterApproval, stageAfterRejection } from '../labels';
+import { STAGE_LABEL, approveOneQuestion, batchDecisionStages, stageAfterApproval, stageAfterRejection } from '../labels';
 import {
   APPLICATION_VIEWS,
   STAGES,
@@ -16,6 +16,7 @@ import {
   type ApplicationView,
   type ApprovalSummary,
   type BatchRow,
+  type Stage,
 } from '../types/ippApprovals.types';
 import ApplicationsTable from './ApplicationsTable';
 import ApproveModal from './ApproveModal';
@@ -107,7 +108,20 @@ export default function ApplicationsPanel({ summary, batch, defaultView }: Props
   const filtered = otherFilters || !!districtId || (!batch && !!batchId);
 
   const label = (s: ReturnType<typeof stageAfterApproval>) => (s ? STAGE_LABEL[s] : null);
-  const goesTo = summary.stages.length === 1 ? label(stageAfterApproval(summary.stages[0], summary.headOfficeEnabled)) : null;
+
+  /*
+   * Where the chosen applications are, for the bulk confirmation, which names the next approval authority: the one stage
+   * the user decides at, else the stages of the chosen rows as listed in this scope (the choice is kept across pages).
+   * A row not seen here (cannot happen while the scope stays) counts as any of the user's stages.
+   */
+  const seen = useRef({ scope, stages: new Map<string, Stage>() });
+  if (seen.current.scope !== scope) seen.current = { scope, stages: new Map() };
+  for (const r of rows) seen.current.stages.set(r.id, r.stage);
+  const chosenStages = (): Stage[] => {
+    if (summary.stages.length <= 1) return summary.stages;
+    const known = [...selection.ids].map((rowId) => seen.current.stages.get(rowId));
+    return known.every((s): s is Stage => !!s) ? [...new Set(known)] : summary.stages;
+  };
 
   const reset = () => {
     setSearchInput('');
@@ -225,7 +239,9 @@ export default function ApplicationsPanel({ summary, batch, defaultView }: Props
               rows={rows}
               batch={batch ? undefined : chosenBatch}
               otherFilters={otherFilters}
-              goesTo={goesTo}
+              chosenStages={chosenStages()}
+              batchStages={chosenBatch ? batchDecisionStages(summary.stages, chosenBatch.stages) : summary.stages}
+              headOfficeEnabled={summary.headOfficeEnabled}
               busy={decisions.busy}
               error={decisions.approveError}
               onOpen={decisions.resetApprove}
@@ -260,8 +276,8 @@ export default function ApplicationsPanel({ summary, batch, defaultView }: Props
 
       {approving ? (
         <ApproveModal
-          title={`Approve — ${approving.name}`}
-          message={`Approve the application of ${approving.name} (${approving.registrationId})? After your approval: ${label(stageAfterApproval(approving.stage, summary.headOfficeEnabled)) ?? 'the next level'}.`}
+          title={`Approve — ${approving.name} (${approving.registrationId})`}
+          message={approveOneQuestion(stageAfterApproval(approving.stage, summary.headOfficeEnabled))}
           confirmLabel={decisions.busy ? 'Approving…' : 'Approve application'}
           askReason={approving.reasonRequired}
           busy={decisions.busy}

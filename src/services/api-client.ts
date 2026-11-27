@@ -12,6 +12,14 @@
 
 export const API_BASE_URL: string = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
 
+/*
+ * A request that got no HTTP answer the page may read (fetch rejected): the server is down or unreachable, an error page
+ * of the proxy in front of it carried no CORS headers, or the browser stopped the request (Brave Shields, an ad blocker,
+ * a privacy extension). The login page tells these apart with diagnoseNetworkFailure().
+ */
+export const NETWORK_ERROR_MESSAGE = 'Cannot reach the server. Check your internet connection and try again.';
+const networkError = () => new ApiError(NETWORK_ERROR_MESSAGE, 0, 'NETWORK_ERROR');
+
 let csrfToken: string | null = null;
 /* Called by the auth module with the token from login or /auth/me; cleared on logout. */
 export const setCsrfToken = (token: string | null) => {
@@ -111,7 +119,7 @@ export async function request<T>(path: string, opts: RequestOptions = {}): Promi
     });
   } catch (err) {
     if ((err as Error).name === 'AbortError') throw err;
-    throw new ApiError('Cannot reach the server. Check that the backend is running.', 0, 'NETWORK_ERROR');
+    throw networkError();
   }
 
   const json = (await res.json().catch(() => null)) as Envelope<T> | null;
@@ -153,7 +161,7 @@ export async function downloadFile(path: string, fileName: string): Promise<void
     res = await fetch(API_BASE_URL + path, { credentials: 'include' });
   } catch (err) {
     if ((err as Error).name === 'AbortError') throw err;
-    throw new ApiError('Cannot reach the server. Check that the backend is running.', 0, 'NETWORK_ERROR');
+    throw networkError();
   }
   if (res.status === 401) unauthorizedHandler?.();
   if (!res.ok) {
@@ -189,7 +197,7 @@ export async function requestBlob(path: string, opts: { signal?: AbortSignal; ac
     });
   } catch (err) {
     if ((err as Error).name === 'AbortError') throw err;
-    throw new ApiError('Cannot reach the server. Check that the backend is running.', 0, 'NETWORK_ERROR');
+    throw networkError();
   }
   if (res.status === 401) unauthorizedHandler?.();
   if (!res.ok) {
@@ -214,3 +222,44 @@ export const newIdempotencyKey = () => (crypto.randomUUID ? crypto.randomUUID() 
  */
 export const needsNewIdempotencyKey = (err: unknown): boolean =>
   err instanceof ApiError && err.status >= 400 && err.status < 500;
+
+export const isNetworkError = (err: unknown): boolean => err instanceof ApiError && err.code === 'NETWORK_ERROR';
+
+export type NetworkFailure = 'offline' | 'blocked' | 'server-error' | 'unreachable';
+
+/*
+ * Why a request got no answer, for a message the user can act on (the login page). Two probes of GET /health, which needs
+ * no session, sent without cookies and without a preflight:
+ * - read with CORS: the API is up and accepts this page's origin, so the browser itself stopped the failed request
+ *   (Brave Shields, an ad blocker or a privacy extension);
+ * - else fetched opaquely (no-cors): something answered, but without CORS headers: an error page of the proxy in front of
+ *   the API (e.g. 502 while it restarts), or an API that does not list this page's origin (FRONTEND_URL);
+ * - else nothing answered: no connection, the server is down, or the browser blocks the whole server.
+ */
+export async function diagnoseNetworkFailure(): Promise<NetworkFailure> {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return 'offline';
+  const url = API_BASE_URL + '/health';
+  try {
+    await fetch(url, { credentials: 'omit', cache: 'no-store', headers: { Accept: 'application/json' } });
+    return 'blocked';
+  } catch {
+    /* not readable: try the opaque probe */
+  }
+  try {
+    await fetch(url, { mode: 'no-cors', credentials: 'omit', cache: 'no-store' });
+    return 'server-error';
+  } catch {
+    return 'unreachable';
+  }
+}
+
+export const NETWORK_FAILURE_TEXT: Readonly<Record<NetworkFailure, string>> = {
+  offline: 'You are offline. Check your internet connection and try again.',
+  blocked:
+    'The server is up, but this browser blocked the request. In Brave, click the Shields (lion) icon in the address bar and turn Shields off for ' +
+    'this site; with an ad blocker or privacy extension, allow this site in it. Then sign in again.',
+  'server-error':
+    'The server answered with an error instead of signing you in (it may be restarting). Try again in a minute; if it keeps happening, tell the administrator.',
+  unreachable:
+    'Cannot reach the server. Check your internet connection and try again. If other sites open, a firewall, ad blocker or browser shield may be blocking it.',
+};

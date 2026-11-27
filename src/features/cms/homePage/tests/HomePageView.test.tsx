@@ -44,7 +44,7 @@ import HomePageView from '../pages/HomePageView';
 const auth = vi.hoisted(() => ({
   permissions: new Set<string>(),
   hiddenMenus: new Set<string>(),
-  portal: 'admin' as 'admin' | 'website',
+  portal: 'admin' as Portal,
 }));
 vi.mock('../../../../modules/auth/auth-context', () => ({ useAuth: () => auth }));
 /* The real routes, without the sidebar and top bar around them. */

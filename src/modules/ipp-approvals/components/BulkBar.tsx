@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Callout, fmt } from '../../../components/ui';
 import type { RowSelection } from '../hooks/useRowSelection';
-import { plural } from '../labels';
-import { BULK_APPROVE_MAX, type ApplicationRow, type BatchRow } from '../types/ippApprovals.types';
+import { approveManyQuestion, plural } from '../labels';
+import { BULK_APPROVE_MAX, type ApplicationRow, type BatchRow, type Stage } from '../types/ippApprovals.types';
 import ApproveModal from './ApproveModal';
 
 interface Props {
@@ -12,8 +12,10 @@ interface Props {
   batch?: BatchRow;
   /* The search or another filter is set as well: it does not limit a whole batch. */
   otherFilters: boolean;
-  /* Where an approval sends the applications; null when it differs from one to the next. */
-  goesTo: string | null;
+  /* The stages the chosen applications are at, and those the batch's waiting ones are at: the confirmation names who is next. */
+  chosenStages: readonly Stage[];
+  batchStages: readonly Stage[];
+  headOfficeEnabled: boolean;
   busy: boolean;
   /* The API's refusal of the reason (422), shown in the dialog. */
   error?: string | null;
@@ -27,14 +29,25 @@ interface Props {
 }
 
 /* Choose the page or the whole batch, then approve the chosen applications with one reason, kept for each. */
-export default function BulkBar({ selection, rows, batch, otherFilters, goesTo, busy, error, onOpen, onApprove }: Props) {
+export default function BulkBar({
+  selection,
+  rows,
+  batch,
+  otherFilters,
+  chosenStages,
+  batchStages,
+  headOfficeEnabled,
+  busy,
+  error,
+  onOpen,
+  onApprove,
+}: Props) {
   const [confirm, setConfirm] = useState(false);
   const wholeBatch = selection.wholeBatch ? batch : undefined;
   const n = wholeBatch ? wholeBatch.toDecide : selection.ids.size;
   const tooMany = !wholeBatch && n > BULK_APPROVE_MAX;
   const pageIds = rows.filter((r) => r.canDecide).map((r) => r.id);
   const batchName = batch ? `batch ${batch.code}` : '';
-  const after = goesTo ? ` After your approval: ${goesTo}.` : ' Each goes on to its next level.';
 
   /* Chosen on this page and approved a second time: the reason is asked (for a whole batch, the API says so: 422). */
   const again = wholeBatch ? 0 : rows.filter((r) => selection.ids.has(r.id) && r.reasonRequired).length;
@@ -90,11 +103,16 @@ export default function BulkBar({ selection, rows, batch, otherFilters, goesTo, 
       {confirm ? (
         <ApproveModal
           title="Approve applications"
-          message={
+          message={approveManyQuestion(
             wholeBatch
-              ? `Approve all ${plural(n, 'application')} of ${batchName} that wait for you, on every page${otherFilters ? ' and whatever the other filters show' : ''}?${after}`
-              : `Approve ${plural(n, 'selected application')}?${after}`
-          }
+              ? `all ${plural(n, 'application')} of ${batchName} that wait for you, on every page${otherFilters ? ' and whatever the other filters show' : ''}`
+              : n === 1
+                ? 'this application'
+                : `these ${plural(n, 'selected application')}`,
+            wholeBatch ? batchStages : chosenStages,
+            headOfficeEnabled,
+            n,
+          )}
           confirmLabel={busy ? 'Approving…' : `Approve ${fmt(n)}`}
           askReason={again > 0}
           several={n > 1}

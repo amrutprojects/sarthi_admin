@@ -46,6 +46,57 @@ export function stageAfterApproval(stage: Stage, headOfficeEnabled: boolean): St
   if (stage === 'HEAD_OFFICE' || stage === 'SUPER_ADMIN') return 'APPROVED';
   return null;
 }
+/*
+ * The approval confirmation names the next approval authority, from the stage an approval sends the application to
+ * (stageAfterApproval: COEP after the Divisional Officer; the Head Officer after the COEP, or the Super Admin while
+ * Head Office approval is off). After the Head Office or the Super Admin it is the final approval.
+ */
+const NEXT_AUTHORITY: Partial<Record<Stage, string>> = {
+  COEP: 'the COEP for further review and approval',
+  HEAD_OFFICE: 'the Head Officer (HO) for final review and approval',
+  SUPER_ADMIN: 'the Super Admin for final review and approval',
+};
+const STAGE_ORDER: readonly Stage[] = ['AUDITOR', 'DIVISION', 'COEP', 'HEAD_OFFICE', 'SUPER_ADMIN', 'APPROVED'];
+
+/* "Once approved, the application will be forwarded to the COEP for further review and approval." */
+export function afterApprovalText(to: Stage | null, several = false): string {
+  if (to === 'APPROVED') return `Once approved, this will be ${several ? 'their' : 'its'} final approval.`;
+  const next = to ? NEXT_AUTHORITY[to] : undefined;
+  if (next) return `Once approved, ${several ? 'the applications' : 'the application'} will be forwarded to ${next}.`;
+  return `Once approved, ${several ? 'each application' : 'the application'} goes on to its next level.`;
+}
+
+/* The confirmation of one approval; `to` = where the approval sends it (the API's approveTo, or stageAfterApproval). */
+export const approveOneQuestion = (to: Stage | null): string =>
+  `Are you sure you want to approve this application? ${afterApprovalText(to)}`;
+
+/*
+ * The confirmation of several approvals, from the stages the applications are at now (`from`). All at one stage: that
+ * stage's sentence. At several: each goes to its own next authority, named stage by stage. `subject` names them
+ * ("these 3 selected applications", "all 7 applications of batch B-1 that wait for you").
+ */
+export function approveManyQuestion(subject: string, from: readonly Stage[], headOfficeEnabled: boolean, count: number): string {
+  const ask = `Are you sure you want to approve ${subject}?`;
+  const stages = STAGE_ORDER.filter((s) => from.includes(s) && stageAfterApproval(s, headOfficeEnabled));
+  if (stages.length <= 1) {
+    const to = stages.length ? stageAfterApproval(stages[0], headOfficeEnabled) : null;
+    return `${ask} ${afterApprovalText(to, count !== 1)}`;
+  }
+  const parts = stages.map((s) => {
+    const to = stageAfterApproval(s, headOfficeEnabled);
+    const those = `those with the ${STAGE_NAME[s]}`;
+    return to === 'APPROVED' ? `${those} will have their final approval` : `${those} to ${to ? NEXT_AUTHORITY[to] : 'the next level'}`;
+  });
+  const list = `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+  return `${ask} Once approved, each application will be forwarded to its own next approval authority: ${list}.`;
+}
+
+/* The stages of mine that a batch has applications at (BatchRow.stages); all of mine when it says none. */
+export function batchDecisionStages(mine: readonly Stage[], counts: Partial<Record<Stage, number>>): Stage[] {
+  const waiting = mine.filter((s) => (counts[s] ?? 0) > 0);
+  return waiting.length ? waiting : [...mine];
+}
+
 export function stageAfterRejection(stage: Stage): Stage | null {
   if (stage === 'DIVISION') return 'AUDITOR';
   if (stage === 'COEP') return 'DIVISION';
