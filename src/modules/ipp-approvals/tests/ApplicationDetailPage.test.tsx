@@ -10,7 +10,7 @@ import { ippApprovalsApi } from '../services/ippApprovalsApi';
 import { detail, event, movedOn, pageOf, resetToasts, row, summary, toasts } from './fixtures';
 import Where from './Where';
 
-vi.mock('../../auth', () => ({ useCan: () => () => true }));
+vi.mock('../../auth', () => ({ useCanOpen: () => () => true, useCan: () => () => true }));
 vi.mock('../services/ippApprovalsApi', () => ({
   ippApprovalsApi: {
     summary: vi.fn(),

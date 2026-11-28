@@ -32,6 +32,8 @@ export interface ApprovalSummary {
   sentBack: number;
   /* Of the applications I see. */
   counts: Record<Stage, number>;
+  /* How many each list holds (the tabs, the dashboard's cards). Missing from an API that predates it. */
+  views?: Record<ApplicationView, number>;
 }
 
 export interface ApprovalEvent {

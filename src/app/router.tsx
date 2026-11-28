@@ -28,6 +28,7 @@ const PAGES: Record<RouteName, LazyExoticComponent<ComponentType>> = {
   registrationNew: page(() => import('../modules/registrations/pages/RegistrationFormPage')),
   registrationDetail: page(() => import('../modules/registrations/pages/RegistrationDetailPage')),
   registrationEdit: page(() => import('../modules/registrations/pages/RegistrationFormPage')),
+  ippDashboard: page(() => import('../modules/ipp-approvals/pages/DashboardPage')),
   ippApplications: page(() => import('../modules/ipp-approvals/pages/ApplicationsPage')),
   ippApplicationDetail: page(() => import('../modules/ipp-approvals/pages/ApplicationDetailPage')),
   ippBatches: page(() => import('../modules/ipp-approvals/pages/BatchesPage')),

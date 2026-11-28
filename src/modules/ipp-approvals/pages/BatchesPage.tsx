@@ -3,6 +3,7 @@ import { fmtDateTime } from '../../../components/feedback/apiFeedback';
 import ServerTable, { type ServerColumn, type ServerSort } from '../../../components/tables/ServerTable';
 import { PageHead, fmt } from '../../../components/ui';
 import { ApprovalNav, ForWhom, LoadProblem, Loading, StageCounts, Wrap } from '../components/common';
+import { useIppCrumbs } from '../hooks/useIppCrumbs';
 import { useApprovalSummary, useBatches, useIppDistricts } from '../hooks/useIppApprovals';
 import { useDebouncedSearch, useExistingPage, useListParams } from '../hooks/useListParams';
 import type { BatchRow, BatchSort } from '../types/ippApprovals.types';
@@ -63,6 +64,7 @@ export default function BatchesPage() {
   const [searchInput, setSearchInput] = useDebouncedSearch(search, (q) => update({ q }));
 
   const summary = useApprovalSummary();
+  const crumbs = useIppCrumbs({ l: 'Batches' });
   const own = summary.data?.districts;
   const allDistricts = useIppDistricts(summary.isSuccess && !own);
   const districts = own ?? allDistricts.data ?? [];
@@ -79,7 +81,7 @@ export default function BatchesPage() {
   return (
     <div className="page">
       <PageHead
-        crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'IPP Approvals', link: '#/ipp-approvals' }, { l: 'Batches' }]}
+        crumbs={crumbs}
         title="IPP Batches"
         sub="Batches of student forms sent by the IPP Auditor. Counts cover the applications you may see."
       />

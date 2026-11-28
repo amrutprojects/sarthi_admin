@@ -75,8 +75,9 @@ describe('<LoginPage> landing after sign-in', () => {
   });
 
   it.each([
-    [undefined, '/ipp-approvals'],
-    ['/certification', '/ipp-approvals'],
+    [undefined, '/ipp-approvals/dashboard'],
+    ['/certification', '/ipp-approvals/dashboard'],
+    ['/ipp-approvals', '/ipp-approvals'],
     ['/ipp-approvals/batches', '/ipp-approvals/batches'],
   ])('takes an IPP officer asked for by %s to %s', async (from, to) => {
     const coep = account({

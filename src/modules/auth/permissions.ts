@@ -104,9 +104,10 @@ const MENU_KEYS = [
 ];
 /*
  * Sidebar entries that gather other menus on one page: Home Page Management, whose tabs are the twelve home page
- * menus (constants/navigation.ts: HOME_PAGE_TABS). Such an entry has no permission codes or Menu Visibility row
- * of its own; it opens when any of its menus opens (canOpen below), and each tab and each menu's own pages still
- * check their own menu.
+ * menus (constants/navigation.ts: HOME_PAGE_TABS), and the IPP Approvals Dashboard, the counts of the Applications
+ * lists. Such an entry has no permission codes or Menu Visibility row of its own; it opens when any of its menus
+ * opens (canOpen below, the IPP officers' workspace included), and each tab and each menu's own pages still check
+ * their own menu.
  */
 export const MENU_GROUPS: Readonly<Record<string, readonly string[]>> = {
   'cms-home-page': [
@@ -124,6 +125,7 @@ export const MENU_GROUPS: Readonly<Record<string, readonly string[]>> = {
     'cms-schemes',
     'cms-about',
   ],
+  'ipp-dashboard': ['ipp-approvals'],
 };
 
 export const SCREEN_ACCESS: Record<string, string[]> = {
@@ -394,8 +396,9 @@ export const WEBSITE_MENUS: readonly string[] = [
 ];
 
 /*
- * IPP officer accounts (backend roles DIVISIONAL_OFFICER, COEP, HEAD_OFFICER; GET /auth/me → portal 'ipp') work in the
- * Applications screen of IPP Approvals only: no Dashboard, no Outcomes, no links to the public site. The backend confines
+ * IPP officer accounts (backend roles DIVISIONAL_OFFICER, COEP, HEAD_OFFICER; GET /auth/me → portal 'ipp') work in
+ * IPP Approvals only (its Dashboard, which opens with Applications, and Applications): not the programme Dashboard,
+ * no Outcomes, no links to the public site. The backend confines
  * those roles to the same menu (sarthi-api RbacService rule 8).
  */
 export const IPP_OFFICER_MENUS: readonly string[] = ['ipp-approvals'];

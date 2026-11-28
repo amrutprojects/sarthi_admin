@@ -7,6 +7,7 @@ import ApplicationsPanel from '../components/ApplicationsPanel';
 import ApproveModal from '../components/ApproveModal';
 import { DecideAs, ReadOnlyNote } from '../components/DecideAs';
 import { LoadProblem, Loading, Notice, StageCounts } from '../components/common';
+import { useIppCrumbs } from '../hooks/useIppCrumbs';
 import { useApprovalSummary, useBatch } from '../hooks/useIppApprovals';
 import { useDecisions } from '../hooks/useDecisions';
 import { approveManyQuestion, batchDecisionStages, plural } from '../labels';
@@ -56,18 +57,14 @@ export default function BatchDetailPage() {
   const [confirm, setConfirm] = useState(false);
   const batch = q.data;
   useTitle(batch ? `Batch ${batch.code}` : 'IPP batch');
+  const crumbs = useIppCrumbs({ l: 'Batches', link: '#' + BATCHES_PATH }, { l: batch?.code ?? 'Batch' });
 
   const close = () => setConfirm(false);
 
   return (
     <div className="page">
       <PageHead
-        crumbs={[
-          { l: 'Dashboard', link: '#/dashboard' },
-          { l: 'IPP Approvals', link: '#/ipp-approvals' },
-          { l: 'Batches', link: '#' + BATCHES_PATH },
-          { l: batch?.code ?? 'Batch' },
-        ]}
+        crumbs={crumbs}
         title={batch ? batch.name : 'IPP batch'}
         sub={summary.data ? <DecideAs summary={summary.data} /> : undefined}
         actions={

@@ -11,7 +11,11 @@ import { PUNE, SATARA, resetToasts, toasts } from './fixtures';
 
 let granted = new Set<string>();
 let me = 'u-admin';
-vi.mock('../../auth', () => ({ useCan: () => (action: string) => granted.has(action), useAuth: () => ({ user: { id: me } }) }));
+vi.mock('../../auth', () => ({
+  useCanOpen: () => () => true,
+  useCan: () => (action: string) => granted.has(action),
+  useAuth: () => ({ user: { id: me } }),
+}));
 vi.mock('../services/ippApprovalsApi', () => ({
   ippApprovalsApi: { officers: vi.fn(), districts: vi.fn(), setOfficerDistricts: vi.fn() },
 }));

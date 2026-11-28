@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { Badge, Callout } from '../../../components/ui';
 import { STAGE_LABEL, STAGE_TONE } from '../labels';
 import { STAGES, type Stage } from '../types/ippApprovals.types';
-import { APPLICATIONS_PATH, BATCHES_PATH, errorText, isStatus, type NoticeValue } from '../utils';
+import { APPLICATIONS_PATH, BATCHES_PATH, DASHBOARD_PATH, errorText, isStatus, type NoticeValue } from '../utils';
 
-/* The two lists of the menu: one sidebar entry, two screens. */
-export function ApprovalNav({ current }: { current: 'applications' | 'batches' }) {
+/* The screens of the menu: its dashboard and its two lists. */
+export function ApprovalNav({ current }: { current: 'dashboard' | 'applications' | 'batches' }) {
   const item = (key: typeof current, label: string, to: string) => (
     <Link to={to} className={'chip' + (current === key ? ' on' : '')} aria-current={current === key ? 'page' : undefined}>
       {label}
@@ -14,6 +14,7 @@ export function ApprovalNav({ current }: { current: 'applications' | 'batches' }
   );
   return (
     <nav className="pills mb14" aria-label="IPP approvals">
+      {item('dashboard', 'Dashboard', DASHBOARD_PATH)}
       {item('applications', 'Applications', APPLICATIONS_PATH)}
       {item('batches', 'Batches', BATCHES_PATH)}
     </nav>

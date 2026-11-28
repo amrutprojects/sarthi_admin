@@ -6,6 +6,7 @@ import { useAuth, useCan } from '../../auth';
 import { UserDetailsDrawer, useSetUserStatus } from '../../users';
 import OfficerDistrictsDrawer from '../components/OfficerDistrictsDrawer';
 import { ForWhom, LoadProblem, Loading } from '../components/common';
+import { useIppCrumbs } from '../hooks/useIppCrumbs';
 import { ippKeys, useOfficers, useSetOfficerDistricts } from '../hooks/useIppApprovals';
 import { plural } from '../labels';
 import type { Officer } from '../types/ippApprovals.types';
@@ -33,6 +34,7 @@ const districtTags = (o: Officer) =>
  */
 export default function OfficersPage() {
   useTitle('Divisional Officer Mapping');
+  const crumbs = useIppCrumbs({ l: 'Divisional Officer Mapping' });
   const can = useCan();
   const { user: me } = useAuth();
   const mayEdit = can('updateIppOfficers');
@@ -73,7 +75,7 @@ export default function OfficersPage() {
   return (
     <div className="page">
       <PageHead
-        crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'IPP Approvals' }, { l: 'Divisional Officer Mapping' }]}
+        crumbs={crumbs}
         title="Divisional Officer Mapping"
         sub="Each Divisional Officer sees and decides the IPP applications of their districts. Each district can be assigned to one officer."
       />

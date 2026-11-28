@@ -221,6 +221,7 @@ export type RouteName =
   | 'registrationNew'
   | 'registrationDetail'
   | 'registrationEdit'
+  | 'ippDashboard'
   | 'ippApplications'
   | 'ippApplicationDetail'
   | 'ippBatches'
@@ -309,6 +310,8 @@ export const NAV: NavEntry[] = [
   { k: 'registrations', l: 'Student Registration', i: 'clipboard', r: '/student-registrations' },
   /* Student forms of IPP, decided by the Divisional Officer, COEP and Head Office or the Super Admin (sarthi-api /ipp-approvals). */
   { g: 'IPP Approvals' },
+  /* The counts of the lists, each a link to its list; opens with Applications (permissions.ts MENU_GROUPS). */
+  { k: 'ipp-dashboard', l: 'IPP Dashboard', i: 'dashboard', r: '/ipp-approvals/dashboard' },
   { k: 'ipp-approvals', l: 'Applications', i: 'check', r: '/ipp-approvals' },
   { k: 'ipp-officers', l: 'Divisional Officer Mapping', i: 'pin', r: '/ipp-officers' },
   { g: 'Delivery Network' },
@@ -449,6 +452,7 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   ['/student-registrations/new', 'registrationNew', 'registrations'],
   ['/student-registrations/:id', 'registrationDetail', 'registrations'],
   ['/student-registrations/:id/edit', 'registrationEdit', 'registrations'],
+  ['/ipp-approvals/dashboard', 'ippDashboard', 'ipp-dashboard'],
   ['/ipp-approvals', 'ippApplications', 'ipp-approvals'],
   ['/ipp-approvals/applications/:id', 'ippApplicationDetail', 'ipp-approvals'],
   ['/ipp-approvals/batches', 'ippBatches', 'ipp-approvals'],

@@ -9,7 +9,7 @@ import type { LinkItem } from '../types/ippApprovals.types';
 import { linkState, resetToasts, toasts } from './fixtures';
 
 let granted = new Set<string>();
-vi.mock('../../auth', () => ({ useCan: () => (action: string) => granted.has(action) }));
+vi.mock('../../auth', () => ({ useCanOpen: () => () => true, useCan: () => (action: string) => granted.has(action) }));
 vi.mock('../services/ippApprovalsApi', () => ({
   ippApprovalsApi: { headOffice: vi.fn(), setHeadOffice: vi.fn(), link: vi.fn(), retryLink: vi.fn(), testLink: vi.fn() },
 }));

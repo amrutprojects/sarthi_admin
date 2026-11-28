@@ -103,7 +103,7 @@ export default function ApplicationsPanel({ summary, batch, defaultView }: Props
   const selectable = decides && (view === 'TO_DECIDE' || view === 'ALL');
   const counts: Partial<Record<ApplicationView, number>> = batch
     ? { TO_DECIDE: batch.toDecide, ALL: batch.students }
-    : { TO_DECIDE: summary.toDecide, ALL: sum(summary.counts) };
+    : (summary.views ?? { TO_DECIDE: summary.toDecide, ALL: sum(summary.counts) });
   const otherFilters = !!search || !!stage;
   const filtered = otherFilters || !!districtId || (!batch && !!batchId);
 

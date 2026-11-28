@@ -10,7 +10,7 @@ import { BATCH_ID, PUNE, batch, event, movedOn, pageOf, readOnlySummary, resetTo
 import Where from './Where';
 
 let granted = new Set<string>();
-vi.mock('../../auth', () => ({ useCan: () => (action: string) => granted.has(action) }));
+vi.mock('../../auth', () => ({ useCanOpen: () => () => true, useCan: () => (action: string) => granted.has(action) }));
 vi.mock('../services/ippApprovalsApi', () => ({
   ippApprovalsApi: {
     summary: vi.fn(),
@@ -144,6 +144,14 @@ describe('IPP applications — list', () => {
     await waitFor(() => expect(screen.queryByRole('checkbox')).not.toBeInTheDocument());
     await userEvent.click(within(chips).getByRole('button', { name: /^To decide/ }));
     expect(screen.getByTestId('where')).toHaveTextContent(/^\/ipp-approvals$/);
+  });
+
+  it('counts every list when the API counts them', async () => {
+    api.summary.mockResolvedValue(summary({ views: { TO_DECIDE: 12, SENT_ON: 23, SENT_BACK: 4, ALL: 35 } }));
+    renderAt();
+    const chips = await screen.findByRole('group', { name: 'Applications' });
+    for (const name of ['To decide 12', 'Sent on 23', 'Sent back 4', 'All 35'])
+      expect(within(chips).getByRole('button', { name })).toBeInTheDocument();
   });
 
   it('reads the list, filters, sorting and page from the URL and sends them to the API', async () => {

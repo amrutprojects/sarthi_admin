@@ -26,6 +26,7 @@ vi.mock('../../AdminLayout', async () => {
   return { default: () => createElement(Outlet) };
 });
 vi.mock('../../../modules/ipp-approvals/pages/ApplicationsPage', () => ({ default: () => 'Applications page' }));
+vi.mock('../../../modules/ipp-approvals/pages/DashboardPage', () => ({ default: () => 'IPP dashboard page' }));
 
 const OFFICERS: [string, string[]][] = [
   ['Divisional Officer', ['ipp-approvals.view', 'ipp-approvals.division-officer']],
@@ -67,10 +68,10 @@ const renderApp = (route: string) =>
 describe.each(OFFICERS)('IPP portal layout (%s)', (_role, codes) => {
   beforeEach(() => signInAs('ipp', codes));
 
-  it('the sidebar shows the Applications menu and nothing else', () => {
+  it('the sidebar shows the IPP Dashboard and Applications and nothing else', () => {
     const { container } = sidebar();
     expect(groups(container)).toEqual(['IPP Approvals']);
-    expect(labels(container)).toEqual(['Applications']);
+    expect(labels(container)).toEqual(['IPP Dashboard', 'Applications']);
     for (const text of HIDDEN) expect([text, screen.queryByText(text)]).toEqual([text, null]);
   });
 
@@ -86,13 +87,16 @@ describe.each(OFFICERS)('IPP portal layout (%s)', (_role, codes) => {
     expect(document.querySelector('.mnav')).toBeNull();
   });
 
-  it('opens Applications, and sends the Dashboard and the start page there', async () => {
-    for (const route of ['/ipp-approvals', '/dashboard', '/']) {
+  it('opens the IPP Dashboard, and sends the programme Dashboard and the start page there', async () => {
+    for (const route of ['/ipp-approvals/dashboard', '/dashboard', '/']) {
       const { unmount } = renderApp(route);
-      expect(await screen.findByText('Applications page')).toBeInTheDocument();
-      expect(screen.getByTestId('location')).toHaveTextContent('/ipp-approvals');
+      expect(await screen.findByText('IPP dashboard page')).toBeInTheDocument();
+      expect(screen.getByTestId('location')).toHaveTextContent('/ipp-approvals/dashboard');
       unmount();
     }
+    const { unmount } = renderApp('/ipp-approvals');
+    expect(await screen.findByText('Applications page')).toBeInTheDocument();
+    unmount();
   });
 
   it('does not render the hidden menus’ pages when reached by direct URL', async () => {
@@ -100,14 +104,14 @@ describe.each(OFFICERS)('IPP portal layout (%s)', (_role, codes) => {
       const { unmount } = renderApp(route);
       expect(await screen.findByText("You don't have access to this screen")).toBeInTheDocument();
       expect(screen.getByTestId('location')).toHaveTextContent(route);
-      expect(screen.getByRole('button', { name: 'Go to Applications' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Go to IPP Dashboard' })).toBeInTheDocument();
       unmount();
     }
     /* Certificate Verification and the public site are pages of the public website, never of the admin panel. */
     for (const route of ['/verify', '/home', '/programme']) {
       const { unmount } = renderApp(route);
       expect(await screen.findByText('Page not found')).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Go to Applications' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Go to IPP Dashboard' })).toBeInTheDocument();
       unmount();
     }
   });
@@ -121,6 +125,7 @@ describe('other roles are unchanged', () => {
     expect(labels(container)).toEqual(
       expect.arrayContaining([
         'Dashboard',
+        'IPP Dashboard',
         'Applications',
         'Divisional Officer Mapping',
         'Certification',

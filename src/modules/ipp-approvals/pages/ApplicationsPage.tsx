@@ -2,6 +2,7 @@ import { PageHead } from '../../../components/ui';
 import ApplicationsPanel from '../components/ApplicationsPanel';
 import { DecideAs, ReadOnlyNote } from '../components/DecideAs';
 import { ApprovalNav, LoadProblem, Loading } from '../components/common';
+import { useIppCrumbs } from '../hooks/useIppCrumbs';
 import { useApprovalSummary } from '../hooks/useIppApprovals';
 import { useTitle } from '../utils';
 
@@ -9,10 +10,11 @@ import { useTitle } from '../utils';
 export default function ApplicationsPage() {
   useTitle('IPP applications');
   const summary = useApprovalSummary();
+  const crumbs = useIppCrumbs({ l: 'Applications' });
   return (
     <div className="page">
       <PageHead
-        crumbs={[{ l: 'Dashboard', link: '#/dashboard' }, { l: 'IPP Approvals' }, { l: 'Applications' }]}
+        crumbs={crumbs}
         title="IPP Applications"
         sub={summary.data ? <DecideAs summary={summary.data} /> : 'Student forms of the 3 Month Internship Placement Program (IPP).'}
       />

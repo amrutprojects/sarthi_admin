@@ -16,19 +16,25 @@ const SIDEBAR_KEYS = keysOf(SIDEBAR_NAV);
 const OPEN_TO_ALL = ['verify', 'pubhome', 'pubprog'];
 
 describe.each(Object.entries(OFFICERS))('the IPP portal (%s)', (_role, codes) => {
-  it('opens IPP Approvals’ Applications and nothing else', () => {
-    expect(NAV_KEYS.filter((k) => canOpen(codes, k, undefined, 'ipp'))).toEqual(['ipp-approvals']);
-    expect(SIDEBAR_KEYS.filter((k) => canOpen(codes, k, undefined, 'ipp'))).toEqual(['ipp-approvals']);
+  it('opens IPP Approvals’ Dashboard and Applications and nothing else', () => {
+    expect(NAV_KEYS.filter((k) => canOpen(codes, k, undefined, 'ipp'))).toEqual(['ipp-dashboard', 'ipp-approvals']);
+    expect(SIDEBAR_KEYS.filter((k) => canOpen(codes, k, undefined, 'ipp'))).toEqual(['ipp-dashboard', 'ipp-approvals']);
   });
 
-  it('starts on Applications', () => {
-    expect(homeItem({ permissions: codes, portal: 'ipp' }).k).toBe('ipp-approvals');
-    expect(homePath({ permissions: codes, portal: 'ipp' })).toBe('/ipp-approvals');
+  it('starts on the IPP Dashboard', () => {
+    expect(homeItem({ permissions: codes, portal: 'ipp' }).k).toBe('ipp-dashboard');
+    expect(homePath({ permissions: codes, portal: 'ipp' })).toBe('/ipp-approvals/dashboard');
   });
 
-  it('opens the Applications pages by direct URL and no other screen', () => {
+  it('opens the IPP Approvals pages by direct URL and no other screen', () => {
     const access = { permissions: codes, portal: 'ipp' as const };
-    for (const path of ['/ipp-approvals', '/ipp-approvals/applications/a1', '/ipp-approvals/batches', '/ipp-approvals/batches/b1'])
+    for (const path of [
+      '/ipp-approvals/dashboard',
+      '/ipp-approvals',
+      '/ipp-approvals/applications/a1',
+      '/ipp-approvals/batches',
+      '/ipp-approvals/batches/b1',
+    ])
       expect([path, canOpenPath(path, access)]).toEqual([path, true]);
     for (const path of [
       '/dashboard',
@@ -65,17 +71,21 @@ describe('the IPP portal', () => {
     for (const k of ['ipp-officers', 'dashboard', 'certification', 'assessments', 'users'])
       expect([k, canOpen(lots, k, undefined, 'ipp')]).toEqual([k, false]);
     expect(canOpen(lots, 'ipp-approvals', undefined, 'ipp')).toBe(true);
+    expect(canOpen(lots, 'ipp-dashboard', undefined, 'ipp')).toBe(true);
     expect(IPP_OFFICER_MENUS).toEqual(['ipp-approvals']);
   });
 
   it('still needs the view permission and respects Menu Visibility', () => {
     expect(canOpen(new Set(), 'ipp-approvals', undefined, 'ipp')).toBe(false);
     expect(canOpen(OFFICERS.COEP, 'ipp-approvals', new Set(['ipp-approvals']), 'ipp')).toBe(false);
+    /* The dashboard opens with Applications: no permission or Menu Visibility row of its own. */
+    expect(canOpen(new Set(), 'ipp-dashboard', undefined, 'ipp')).toBe(false);
+    expect(canOpen(OFFICERS.COEP, 'ipp-dashboard', new Set(['ipp-approvals']), 'ipp')).toBe(false);
   });
 
   it('leaves the full panel and the website portal as they were', () => {
     const admin = new Set(['dashboard.view', 'ipp-approvals.view', 'ipp-officers.view', 'certification.view']);
-    for (const k of ['dashboard', 'ipp-approvals', 'ipp-officers', 'certification', ...OPEN_TO_ALL])
+    for (const k of ['dashboard', 'ipp-dashboard', 'ipp-approvals', 'ipp-officers', 'certification', ...OPEN_TO_ALL])
       expect([k, canOpen(admin, k)]).toEqual([k, true]);
     expect(canOpen(new Set(['ipp-approvals.view']), 'ipp-approvals', undefined, 'website')).toBe(false);
     expect(canOpen(new Set(['cms-faqs.view']), 'cms-faqs', undefined, 'website')).toBe(true);

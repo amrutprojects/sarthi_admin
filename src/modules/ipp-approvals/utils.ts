@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { ApiError } from '../../services/api-client';
 
+export const DASHBOARD_PATH = '/ipp-approvals/dashboard';
 export const APPLICATIONS_PATH = '/ipp-approvals';
 export const BATCHES_PATH = '/ipp-approvals/batches';
 export const applicationPath = (id: string) => `/ipp-approvals/applications/${id}`;

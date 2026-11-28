@@ -7,6 +7,7 @@ import ApproveModal from '../components/ApproveModal';
 import DocumentsCard from '../components/DocumentsCard';
 import RejectModal from '../components/RejectModal';
 import { LoadProblem, Loading, Notice, StageBadge } from '../components/common';
+import { useIppCrumbs } from '../hooks/useIppCrumbs';
 import { useDecisions } from '../hooks/useDecisions';
 import { useApplication } from '../hooks/useIppApprovals';
 import { approveOneQuestion, whoLabel } from '../labels';
@@ -51,6 +52,7 @@ export default function ApplicationDetailPage() {
   const [dialog, setDialog] = useState<'approve' | 'reject' | null>(null);
   const a = q.data;
   useTitle(a ? `${a.name} (${a.registrationId})` : 'IPP application');
+  const crumbs = useIppCrumbs({ l: 'Applications', link: '#' + APPLICATIONS_PATH }, { l: a?.registrationId ?? 'Application' });
 
   const position = listState ? listState.ids.indexOf(id) : -1;
   const goTo = (target: string | undefined) => {
@@ -64,11 +66,7 @@ export default function ApplicationDetailPage() {
   return (
     <div className="page">
       <PageHead
-        crumbs={[
-          { l: 'Dashboard', link: '#/dashboard' },
-          { l: 'IPP Approvals', link: '#' + APPLICATIONS_PATH },
-          { l: a?.registrationId ?? 'Application' },
-        ]}
+        crumbs={crumbs}
         title={a ? a.name : 'IPP application'}
         badge={a ? <StageBadge stage={a.stage} label={a.stageLabel} /> : undefined}
         sub={a ? `${a.registrationId} · ${a.district.name} · batch ${a.batch.code}` : undefined}

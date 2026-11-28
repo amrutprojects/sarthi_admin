@@ -26,15 +26,16 @@ const sidebar = () => {
 const OFFICER = ['ipp-approvals.view', 'ipp-approvals.division-officer'];
 
 describe('IPP approvals — menu and permissions', () => {
-  it('is a menu group of its own with two entries', () => {
+  it('is a menu group of its own with three entries', () => {
     const groups = NAV.filter(isNavGroup).map((n) => n.g);
     expect(groups.filter((g) => g === 'IPP Approvals')).toHaveLength(1);
     const at = SIDEBAR_NAV.findIndex((n) => isNavGroup(n) && n.g === 'IPP Approvals');
-    expect(SIDEBAR_NAV.slice(at + 1, at + 3)).toEqual([
+    expect(SIDEBAR_NAV.slice(at + 1, at + 4)).toEqual([
+      expect.objectContaining({ k: 'ipp-dashboard', l: 'IPP Dashboard', r: '/ipp-approvals/dashboard' }),
       expect.objectContaining({ k: 'ipp-approvals', l: 'Applications', r: '/ipp-approvals' }),
       expect.objectContaining({ k: 'ipp-officers', l: 'Divisional Officer Mapping', r: '/ipp-officers' }),
     ]);
-    expect(isNavGroup(SIDEBAR_NAV[at + 3])).toBe(true);
+    expect(isNavGroup(SIDEBAR_NAV[at + 4])).toBe(true);
   });
 
   it('shows the entries only with their view permission, and drops the empty group', () => {
@@ -49,11 +50,16 @@ describe('IPP approvals — menu and permissions', () => {
     const menu = sidebar();
     expect(within(menu).getByText('IPP Approvals')).toBeInTheDocument();
     expect(within(menu).getByRole('button', { name: 'Applications' })).toHaveClass('active');
+    expect(within(menu).getByRole('button', { name: 'IPP Dashboard' })).not.toHaveClass('active');
     expect(within(menu).queryByRole('button', { name: 'Divisional Officer Mapping' })).not.toBeInTheDocument();
   });
 
   it('follows Menu Visibility and stays out of the website portal', () => {
     expect(canOpen(new Set(OFFICER), 'ipp-approvals', new Set(['ipp-approvals']))).toBe(false);
+    /* The dashboard opens and closes with Applications. */
+    expect(canOpen(new Set(OFFICER), 'ipp-dashboard')).toBe(true);
+    expect(canOpen(new Set(OFFICER), 'ipp-dashboard', new Set(['ipp-approvals']))).toBe(false);
+    expect(canOpen(new Set(['ipp-officers.view']), 'ipp-dashboard')).toBe(false);
     expect(canOpen(new Set([...OFFICER, 'ipp-officers.view']), 'ipp-approvals', undefined, 'website')).toBe(false);
     expect(canOpen(new Set(['ipp-officers.view']), 'ipp-officers')).toBe(true);
     expect(canOpen(new Set(OFFICER), 'ipp-officers')).toBe(false);
@@ -63,14 +69,16 @@ describe('IPP approvals — menu and permissions', () => {
 
   it('closes every screen without its permission', () => {
     expect(SCREEN_ACCESS['ipp-approvals']).toEqual(['ipp-approvals.view']);
+    expect(SCREEN_ACCESS['ipp-dashboard']).toEqual(['ipp-approvals.view']);
     expect(SCREEN_ACCESS['ipp-officers']).toEqual(['ipp-officers.view']);
   });
 
   it('is the start screen of a user who has nothing else', () => {
-    expect(homePath({ permissions: new Set(OFFICER) })).toBe('/ipp-approvals');
+    expect(homePath({ permissions: new Set(OFFICER) })).toBe('/ipp-approvals/dashboard');
   });
 
   it.each([
+    ['/ipp-approvals/dashboard', 'ippDashboard', 'ipp-dashboard'],
     ['/ipp-approvals', 'ippApplications', 'ipp-approvals'],
     ['/ipp-approvals/applications/app-1', 'ippApplicationDetail', 'ipp-approvals'],
     ['/ipp-approvals/batches', 'ippBatches', 'ipp-approvals'],
