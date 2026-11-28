@@ -4,6 +4,7 @@ import './styles/tailwind.css';
 import './styles/styles.css';
 import './styles/amrut.css';
 import './styles/refresh.css';
+import './styles/charts.css';
 import './styles/cms-tables.css';
 import './legacy';
 import { bump } from './utils/legacyBus';

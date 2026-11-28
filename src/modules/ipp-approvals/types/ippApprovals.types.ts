@@ -36,6 +36,22 @@ export interface ApprovalSummary {
   views?: Record<ApplicationView, number>;
 }
 
+/*
+ * Figures of the dashboards (GET /dashboard): counts only, over the whole programme or a Divisional Officer's districts.
+ * The pipeline counts where the forms are now. Attendance, assessments, certification and placement are not recorded.
+ */
+export interface DashboardFigures {
+  /* The Divisional Officer's districts the figures are of; null = the whole programme. */
+  districts: NamedRef[] | null;
+  pipeline: { received: number; auditorApproved: number; divisionApproved: number; coepApproved: number; finalApproved: number };
+  /* ongoing / ended: as IPP sends the batch (its Auditor starts it once every student is final approved, then ends it). */
+  batches: { total: number; ongoing: number; ended: number };
+  /* Final approved, in an ongoing batch. */
+  inTraining: number;
+  /* By the batch's technology; enrolled = final approved. */
+  courses: { name: string; applications: number; enrolled: number }[];
+}
+
 export interface ApprovalEvent {
   /* RECEIVED, RESUBMITTED, CORRECTED, APPROVED, REJECTED, MOVED */
   event: string;

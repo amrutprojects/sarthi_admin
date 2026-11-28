@@ -4,6 +4,7 @@ import type {
   ApplicationListQuery,
   ApplicationRow,
   ApprovalSummary,
+  DashboardFigures,
   ApproveResult,
   BatchListQuery,
   BatchRow,
@@ -33,6 +34,7 @@ const withReason = (reason: string | null) => (reason ? { reason } : {});
 
 export const ippApprovalsApi = {
   summary: async () => (await request<ApprovalSummary>(`${BASE}/summary`)).data,
+  dashboard: async () => (await request<DashboardFigures>(`${BASE}/dashboard`)).data,
   districts: async () => (await request<District[]>(`${BASE}/districts`)).data,
 
   applications: (query: ApplicationListQuery, signal?: AbortSignal) => list<ApplicationRow>(`${BASE}/applications`, { ...query }, signal),

@@ -4,6 +4,7 @@ import { fmtDateTime } from '../../../components/feedback/apiFeedback';
 import ServerTable, { type ServerColumn, type ServerSort } from '../../../components/tables/ServerTable';
 import type { PageMeta } from '../../../services/api-client';
 import type { RowSelection } from '../hooks/useRowSelection';
+import { useShowNames } from '../hooks/useShowNames';
 import { eventLabel, whoLabel } from '../labels';
 import type { ApplicationRow } from '../types/ippApprovals.types';
 import { applicationPath, batchPath, type ListState } from '../utils';
@@ -33,13 +34,14 @@ function PageCheckbox({ rows, selection }: { rows: ApplicationRow[]; selection: 
 
 /* Where it is and the latest step; for a rejection who sent it back and why. */
 function Standing({ row }: { row: ApplicationRow }) {
+  const names = useShowNames();
   const e = row.lastEvent;
   return (
     <div className="tw-min-w-[190px] tw-max-w-[300px] tw-whitespace-normal">
       <StageBadge stage={row.stage} label={row.stageLabel} />
       {e ? (
         <div className="fs12 mt4">
-          {eventLabel(e.event)} {e.event === 'RECEIVED' ? null : <span className="muted">by {whoLabel(e)}</span>}
+          {eventLabel(e.event)} {e.event === 'RECEIVED' ? null : <span className="muted">by {whoLabel(e, names)}</span>}
           {e.event === 'REJECTED' && e.reason ? <div className="tw-text-danger">“{e.reason}”</div> : null}
           <div className="muted">{fmtDateTime(e.at)}</div>
         </div>

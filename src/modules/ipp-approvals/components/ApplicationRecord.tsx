@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { fmtDateTime } from '../../../components/feedback/apiFeedback';
 import { Card, KvList, Timeline, type TimelineItem } from '../../../components/ui';
-import { eventLabel, stageMove, whoLabel } from '../labels';
+import { useShowNames } from '../hooks/useShowNames';
+import { auditorLabel, eventLabel, stageMove, whoLabel } from '../labels';
 import type { ApplicationDetail, ApplicationEdit, ApplicationField, ApprovalEvent } from '../types/ippApprovals.types';
 import { batchPath, fieldText } from '../utils';
 import { FieldRows, Wrap } from './common';
@@ -9,6 +10,7 @@ import { FieldRows, Wrap } from './common';
 /* The parts of an application's page that only show what was recorded. */
 
 export function SummaryCard({ application: a }: { application: ApplicationDetail }) {
+  const names = useShowNames();
   return (
     <Card title="Application">
       <KvList
@@ -27,7 +29,7 @@ export function SummaryCard({ application: a }: { application: ApplicationDetail
           ['Submitted', fmtDateTime(a.submittedAt)],
           [
             'Approved by the IPP Auditor',
-            a.auditor.approvedAt ? `${fmtDateTime(a.auditor.approvedAt)}${a.auditor.by ? `, ${a.auditor.by}` : ''}` : '—',
+            a.auditor.approvedAt ? `${fmtDateTime(a.auditor.approvedAt)}${names && a.auditor.by ? `, ${a.auditor.by}` : ''}` : '—',
           ],
           ["Auditor's approval reason", a.auditor.reason ?? '—'],
         ]}
@@ -60,6 +62,7 @@ export function FormCards({ fields }: { fields: ApplicationField[] }) {
 }
 
 export function EditsCard({ edits }: { edits: ApplicationEdit[] }) {
+  const names = useShowNames();
   return (
     <Card title="Corrections by the IPP Auditor">
       {edits.length ? (
@@ -89,7 +92,7 @@ export function EditsCard({ edits }: { edits: ApplicationEdit[] }) {
                     <td className="fs12">
                       <Wrap min={110}>
                         {fmtDateTime(e.at)}
-                        {e.by ? <div className="muted">by {e.by}</div> : null}
+                        {e.by ? <div className="muted">by {auditorLabel(e.by, names)}</div> : null}
                       </Wrap>
                     </td>
                   </tr>
@@ -120,6 +123,7 @@ function Reason({ event: e }: { event: ApprovalEvent }) {
 
 /* Newest first, as the API sends it. */
 export function HistoryCard({ history }: { history: ApprovalEvent[] }) {
+  const names = useShowNames();
   return (
     <Card title="History">
       {history.length ? (
@@ -130,7 +134,7 @@ export function HistoryCard({ history }: { history: ApprovalEvent[] }) {
             sub: (
               <>
                 <Reason event={e} />
-                {whoLabel(e)} · {fmtDateTime(e.at)}
+                {whoLabel(e, names)} · {fmtDateTime(e.at)}
               </>
             ),
           }))}

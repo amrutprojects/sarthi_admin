@@ -6,6 +6,7 @@ import type { ApplicationDetail, ApplicationListQuery, BatchListQuery, HeadOffic
 export const ippKeys = {
   all: ['ipp-approvals'] as const,
   summary: ['ipp-approvals', 'summary'] as const,
+  dashboard: ['ipp-approvals', 'dashboard'] as const,
   districts: ['ipp-approvals', 'districts'] as const,
   applications: (q: ApplicationListQuery) => ['ipp-approvals', 'applications', q] as const,
   application: (id: string) => ['ipp-approvals', 'application', id] as const,
@@ -18,6 +19,7 @@ export const ippKeys = {
 };
 
 export const useApprovalSummary = () => useQuery({ queryKey: ippKeys.summary, queryFn: () => ippApprovalsApi.summary() });
+export const useDashboardFigures = () => useQuery({ queryKey: ippKeys.dashboard, queryFn: () => ippApprovalsApi.dashboard() });
 
 export const useIppDistricts = (enabled = true) =>
   useQuery({ queryKey: ippKeys.districts, queryFn: () => ippApprovalsApi.districts(), enabled, staleTime: 5 * 60_000 });

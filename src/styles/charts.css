@@ -1,0 +1,407 @@
+/*
+ * Charts of the IPP dashboards (modules/ipp-approvals/components/DashboardCharts.tsx), in the panel's colours:
+ * s0 = brand 600 (one series), s1 = brand 700 (Certified), s2 = saffron (Enrolled, Placed). Saffron is light on white,
+ * so every bar carries its value as text. Bars are at most 18px thick, square at the baseline and rounded at the end.
+ */
+.dchart-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dchart-row {
+  display: grid;
+  grid-template-columns: minmax(96px, 38%) 1fr;
+  align-items: center;
+  gap: 10px;
+}
+.dchart-row.stacked {
+  grid-template-columns: 1fr auto;
+  row-gap: 5px;
+}
+.dchart-row.stacked .dchart-track {
+  grid-column: 1 / -1;
+}
+.dchart-label {
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.3;
+  text-align: right;
+}
+.dchart-row.stacked .dchart-label {
+  text-align: left;
+}
+.dchart-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dchart-track {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.dchart-track.wide {
+  height: 10px;
+  border-radius: 0 4px 4px 0;
+  background: var(--brand-050);
+}
+.dchart-bar {
+  display: block;
+  height: 10px;
+  border-radius: 0 4px 4px 0;
+  flex: 0 0 auto;
+}
+.dchart-bar.thick {
+  height: 18px;
+}
+.dchart-bar.s0 {
+  background: var(--brand-600);
+}
+.dchart-bar.s1 {
+  background: var(--brand-700);
+}
+.dchart-bar.s2 {
+  background: var(--saffron);
+}
+.dchart-value,
+.dchart-figure {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.dchart-figure {
+  font-size: 13px;
+}
+.dchart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.dchart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dchart-key {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+.dchart-key.s1 {
+  background: var(--brand-700);
+}
+.dchart-key.s2 {
+  background: var(--saffron);
+}
+
+/* Meter against a target */
+.dchart-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dchart-big {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--brand-700);
+  font-variant-numeric: tabular-nums;
+}
+.dchart-meter-track {
+  position: relative;
+  height: 14px;
+  margin-top: 10px;
+  border-radius: 0 4px 4px 0;
+  background: var(--brand-050);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.dchart-meter-track .dchart-bar {
+  height: 14px;
+}
+.dchart-target {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--text);
+}
+.dchart-scale {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+}
+.dchart-scale span:nth-child(2) {
+  position: absolute;
+  transform: translateX(-50%);
+  color: var(--text-2);
+  font-weight: 600;
+}
+.dchart-caption {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.dchart-status {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.dchart-status.ok {
+  color: var(--green);
+}
+.dchart-status.warn {
+  color: var(--brand-700);
+}
+
+/* Line by month */
+.dchart-line {
+  width: 100%;
+  height: auto;
+  max-height: 210px;
+  display: block;
+}
+.dchart-line .grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.dchart-line .tick {
+  font-size: 10.5px;
+  fill: var(--muted);
+}
+.dchart-line .val {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--text);
+}
+.dchart-line .series {
+  fill: none;
+  stroke: var(--brand-600);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.dchart-line .dot {
+  fill: var(--brand-600);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+/* The dashboard's layout: six figures, then three charts side by side (one under the other on narrow screens) */
+.dash-kpis {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+.dash-kpis .kpi {
+  cursor: default;
+}
+.dash-kpis .kpi:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--border);
+}
+.dash-kpis .kpi:hover::after {
+  opacity: 1;
+}
+/* The outcome the dashboard is about (Placed, Certified), filled in the brand colour. */
+.dash-kpis .kpi.hero {
+  background: var(--brand-700);
+  border-color: var(--brand-700);
+  --kpi-accent: var(--saffron);
+}
+.dash-kpis .kpi.hero .kpi-t,
+.dash-kpis .kpi.hero .kpi-v,
+.dash-kpis .kpi.hero .kpi-d {
+  color: #fff;
+}
+.dash-charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 0.95fr);
+  gap: 14px;
+  align-items: start;
+}
+.dash-charts.lead-wide {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 0.95fr);
+}
+.dash-charts > .card {
+  margin: 0;
+}
+.dash-note {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 8px 0 18px;
+}
+@media (max-width: 1280px) {
+  .dash-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .dash-charts,
+  .dash-charts.lead-wide {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .dash-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dash-charts,
+  .dash-charts.lead-wide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/*
+ * One screen: on the dashboard page the figures, the charts and the lists are tightened so that a 1080p screen shows them
+ * all without scrolling (the lists sit side by side under the charts, what each figure holds is in its tooltip).
+ */
+.dash-page .page-head {
+  margin-bottom: 8px;
+}
+.dash-page .mb14 {
+  margin-bottom: 10px;
+}
+.dash-page .dash-kpis {
+  gap: 10px;
+}
+.dash-page .dash-kpis .kpi {
+  padding: 9px 12px 8px;
+}
+.dash-page .dash-kpis .kpi-v {
+  font-size: 22px;
+  margin-top: 2px;
+}
+.dash-page .dash-kpis .kpi-d {
+  margin-top: 1px;
+  font-size: 11px;
+}
+.dash-page .dash-charts {
+  gap: 10px;
+}
+.dash-page .card-h {
+  padding: 8px 14px;
+}
+.dash-page .card-b {
+  padding: 10px 14px 12px;
+}
+.dash-page .dchart-bars {
+  gap: 6px;
+}
+.dash-page .dchart-pair {
+  gap: 1px;
+}
+.dash-page .dchart-bar {
+  height: 8px;
+}
+.dash-page .dchart-bar.thick {
+  height: 14px;
+}
+.dash-page .dchart-value {
+  font-size: 11px;
+  line-height: 1.1;
+}
+.dash-page .dchart-label {
+  font-size: 12px;
+}
+.dash-page .dchart-legend {
+  margin-bottom: 8px;
+}
+.dash-page .dchart-meter {
+  gap: 6px;
+}
+.dash-page .dchart-big {
+  font-size: 32px;
+}
+.dash-page .dchart-meter-track,
+.dash-page .dchart-meter-track .dchart-bar {
+  height: 12px;
+}
+.dash-page .dchart-line {
+  max-height: 160px;
+}
+.dash-page .dash-note {
+  margin: 6px 0 10px;
+}
+.dash-lists {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 10px;
+  align-items: start;
+}
+.dash-lists > .card {
+  margin: 0;
+}
+.dash-mini {
+  display: grid;
+  gap: 8px;
+}
+.kpi.mini {
+  padding: 8px 10px 7px;
+}
+.kpi.mini .kpi-t {
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  line-height: 1.25;
+}
+.kpi.mini .kpi-v {
+  font-size: 20px;
+  margin-top: 2px;
+}
+.kpi.mini .kpi-d {
+  margin-top: 1px;
+  font-size: 10.5px;
+}
+@media (max-width: 1280px) {
+  .dash-lists {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .dash-mini {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/*
+ * One even row of charts: the cards as tall as the tallest, the month line short, and each row of a meter list on one
+ * line (name, bar, figure).
+ */
+.dash-page .dash-charts {
+  align-items: stretch;
+}
+.dash-page .dash-charts > .card {
+  display: flex;
+  flex-direction: column;
+}
+.dash-page .dash-charts > .card > .card-b {
+  flex: 1;
+}
+.dash-page .dchart-line {
+  max-height: 130px;
+}
+.dash-page .dchart-row.stacked {
+  grid-template-columns: minmax(0, 1fr) minmax(60px, 1.3fr) auto;
+  grid-template-areas: 'label track figure';
+  column-gap: 10px;
+  row-gap: 0;
+}
+.dash-page .dchart-row.stacked .dchart-label {
+  grid-area: label;
+}
+.dash-page .dchart-row.stacked .dchart-track {
+  grid-area: track;
+  grid-column: auto;
+}
+.dash-page .dchart-row.stacked .dchart-figure {
+  grid-area: figure;
+}

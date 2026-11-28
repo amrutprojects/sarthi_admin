@@ -10,6 +10,7 @@ import { LoadProblem, Loading, Notice, StageBadge } from '../components/common';
 import { useIppCrumbs } from '../hooks/useIppCrumbs';
 import { useDecisions } from '../hooks/useDecisions';
 import { useApplication } from '../hooks/useIppApprovals';
+import { useShowNames } from '../hooks/useShowNames';
 import { approveOneQuestion, whoLabel } from '../labels';
 import type { ApplicationDetail } from '../types/ippApprovals.types';
 import { APPLICATIONS_PATH, applicationPath, isStatus, useTitle, type ListState } from '../utils';
@@ -22,13 +23,14 @@ function useListState(): ListState | null {
 
 /* Where the application stands for this user: the rejection that brought it back, or that it is not theirs to decide. */
 function StandingNote({ application: a }: { application: ApplicationDetail }) {
+  const names = useShowNames();
   /* The last move; a correction by the Auditor is not one. */
   const last = a.history.find((e) => e.event !== 'CORRECTED');
   return (
     <>
       {last?.event === 'REJECTED' ? (
         <div className="mb14">
-          <Callout tone="warn" title={`Sent back by ${whoLabel(last)}. `}>
+          <Callout tone="warn" title={`Sent back by ${whoLabel(last, names)}. `}>
             {last.reason}
           </Callout>
         </div>

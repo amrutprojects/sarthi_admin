@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { fmtDateTime, toastError } from '../../../components/feedback/apiFeedback';
 import { Badge, Callout } from '../../../components/ui';
 import { Modal } from '../../../components/ui/Overlay';
+import { useShowNames } from '../hooks/useShowNames';
+import { auditorLabel } from '../labels';
 import { ippApprovalsApi } from '../services/ippApprovalsApi';
 import type { ApplicationDocument, DocumentFile } from '../types/ippApprovals.types';
 import { errorText, fileSize } from '../utils';
@@ -59,6 +61,7 @@ function DocumentView({ url, file }: { url: string; file: DocumentFile }) {
 }
 
 function VerifiedMark({ doc }: { doc: ApplicationDocument }) {
+  const names = useShowNames();
   if (!doc.file) return <span className="muted">—</span>;
   if (!doc.verified) return <Badge tone="amber">Not verified</Badge>;
   return (
@@ -66,7 +69,7 @@ function VerifiedMark({ doc }: { doc: ApplicationDocument }) {
       <Badge tone="green">Verified</Badge>
       {doc.verifiedBy || doc.verifiedAt ? (
         <div className="muted fs12">
-          {doc.verifiedBy ? `by ${doc.verifiedBy}` : ''} {doc.verifiedAt ? fmtDateTime(doc.verifiedAt) : ''}
+          {doc.verifiedBy ? `by ${auditorLabel(doc.verifiedBy, names)}` : ''} {doc.verifiedAt ? fmtDateTime(doc.verifiedAt) : ''}
         </div>
       ) : null}
     </>

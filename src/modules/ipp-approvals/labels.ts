@@ -121,6 +121,13 @@ export function stageMove(e: ApprovalEvent): string {
 }
 
 /* "Asha Patil (COEP)" */
-export const whoLabel = (e: { by: string; role: string | null }): string => (e.role && e.role !== e.by ? `${e.by} (${e.role})` : e.by);
+/*
+ * Who made a move: "Keshav Mahale (COEP)", or the role alone for a user who sees no names ("COEP"; hooks/useShowNames). A
+ * move without a role (none such is recorded now) is "an officer" then.
+ */
+export const whoLabel = (e: { by: string; role: string | null }, names = true): string =>
+  !names ? (e.role ?? 'an officer') : e.role && e.role !== e.by ? `${e.by} (${e.role})` : e.by;
+/* The IPP Auditor, by name for a user who sees names. */
+export const auditorLabel = (name: string | null, names: boolean): string => (names && name ? name : 'IPP Auditor');
 
 export const plural = (n: number, one: string, many = one + 's'): string => `${n.toLocaleString('en-IN')} ${n === 1 ? one : many}`;

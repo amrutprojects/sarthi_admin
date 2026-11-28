@@ -10,7 +10,12 @@ import { BATCH_ID, PUNE, batch, event, movedOn, pageOf, readOnlySummary, resetTo
 import Where from './Where';
 
 let granted = new Set<string>();
-vi.mock('../../auth', () => ({ useCanOpen: () => () => true, useCan: () => (action: string) => granted.has(action) }));
+let portal = 'admin';
+vi.mock('../../auth', () => ({
+  useAuth: () => ({ portal }),
+  useCanOpen: () => () => true,
+  useCan: () => (action: string) => granted.has(action),
+}));
 vi.mock('../services/ippApprovalsApi', () => ({
   ippApprovalsApi: {
     summary: vi.fn(),
@@ -60,6 +65,7 @@ const box = (name: RegExp | string) => screen.getByRole('checkbox', { name });
 const bar = () => screen.getByRole('group', { name: 'Approve several applications' });
 
 beforeEach(() => {
+  portal = 'admin';
   granted = new Set(['decideIppDivision']);
   resetToasts();
   api.summary.mockResolvedValue(summary());
@@ -152,6 +158,20 @@ describe('IPP applications — list', () => {
     const chips = await screen.findByRole('group', { name: 'Applications' });
     for (const name of ['To decide 12', 'Sent on 23', 'Sent back 4', 'All 35'])
       expect(within(chips).getByRole('button', { name })).toBeInTheDocument();
+  });
+
+  it('names who decided for the full panel, and gives an officer (IPP workspace) the role only', async () => {
+    const meera = event({ event: 'APPROVED', from: 'DIVISION', to: 'COEP', by: 'Keshav Mahale', role: 'Divisional Officer' });
+    api.applications.mockResolvedValue(pageOf([row({ id: 'app-7', name: 'Kiran Patil', lastEvent: meera })]));
+    const { unmount } = renderAt();
+    let kiran = (await screen.findByRole('link', { name: 'Kiran Patil' })).closest('tr') as HTMLElement;
+    expect(within(kiran).getByText('by Keshav Mahale (Divisional Officer)')).toBeInTheDocument();
+    unmount();
+    portal = 'ipp';
+    renderAt();
+    kiran = (await screen.findByRole('link', { name: 'Kiran Patil' })).closest('tr') as HTMLElement;
+    expect(within(kiran).getByText('by Divisional Officer')).toBeInTheDocument();
+    expect(within(kiran).queryByText(/Keshav/)).toBeNull();
   });
 
   it('reads the list, filters, sorting and page from the URL and sends them to the API', async () => {

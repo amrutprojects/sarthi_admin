@@ -10,11 +10,13 @@ import { LoadProblem, Loading, Notice, StageCounts } from '../components/common'
 import { useIppCrumbs } from '../hooks/useIppCrumbs';
 import { useApprovalSummary, useBatch } from '../hooks/useIppApprovals';
 import { useDecisions } from '../hooks/useDecisions';
-import { approveManyQuestion, batchDecisionStages, plural } from '../labels';
+import { useShowNames } from '../hooks/useShowNames';
+import { approveManyQuestion, auditorLabel, batchDecisionStages, plural } from '../labels';
 import type { BatchRow } from '../types/ippApprovals.types';
 import { BATCHES_PATH, fmtDay, isStatus, useTitle } from '../utils';
 
 function BatchData({ batch }: { batch: BatchRow }) {
+  const names = useShowNames();
   return (
     <Card title="Batch">
       <div className="tw-grid tw-grid-cols-1 tw-gap-x-8 md:tw-grid-cols-2">
@@ -36,7 +38,7 @@ function BatchData({ batch }: { batch: BatchRow }) {
               ['Students', `${fmt(batch.students)} (batch size ${fmt(batch.size)})`],
               ['Starts', fmtDay(batch.startDate)],
               ['Ends', fmtDay(batch.endDate)],
-              ['Sent by', batch.sentBy ?? '—'],
+              ['Sent by', auditorLabel(batch.sentBy, names)],
               ['Received', fmtDateTime(batch.receivedAt)],
               ['Where they are now', <StageCounts stages={batch.stages} />],
             ]}

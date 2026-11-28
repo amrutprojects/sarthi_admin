@@ -10,7 +10,8 @@ import { ippApprovalsApi } from '../services/ippApprovalsApi';
 import { detail, event, movedOn, pageOf, resetToasts, row, summary, toasts } from './fixtures';
 import Where from './Where';
 
-vi.mock('../../auth', () => ({ useCanOpen: () => () => true, useCan: () => () => true }));
+let portal = 'admin';
+vi.mock('../../auth', () => ({ useAuth: () => ({ portal }), useCanOpen: () => () => true, useCan: () => () => true }));
 vi.mock('../services/ippApprovalsApi', () => ({
   ippApprovalsApi: {
     summary: vi.fn(),
@@ -38,6 +39,7 @@ const renderAt = (id = 'app-1') =>
 const card = (title: string) => screen.getByRole('heading', { name: title, level: 3 }).closest('.card') as HTMLElement;
 
 beforeEach(() => {
+  portal = 'admin';
   resetToasts();
   api.application.mockResolvedValue(detail());
   api.documentBlob.mockResolvedValue(new Blob(['file']));
@@ -119,6 +121,27 @@ describe('IPP application — record', () => {
     expect(history.getByText(/Anil Rao \(Divisional Officer\)/)).toBeInTheDocument();
     /* What the officer has to look at is on top. */
     expect(screen.getByText('Sent back by Meera Shah (COEP).').closest('.callout')).toHaveTextContent('Photo is not clear');
+  });
+
+  it('gives an officer (IPP workspace) the roles of who decided, never their names', async () => {
+    portal = 'ipp';
+    api.application.mockResolvedValue(
+      detail({
+        history: [
+          event({ event: 'REJECTED', from: 'COEP', to: 'DIVISION', reason: 'Photo is not clear', by: 'Meera Shah', role: 'COEP' }),
+          event({ event: 'APPROVED', from: 'DIVISION', to: 'COEP', reason: 'Documents match', by: 'Anil Rao', role: 'Divisional Officer' }),
+          event({ event: 'CORRECTED', from: 'DIVISION', to: 'DIVISION', by: 'Auditor One', role: 'IPP Auditor' }),
+          event(),
+        ],
+      }),
+    );
+    renderAt();
+    await screen.findByText('Sent back by COEP.');
+    const page = document.body.textContent ?? '';
+    for (const name of ['Meera Shah', 'Anil Rao', 'Auditor One']) expect([name, page.includes(name)]).toEqual([name, false]);
+    const history = within(card('History'));
+    expect(history.getAllByText(/^COEP ·/).length).toBeGreaterThan(0);
+    expect(history.getAllByText(/^Divisional Officer ·/).length).toBeGreaterThan(0);
   });
 
   it('says when nothing was corrected, and when the form has no documents', async () => {

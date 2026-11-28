@@ -8,7 +8,7 @@ Office approval is off. API: sarthi-api `docs/ipp-approvals.md` (`/api/v1/ipp-ap
 
 | Path | Menu key | What it does |
 |---|---|---|
-| `/ipp-approvals/dashboard` | `ipp-dashboard` | IPP Dashboard: how many applications each list holds (To decide · Sent on · Sent back · All), the batches, and how many are at each stage; every figure opens its list (`/ipp-approvals?view=…`, `&stage=…` for a stage) |
+| `/ipp-approvals/dashboard` | `ipp-dashboard` | The dashboard of the user's level (`GET /dashboard`): Head Office (statewide: Applications, Approved, Batches with how many are ongoing and ended, Avg. attendance, Certified, Placed; approval pipeline; certified vs placed by division; placement vs the 80% target), COEP (Batches ongoing, Candidates in training, Assessments done, Avg. score, Certified, Pending; enrolled vs certified by course; attendance by month; certification status) or Divisional Officer (the Head Office's figures for their districts, by district). A user of several levels switches (`?as=HO\|COEP\|DO`); one who decides at none gets the Head Office's. Then how many applications each list holds and where they are, every figure a link to its list. What SARTHI does not record (attendance, assessments and scores, certification, placement) shows 0, with a note |
 | `/ipp-approvals` | `ipp-approvals` | Applications: To decide · Sent on · Sent back · All; search, stage, district, batch; select and approve several; approve or reject one |
 | `/ipp-approvals/applications/:id` | `ipp-approvals` | Form by step, documents (preview, download), corrections, history, Approve / Reject, Previous / Next in the list it was opened from |
 | `/ipp-approvals/batches`, `/ipp-approvals/batches/:id` | `ipp-approvals` | Batches with where their students are now; one batch with its applications and "Approve all that wait for me" |
@@ -31,6 +31,12 @@ Office approval is off. API: sarthi-api `docs/ipp-approvals.md` (`/api/v1/ipp-ap
   notice or "Page not found" by direct URL (`modules/auth/permissions.ts` `IPP_OFFICER_MENUS`).
 - IPP Dashboard (`ipp-dashboard`) has no permission or Menu Visibility row of its own: it opens and closes with Applications
   (`MENU_GROUPS`). The breadcrumb starts with the programme Dashboard only for those who may open it.
+- Divisional Officers, COEP and Head Officers (portal `ipp`) see who decided by role only: "Approved by COEP", "Sent back by
+  Divisional Officer", "verified by IPP Auditor", never the person's name (`hooks/useShowNames.ts`). The full panel (Super Admin,
+  administrators) sees the name with the role, as the Auditor does in IPP.
+- The dashboards count the ongoing batches as IPP sends them: its Auditor starts a batch once every student is final approved,
+  then ends it (Batches tile: "N ongoing · N ended"; COEP: Batches ongoing; Candidates in training = final approved in an
+  ongoing batch).
 - A rejection concerns one application and needs a reason of 3–500 characters.
 - A 409 (the application has moved on) shows the API's message, and every query of the module is read again, as after each write.
 - Filters, sorting and the page are in the URL. Documents are streamed from IPP through the API and shown through an object URL of the document's
